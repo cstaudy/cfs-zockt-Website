@@ -21030,6 +21030,9 @@ app.get("/go/tiktok/community", (_req, res) => {
 
 const SEO_CANONICAL_PATHS = new Map([
     ["/index.html", "/"],
+    ["/pages/creator-suite", "/pages/creator-suite.html"],
+    ["/pages/plans", "/pages/plans.html"],
+    ["/pages/roadmap", "/pages/roadmap.html"],
     ["/pages/support", "/pages/support.html"],
     ["/pages/security", "/pages/security.html"],
     ["/pages/impressum", "/pages/impressum.html"],
