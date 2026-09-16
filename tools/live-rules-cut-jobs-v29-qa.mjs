@@ -1,0 +1,12 @@
+import fs from "node:fs";import path from "node:path";const root=path.resolve(process.argv[2]||path.join(import.meta.dirname,"..")),must=(v,m)=>{if(!v)throw new Error(m)};
+const s=fs.readFileSync(path.join(root,"server.js"),"utf8"),g=fs.readFileSync(path.join(root,"public/pages/games.html"),"utf8"),c=fs.readFileSync(path.join(root,"public/pages/cut-studio.html"),"utf8"),l=fs.readFileSync(path.join(root,"launcher/renderer/index.html"),"utf8");
+for(const table of ["creator_game_rules","creator_game_rule_hits","creator_cut_export_jobs"])must(s.includes(table),table);
+for(const route of ["/api/creator/games/rules","/api/creator/cut-studio/jobs","/api/creator/cut-studio/projects/:id/export-jobs","/api/bridge/games/rules","/api/bridge/cut-studio/jobs"])must(s.includes(route),route);
+must(s.includes("processCreatorGameLiveEvent(creatorId, insertedEvent)"),"live event hook");
+must(s.includes("UNIQUE(rule_id,event_id)"),"rule hit dedupe");
+must(s.includes("buildCutJobManifest"),"cut manifest");
+must(g.includes("LIVE RULE ENGINE")&&g.includes('id="gameRuleList"'),"games rule UI");
+must(c.includes("EXPORT JOB QUEUE")&&c.includes('id="queueCutExport"'),"cut jobs UI");
+must(l.includes('id="toolsGameRuleCount"')&&l.includes('id="toolsCutJobList"'),"launcher V29 UI");
+must(!s.includes("fake_tiktok_game_event"),"fake event injection marker found");
+console.log(JSON.stringify({ok:true,rule_dedupe:true,real_live_hook:true,cut_job_queue:true,launcher_visibility:true}));

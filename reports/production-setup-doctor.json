@@ -1,0 +1,114 @@
+{
+  "schema": 1,
+  "generated_at": "2026-09-15T18:28:34.016Z",
+  "status": "NO-GO",
+  "root": "/mnt/data/cfs_zockt_creator_suite_full_2026-09-15_pass13",
+  "summary": {
+    "passed": 11,
+    "failed": 2,
+    "skipped": 1
+  },
+  "checks": [
+    {
+      "id": "node_engine",
+      "label": "Node.js 22+ declared",
+      "ok": true,
+      "detail": ">=22",
+      "blocking": true
+    },
+    {
+      "id": "root_deps_exact",
+      "label": "Backend direct dependencies are exact",
+      "ok": true,
+      "detail": "4 dependencies",
+      "blocking": true
+    },
+    {
+      "id": "launcher_deps_exact",
+      "label": "Launcher direct dependencies are exact",
+      "ok": true,
+      "detail": "2 dependencies",
+      "blocking": true
+    },
+    {
+      "id": "root_lock",
+      "label": "Backend package-lock.json exists",
+      "ok": false,
+      "detail": "package-lock.json",
+      "blocking": true
+    },
+    {
+      "id": "launcher_lock",
+      "label": "Launcher package-lock.json exists",
+      "ok": false,
+      "detail": "launcher/package-lock.json",
+      "blocking": true
+    },
+    {
+      "id": "blueprint_present",
+      "label": "Render Blueprint example exists",
+      "ok": true,
+      "detail": "render.blueprint.example.yaml",
+      "blocking": true
+    },
+    {
+      "id": "blueprint_manual_deploy",
+      "label": "Blueprint disables auto deploy",
+      "ok": true,
+      "detail": "",
+      "blocking": true
+    },
+    {
+      "id": "blueprint_npm_ci",
+      "label": "Blueprint build uses npm ci",
+      "ok": true,
+      "detail": "",
+      "blocking": true
+    },
+    {
+      "id": "blueprint_health",
+      "label": "Blueprint uses application health check",
+      "ok": true,
+      "detail": "",
+      "blocking": true
+    },
+    {
+      "id": "blueprint_domain",
+      "label": "Blueprint declares canonical domain",
+      "ok": true,
+      "detail": "",
+      "blocking": true
+    },
+    {
+      "id": "blueprint_origin",
+      "label": "Blueprint pins canonical APP_BASE_URL",
+      "ok": true,
+      "detail": "",
+      "blocking": true
+    },
+    {
+      "id": "blueprint_rp",
+      "label": "Blueprint pins WebAuthn RP ID",
+      "ok": true,
+      "detail": "",
+      "blocking": true
+    },
+    {
+      "id": "blueprint_secrets",
+      "label": "Blueprint does not hardcode production secrets",
+      "ok": true,
+      "detail": "",
+      "blocking": true
+    },
+    {
+      "id": "runtime_config",
+      "label": "Production runtime configuration",
+      "ok": null,
+      "detail": "not evaluated (no production env supplied)",
+      "blocking": false
+    }
+  ],
+  "warnings": [
+    "Runtime environment was not supplied; secret/value checks were skipped. Run with production env or --strict on the deployment host."
+  ]
+}

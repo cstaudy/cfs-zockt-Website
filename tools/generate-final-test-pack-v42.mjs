@@ -1,0 +1,14 @@
+import fs from "node:fs";import path from "node:path";import {createRequire} from "node:module";
+const require=createRequire(import.meta.url);
+const {createPlan,summarize,markdown,csv}=require("../lib/final-test-plan.js");
+const root=path.resolve(process.argv[2]||path.join(import.meta.dirname,".."));
+const pkg=JSON.parse(fs.readFileSync(path.join(root,"package.json"),"utf8"));
+const lpkg=JSON.parse(fs.readFileSync(path.join(root,"launcher/package.json"),"utf8"));
+const plan=createPlan({backendVersion:pkg.version,launcherVersion:lpkg.version});
+const dir=path.join(root,"reports");fs.mkdirSync(dir,{recursive:true});
+fs.writeFileSync(path.join(dir,"final-test-matrix.json"),JSON.stringify(plan,null,2),"utf8");
+fs.writeFileSync(path.join(dir,"final-test-matrix.md"),markdown(plan),"utf8");
+fs.writeFileSync(path.join(dir,"final-test-matrix.csv"),csv(plan),"utf8");
+const summary=summarize(plan);
+fs.writeFileSync(path.join(dir,"final-test-summary.json"),JSON.stringify(summary,null,2),"utf8");
+console.log(JSON.stringify({ok:true,areas:plan.areas.length,checks:summary.total,status:plan.status}));

@@ -1,0 +1,863 @@
+{
+  "schema": 1,
+  "generated_at": "2026-09-16T12:30:49.418Z",
+  "backend_version": "3.12.0",
+  "launcher_version": "0.42.0",
+  "status": "pending_real_world_tests",
+  "areas": [
+    {
+      "id": "website_account",
+      "label": "Website / Creator Account",
+      "required": true,
+      "checks": [
+        {
+          "id": "login",
+          "label": "Login/Logout funktioniert",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "register",
+          "label": "Registrierung funktioniert",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "security",
+          "label": "Security-/Account-Seite lädt",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "plan_view",
+          "label": "FREE/CREATOR/PRO wird korrekt angezeigt",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "admin_access",
+          "label": "Admin-Zugriff nur für berechtigte Creator",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        }
+      ]
+    },
+    {
+      "id": "tiktok_account",
+      "label": "TikTok Account / OAuth",
+      "required": true,
+      "checks": [
+        {
+          "id": "oauth_creator_1",
+          "label": "Creator 1 verbindet TikTok real",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "oauth_creator_2",
+          "label": "Creator 2 verbindet TikTok real",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "profile_sync",
+          "label": "Profil/Avatar/Follower-Daten werden korrekt synchronisiert",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "disconnect",
+          "label": "Disconnect entfernt Creator-Verknüpfung korrekt",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "reconnect_account",
+          "label": "Reconnect funktioniert erneut",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        }
+      ]
+    },
+    {
+      "id": "widget_studio",
+      "label": "Widget Studio",
+      "required": true,
+      "checks": [
+        {
+          "id": "create_widget",
+          "label": "Widget erstellen",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "edit_widget",
+          "label": "Text/Counter/Progress/Shape/Image bearbeiten",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "publish_widget",
+          "label": "Widget veröffentlichen",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "obs_url",
+          "label": "stabile OBS URL funktioniert",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "output_vertical",
+          "label": "TikTok Vertical Output korrekt",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "output_landscape",
+          "label": "Landscape Output korrekt",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "alert_test",
+          "label": "lokaler Alert-Test sichtbar",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "creator_isolation",
+          "label": "Widget eines anderen Creators nicht zugreifbar",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        }
+      ]
+    },
+    {
+      "id": "scene_studio",
+      "label": "Scene Studio",
+      "required": true,
+      "checks": [
+        {
+          "id": "scene_create",
+          "label": "Scene erstellen",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "scene_layout",
+          "label": "Widget Position/Scale/Rotation/Opacity bearbeiten",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "scene_publish",
+          "label": "Scene veröffentlichen",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "scene_obs",
+          "label": "Scene Runtime als Browser Source",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "scene_launcher",
+          "label": "Scene im Launcher laden",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "scene_creator_isolation",
+          "label": "Scene Creator Isolation",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        }
+      ]
+    },
+    {
+      "id": "launcher",
+      "label": "Desktop Launcher",
+      "required": true,
+      "checks": [
+        {
+          "id": "install",
+          "label": "Setup auf Clean Windows 11",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "device_link",
+          "label": "Device-Link",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "restart_login",
+          "label": "Login bleibt nach Neustart erhalten",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "tray",
+          "label": "Tray / Hide / Restore",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "autostart",
+          "label": "Autostart falls aktiviert",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "update_check",
+          "label": "Update Check",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "diagnostics",
+          "label": "Diagnostics / Preflight",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "obs_doctor",
+          "label": "OBS Doctor",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "support_bundle",
+          "label": "Support Bundle",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "logout",
+          "label": "Logout / Device Revoke",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        }
+      ]
+    },
+    {
+      "id": "live_provider",
+      "label": "TikTok LIVE Provider",
+      "required": true,
+      "checks": [
+        {
+          "id": "connect",
+          "label": "echter LIVE Connect",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "follow",
+          "label": "echtes Follow Event",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "like",
+          "label": "echtes Like Event",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "gift",
+          "label": "echtes Gift Event",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "share",
+          "label": "echtes Share Event",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "viewer",
+          "label": "Viewer Snapshot/Update",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "gift_streak",
+          "label": "Gift Streak",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "reconnect",
+          "label": "Reconnect nach Unterbrechung",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "restart_recovery",
+          "label": "Launcher Restart + Session Recovery",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "no_duplicates",
+          "label": "keine doppelten Event Deliveries",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        }
+      ]
+    },
+    {
+      "id": "stream_deck",
+      "label": "CFS Stream Deck",
+      "required": true,
+      "checks": [
+        {
+          "id": "layout",
+          "label": "12-Button Layout",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "widget_toggle",
+          "label": "Widget On/Off",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "alert_test",
+          "label": "Follow/Gift/Share Test",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "autothanks",
+          "label": "AutoThanks Toggle",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "game_actions",
+          "label": "Game Start/Stop/Score/Reset",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "cut_open",
+          "label": "Cut Projekt öffnen",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "persistence",
+          "label": "Layout nach Neustart erhalten",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        }
+      ]
+    },
+    {
+      "id": "games",
+      "label": "Creator Games",
+      "required": true,
+      "checks": [
+        {
+          "id": "game_create",
+          "label": "Game Runtime vorhanden",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "game_overlay",
+          "label": "Overlay URL funktioniert",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "game_start_stop",
+          "label": "Start/Stop",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "rule_follow",
+          "label": "Follow Regel real",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "rule_like",
+          "label": "Like Regel real",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "rule_gift",
+          "label": "Gift Regel real",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "rule_share",
+          "label": "Share Regel real",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "dedupe",
+          "label": "Rule Hit Dedupe",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "scene_integration",
+          "label": "Game Runtime in Scene",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        }
+      ]
+    },
+    {
+      "id": "cut_studio",
+      "label": "Cut Studio",
+      "required": true,
+      "checks": [
+        {
+          "id": "source_pick",
+          "label": "lokale Videoquelle zuordnen",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "metadata",
+          "label": "ffprobe/Metadaten falls vorhanden",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "timeline",
+          "label": "Timeline/Reihenfolge",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "caption",
+          "label": "Caption Burn-in",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "keyframes",
+          "label": "Keyframes / Bezier",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "transition",
+          "label": "Transition",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "music",
+          "label": "mehrere Musikspuren",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "voice",
+          "label": "mehrere Voice-Spuren",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "sfx",
+          "label": "SFX",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "ducking",
+          "label": "Voice Ducking",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "waveform",
+          "label": "Waveform/Peak Analyse",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "clip_export",
+          "label": "Clip Export",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "reel_export",
+          "label": "Reel Export",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "cancel",
+          "label": "Export Cancel falls vorhanden",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "output_folder",
+          "label": "Exportordner öffnen",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "large_file",
+          "label": "größeres reales Creator-Video",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        }
+      ]
+    },
+    {
+      "id": "obs",
+      "label": "OBS",
+      "required": true,
+      "checks": [
+        {
+          "id": "browser_widget",
+          "label": "Widget Browser Source",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "browser_scene",
+          "label": "Scene Browser Source",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "alpha",
+          "label": "Transparenz",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "resolution",
+          "label": "1080x1920 / 1920x1080",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "framerate",
+          "label": "Framerate unter Last",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "launcher_closed",
+          "label": "Cloud Sources laufen nach Launcher-Schließen",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "simultaneous",
+          "label": "mehrere Sources gleichzeitig",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        }
+      ]
+    },
+    {
+      "id": "tiktok_output",
+      "label": "TikTok LIVE Studio / Output",
+      "required": true,
+      "checks": [
+        {
+          "id": "vertical_capture",
+          "label": "9:16 Output real sichtbar",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "capture_route",
+          "label": "gewählter Capture-/Output-Pfad funktioniert",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "alpha_or_bg",
+          "label": "Alpha/Hintergrund Verhalten geprüft",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "simultaneous_obs",
+          "label": "gleichzeitig OBS + TikTok",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "load_30m",
+          "label": "30 Minuten Stabilität",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        }
+      ]
+    },
+    {
+      "id": "billing",
+      "label": "Billing / Stripe Testmode",
+      "required": true,
+      "checks": [
+        {
+          "id": "creator_checkout",
+          "label": "CREATOR Checkout",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "pro_checkout",
+          "label": "PRO Checkout",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "webhooks",
+          "label": "signierte Webhooks",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "entitlement",
+          "label": "Plan wird korrekt angewendet",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "portal",
+          "label": "Customer Portal",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "upgrade",
+          "label": "Upgrade",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "downgrade",
+          "label": "Downgrade",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "cancel",
+          "label": "Kündigung Periodenende",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "failure",
+          "label": "Payment Failure / Grace",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "recovery",
+          "label": "Invoice Paid / Recovery",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        }
+      ]
+    },
+    {
+      "id": "release",
+      "label": "Release / Windows / Production",
+      "required": true,
+      "checks": [
+        {
+          "id": "github_quality",
+          "label": "GitHub Quality Gate PASS",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "windows_build",
+          "label": "GitHub Windows Build PASS",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "signed",
+          "label": "Authenticode VALID oder bewusst als offen dokumentiert",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "installer",
+          "label": "Setup EXE installiert",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "portable",
+          "label": "Portable EXE startet",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "updater",
+          "label": "Installed Updater E2E",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "pilot_5",
+          "label": "Pilot Beta 5 Creator",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "expanded_20",
+          "label": "Expanded Beta 20 Creator",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "canary",
+          "label": "Production Canary",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "rollback",
+          "label": "Production Rollback",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        },
+        {
+          "id": "go_no_go",
+          "label": "Finales Go/No-Go dokumentiert",
+          "status": "pending",
+          "notes": "",
+          "reference": ""
+        }
+      ]
+    }
+  ]
+}

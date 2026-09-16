@@ -1,0 +1,15 @@
+import fs from "node:fs";import path from "node:path";
+const root=path.resolve(process.argv[2]||path.join(import.meta.dirname,"..")),must=(v,m)=>{if(!v)throw new Error(m)};
+const server=fs.readFileSync(path.join(root,"server.js"),"utf8"),evidence=fs.readFileSync(path.join(root,"lib/production-evidence.js"),"utf8"),stripe=fs.readFileSync(path.join(root,"lib/stripe-testmode-evidence.js"),"utf8"),ready=fs.readFileSync(path.join(root,"lib/production-release-readiness.js"),"utf8"),workflow=fs.readFileSync(path.join(root,".github/workflows/launcher-release.yml"),"utf8"),deploy=fs.readFileSync(path.join(root,".github/workflows/production-deploy.yml"),"utf8");
+const backendVersion=server.match(/\bBACKEND_VERSION\s*=\s*["\'](\d+)\.(\d+)\.(\d+)["\']/);
+must(backendVersion&&(Number(backendVersion[1])>3||(Number(backendVersion[1])===3&&Number(backendVersion[2])>=8)),"backend 3.8+");
+must(server.includes("creator_production_evidence")&&server.includes("/api/admin/creator-suite/production-evidence"),"evidence persistence/api");
+must(server.includes("loadStripeTestmodeEvidence")&&server.includes("verificationFlagsFromEvidence"),"readiness evidence");
+must(evidence.includes('"code_signing"')&&evidence.includes("artifact_sha256"),"evidence model");
+must(stripe.includes("checkout.session.completed")&&stripe.includes("invoice.paid")&&stripe.includes("creator.correlation"),"stripe e2e evidence");
+must(ready.includes("code_signing")&&ready.includes("stripeTestmode.verified"),"readiness gates");
+must(workflow.includes("windows-build-evidence.json")&&workflow.includes("CFS_WINDOWS_SIGNATURE_STATUS"),"windows workflow evidence");
+must(deploy.includes("production-canary-check.mjs")&&deploy.includes("production-canary-evidence.json"),"deploy canary evidence");
+must(fs.existsSync(path.join(root,".github/workflows/production-verification.yml")),"verification workflow");
+must(!server.includes("CFS_RELEASE_EVIDENCE_TOKEN"),"no improvised evidence service token");
+console.log(JSON.stringify({ok:true,backend:"3.8+",auditable_evidence:true,stripe_testmode:true,windows_evidence:true,canary:true}));

@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#030711">
+  <title>E-Mail bestätigen | cfs_zockt</title>
+  <link rel="stylesheet" href="/assets/css/styles.css">
+  <style>.verify-wrap{max-width:760px;margin:0 auto}.verify-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}</style>
+  <meta name="robots" content="noindex,nofollow,noarchive">
+</head>
+<body>
+<header class="site-header"><div class="container header-inner"><a class="brand" href="/">cfs_<span>zockt</span></a><nav class="nav"><a href="/">HOME</a><a class="cta" href="/pages/login.html">LOGIN</a></nav></div></header>
+<main class="container verify-wrap">
+  <section class="page-hero"><div class="eyebrow">E-MAIL-VERIFIZIERUNG</div><h1>ADRESSE BESTÄTIGEN.</h1><p>Der Bestätigungstoken wird nach dem Öffnen aus der sichtbaren URL entfernt und serverseitig nur gehasht gespeichert.</p></section>
+  <section class="panel">
+    <div id="verifyEmailMsg" class="notice" role="status" aria-live="polite">Bestätigungsstatus wird geprüft …</div>
+    <form id="verifyResendForm" class="form-grid" novalidate>
+      <div class="field full"><label for="verifyEmailAddress">NEUEN BESTÄTIGUNGSLINK ANFORDERN</label><input id="verifyEmailAddress" type="email" maxlength="254" autocomplete="email" inputmode="email" required></div>
+      <div class="field full"><button id="verifyResendBtn" class="btn" type="submit">BESTÄTIGUNGSLINK ANFORDERN</button></div>
+    </form>
+    <div id="verifyResendMsg" class="notice hidden" role="status" aria-live="polite"></div>
+    <div class="verify-actions"><a class="btn ghost" href="/pages/login.html">ZUM LOGIN</a><a class="btn ghost" href="/pages/support.html">SUPPORT</a></div>
+  </section>
+</main>
+<script src="/assets/js/app.js?v=v42-r9"></script>
+<script src="/assets/js/page-verify-email.js"></script>
+</body>
+</html>

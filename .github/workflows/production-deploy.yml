@@ -1,0 +1,148 @@
+name: Production Deployment Gate
+
+on:
+  workflow_dispatch:
+    inputs:
+      expected_backend_version:
+        description: "Expected backend version after deploy"
+        required: true
+        default: "3.12.0"
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cfs-production-deployment
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Deployment structure / Render readiness
+        run: npm run deployment13:check
+
+      - name: Require committed lockfiles
+        run: npm run lockfiles:check
+
+      - name: Backend dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Backend syntax
+        run: npm run check
+
+      - name: Launcher release policy tests
+        run: node tools/launcher-release-policy-test.mjs
+
+      - name: Launcher dependencies
+        working-directory: launcher
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Launcher release gate
+        working-directory: launcher
+        run: npm run release:gate
+
+      - name: Create release-state snapshot
+        env:
+          CFS_PRODUCTION_URL: ${{ vars.CFS_PRODUCTION_URL }}
+        run: node tools/release-state-snapshot.mjs . --out reports/release-state-snapshot.json
+
+      - name: Upload release-gate report
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-release-gate
+          path: |
+            launcher/reports/release-gate.json
+            launcher/reports/release-gate.md
+            reports/release-state-snapshot.json
+
+  deploy-render:
+    needs: validate
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Trigger Render deploy when hook exists
+        env:
+          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+        run: |
+          if [ -z "$RENDER_DEPLOY_HOOK_URL" ]; then
+            echo "RENDER_DEPLOY_HOOK_URL is not configured. Validation passed; deploy trigger skipped."
+            exit 0
+          fi
+          curl --fail --silent --show-error --request POST "$RENDER_DEPLOY_HOOK_URL"
+          echo "Render deploy triggered."
+
+      - name: Production target required
+        env:
+          CFS_PRODUCTION_URL: ${{ vars.CFS_PRODUCTION_URL }}
+        run: |
+          if [ -z "$CFS_PRODUCTION_URL" ]; then
+            echo "CFS_PRODUCTION_URL repository variable is required for a production deploy."
+            exit 1
+          fi
+          case "$CFS_PRODUCTION_URL" in
+            https://cfs-zockt.de|https://cfs-zockt.de/) ;;
+            *) echo "CFS_PRODUCTION_URL must be the canonical production origin https://cfs-zockt.de"; exit 1 ;;
+          esac
+
+      - name: Production canary verification
+        timeout-minutes: 10
+        env:
+          CFS_PRODUCTION_URL: ${{ vars.CFS_PRODUCTION_URL }}
+        run: |
+
+          # Render's deploy hook returns before the new instance is fully ready.
+          # Poll the production health endpoint instead of failing on the first
+          # short restart window or on the previous backend version.
+          ATTEMPTS=18
+          for ATTEMPT in $(seq 1 "$ATTEMPTS"); do
+            echo "Production canary attempt ${ATTEMPT}/${ATTEMPTS}..."
+
+            if node tools/production-canary-check.mjs \
+              --url "$CFS_PRODUCTION_URL" \
+              --expected-version "${{ inputs.expected_backend_version }}" \
+              --mode canary \
+              --timeout-ms 20000 \
+              --out reports/production-canary-evidence.json; then
+              echo "Production canary passed."
+              exit 0
+            fi
+
+            if [ "$ATTEMPT" -lt "$ATTEMPTS" ]; then
+              echo "Render is not ready yet. Retrying in 10 seconds..."
+              sleep 10
+            fi
+          done
+
+          echo "Production canary did not pass within the retry window."
+          exit 1
+
+      - name: Production external security gate
+        env:
+          APP_BASE_URL: ${{ vars.CFS_PRODUCTION_URL }}
+        run: npm run production:external-gate
+
+      - name: Upload production canary evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-canary-evidence
+          if-no-files-found: ignore
+          path: reports/production-canary-evidence.json

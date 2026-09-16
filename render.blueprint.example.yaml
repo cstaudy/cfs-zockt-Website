@@ -1,0 +1,89 @@
+# cfs_zockt Creator Suite — Render Blueprint example
+#
+# IMPORTANT:
+# - Keep this as an example until the `name` matches the existing Render service.
+# - Do not manage the same Render service from multiple Blueprints.
+# - Production deploys stay manual/gated (`autoDeployTrigger: "off"`).
+# - `package-lock.json` must exist before this build can pass because the build uses `npm ci`.
+
+services:
+  - type: web
+    name: cfs-zockt-backend
+    runtime: node
+    autoDeployTrigger: "off"
+    buildCommand: npm ci --omit=dev --ignore-scripts --no-audit --no-fund
+    startCommand: npm start
+    healthCheckPath: /api/health
+    maxShutdownDelaySeconds: 30
+    domains:
+      - cfs-zockt.de
+    renderSubdomainPolicy: enabled
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: APP_BASE_URL
+        value: https://cfs-zockt.de
+      - key: CFS_ALLOWED_HOSTS
+        value: cfs-zockt.de,www.cfs-zockt.de
+      - key: CFS_WEBAUTHN_RP_ID
+        value: cfs-zockt.de
+      - key: TIKTOK_REDIRECT_URI
+        value: https://cfs-zockt.de/auth/tiktok/callback
+      - key: CFS_HSTS_INCLUDE_SUBDOMAINS
+        value: "false"
+      - key: CFS_HSTS_PRELOAD
+        value: "false"
+      - key: CFS_ACCOUNT_MAIL_MODE
+        value: disabled
+      - key: CFS_EMAIL_VERIFICATION_REQUIRED
+        value: "false"
+      - key: CFS_BILLING_GRACE_DAYS
+        value: "3"
+      - key: CFS_LAUNCHER_BUILD_TARGET_VERSION
+        value: 0.42.0
+      - key: CFS_RELEASE_EVIDENCE_VERSION
+        value: 0.42.0
+      - key: CFS_LAUNCHER_RELEASE_REPO
+        value: cstaudy/CFS-TikTok-Backend
+      - key: CFS_ALLOW_LEGACY_VERIFICATION_FLAGS
+        value: "false"
+
+      # Existing / external credentials. Render prompts on initial Blueprint creation.
+      - key: DATABASE_URL
+        sync: false
+      - key: TIKTOK_CLIENT_KEY
+        sync: false
+      - key: TIKTOK_CLIENT_SECRET
+        sync: false
+      - key: CFS_LAUNCHER_API_KEY
+        sync: false
+      - key: CFS_ADMIN_CREATOR_IDS
+        sync: false
+      - key: CFS_ADMIN_EMAILS
+        sync: false
+
+      # Independent security secrets. Generate once and keep stable.
+      - key: CFS_TOKEN_ENCRYPTION_KEY
+        generateValue: true
+      - key: CFS_CSRF_SIGNING_SECRET
+        generateValue: true
+      - key: CFS_PUBLIC_REVIEW_HASH_SALT
+        generateValue: true
+      - key: CFS_PUBLIC_SUPPORT_HASH_SALT
+        generateValue: true
+      - key: CFS_MFA_RECOVERY_HASH_SALT
+        generateValue: true
+      - key: CFS_ADMIN_ELEVATION_SECRET
+        generateValue: true
+      - key: CFS_ADMIN_AUDIT_HMAC_SECRET
+        generateValue: true
+
+      # Optional billing values: add in Render only when Stripe billing is actually enabled.
+      # CFS_STRIPE_SECRET_KEY
+      # CFS_STRIPE_WEBHOOK_SECRET
+      # CFS_STRIPE_PRICE_CREATOR_MONTHLY
+      # CFS_STRIPE_PRICE_PRO_MONTHLY
+
+      # Optional mail relay values: add only after the relay has been tested.
+      # CFS_ACCOUNT_MAIL_WEBHOOK_URL
+      # CFS_ACCOUNT_MAIL_WEBHOOK_SECRET

@@ -1,0 +1,167 @@
+name: Production Application Recovery
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_commit_sha:
+        description: "Known-good Git commit SHA to redeploy"
+        required: true
+        type: string
+      expected_backend_version:
+        description: "Expected backend version after recovery"
+        required: true
+        default: "3.12.0"
+        type: string
+      reason:
+        description: "Short recovery reason / incident reference"
+        required: true
+        type: string
+      confirmation:
+        description: "Type RECOVER_PRODUCTION"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cfs-production-deployment
+  cancel-in-progress: false
+
+jobs:
+  validate-target:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require explicit recovery confirmation
+        env:
+          CONFIRMATION: ${{ inputs.confirmation }}
+          TARGET_SHA: ${{ inputs.target_commit_sha }}
+        run: |
+          test "$CONFIRMATION" = "RECOVER_PRODUCTION" || { echo "Recovery confirmation is invalid."; exit 1; }
+          echo "$TARGET_SHA" | grep -Eq '^[0-9a-fA-F]{7,40}$' || { echo "target_commit_sha must be a Git SHA."; exit 1; }
+
+      - name: Checkout known-good target
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.target_commit_sha }}
+          fetch-depth: 0
+
+      - name: Verify checked-out target
+        env:
+          TARGET_SHA: ${{ inputs.target_commit_sha }}
+        run: |
+          ACTUAL_SHA="$(git rev-parse HEAD)"
+          case "$ACTUAL_SHA" in "$TARGET_SHA"*) ;; *) echo "Checked-out SHA does not match target."; exit 1;; esac
+          echo "Validated recovery target ${ACTUAL_SHA:0:12}."
+
+      - name: Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Require committed lockfiles
+        run: npm run lockfiles:check
+
+      - name: Backend dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Launcher dependencies
+        working-directory: launcher
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Known-good target release preflight
+        run: npm run release:preflight
+
+      - name: Snapshot recovery target
+        env:
+          CFS_PRODUCTION_URL: ${{ vars.CFS_PRODUCTION_URL }}
+        run: node tools/release-state-snapshot.mjs . --out reports/recovery-target-snapshot.json
+
+      - name: Upload target validation evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: application-recovery-target
+          path: reports/recovery-target-snapshot.json
+
+  recover-render:
+    needs: validate-target
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Checkout recovery tooling
+        uses: actions/checkout@v4
+
+      - name: Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Require canonical production target
+        env:
+          CFS_PRODUCTION_URL: ${{ vars.CFS_PRODUCTION_URL }}
+        run: |
+          test "$CFS_PRODUCTION_URL" = "https://cfs-zockt.de" || { echo "CFS_PRODUCTION_URL must be https://cfs-zockt.de"; exit 1; }
+
+      - name: Redeploy known-good commit on Render
+        env:
+          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+          TARGET_SHA: ${{ inputs.target_commit_sha }}
+        run: |
+          test -n "$RENDER_DEPLOY_HOOK_URL" || { echo "RENDER_DEPLOY_HOOK_URL is required."; exit 1; }
+          node --input-type=module <<'NODE'
+          const hook=process.env.RENDER_DEPLOY_HOOK_URL;
+          const sha=process.env.TARGET_SHA;
+          const url=new URL(hook);
+          url.searchParams.set('ref',sha);
+          const response=await fetch(url,{method:'POST',redirect:'error'});
+          if(!response.ok) throw new Error(`Render deploy hook failed with HTTP ${response.status}`);
+          console.log(`Render recovery deploy accepted for ${sha.slice(0,12)}.`);
+          NODE
+
+      - name: Production recovery canary
+        timeout-minutes: 10
+        env:
+          CFS_PRODUCTION_URL: ${{ vars.CFS_PRODUCTION_URL }}
+        run: |
+          ATTEMPTS=18
+          for ATTEMPT in $(seq 1 "$ATTEMPTS"); do
+            echo "Recovery canary attempt ${ATTEMPT}/${ATTEMPTS}..."
+            if node tools/production-canary-check.mjs \
+              --url "$CFS_PRODUCTION_URL" \
+              --expected-version "${{ inputs.expected_backend_version }}" \
+              --mode recovery \
+              --timeout-ms 20000 \
+              --out reports/application-recovery-canary.json; then
+              exit 0
+            fi
+            if [ "$ATTEMPT" -lt "$ATTEMPTS" ]; then sleep 10; fi
+          done
+          echo "Recovered application did not pass canary."; exit 1
+
+      - name: Production recovery edge gate
+        env:
+          APP_BASE_URL: ${{ vars.CFS_PRODUCTION_URL }}
+        run: node tools/production-edge-check.mjs "$APP_BASE_URL" --out reports/application-recovery-edge.json
+
+      - name: Create application recovery evidence
+        run: |
+          node tools/application-recovery-evidence.mjs \
+            --target-commit "${{ inputs.target_commit_sha }}" \
+            --expected-version "${{ inputs.expected_backend_version }}" \
+            --target-origin "${{ vars.CFS_PRODUCTION_URL }}" \
+            --method specific_commit_redeploy \
+            --canary reports/application-recovery-canary.json \
+            --edge reports/application-recovery-edge.json \
+            --out reports/application-recovery-evidence.json
+
+      - name: Upload recovery evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-application-recovery-evidence
+          if-no-files-found: ignore
+          path: |
+            reports/application-recovery-canary.json
+            reports/application-recovery-edge.json
+            reports/application-recovery-evidence.json

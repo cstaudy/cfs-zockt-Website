@@ -1,0 +1,15 @@
+import fs from "node:fs";import path from "node:path";
+const root=path.resolve(process.argv[2]||path.join(import.meta.dirname,".."));
+const s=fs.readFileSync(path.join(root,"server.js"),"utf8"),must=(v,m)=>{if(!v)throw new Error(m)};
+for(const route of ["/api/launcher/device-link/start","/api/launcher/device-link/poll","/api/creator/launcher/device-link/:code","/api/creator/launcher/device-link/confirm","/api/creator/launcher/devices","/api/bridge/widget-studio/library","/api/bridge/widget-studio/logout"])must(s.includes(route),`missing ${route}`);
+must(s.includes("creator_launcher_device_links"),"device link table missing");
+must(s.includes("device_secret_hash"),"device secret hash missing");
+must(s.includes("bridge_token_hash"),"bridge token hash missing");
+must(!s.includes("bridge_token TEXT"),"plaintext bridge token column found");
+must(s.includes("revokeExisting = true"),"legacy bridge behavior option missing");
+must(s.includes("auth_method"),"bridge auth method missing");
+const h=fs.readFileSync(path.join(root,"public/pages/launcher-connect.html"),"utf8");
+const j=fs.readFileSync(path.join(root,"public/assets/js/launcher-connect.js"),"utf8");
+must(h.includes("LAUNCHER")&&h.includes("VERBINDEN"),"connect page missing");
+must(j.includes("/api/creator/launcher/device-link/confirm"),"confirm flow missing");
+console.log(JSON.stringify({ok:true,routes:7,hashed_secrets:true,multi_device:true}));

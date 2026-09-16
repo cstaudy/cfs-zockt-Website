@@ -1,0 +1,18 @@
+import fs from "node:fs";import os from "node:os";import path from "node:path";import {createRequire} from "node:module";
+const require=createRequire(import.meta.url);
+const {StreamDeckStore,MAX_BUTTONS,ACTION_CATALOG}=require("../src/stream-deck-store.js");
+const dir=fs.mkdtempSync(path.join(os.tmpdir(),"cfs-deck-")),file=path.join(dir,"layout.json");
+let store=new StreamDeckStore(file);
+let snap=store.snapshot();
+if(snap.buttons.length!==MAX_BUTTONS||snap.action_catalog.length!==ACTION_CATALOG.length)throw new Error("default deck failed");
+store.updateButton("slot_2",{label:"Meine Scene",action:"scene_start",target:"scene-123"});
+snap=store.snapshot();
+if(snap.buttons[1].label!=="Meine Scene"||snap.buttons[1].target!=="scene-123")throw new Error("update failed");
+store.updateButton("slot_3",{action:"unknown_action",target:"SHOULD_NOT_SURVIVE"});
+snap=store.snapshot();
+if(snap.buttons[2].action!=="output_stop"||snap.buttons[2].target!=="")throw new Error("unknown action fallback failed");
+store=new StreamDeckStore(file);
+if(store.snapshot().buttons[1].target!=="scene-123")throw new Error("persistence failed");
+store.reset();
+if(store.snapshot().buttons[0].action!=="live_toggle")throw new Error("reset failed");
+console.log(JSON.stringify({ok:true,buttons:MAX_BUTTONS,actions:ACTION_CATALOG.length,persisted:true}));

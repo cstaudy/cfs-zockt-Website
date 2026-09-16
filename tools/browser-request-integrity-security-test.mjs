@@ -1,0 +1,22 @@
+import fs from 'node:fs';
+import path from 'node:path';
+const root=path.resolve(process.argv[2]||'.');
+const read=r=>fs.readFileSync(path.join(root,r),'utf8');
+const s=read('server.js'); const pkg=JSON.parse(read('package.json'));
+const checks=[]; const check=(n,c)=>checks.push([n,!!c]);
+check('requestintegrity script wired',pkg.scripts?.['requestintegrity:check']==='node tools/browser-request-integrity-security-test.mjs .');
+check('cross-site and same-site writes rejected',s.includes('if (fetchSite && fetchSite !== "same-origin")'));
+check('trusted explicit origin required when supplied',s.includes('return TRUSTED_BROWSER_ORIGINS.has(suppliedOrigin)'));
+check('headerless browser writes fail closed',s.includes('return fetchSite === "same-origin"'));
+check('Origin varies response',s.includes('res.vary("Origin")'));
+check('Sec-Fetch-Site varies response',s.includes('res.vary("Sec-Fetch-Site")'));
+check('sensitive response prefixes exist',s.includes('const SENSITIVE_RESPONSE_PREFIXES = ['));
+for (const prefix of ['/api/account/','/api/creator/','/api/admin/','/api/billing/','/api/launcher/','/api/bridge/','/auth/']) check(`no-store prefix ${prefix}`,s.includes(`"${prefix}"`));
+check('sensitive responses are no-store/private',s.includes('"no-store, private, max-age=0"'));
+check('legacy proxy caches disabled',s.includes('res.setHeader("Pragma", "no-cache")')&&s.includes('res.setHeader("Expires", "0")'));
+check('cookie cache variance set',s.includes('res.vary("Cookie")'));
+check('authorization cache variance set',s.includes('res.vary("Authorization")'));
+check('CSRF remains session-bound',s.includes('validCreatorCsrfToken(cookieToken, sessionToken)'));
+check('public trusted writes use source validation',s.includes('function requireTrustedPublicWrite(req,res,next)'));
+let pass=0; for(const [n,ok] of checks){console.log(`${ok?'PASS':'FAIL'}  ${n}`); if(ok)pass++;}
+console.log(`\nBrowser Request Integrity: ${pass}/${checks.length}`); if(pass!==checks.length)process.exit(1);

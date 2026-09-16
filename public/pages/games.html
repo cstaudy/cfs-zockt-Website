@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#020711"><title>Games | cfs_zockt</title><link rel="stylesheet" href="/assets/css/styles.css"><link rel="stylesheet" href="/assets/css/games.css">  <meta name="robots" content="noindex,nofollow,noarchive">
+</head>
+<body>
+<header class="site-header"><div class="container header-inner"><a class="brand" href="/">cfs_<span>zockt</span></a><button class="mobile-toggle" data-mobile-toggle>MENÜ</button><nav class="nav" data-nav><a href="/pages/dashboard.html">DASHBOARD</a><a href="/pages/widget-studio.html">WIDGETS</a><a href="/pages/scene-studio.html">SCENES</a><a class="active" href="/pages/games.html">SPIELE</a><a href="/pages/cut-studio.html">CUT STUDIO</a><a href="/pages/launcher.html">LAUNCHER</a><a href="/pages/account.html">ACCOUNT</a><button data-logout>LOGOUT</button></nav></div></header>
+<main class="container game-page">
+<section class="game-hero"><div><div class="eyebrow">CREATOR GAMES · V29</div><h1>COMMUNITY<br><span>GAME CONTROL.</span></h1><p>Das Game besitzt eine Creator-spezifische Runtime und kann jetzt zusätzlich echte LIVE-Events über konfigurierbare Regeln in Punkte umwandeln.</p></div><div class="game-hero-state"><span>RUNTIME</span><strong id="runtimeHeroState">LÄDT…</strong></div></section>
+<div id="gameGate" class="notice warn hidden"></div>
+<div id="gameApp">
+<section class="game-grid">
+<article class="panel"><div class="panel-head"><div><span>GAME PROFILE</span><h2>Einstellungen</h2></div><button class="btn" id="saveGameProfile">PROFIL SPEICHERN</button></div>
+<div class="form-grid">
+<label class="full"><span>TITEL</span><input id="gameTitle" maxlength="80"></label>
+<label><span>SPIELTYP</span><select id="gameType"><option value="chat_battle">Chat Battle</option><option value="community_quiz">Community Quiz</option><option value="gift_rush">Gift Rush</option></select></label>
+<label><span>PROFIL</span><select id="gameEnabled"><option value="true">Aktiv</option><option value="false">Deaktiviert</option></select></label>
+<label><span>TEAM A</span><input id="teamAName" maxlength="32"></label><label><span>TEAM B</span><input id="teamBName" maxlength="32"></label>
+<label><span>ZIELPUNKTE</span><input id="gameTarget" type="number" min="1" max="999999"></label><label><span>RUNDE SEK.</span><input id="gameRoundSeconds" type="number" min="10" max="7200"></label>
+<label class="full"><span>REGELN / BESCHREIBUNG</span><textarea id="gameRules" maxlength="3000"></textarea></label>
+</div></article>
+
+<article class="panel game-control"><div class="panel-head"><div><span>LIVE RUNTIME</span><h2 id="runtimeTitle">Community Battle</h2></div><span class="game-runtime-pill" id="runtimePill">IDLE</span></div>
+<div class="score-board"><div><span id="scoreATeam">TEAM A</span><strong id="scoreA">0</strong><button class="btn score" data-score-team="a" data-score-delta="1">+1</button></div><div class="score-vs">VS</div><div><span id="scoreBTeam">TEAM B</span><strong id="scoreB">0</strong><button class="btn score" data-score-team="b" data-score-delta="1">+1</button></div></div>
+<div class="runtime-meta"><div><span>ZIEL</span><strong id="runtimeTarget">100</strong></div><div><span>RUNDE</span><strong id="runtimeRound">1</strong></div><div><span>RESTZEIT</span><strong id="runtimeTimer">–</strong></div></div>
+<div class="inline"><button class="btn primary" id="startGame">GAME STARTEN</button><button class="btn" id="resetGame">RUNDE RESET</button><button class="btn danger" id="stopGame">STOPPEN</button></div>
+</article>
+</section>
+
+<section class="panel game-rules-panel">
+<div class="panel-head"><div><span>LIVE RULE ENGINE</span><h2>Echte LIVE Events → Game Punkte</h2><p>Regeln reagieren nur auf Events, die bereits von deiner LIVE-Bridge akzeptiert wurden.</p></div><strong id="gameRuleCount">0 / 0</strong></div>
+<div class="form-grid game-rule-create">
+<label><span>LABEL</span><input id="newRuleLabel" maxlength="120" placeholder="z. B. Rose für Team A"></label>
+<label><span>EVENT</span><select id="newRuleEvent"><option value="follow">Follow</option><option value="like">Like</option><option value="gift">Gift</option><option value="share">Share</option></select></label>
+<label><span>TEAM</span><select id="newRuleTeam"><option value="a">Team A</option><option value="b">Team B</option></select></label>
+<label><span>PUNKTE</span><input id="newRulePoints" type="number" min="1" max="1000" value="1"></label>
+<label><span>WERTUNG</span><select id="newRuleMode"><option value="fixed">Fix</option><option value="multiply">× Event-Menge</option></select></label>
+<label><span>MIN. MENGE</span><input id="newRuleMin" type="number" min="1" value="1"></label>
+<label><span>GIFT NAME · optional</span><input id="newRuleGiftName" maxlength="120" placeholder="exakter Name"></label>
+<label><span>GIFT ID · optional</span><input id="newRuleGiftId" maxlength="120" placeholder="Provider Gift-ID"></label>
+<div class="full inline"><button class="btn primary" id="addGameRule">+ REGEL ERSTELLEN</button></div>
+</div>
+<div class="game-rule-layout">
+<div><div class="mini-head">REGELN</div><div id="gameRuleList" class="game-rule-list"></div></div>
+<div><div class="mini-head">LETZTE ECHTE TREFFER</div><div id="gameRuleHits" class="game-rule-hits"></div></div>
+</div>
+<div class="notice compact">Gift-Regeln können optional exakt auf Gift-Name oder Provider-Gift-ID eingeschränkt werden. Der Provider-Wert bleibt Diamonds/Provider-Wert und wird hier nicht als Geld interpretiert.</div>
+</section>
+
+<section class="panel game-output"><div class="panel-head"><div><span>STREAM OUTPUT</span><h2>Game Overlay</h2><p>Der Link bleibt stabil. Im Scene Studio erscheint zusätzlich <b>Game · …</b> in deiner Widget-Library.</p></div></div><div class="game-output-row"><input id="gameOutputUrl" readonly><button class="btn" id="copyGameUrl">URL KOPIEREN</button><a class="btn" id="openGameUrl" target="_blank" rel="noopener">VORSCHAU</a><a class="btn primary" href="/pages/scene-studio.html">IN SCENE EINBAUEN</a></div><div class="notice compact">Manuelle Steuerung bleibt möglich. Zusätzlich können V29-Regeln echte Follow-, Like-, Gift- und Share-Events aus der bestehenden LIVE-Pipeline auf Team-Punkte abbilden.</div></section>
+</div></main><div class="game-toast" id="gameToast" hidden></div><script src="/assets/js/app.js"></script><script src="/assets/js/games.js"></script></body></html>

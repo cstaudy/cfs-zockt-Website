@@ -1,0 +1,14 @@
+import fs from "node:fs";import path from "node:path";
+const root=path.resolve(process.argv[2]||path.join(import.meta.dirname,"..")),must=(v,m)=>{if(!v)throw new Error(m)};
+const server=fs.readFileSync(path.join(root,"server.js"),"utf8"),model=fs.readFileSync(path.join(root,"lib/creator-cut-studio.js"),"utf8"),jobs=fs.readFileSync(path.join(root,"lib/creator-cut-jobs.js"),"utf8"),html=fs.readFileSync(path.join(root,"public/pages/cut-studio.html"),"utf8"),ui=fs.readFileSync(path.join(root,"public/assets/js/cut-studio.js"),"utf8"),engine=fs.readFileSync(path.join(root,"launcher/src/cut-media-engine.js"),"utf8"),store=fs.readFileSync(path.join(root,"launcher/src/media-source-store.js"),"utf8"),main=fs.readFileSync(path.join(root,"launcher/main.js"),"utf8"),preload=fs.readFileSync(path.join(root,"launcher/preload.js"),"utf8");
+must(server.includes("visual_keyframes JSONB"),"visual keyframes db");
+must(model.includes("sanitizeVisualKeyframes")&&model.includes("sanitizeSfxTracks"),"model helpers");
+must((jobs.includes("schema:5")||jobs.includes("schema:6")||jobs.includes("schema:7"))&&jobs.includes("voiceover_enabled")&&jobs.includes("sfx_tracks"),"manifest5+");
+for(const id of ["cutVoiceEnabled","cutVoiceName","cutDuckingEnabled","cutSfxList"])must(html.includes(`id="${id}"`),id);
+must(ui.includes("data-kf-point")&&ui.includes("readVisualPoints")&&ui.includes("readSfxTracks"),"UI free points/sfx");
+must(engine.includes("keyframePiecewise")&&engine.includes("sidechaincompress=threshold=0.035")&&engine.includes("buildMultitrackMixArgs"),"engine");
+must((store.includes("schema:3")||store.includes("schema:4"))&&store.includes("setVoice")&&store.includes("setSfx"),"source store3+");
+must(main.includes("launcher:cut-voice-select")&&main.includes("launcher:cut-sfx-select"),"main IPC");
+must(preload.includes("selectCutVoice")&&preload.includes("selectCutSfx"),"preload");
+must(!server.includes("voice-upload")&&!server.includes("sfx-upload")&&!server.includes("video-upload"),"no cloud media upload");
+console.log(JSON.stringify({ok:true,schema:"5+",free_keyframes:true,voice:true,sfx:true,ducking:true,local_only:true}));

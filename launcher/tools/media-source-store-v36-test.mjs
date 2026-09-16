@@ -1,0 +1,15 @@
+import fs from "node:fs";import os from "node:os";import path from "node:path";import {createRequire} from "node:module";
+const require=createRequire(import.meta.url),{MediaSourceStore}=require("../src/media-source-store.js");
+const dir=fs.mkdtempSync(path.join(os.tmpdir(),"cfs-source-v36-")),db=path.join(dir,"sources.json");
+for(const name of ["video.mp4","music2.wav","voice2.wav"])fs.writeFileSync(path.join(dir,name),name);
+fs.writeFileSync(db,JSON.stringify({schema:3,sources:{p1:{projectId:"p1",sourceName:"video",filePath:path.join(dir,"video.mp4"),fileName:"video.mp4"}},music:{},voice:{},sfx:{}}));
+let store=new MediaSourceStore(db);
+if(store.snapshot().schema!==4||!store.get("p1")?.exists)throw new Error("schema3 migration");
+const analysis={available:true,peak_db:-1.4,mean_db:-12.2,duration_ms:5500,waveform_path:path.join(dir,"wave.png"),analyzed_at:new Date().toISOString()};
+store.setMusicTrack("p1","m2",{sourceName:"M2",filePath:path.join(dir,"music2.wav"),analysis});
+store.setVoiceTrack("p1","v2",{sourceName:"V2",filePath:path.join(dir,"voice2.wav"),analysis:{...analysis,peak_db:-2.1}});
+store=new MediaSourceStore(db);
+const m=store.getMusicTrack("p1","m2"),v=store.getVoiceTrack("p1","v2");
+if(!m?.exists||m.analysis.peak_db!==-1.4||!v?.exists||v.analysis.peak_db!==-2.1)throw new Error("track analysis persistence");
+store.removeMusicTrack("p1","m2");if(store.getMusicTrack("p1","m2"))throw new Error("music track remove");
+console.log(JSON.stringify({ok:true,schema:4,migration:true,analysis:true,extra_tracks:true}));

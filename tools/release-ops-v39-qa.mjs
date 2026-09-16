@@ -1,0 +1,11 @@
+import fs from "node:fs";import path from "node:path";
+const root=path.resolve(process.argv[2]||path.join(import.meta.dirname,"..")),must=(v,m)=>{if(!v)throw new Error(m)};
+const acceptance=fs.readFileSync(path.join(root,"lib/release-acceptance.js"),"utf8"),cohort=fs.readFileSync(path.join(root,"lib/beta-cohort-operations.js"),"utf8"),decision=fs.readFileSync(path.join(root,"lib/release-go-no-go.js"),"utf8"),server=fs.readFileSync(path.join(root,"server.js"),"utf8");
+must(acceptance.includes("windows_install")&&acceptance.includes("stripe_testmode")&&acceptance.includes("tiktok_live"),"protocols");
+must(acceptance.includes("Bestandene Acceptance braucht"),"acceptance proof");
+must(cohort.includes("default_target:5")&&cohort.includes("default_target:20"),"5/20 beta");
+must(cohort.includes("String(s.launcher_version||\"\")===String(cohort.release_version)"),"release scoped beta sessions");
+must(decision.includes('decision==="go"&&assessment.ready!==true'),"go bypass block");
+must(server.includes("loadReleaseOperationsState")&&server.includes("goNoGoAssessment"),"server assessment");
+must(!server.includes("release_go_override"),"no go override");
+console.log(JSON.stringify({ok:true,acceptance_proof:true,beta_5_20:true,go_override:false}));

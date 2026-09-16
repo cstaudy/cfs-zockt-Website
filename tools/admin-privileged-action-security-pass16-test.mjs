@@ -1,0 +1,62 @@
+import fs from 'node:fs';
+import path from 'node:path';
+
+const root=path.resolve(process.argv[2]||'.');
+const read=rel=>fs.readFileSync(path.join(root,rel),'utf8');
+const server=read('server.js');
+const html=read('public/pages/admin-creators.html');
+const js=read('public/assets/js/admin-creators.js');
+const css=read('public/assets/css/admin-creators.css');
+const security=read('public/pages/security.html');
+const env=read('.env.example');
+const doctor=read('lib/config-doctor.js');
+const blueprint=read('render.blueprint.example.yaml');
+const pkg=JSON.parse(read('package.json'));
+
+const checks=[];
+function check(name,ok){checks.push({name,ok:Boolean(ok)});console.log(`${ok?'PASS':'FAIL'}  ${name}`)}
+
+check('admin elevation secret configured',/CFS_ADMIN_ELEVATION_SECRET/.test(server));
+check('production requires admin elevation secret',/requireEnv\(\s*"CFS_ADMIN_ELEVATION_SECRET",\s*ADMIN_ELEVATION_SECRET/.test(server));
+check('production requires >=32 char admin elevation secret',/ADMIN_ELEVATION_SECRET\.length < 32/.test(server));
+check('env example documents admin elevation secret',/CFS_ADMIN_ELEVATION_SECRET=/.test(env));
+check('config doctor marks admin elevation secret secret',/"CFS_ADMIN_ELEVATION_SECRET"/.test(doctor)&&/separates Signing-Secret für Admin-Step-up/.test(doctor));
+check('render blueprint generates admin elevation secret',/key:\s*CFS_ADMIN_ELEVATION_SECRET[\s\S]{0,80}generateValue:\s*true/.test(blueprint));
+check('host-bound admin elevation cookie exists',/__Host-cfs_admin_elevation/.test(server));
+check('admin elevation cookie is HttpOnly',/function adminElevationCookieOptions\(\)[\s\S]{0,260}httpOnly:true/.test(server));
+check('admin elevation cookie is Secure in production',/function adminElevationCookieOptions\(\)[\s\S]{0,260}secure:NODE_ENV!=="development"/.test(server));
+check('admin elevation cookie is SameSite strict',/function adminElevationCookieOptions\(\)[\s\S]{0,260}sameSite:"strict"/.test(server));
+check('admin elevation lasts ten minutes',/ADMIN_ELEVATION_TTL_MS\s*=\s*\n?\s*10 \* 60 \* 1000/.test(server));
+check('admin elevation token uses HMAC SHA-256',/createHmac\("sha256",ADMIN_ELEVATION_SECRET\)/.test(server));
+check('admin elevation signature binds current session hash',/cfs-admin-elevation-v1\|\$\{payload\}\|\$\{sessionHash\}/.test(server));
+check('admin elevation validates creator id',/String\(payload\?\.cid\|\|""\)!==String\(req\.creatorAccount\.id\)/.test(server));
+check('admin elevation rejects expired tokens',/expiresAt<=Date\.now\(\)/.test(server));
+check('admin elevation rate limiter exists',/const adminElevationLimiter\s*=/.test(server));
+check('admin elevation verifies current password',/verifyCreatorPasswordForLifecycle\(req\.creatorAccount\.id,password\)/.test(server));
+check('failed elevation creates security event',/admin_elevation_failed/.test(server));
+check('successful elevation creates security event',/admin_elevation_granted/.test(server));
+check('all admin writes centrally require elevation',/app\.use\("\/api\/admin\/"[\s\S]{0,900}requireCreatorAdminElevation/.test(server));
+check('elevation endpoint excluded from its own gate',/cleanPath==="\/api\/admin\/creator-suite\/elevation"/.test(server));
+check('missing elevation returns 428',/res\.status\(428\)/.test(server)&&/admin_reauth_required/.test(server));
+check('new login clears stale admin elevation',/createCreatorSession[\s\S]{0,2200}clearAdminElevationCookie\(res\)/.test(server));
+check('logout clears admin elevation',/destroyCreatorSession[\s\S]{0,1800}clearAdminElevationCookie\(res\)/.test(server));
+check('admin audit table exists',/CREATE TABLE IF NOT EXISTS creator_admin_audit_events/.test(server));
+check('admin audit stores no request body',!/creator_admin_audit_events[\s\S]{0,450}(request_body|body_json|payload)/i.test(server));
+check('admin audit stores no ip or user agent',!/creator_admin_audit_events[\s\S]{0,450}(ip_address|user_agent|remote_addr)/i.test(server));
+check('admin audit retention is 180 days',/ADMIN_AUDIT_RETENTION_DAYS\s*=\s*\n?\s*180/.test(server));
+check('admin audit cleanup exists',/cleanupOldAdminAuditEvents/.test(server));
+check('admin audit endpoint is admin-protected',/"\/api\/admin\/creator-suite\/audit-events",requireCreatorAccount,requireCreatorAdmin/.test(server));
+check('admin audit records minimized fields plus integrity metadata',/INSERT INTO creator_admin_audit_events\(admin_creator_id,method,route,outcome,status_code,request_id,chain_version,prev_hash,event_hash,created_at\)/.test(server));
+check('admin UI has explicit step-up controls',/id="adminElevationPassword"/.test(html)&&/id="adminElevationUnlock"/.test(html)&&/id="adminElevationLock"/.test(html));
+check('admin UI does not persist password field',/autocomplete="current-password"/.test(html)&&!/localStorage[^\n]*adminElevationPassword/.test(js));
+check('admin UI exposes audit list',/id="adminAuditList"/.test(html)&&/loadAdminAudit/.test(js));
+check('admin wrapper handles 428 reauth response',/error\.status===428/.test(js)&&/admin_reauth_required/.test(js));
+check('admin writes use wrapper',!/await CFS\.json\(`?\/api\/admin\/creator-suite\/(?:public-reviews|support-reports|release-acceptance|release-cohorts|release-decisions|beta-feedback|production-evidence|creators\/)/.test(js));
+check('admin elevation styling present',/admin-security-stepup/.test(css)&&/is-unlocked/.test(css));
+check('public security page describes admin step-up',/Admin-Step-up & Audit/.test(security));
+check('security page discloses minimized audit data',/ohne Request-Body, rohe IP oder User-Agent/.test(security));
+check('package script exposes admin16 check',pkg.scripts?.['admin16:check']==='node tools/admin-privileged-action-security-pass16-test.mjs .');
+
+const failed=checks.filter(c=>!c.ok);
+console.log(`\nAdmin privileged action security: ${checks.length-failed.length}/${checks.length}`);
+if(failed.length)process.exit(1);

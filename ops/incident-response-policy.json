@@ -1,0 +1,52 @@
+{
+  "version": 1,
+  "scope": "public-website-and-creator-browser-writes",
+  "modes": {
+    "normal": {
+      "public_status": "online",
+      "write_freeze": false
+    },
+    "degraded": {
+      "public_status": "degraded",
+      "write_freeze": false
+    },
+    "maintenance": {
+      "public_status": "maintenance",
+      "write_freeze": true
+    },
+    "security_lockdown": {
+      "public_status": "security_lockdown",
+      "write_freeze": true,
+      "optional_revoke_other_sessions": true
+    }
+  },
+  "always_available": [
+    "/api/admin/*",
+    "/api/health",
+    "/api/public/status",
+    "/api/public/security/csp-report",
+    "/api/public/support/report",
+    "/api/billing/stripe/webhook",
+    "/api/account/login",
+    "/api/account/logout"
+  ],
+  "frozen_write_scopes": [
+    "/api/account/*",
+    "/api/creator/*",
+    "/api/billing/*",
+    "/api/public/reviews/*",
+    "/auth/tiktok*"
+  ],
+  "privacy": {
+    "public_status_exposes_internal_infrastructure": false,
+    "stores_raw_ip": false,
+    "stores_user_agent": false,
+    "stores_browser_fingerprint": false
+  },
+  "operations": {
+    "admin_step_up_required": true,
+    "admin_audit_required": true,
+    "retry_after_seconds": 300,
+    "public_message_max_chars": 240
+  }
+}

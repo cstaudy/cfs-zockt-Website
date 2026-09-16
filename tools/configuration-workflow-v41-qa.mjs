@@ -1,0 +1,13 @@
+import fs from "node:fs";import path from "node:path";
+const root=path.resolve(process.argv[2]||path.join(import.meta.dirname,"..")),must=(v,m)=>{if(!v)throw new Error(m)};
+const wf=fs.readFileSync(path.join(root,".github/workflows/configuration-doctor.yml"),"utf8");
+const quality=fs.readFileSync(path.join(root,".github/workflows/quality-gate.yml"),"utf8");
+const labels=fs.readFileSync(path.join(root,".github/workflows/setup-labels.yml"),"utf8");
+must(wf.includes("environment: production")&&wf.includes("environment: windows-release"),"doctor environments");
+must(wf.includes("secrets.RENDER_DEPLOY_HOOK_URL")&&wf.includes("vars.CFS_PRODUCTION_URL"),"production env inputs");
+must(wf.includes("secrets.CSC_LINK")&&wf.includes("secrets.CSC_KEY_PASSWORD"),"windows signing inputs");
+must(wf.includes("config-doctor-v41.mjs")&&wf.includes("github-production-doctor.json")&&wf.includes("github-windows-doctor.json"),"redacted reports");
+must(!wf.includes("DATABASE_URL")&&!wf.includes("CFS_STRIPE_SECRET_KEY"),"runtime secrets must not be copied to github doctor");
+must(quality.includes("github-bootstrap-plan-v41.mjs")||quality.includes("Backend / Repository V40 QA"),"quality flow available");
+must(labels.includes("workflow_dispatch:")&&labels.includes("issues: write")&&labels.includes('gh label create "release-acceptance"'),"label workflow");
+console.log(JSON.stringify({ok:true,configuration_doctor:true,labels:true,secrets_scoped:true}));

@@ -1,0 +1,174 @@
+{
+  "name": "cfs-zockt-creator-suite-launcher",
+  "version": "0.42.0",
+  "private": true,
+  "description": "Desktop Launcher / LIVE Bridge für die cfs_zockt Creator Suite.",
+  "main": "main.js",
+  "type": "commonjs",
+  "scripts": {
+    "dev": "electron .",
+    "start": "electron .",
+    "check": "node tools/static-check.mjs",
+    "dist:win": "electron-builder --win nsis portable --publish never",
+    "dist:portable": "electron-builder --win portable --publish never",
+    "test:bridge": "node tools/bridge-client-test.mjs",
+    "test:stability": "node tools/stability-pass-test.mjs",
+    "qa": "npm run check && npm run test:stability && npm run test:bridge && npm run test:spool && npm run test:preflight && npm run test:gifts && npm run test:monitor && npm run test:obs-doctor && npm run test:shutdown && npm run test:backup && npm run test:recovery && npm run test:health && npm run test:manifest && npm run test:version-policy && npm run test:release-safety && npm run test:creator-profile && npm run test:device-link && npm run test:device-config && npm run test:output-window && npm run test:output-gate && npm run test:stream-deck-store && npm run test:stream-deck-actions && npm run test:post-v42-bridge && npm run test:acceptance-part2 && npm run test:entitlement-guard && npm run test:entitlement-preflight && npm run test:beta-session-v27 && npm run test:beta-feedback-v27 && npm run test:creator-tools-v28 && npm run test:game-rules-v29 && npm run test:cut-jobs-v29 && npm run test:flush-serialization-v29 && npm run test:media-source-v30 && npm run test:media-engine-v30 && npm run test:cut-job-retry-v30 && npm run test:cut-timeline-v31 && npm run test:cut-media-v31 && npm run test:cut-audio-v32 && npm run test:cut-transition-v32 && npm run ffmpeg:check && npm run test:cut-music-model-v33 && npm run test:media-source-v33 && npm run test:cut-media-v33 && npm run test:cut-free-kf-v34 && npm run test:media-source-v34 && npm run test:cut-multitrack-v34 && npm run test:cut-curve-mixer-v35 && npm run test:cut-media-v35 && npm run test:cut-final-v36 && npm run test:media-source-v36 && npm run test:cut-media-v36 && npm run test:billing-v37 && npm run test:production-evidence-v38 && npm run test:stripe-testmode-v38 && npm run test:windows-evidence-v38 && npm run test:production-canary-v38 && npm run test:production-static-v38 && npm run test:acceptance-v39 && npm run test:beta-cohort-v39 && npm run test:go-no-go-v39 && npm run test:release-ops-admin-v39 && npm run test:release-ops-v39 && npm run test:acceptance-template-v39 && npm run test:beta-profile && npm run test:session-store && npm run test:resume-protocol && npm run test:action-lease && npm run test:provider-switch && npm run test:logger-tail && npm run test:scenes && npm run test:e2e && npm run test:stress && npm run test:obs && npm run check:release",
+    "release:win": "npm run qa && electron-builder --win nsis portable --publish never",
+    "check:release": "node tools/release-check.mjs",
+    "test:spool": "node tools/event-spool-test.mjs",
+    "test:preflight": "node tools/preflight-test.mjs",
+    "test:e2e": "node tools/e2e-live-session-test.mjs",
+    "test:stress": "node tools/event-stress-test.mjs",
+    "test:gifts": "node tools/gift-streak-test.mjs",
+    "test:obs": "node tools/obs-multi-widget-load-test.mjs",
+    "release:gate": "node tools/release-gate.mjs",
+    "test:monitor": "node tools/event-monitor-test.mjs",
+    "test:obs-doctor": "node tools/obs-doctor-test.mjs",
+    "test:shutdown": "node tools/graceful-shutdown-test.mjs",
+    "test:backup": "node tools/config-backup-test.mjs",
+    "test:recovery": "node tools/recovery-manager-test.mjs",
+    "test:health": "node tools/cloud-health-test.mjs",
+    "test:manifest": "node tools/release-manifest-test.mjs",
+    "manifest:release": "node tools/generate-release-manifest.mjs",
+    "test:version-policy": "node tools/version-policy-client-test.mjs",
+    "test:release-safety": "node tools/release-safety-preflight-test.mjs",
+    "test:creator-profile": "node tools/creator-profile-bridge-test.mjs",
+    "test:scenes": "node tools/scene-output-bridge-test.mjs",
+    "test:beta-profile": "node tools/beta-profile-bridge-test.mjs",
+    "test:session-store": "node tools/live-session-store-test.mjs",
+    "test:resume-protocol": "node tools/live-resume-bridge-test.mjs",
+    "test:action-lease": "node tools/action-lease-client-test.mjs",
+    "test:provider-switch": "node tools/provider-switch-test.mjs",
+    "test:logger-tail": "node tools/logger-tail-test.mjs",
+    "test:device-link": "node tools/device-link-client-test.mjs",
+    "test:device-config": "node tools/device-link-config-test.mjs",
+    "test:output-window": "node tools/output-window-manager-test.mjs",
+    "test:output-gate": "node tools/output-gate-store-test.mjs",
+    "test:stream-deck-store": "node tools/stream-deck-store-test.mjs",
+    "test:stream-deck-actions": "node tools/stream-deck-actions-test.mjs",
+    "test:entitlement-guard": "node tools/entitlement-guard-test.mjs",
+    "test:entitlement-preflight": "node tools/entitlement-preflight-test.mjs",
+    "test:beta-session-v27": "node tools/beta-session-store-v27-test.mjs",
+    "test:beta-feedback-v27": "node tools/beta-feedback-bridge-v27-test.mjs",
+    "test:creator-tools-v28": "node tools/creator-tools-bridge-v28-test.mjs",
+    "test:game-rules-v29": "node tools/game-live-rules-v29-test.mjs",
+    "test:cut-jobs-v29": "node tools/cut-job-bridge-v29-test.mjs",
+    "test:flush-serialization-v29": "node tools/bridge-flush-serialization-v29-test.mjs",
+    "test:media-source-v30": "node tools/media-source-store-v30-test.mjs",
+    "test:media-engine-v30": "node tools/cut-media-engine-v30-test.mjs",
+    "test:cut-job-retry-v30": "node tools/cut-job-retry-v30-test.mjs",
+    "test:cut-timeline-v31": "node ../tools/cut-timeline-v31-test.mjs",
+    "test:cut-media-v31": "node tools/cut-media-caption-reel-v31-test.mjs",
+    "ffmpeg:stage": "node tools/stage-ffmpeg-windows.mjs",
+    "ffmpeg:check": "node tools/ffmpeg-bundle-prep-v32-test.mjs",
+    "test:cut-audio-v32": "node ../tools/cut-audio-transition-v32-test.mjs",
+    "test:cut-transition-v32": "node tools/cut-media-transition-audio-v32-test.mjs",
+    "test:cut-music-model-v33": "node ../tools/cut-music-keyframes-v33-test.mjs",
+    "test:media-source-v33": "node tools/media-source-store-v33-test.mjs",
+    "test:cut-media-v33": "node tools/cut-media-music-keyframes-v33-test.mjs",
+    "test:cut-free-kf-v34": "node ../tools/cut-free-keyframes-voice-sfx-v34-test.mjs",
+    "test:media-source-v34": "node tools/media-source-store-v34-test.mjs",
+    "test:cut-multitrack-v34": "node tools/cut-media-multitrack-v34-test.mjs",
+    "test:cut-curve-mixer-v35": "node ../tools/cut-curve-mixer-v35-test.mjs",
+    "test:cut-media-v35": "node tools/cut-media-curve-mixer-v35-test.mjs",
+    "test:cut-final-v36": "node ../tools/cut-multitrack-bezier-v36-test.mjs",
+    "test:media-source-v36": "node tools/media-source-store-v36-test.mjs",
+    "test:cut-media-v36": "node tools/cut-media-multitrack-v36-test.mjs",
+    "test:cut-real-v36": "node tools/cut-media-real-v36.mjs",
+    "test:billing-v37": "node ../tools/billing-policy-v37-test.mjs && node ../tools/production-readiness-v37-test.mjs && node ../tools/billing-v37-qa.mjs .. && node tools/billing-entitlement-v37-test.mjs .",
+    "test:production-evidence-v38": "node ../tools/production-evidence-v38-test.mjs",
+    "test:stripe-testmode-v38": "node ../tools/stripe-testmode-e2e-v38-test.mjs",
+    "test:windows-evidence-v38": "node tools/windows-build-evidence-v38-test.mjs",
+    "test:production-canary-v38": "node ../tools/production-canary-v38-test.mjs",
+    "test:production-static-v38": "node ../tools/production-v38-qa.mjs ..",
+    "test:acceptance-v39": "node ../tools/release-acceptance-v39-test.mjs",
+    "test:beta-cohort-v39": "node ../tools/beta-cohort-v39-test.mjs",
+    "test:go-no-go-v39": "node ../tools/release-go-no-go-v39-test.mjs",
+    "test:release-ops-admin-v39": "node ../tools/release-ops-admin-v39-qa.mjs ..",
+    "test:release-ops-v39": "node ../tools/release-ops-v39-qa.mjs ..",
+    "test:acceptance-template-v39": "node tools/windows-acceptance-template-v39-test.mjs",
+    "test:repo-hygiene-v40": "node ../tools/repository-hygiene-v40-test.mjs ..",
+    "test:github-setup-v40": "node ../tools/github-setup-v40-qa.mjs ..",
+    "test:deployment-flow-v40": "node ../tools/deployment-flow-v40-test.mjs ..",
+    "test:legacy-flags-v40": "node ../tools/legacy-verification-flags-v40-test.mjs ..",
+    "test:file-placement-v40": "node ../tools/github-files-placement-v40-test.mjs ..",
+    "test:config-doctor-v41": "node ../tools/config-doctor-v41-test.mjs",
+    "test:github-bootstrap-v41": "node ../tools/github-bootstrap-v41-test.mjs",
+    "test:configuration-workflow-v41": "node ../tools/configuration-workflow-v41-qa.mjs ..",
+    "test:admin-config-doctor-v41": "node ../tools/admin-config-doctor-v41-qa.mjs ..",
+    "test:github-labels-v41": "node ../tools/github-labels-v41-test.mjs ..",
+    "test:final-plan-v42": "node ../tools/final-test-plan-v42-test.mjs",
+    "test:final-qa-v42": "node ../tools/final-verification-v42-qa.mjs ..",
+    "test:final-files-v42": "node ../tools/final-test-files-v42-test.mjs ..",
+    "test:post-v42-bridge": "node tools/post-v42-bridge-controls-test.mjs",
+    "test:acceptance-part2": "node tools/tiktool-provider-acceptance-part2-test.mjs && node tools/live-acceptance-part2-test.mjs && node ../tools/widget-runtime-audio-part2-test.mjs .. && node tools/output-window-manager-test.mjs && node tools/obs-multi-widget-load-test.mjs && node ../tools/post-v42-security-test.mjs .."
+  },
+  "devDependencies": {
+    "electron": "38.0.0",
+    "electron-builder": "26.0.12"
+  },
+  "build": {
+    "appId": "de.cfszockt.creator-suite.launcher",
+    "productName": "cfs_zockt Creator Suite",
+    "asar": true,
+    "files": [
+      "main.js",
+      "preload.js",
+      "src/**/*",
+      "renderer/**/*",
+      "package.json"
+    ],
+    "directories": {
+      "buildResources": "build",
+      "output": "dist"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.ico",
+      "artifactName": "cfs_zockt-Creator-Suite-${version}-${arch}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "cfs_zockt Creator Suite",
+      "runAfterFinish": true,
+      "deleteAppDataOnUninstall": false,
+      "artifactName": "cfs_zockt-Creator-Suite-Setup-${version}-${arch}.${ext}"
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "cstaudy",
+        "repo": "CFS-TikTok-Backend",
+        "releaseType": "release"
+      }
+    ],
+    "generateUpdatesFilesForAllChannels": true,
+    "portable": {
+      "artifactName": "cfs_zockt-Creator-Suite-Portable-${version}-${arch}.${ext}"
+    },
+    "extraResources": [
+      {
+        "from": "vendor/ffmpeg",
+        "to": "ffmpeg",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ]
+  },
+  "dependencies": {
+    "tiktok-live-api": "1.4.9",
+    "electron-updater": "6.6.2"
+  }
+}

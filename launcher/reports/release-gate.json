@@ -1,0 +1,798 @@
+{
+  "schema": 2,
+  "generated_at": "2026-09-15T17:34:38.170872+00:00",
+  "launcher_version": "0.42.0",
+  "complete": true,
+  "expected_total": 98,
+  "ok": true,
+  "total": 98,
+  "passed": 98,
+  "failed": 0,
+  "execution_mode": "segmented_due_to_orchestrator_timeout",
+  "results": [
+    {
+      "key": "static",
+      "file": "tools/static-check.mjs",
+      "ok": true,
+      "duration_ms": 1289,
+      "stdout": "Launcher static check passed (Windows-safe path resolution).\n",
+      "stderr": ""
+    },
+    {
+      "key": "bridge",
+      "file": "tools/bridge-client-test.mjs",
+      "ok": true,
+      "duration_ms": 365,
+      "stdout": "BridgeClient integration test passed.\n",
+      "stderr": ""
+    },
+    {
+      "key": "spool",
+      "file": "tools/event-spool-test.mjs",
+      "ok": true,
+      "duration_ms": 211,
+      "stdout": "EventSpool persistence test passed.\n",
+      "stderr": ""
+    },
+    {
+      "key": "preflight",
+      "file": "tools/preflight-test.mjs",
+      "ok": true,
+      "duration_ms": 169,
+      "stdout": "Preflight test passed.\n",
+      "stderr": ""
+    },
+    {
+      "key": "gifts",
+      "file": "tools/gift-streak-test.mjs",
+      "ok": true,
+      "duration_ms": 863,
+      "stdout": "{\"ok\":true,\"emissions\":[{\"count\":1,\"reason\":\"single\"},{\"count\":5,\"reason\":\"repeatEnd\"},{\"count\":3,\"reason\":\"timeout\"}]}\n",
+      "stderr": ""
+    },
+    {
+      "key": "monitor",
+      "file": "tools/event-monitor-test.mjs",
+      "ok": true,
+      "duration_ms": 143,
+      "stdout": "{\"ok\":true,\"coverage\":{\"follow\":true,\"like\":true,\"gift\":true,\"share\":true,\"viewer_update\":true},\"amounts\":{\"likes\":23,\"gifts\":4,\"shares\":1,\"follows\":1},\"viewer\":{\"latest\":127,\"peak\":127}}\n",
+      "stderr": ""
+    },
+    {
+      "key": "obs_doctor",
+      "file": "tools/obs-doctor-test.mjs",
+      "ok": true,
+      "duration_ms": 443,
+      "stdout": "{\"ok\":true,\"latencyMs\":84,\"checks\":6}\n",
+      "stderr": ""
+    },
+    {
+      "key": "shutdown",
+      "file": "tools/graceful-shutdown-test.mjs",
+      "ok": true,
+      "duration_ms": 408,
+      "stdout": "{\"ok\":true,\"drain\":{\"ok\":true,\"remaining\":0,\"drainedAt\":\"2026-09-15T17:25:28.904Z\",\"durationMs\":93,\"attempts\":2},\"batches\":2}\n",
+      "stderr": ""
+    },
+    {
+      "key": "backup",
+      "file": "tools/config-backup-test.mjs",
+      "ok": true,
+      "duration_ms": 377,
+      "stdout": "{\"ok\":true,\"fields\":14,\"checksum\":\"3ddd43298d3c\"}\n",
+      "stderr": ""
+    },
+    {
+      "key": "recovery",
+      "file": "tools/recovery-manager-test.mjs",
+      "ok": true,
+      "duration_ms": 181,
+      "stdout": "{\"ok\":true,\"id\":\"2026-09-15T17-25-29-500Z_manual-test\",\"points\":1}\n",
+      "stderr": ""
+    },
+    {
+      "key": "health",
+      "file": "tools/cloud-health-test.mjs",
+      "ok": true,
+      "duration_ms": 235,
+      "stdout": "{\"ok\":true,\"latency\":33,\"score\":100}\n",
+      "stderr": ""
+    },
+    {
+      "key": "manifest",
+      "file": "tools/release-manifest-test.mjs",
+      "ok": true,
+      "duration_ms": 177,
+      "stdout": "{\"ok\":true,\"files\":3,\"version\":\"0.16.0\"}\n",
+      "stderr": ""
+    },
+    {
+      "key": "version_policy",
+      "file": "tools/version-policy-client-test.mjs",
+      "ok": true,
+      "duration_ms": 585,
+      "stdout": "{\"ok\":true,\"status\":\"compatible\",\"rollout\":25,\"live\":true}\n",
+      "stderr": ""
+    },
+    {
+      "key": "release_safety",
+      "file": "tools/release-safety-preflight-test.mjs",
+      "ok": true,
+      "duration_ms": 138,
+      "stdout": "{\"ok\":true,\"safe\":true,\"blocked\":false,\"maintenance\":false}\n",
+      "stderr": ""
+    },
+    {
+      "key": "creator_profile",
+      "file": "tools/creator-profile-bridge-test.mjs",
+      "ok": true,
+      "duration_ms": 472,
+      "stdout": "{\"ok\":true,\"name\":\"Devrimex\",\"followers\":156,\"likes\":5000,\"plan\":\"pro\"}\n",
+      "stderr": ""
+    },
+    {
+      "key": "device_link",
+      "file": "tools/device-link-client-test.mjs",
+      "ok": true,
+      "duration_ms": 539,
+      "stdout": "{\"ok\":true,\"code\":\"CFS-ABCD-EFGH\",\"pending\":\"pending\",\"approved\":true}\n",
+      "stderr": ""
+    },
+    {
+      "key": "device_config",
+      "file": "tools/device-link-config-test.mjs",
+      "ok": true,
+      "duration_ms": 142,
+      "stdout": "{\"ok\":true,\"encrypted\":true,\"tokenStored\":true}\n",
+      "stderr": ""
+    },
+    {
+      "key": "output_window",
+      "file": "tools/output-window-manager-test.mjs",
+      "ok": true,
+      "duration_ms": 161,
+      "stdout": "{\"ok\":true,\"display_count\":2,\"width\":1080,\"height\":1920,\"https_only\":true}\n",
+      "stderr": ""
+    },
+    {
+      "key": "output_gate",
+      "file": "tools/output-gate-store-test.mjs",
+      "ok": true,
+      "duration_ms": 131,
+      "stdout": "{\"ok\":true,\"checks\":11,\"persisted\":true,\"token_masked\":true}\n",
+      "stderr": ""
+    },
+    {
+      "key": "stream_deck_store",
+      "file": "tools/stream-deck-store-test.mjs",
+      "ok": true,
+      "duration_ms": 134,
+      "stdout": "{\"ok\":true,\"buttons\":12,\"actions\":30,\"persisted\":true}\n",
+      "stderr": ""
+    },
+    {
+      "key": "stream_deck_actions",
+      "file": "tools/stream-deck-actions-test.mjs",
+      "ok": true,
+      "duration_ms": 118,
+      "stdout": "{\"ok\":true,\"calls\":13,\"unknown_blocked\":true}\n",
+      "stderr": ""
+    },
+    {
+      "key": "entitlement_guard",
+      "file": "tools/entitlement-guard-test.mjs",
+      "ok": true,
+      "duration_ms": 129,
+      "stdout": "{\"ok\":true,\"blocked\":3,\"creator_keys\":8}\n",
+      "stderr": ""
+    },
+    {
+      "key": "entitlement_preflight",
+      "file": "tools/entitlement-preflight-test.mjs",
+      "ok": true,
+      "duration_ms": 172,
+      "stdout": "{\"ok\":true,\"free_blocked\":true,\"creator_pass\":true}\n",
+      "stderr": ""
+    },
+    {
+      "key": "beta_session_store",
+      "file": "tools/beta-session-store-v27-test.mjs",
+      "ok": true,
+      "duration_ms": 167,
+      "stdout": "{\"ok\":true,\"persistent\":true,\"atomic\":true}\n",
+      "stderr": ""
+    },
+    {
+      "key": "beta_feedback_bridge",
+      "file": "tools/beta-feedback-bridge-v27-test.mjs",
+      "ok": true,
+      "duration_ms": 365,
+      "stdout": "{\"ok\":true,\"session\":\"beta-1\",\"feedback\":\"feedback-1\",\"status\":\"completed\"}\n",
+      "stderr": ""
+    },
+    {
+      "key": "creator_tools",
+      "file": "tools/creator-tools-bridge-v28-test.mjs",
+      "ok": true,
+      "duration_ms": 345,
+      "stdout": "{\"ok\":true,\"game\":\"idle\",\"cut_projects\":1,\"scene_game_layer\":true}\n",
+      "stderr": ""
+    },
+    {
+      "key": "game_live_rules",
+      "file": "tools/game-live-rules-v29-test.mjs",
+      "ok": true,
+      "duration_ms": 411,
+      "stdout": "{\"ok\":true,\"rules\":2,\"hits\":1}\n",
+      "stderr": ""
+    },
+    {
+      "key": "cut_jobs",
+      "file": "tools/cut-job-bridge-v29-test.mjs",
+      "ok": true,
+      "duration_ms": 365,
+      "stdout": "{\"ok\":true,\"status\":\"completed\",\"output\":\"out.mp4\"}\n",
+      "stderr": ""
+    },
+    {
+      "key": "flush_serialization",
+      "file": "tools/bridge-flush-serialization-v29-test.mjs",
+      "ok": true,
+      "duration_ms": 632,
+      "stdout": "{\"ok\":true,\"batches\":1,\"duplicates\":0,\"queue\":0}\n",
+      "stderr": ""
+    },
+    {
+      "key": "media_source",
+      "file": "tools/media-source-store-v30-test.mjs",
+      "ok": true,
+      "duration_ms": 161,
+      "stdout": "{\"ok\":true,\"persistent\":true,\"local_only\":true,\"missing_file_detected\":true}\n",
+      "stderr": ""
+    },
+    {
+      "key": "media_engine",
+      "file": "tools/cut-media-engine-v30-test.mjs",
+      "ok": true,
+      "duration_ms": 140,
+      "stdout": "{\"ok\":true,\"clips\":2,\"bytes\":246,\"ffmpeg_args\":true,\"progress\":100}\n",
+      "stderr": ""
+    },
+    {
+      "key": "cut_job_retry",
+      "file": "tools/cut-job-retry-v30-test.mjs",
+      "ok": true,
+      "duration_ms": 371,
+      "stdout": "{\"ok\":true,\"status\":\"claimed\",\"attempts\":2,\"retry\":true}\n",
+      "stderr": ""
+    },
+    {
+      "key": "cut_timeline",
+      "file": "../tools/cut-timeline-v31-test.mjs",
+      "ok": true,
+      "duration_ms": 136,
+      "stdout": "{\"ok\":true,\"schema\":7,\"mode\":\"both\",\"order\":[\"b\",\"a\"],\"captions\":true}\n",
+      "stderr": ""
+    },
+    {
+      "key": "cut_caption_reel",
+      "file": "tools/cut-media-caption-reel-v31-test.mjs",
+      "ok": true,
+      "duration_ms": 168,
+      "stdout": "{\"ok\":true,\"drawtext\":true,\"clips\":2,\"reel\":1,\"mode\":\"both\"}\n",
+      "stderr": ""
+    },
+    {
+      "key": "cut_audio_model",
+      "file": "../tools/cut-audio-transition-v32-test.mjs",
+      "ok": true,
+      "duration_ms": 129,
+      "stdout": "{\"ok\":true,\"schema\":3,\"transition\":\"dissolve\",\"encoder\":\"nvenc\",\"audio\":true}\n",
+      "stderr": ""
+    },
+    {
+      "key": "cut_transition_engine",
+      "file": "tools/cut-media-transition-audio-v32-test.mjs",
+      "ok": true,
+      "duration_ms": 154,
+      "stdout": "{\"ok\":true,\"transition\":\"dissolve\",\"audio_filters\":true,\"gpu_probe\":true,\"outputs\":3}\n",
+      "stderr": ""
+    },
+    {
+      "key": "ffmpeg_bundle_prep",
+      "file": "tools/ffmpeg-bundle-prep-v32-test.mjs",
+      "ok": true,
+      "duration_ms": 124,
+      "stdout": "{\"ok\":true,\"build_prepared\":true,\"binary_staged\":false,\"optional\":true}\n",
+      "stderr": ""
+    },
+    {
+      "key": "cut_music_model",
+      "file": "../tools/cut-music-keyframes-v33-test.mjs",
+      "ok": true,
+      "duration_ms": 174,
+      "stdout": "{\"ok\":true,\"schema\":4,\"music\":true,\"keyframes\":true}\n",
+      "stderr": ""
+    },
+    {
+      "key": "media_source_music",
+      "file": "tools/media-source-store-v33-test.mjs",
+      "ok": true,
+      "duration_ms": 121,
+      "stdout": "{\"ok\":true,\"schema\":4,\"video\":true,\"music\":true,\"backward_compatible\":true}\n",
+      "stderr": ""
+    },
+    {
+      "key": "cut_music_keyframes",
+      "file": "tools/cut-media-music-keyframes-v33-test.mjs",
+      "ok": true,
+      "duration_ms": 139,
+      "stdout": "{\"ok\":true,\"zoompan\":true,\"music_mix\":true,\"outputs\":3}\n",
+      "stderr": ""
+    },
+    {
+      "key": "cut_music_static",
+      "file": "../tools/cut-music-keyframes-v33-qa.mjs",
+      "ok": true,
+      "duration_ms": 135,
+      "stdout": "{\"ok\":true,\"schema\":\"4+\",\"keyframes\":true,\"music_track\":true,\"local_only\":true}\n",
+      "stderr": ""
+    },
+    {
+      "key": "cut_free_keyframes",
+      "file": "../tools/cut-free-keyframes-voice-sfx-v34-test.mjs",
+      "ok": true,
+      "duration_ms": 124,
+      "stdout": "{\"ok\":true,\"schema\":5,\"keyframe_points\":4,\"voice\":true,\"sfx\":2,\"ducking\":true}\n",
+      "stderr": ""
+    },
+    {
+      "key": "media_source_multitrack",
+      "file": "tools/media-source-store-v34-test.mjs",
+      "ok": true,
+      "duration_ms": 142,
+      "stdout": "{\"ok\":true,\"schema\":3,\"voice\":true,\"sfx\":true,\"migration\":true}\n",
+      "stderr": ""
+    },
+    {
+      "key": "cut_multitrack_engine",
+      "file": "tools/cut-media-multitrack-v34-test.mjs",
+      "ok": true,
+      "duration_ms": 142,
+      "stdout": "{\"ok\":true,\"free_keyframes\":true,\"tracks\":5,\"ducking\":true,\"outputs\":3}\n",
+      "stderr": ""
+    },
+    {
+      "key": "cut_multitrack_static",
+      "file": "../tools/cut-multitrack-keyframes-v34-qa.mjs",
+      "ok": true,
+      "duration_ms": 148,
+      "stdout": "{\"ok\":true,\"schema\":\"5+\",\"free_keyframes\":true,\"voice\":true,\"sfx\":true,\"ducking\":true,\"local_only\":true}\n",
+      "stderr": ""
+    },
+    {
+      "key": "cut_curve_mixer_model",
+      "file": "../tools/cut-curve-mixer-v35-test.mjs",
+      "ok": true,
+      "duration_ms": 181,
+      "stdout": "{\"ok\":true,\"schema\":6,\"rotation\":true,\"opacity\":true,\"mixer\":true}\n",
+      "stderr": ""
+    },
+    {
+      "key": "cut_curve_mixer_engine",
+      "file": "tools/cut-media-curve-mixer-v35-test.mjs",
+      "ok": true,
+      "duration_ms": 162,
+      "stdout": "{\"ok\":true,\"rotation\":true,\"opacity\":true,\"pan\":true,\"solo\":true,\"mute\":true,\"outputs\":3}\n",
+      "stderr": ""
+    },
+    {
+      "key": "cut_curve_mixer_static",
+      "file": "../tools/cut-curve-mixer-v35-qa.mjs",
+      "ok": true,
+      "duration_ms": 128,
+      "stdout": "{\"ok\":true,\"schema\":\"6+\",\"curve_drag\":true,\"rotation\":true,\"opacity\":true,\"mute_solo_pan\":true}\n",
+      "stderr": ""
+    },
+    {
+      "key": "cut_curve_mixer_real",
+      "file": "tools/cut-media-real-v35.mjs",
+      "ok": true,
+      "duration_ms": 9291,
+      "stdout": "{\"ok\":true,\"skipped\":false,\"outputs\":3,\"reel_bytes\":155830,\"rotation\":true,\"opacity\":true,\"mixer\":true}\n",
+      "stderr": ""
+    },
+    {
+      "key": "cut_final_model",
+      "file": "../tools/cut-multitrack-bezier-v36-test.mjs",
+      "ok": true,
+      "duration_ms": 136,
+      "stdout": "{\"ok\":true,\"schema\":7,\"music_tracks\":4,\"voice_tracks\":4,\"bezier\":true}\n",
+      "stderr": ""
+    },
+    {
+      "key": "media_source_v36",
+      "file": "tools/media-source-store-v36-test.mjs",
+      "ok": true,
+      "duration_ms": 145,
+      "stdout": "{\"ok\":true,\"schema\":4,\"migration\":true,\"analysis\":true,\"extra_tracks\":true}\n",
+      "stderr": ""
+    },
+    {
+      "key": "cut_final_engine",
+      "file": "tools/cut-media-multitrack-v36-test.mjs",
+      "ok": true,
+      "duration_ms": 185,
+      "stdout": "{\"ok\":true,\"bezier\":true,\"music_tracks\":3,\"voice_tracks\":3,\"waveform\":true,\"peak\":true,\"outputs\":3}\n",
+      "stderr": ""
+    },
+    {
+      "key": "cut_final_static",
+      "file": "../tools/cut-final-editing-v36-qa.mjs",
+      "ok": true,
+      "duration_ms": 137,
+      "stdout": "{\"ok\":true,\"schema\":7,\"multi_music\":true,\"multi_voice\":true,\"bezier\":true,\"waveform_analysis\":true,\"local_only\":true}\n",
+      "stderr": ""
+    },
+    {
+      "key": "cut_final_real",
+      "file": "tools/cut-media-real-v36.mjs",
+      "ok": true,
+      "duration_ms": 9731,
+      "stdout": "{\"ok\":true,\"skipped\":false,\"outputs\":3,\"reel_bytes\":100535,\"bezier\":true,\"multi_music\":true,\"multi_voice\":true,\"waveform\":true,\"peak_db\":-18.1}\n",
+      "stderr": ""
+    },
+    {
+      "key": "billing_policy",
+      "file": "../tools/billing-policy-v37-test.mjs",
+      "ok": true,
+      "duration_ms": 198,
+      "stdout": "{\"ok\":true,\"active\":true,\"trial\":true,\"grace\":true,\"canceled_fallback\":true,\"stripe_snapshot\":true,\"event_order\":true}\n",
+      "stderr": ""
+    },
+    {
+      "key": "production_readiness",
+      "file": "../tools/production-readiness-v37-test.mjs",
+      "ok": true,
+      "duration_ms": 124,
+      "stdout": "{\"ok\":true,\"total\":16,\"default_external_blocked\":true,\"all_verified_ready\":true}\n",
+      "stderr": ""
+    },
+    {
+      "key": "billing_static",
+      "file": "../tools/billing-v37-qa.mjs",
+      "ok": true,
+      "duration_ms": 168,
+      "stdout": "{\"ok\":true,\"root\":\"/mnt/data/cfs_pass11_work/cfs_zockt_creator_suite_full_2026-09-15_pass10\",\"checkout\":true,\"webhook_signature\":true,\"event_dedupe\":true,\"portal\":true,\"grace\":true,\"production_gate\":true,\"no_browser_secrets\":true}\n",
+      "stderr": ""
+    },
+    {
+      "key": "billing_launcher",
+      "file": "tools/billing-entitlement-v37-test.mjs",
+      "ok": true,
+      "duration_ms": 121,
+      "stdout": "{\"ok\":true,\"effective_plan\":true,\"billing_status\":true,\"launcher\":\"0.37+\"}\n",
+      "stderr": ""
+    },
+    {
+      "key": "production_evidence",
+      "file": "../tools/production-evidence-v38-test.mjs",
+      "ok": true,
+      "duration_ms": 125,
+      "stdout": "{\"ok\":true,\"kinds\":10,\"release_scoped\":true,\"expiry\":true,\"sha\":true}\n",
+      "stderr": ""
+    },
+    {
+      "key": "stripe_testmode_e2e",
+      "file": "../tools/stripe-testmode-e2e-v38-test.mjs",
+      "ok": true,
+      "duration_ms": 129,
+      "stdout": "{\"ok\":true,\"required_sequence\":true,\"testmode_only\":true,\"creator_correlation\":true}\n",
+      "stderr": ""
+    },
+    {
+      "key": "windows_build_evidence",
+      "file": "tools/windows-build-evidence-v38-test.mjs",
+      "ok": true,
+      "duration_ms": 171,
+      "stdout": "{\"ok\":true,\"complete\":true,\"assets\":4,\"signature\":true}\n",
+      "stderr": ""
+    },
+    {
+      "key": "production_canary",
+      "file": "../tools/production-canary-v38-test.mjs",
+      "ok": true,
+      "duration_ms": 408,
+      "stdout": "{\"ok\":true,\"health\":true,\"billing\":true,\"version_mismatch\":true}\n",
+      "stderr": ""
+    },
+    {
+      "key": "production_v38_static",
+      "file": "../tools/production-v38-qa.mjs",
+      "ok": true,
+      "duration_ms": 173,
+      "stdout": "{\"ok\":true,\"backend\":\"3.8+\",\"auditable_evidence\":true,\"stripe_testmode\":true,\"windows_evidence\":true,\"canary\":true}\n",
+      "stderr": ""
+    },
+    {
+      "key": "release_acceptance_v39",
+      "file": "../tools/release-acceptance-v39-test.mjs",
+      "ok": true,
+      "duration_ms": 125,
+      "stdout": "{\"ok\":true,\"protocols\":5,\"proof_required\":true,\"pass\":true,\"fail\":true}\n",
+      "stderr": ""
+    },
+    {
+      "key": "beta_cohort_v39",
+      "file": "../tools/beta-cohort-v39-test.mjs",
+      "ok": true,
+      "duration_ms": 128,
+      "stdout": "{\"ok\":true,\"pilot\":5,\"expanded\":20,\"release_scoped_sessions\":true}\n",
+      "stderr": ""
+    },
+    {
+      "key": "go_no_go_v39",
+      "file": "../tools/release-go-no-go-v39-test.mjs",
+      "ok": true,
+      "duration_ms": 136,
+      "stdout": "{\"ok\":true,\"acceptances\":5,\"go\":true,\"hold\":true,\"bypass_blocked\":true}\n",
+      "stderr": ""
+    },
+    {
+      "key": "release_ops_admin_v39",
+      "file": "../tools/release-ops-admin-v39-qa.mjs",
+      "ok": true,
+      "duration_ms": 151,
+      "stdout": "{\"ok\":true,\"backend\":\"3.9+\",\"release_ops\":true,\"admin\":true,\"templates\":true}\n",
+      "stderr": ""
+    },
+    {
+      "key": "release_ops_static_v39",
+      "file": "../tools/release-ops-v39-qa.mjs",
+      "ok": true,
+      "duration_ms": 157,
+      "stdout": "{\"ok\":true,\"acceptance_proof\":true,\"beta_5_20\":true,\"go_override\":false}\n",
+      "stderr": ""
+    },
+    {
+      "key": "acceptance_template_v39",
+      "file": "tools/windows-acceptance-template-v39-test.mjs",
+      "ok": true,
+      "duration_ms": 408,
+      "stdout": "{\"ok\":true,\"windows_template\":true,\"updater_template\":true,\"pending_only\":true}\n",
+      "stderr": ""
+    },
+    {
+      "key": "repo_hygiene_v40",
+      "file": "../tools/repository-hygiene-v40-test.mjs",
+      "ok": true,
+      "duration_ms": 165,
+      "stdout": "{\"ok\":true,\"forbidden_files\":0,\"gitignore\":true,\"env_example\":true}\n",
+      "stderr": ""
+    },
+    {
+      "key": "github_setup_v40",
+      "file": "../tools/github-setup-v40-qa.mjs",
+      "ok": true,
+      "duration_ms": 180,
+      "stdout": "{\"ok\":true,\"manual_production\":true,\"quality_gate\":true,\"environments\":[\"production\",\"windows-release\"],\"runtime_secrets_scoped\":true}\n",
+      "stderr": ""
+    },
+    {
+      "key": "deployment_flow_v40",
+      "file": "../tools/deployment-flow-v40-test.mjs",
+      "ok": true,
+      "duration_ms": 140,
+      "stdout": "{\"ok\":true,\"backend\":\"3.10+\",\"manual_deploy\":true,\"canary\":true,\"concurrency\":true}\n",
+      "stderr": ""
+    },
+    {
+      "key": "legacy_flags_v40",
+      "file": "../tools/legacy-verification-flags-v40-test.mjs",
+      "ok": true,
+      "duration_ms": 164,
+      "stdout": "{\"ok\":true,\"legacy_flags_default\":false,\"evidence_first\":true}\n",
+      "stderr": ""
+    },
+    {
+      "key": "file_placement_v40",
+      "file": "../tools/github-files-placement-v40-test.mjs",
+      "ok": true,
+      "duration_ms": 159,
+      "stdout": "{\"ok\":true,\"github_source_map\":true,\"github_release_map\":true,\"render_runtime_map\":true}\n",
+      "stderr": ""
+    },
+    {
+      "key": "config_doctor_v41",
+      "file": "../tools/config-doctor-v41-test.mjs",
+      "ok": true,
+      "duration_ms": 128,
+      "stdout": "{\"ok\":true,\"runtime\":true,\"github_production\":true,\"github_windows\":true,\"secrets_redacted\":true,\"legacy_safe\":true,\"account_mail_fail_closed\":true}\n",
+      "stderr": ""
+    },
+    {
+      "key": "github_bootstrap_v41",
+      "file": "../tools/github-bootstrap-v41-test.mjs",
+      "ok": true,
+      "duration_ms": 127,
+      "stdout": "{\"ok\":true,\"steps\":12,\"lockfiles\":false,\"markdown\":true}\n",
+      "stderr": ""
+    },
+    {
+      "key": "configuration_workflow_v41",
+      "file": "../tools/configuration-workflow-v41-qa.mjs",
+      "ok": true,
+      "duration_ms": 157,
+      "stdout": "{\"ok\":true,\"configuration_doctor\":true,\"labels\":true,\"secrets_scoped\":true}\n",
+      "stderr": ""
+    },
+    {
+      "key": "admin_config_doctor_v41",
+      "file": "../tools/admin-config-doctor-v41-qa.mjs",
+      "ok": true,
+      "duration_ms": 181,
+      "stdout": "{\"ok\":true,\"admin_doctor\":true,\"redacted\":true}\n",
+      "stderr": ""
+    },
+    {
+      "key": "github_labels_v41",
+      "file": "../tools/github-labels-v41-test.mjs",
+      "ok": true,
+      "duration_ms": 135,
+      "stdout": "{\"ok\":true,\"labels\":11,\"codeowners\":true,\"manual_only\":true}\n",
+      "stderr": ""
+    },
+    {
+      "key": "final_test_plan_v42",
+      "file": "../tools/final-test-plan-v42-test.mjs",
+      "ok": true,
+      "duration_ms": 124,
+      "stdout": "{\"ok\":true,\"areas\":13,\"checks\":109,\"pending\":109}\n",
+      "stderr": ""
+    },
+    {
+      "key": "final_verification_v42",
+      "file": "../tools/final-verification-v42-qa.mjs",
+      "ok": true,
+      "duration_ms": 117,
+      "stdout": "{\"ok\":true,\"workflow\":true,\"manual_boundary\":true,\"coverage\":true}\n",
+      "stderr": ""
+    },
+    {
+      "key": "final_test_files_v42",
+      "file": "../tools/final-test-files-v42-test.mjs",
+      "ok": true,
+      "duration_ms": 310,
+      "stdout": "{\"ok\":true,\"files\":4,\"checks\":109,\"pending\":109}\n",
+      "stderr": ""
+    },
+    {
+      "key": "server_runtime_symbols_v42",
+      "file": "../tools/server-runtime-symbols-v42-test.mjs",
+      "ok": true,
+      "duration_ms": 297,
+      "stdout": "{\"ok\":true,\"syntax\":true,\"symbols\":19,\"backend\":\"3.12.0\"}\n",
+      "stderr": ""
+    },
+    {
+      "key": "post_v42_bridge_controls",
+      "file": "tools/post-v42-bridge-controls-test.mjs",
+      "ok": true,
+      "duration_ms": 383,
+      "stdout": "{\"ok\":true,\"stream_bot\":true,\"widget_control\":true,\"scenes\":true}\n",
+      "stderr": ""
+    },
+    {
+      "key": "acceptance_part2_provider",
+      "file": "tools/tiktool-provider-acceptance-part2-test.mjs",
+      "ok": true,
+      "duration_ms": 128,
+      "stdout": "{\"ok\":true,\"provider\":\"tiktool\",\"events\":6,\"types\":[\"chat\",\"follow\",\"gift\",\"like\",\"share\",\"viewer_update\"],\"chat_normalized\":true,\"connect_disconnect\":true}\n",
+      "stderr": ""
+    },
+    {
+      "key": "acceptance_part2_live",
+      "file": "tools/live-acceptance-part2-test.mjs",
+      "ok": true,
+      "duration_ms": 441,
+      "stdout": "{\"ok\":true,\"live_event_types\":6,\"offline_spool\":true,\"restart_recovery\":true,\"reconnect_exactly_once\":true,\"bot_config\":true,\"bot_tts_action\":true,\"counter_controls\":true,\"timer_controls\":true,\"accepted_events\":6}\n",
+      "stderr": ""
+    },
+    {
+      "key": "acceptance_part2_audio",
+      "file": "../tools/widget-runtime-audio-part2-test.mjs",
+      "ok": true,
+      "duration_ms": 125,
+      "stdout": "{\"ok\":true,\"audio_context\":true,\"test_alert_rendered\":true,\"tone_starts\":2,\"presets\":6}\n",
+      "stderr": ""
+    },
+    {
+      "key": "beta_profile",
+      "file": "tools/beta-profile-bridge-test.mjs",
+      "ok": true,
+      "duration_ms": 263,
+      "stdout": "{\"ok\":true,\"beta\":\"active\",\"followers\":156}\n",
+      "stderr": ""
+    },
+    {
+      "key": "session_store",
+      "file": "tools/live-session-store-test.mjs",
+      "ok": true,
+      "duration_ms": 137,
+      "stdout": "{\"ok\":true,\"atomic\":true,\"retained_on_error\":true,\"cleared\":true}\n",
+      "stderr": ""
+    },
+    {
+      "key": "resume_protocol",
+      "file": "tools/live-resume-bridge-test.mjs",
+      "ok": true,
+      "duration_ms": 335,
+      "stdout": "{\"ok\":true,\"probe\":1,\"commit\":1,\"likes\":77}\n",
+      "stderr": ""
+    },
+    {
+      "key": "action_lease",
+      "file": "tools/action-lease-client-test.mjs",
+      "ok": true,
+      "duration_ms": 259,
+      "stdout": "{\"ok\":true,\"nacked\":1,\"acked\":1}\n",
+      "stderr": ""
+    },
+    {
+      "key": "provider_switch",
+      "file": "tools/provider-switch-test.mjs",
+      "ok": true,
+      "duration_ms": 190,
+      "stdout": "{\"ok\":true,\"sequence\":[\"stop-begin:mock\",\"stop-end:mock\",\"stop-begin:tiktool\",\"stop-end:tiktool\"]}\n",
+      "stderr": ""
+    },
+    {
+      "key": "logger_tail",
+      "file": "tools/logger-tail-test.mjs",
+      "ok": true,
+      "duration_ms": 167,
+      "stdout": "{\"ok\":true,\"length\":1200,\"redacted\":true}\n",
+      "stderr": ""
+    },
+    {
+      "key": "scenes",
+      "file": "tools/scene-output-bridge-test.mjs",
+      "ok": true,
+      "duration_ms": 276,
+      "stdout": "{\"ok\":true,\"count\":1,\"name\":\"TikTok Main\",\"profile\":\"tiktok_vertical\"}\n",
+      "stderr": ""
+    },
+    {
+      "key": "e2e",
+      "file": "tools/e2e-live-session-test.mjs",
+      "ok": true,
+      "duration_ms": 1160,
+      "stdout": "{\"ok\":true,\"events\":5,\"batches\":3,\"sessionStarts\":1,\"sessionEnds\":1,\"duplicateKeys\":0,\"actionAcked\":1}\n",
+      "stderr": ""
+    },
+    {
+      "key": "stress",
+      "file": "tools/event-stress-test.mjs",
+      "ok": true,
+      "duration_ms": 1040,
+      "stdout": "{\"ok\":true,\"total\":900,\"batches\":18,\"elapsed_ms\":743,\"counts\":{\"follow\":180,\"like\":180,\"gift\":180,\"share\":180,\"viewer_update\":180},\"metrics\":{\"enqueued\":900,\"sent\":900,\"flushBatches\":18,\"flushFailures\":0,\"reconnects\":1,\"actionsReceived\":0,\"actionsAcked\":0,\"actionsNacked\":0,\"actionPollSkips\":0}}\n",
+      "stderr": ""
+    },
+    {
+      "key": "obs",
+      "file": "tools/obs-multi-widget-load-test.mjs",
+      "ok": true,
+      "duration_ms": 4420,
+      "stdout": "{\"ok\":true,\"sources\":12,\"total_requests\":192,\"polls_per_source\":[16,16,16,16,16,16,16,16,16,16,16,16],\"peak_concurrent\":12}\n",
+      "stderr": ""
+    },
+    {
+      "key": "release",
+      "file": "tools/release-check.mjs",
+      "ok": true,
+      "duration_ms": 145,
+      "stdout": "OK: launcher version 0.42.0\nOK: electron-updater dependency\nOK: GitHub publish provider\nOK: src/update-manager.js\nOK: src/diagnostics.js\nOK: src/event-spool.js\nOK: src/preflight.js\nOK: src/gift-streak-tracker.js\nOK: src/event-monitor.js\nOK: src/obs-doctor.js\nOK: src/support-bundle.js\nOK: src/config-backup.js\nOK: src/recovery-manager.js\nOK: src/cloud-health.js\nOK: src/release-manifest.js\nOK: tools/config-backup-test.mjs\nOK: tools/recovery-manager-test.mjs\nOK: tools/cloud-health-test.mjs\nOK: tools/release-manifest-test.mjs\nOK: tools/generate-release-manifest.mjs\nOK: tools/version-policy-client-test.mjs\nOK: tools/release-safety-preflight-test.mjs\nOK: tools/creator-profile-bridge-test.mjs\nOK: tools/device-link-client-test.mjs\nOK: tools/device-link-config-test.mjs\nOK: tools/output-window-manager-test.mjs\nOK: tools/output-gate-store-test.mjs\nOK: tools/stream-deck-store-test.mjs\nOK: tools/stream-deck-actions-test.mjs\nOK: tools/entitlement-guard-test.mjs\nOK: tools/entitlement-preflight-test.mjs\nOK: tools/beta-session-store-v27-test.mjs\nOK: tools/beta-feedback-bridge-v27-test.mjs\nOK: tools/creator-tools-bridge-v28-test.mjs\nOK: tools/game-live-rules-v29-test.mjs\nOK: tools/cut-job-bridge-v29-test.mjs\nOK: tools/bridge-flush-serialization-v29-test.mjs\nOK: src/media-source-store.js\nOK: src/cut-media-engine.js\nOK: tools/media-source-store-v30-test.mjs\nOK: tools/cut-media-engine-v30-test.mjs\nOK: tools/cut-job-retry-v30-test.mjs\nOK: tools/cut-media-caption-reel-v31-test.mjs\nOK: tools/cut-media-transition-audio-v32-test.mjs\nOK: tools/ffmpeg-bundle-prep-v32-test.mjs\nOK: tools/stage-ffmpeg-windows.mjs\nOK: tools/media-source-store-v33-test.mjs\nOK: tools/cut-media-music-keyframes-v33-test.mjs\nOK: tools/media-source-store-v34-test.mjs\nOK: tools/cut-media-multitrack-v34-test.mjs\nOK: tools/cut-media-curve-mixer-v35-test.mjs\nOK: tools/cut-media-real-v35.mjs\nOK: tools/media-source-store-v36-test.mjs\nOK: tools/cut-media-multitrack-v36-test.mjs\nOK: tools/cut-media-real-v36.mjs\nOK: tools/billing-entitlement-v37-test.mjs\nOK: src/windows-build-evidence.js\nOK: tools/generate-windows-build-evidence.mjs\nOK: tools/windows-build-evidence-v38-test.mjs\nOK: tools/windows-acceptance-template-v39-test.mjs\nOK: ../tools/repository-hygiene-v40-test.mjs\nOK: ../tools/github-setup-v40-qa.mjs\nOK: ../tools/deployment-flow-v40-test.mjs\nOK: ../tools/legacy-verification-flags-v40-test.mjs\nOK: ../tools/github-files-placement-v40-test.mjs\nOK: ../tools/config-doctor-v41-test.mjs\nOK: ../tools/github-bootstrap-v41-test.mjs\nOK: ../tools/configuration-workflow-v41-qa.mjs\nOK: ../tools/admin-config-doctor-v41-qa.mjs\nOK: ../tools/github-labels-v41-test.mjs\nOK: ../tools/final-test-plan-v42-test.mjs\nOK: ../tools/final-verification-v42-qa.mjs\nOK: ../tools/final-test-files-v42-test.mjs\nOK: vendor/ffmpeg/README.md\nOK: tools/beta-profile-bridge-test.mjs\nOK: tools/live-session-store-test.mjs\nOK: tools/live-resume-bridge-test.mjs\nOK: tools/action-lease-client-test.mjs\nOK: tools/provider-switch-test.mjs\nOK: tools/logger-tail-test.mjs\nOK: tools/scene-output-bridge-test.mjs\nOK: tools/event-monitor-test.mjs\nOK: tools/obs-doctor-test.mjs\nOK: tools/graceful-shutdown-test.mjs\nOK: tools/e2e-live-session-test.mjs\nOK: tools/event-stress-test.mjs\nOK: tools/gift-streak-test.mjs\nOK: tools/obs-multi-widget-load-test.mjs\nOK: tools/release-gate.mjs\nOK: build-windows.bat\nOK: BUILD_WINDOWS.md\nOK: renderer/index.html\nOK: renderer/app.js\nOK: main: requestSingleInstanceLock\nOK: main: render-process-gone\nOK: main: launcher:update-check\nOK: main: launcher:diagnostics-export\nOK: main: bridge-self-test\nOK: main: launcher:preflight\nOK: main: launcher:spool-clear\nOK: main: launcher:device-link-start\nOK: main: launcher:device-logout\nOK: main: launcher:output-start\nOK: main: launcher:output-stop\nOK: main: launcher:output-gate-update\nOK: main: launcher:stream-deck-action\nOK: main: launcher:stream-deck-button-save\nOK: main: launcher:creator-tools-refresh\nOK: main: launcher:game-control\nOK: main: launcher:open-cut-project\nOK: main: launcher:media-engine-probe\nOK: main: launcher:cut-source-select\nOK: main: launcher:cut-music-select\nOK: main: launcher:cut-music-clear\nOK: main: launcher:cut-voice-select\nOK: main: launcher:cut-voice-clear\nOK: main: launcher:cut-music-track-select\nOK: main: launcher:cut-voice-track-select\nOK: main: launcher:cut-sfx-select\nOK: main: launcher:cut-sfx-clear\nOK: main: launcher:cut-job-process\nOK: main: launcher:cut-export-folder\nOK: renderer: queuedActionIds\nOK: renderer: ttsVoiceName\nOK: renderer: bridgeSelfTest\nOK: renderer: checkForUpdates\nOK: renderer: exportDiagnostics\nOK: renderer: startDeviceLink\nOK: renderer: logoutDevice\nOK: renderer: startLocalOutput\nOK: renderer: renderOutputGate\nOK: renderer: renderStreamDeck\nOK: renderer: renderDeckEditor\nOK: renderer: renderCreatorTools\nOK: renderer: data-process-cut-job\nOK: renderer: data-select-cut-source\nOK: renderer: data-select-cut-music\nOK: renderer: data-select-cut-voice\nOK: renderer: data-select-cut-sfx\nOK: renderer: effective_plan\nOK: optional FFmpeg extraResources prepared\n\nLauncher V0.42 release checks passed.\n",
+      "stderr": ""
+    }
+  ]
+}

@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#030711">
+<title>Audio Studio | cfs_zockt</title>
+<link rel="stylesheet" href="/assets/css/styles.css">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+</head>
+<body>
+<header class="site-header"><div class="container header-inner">
+<a class="brand" href="/">cfs_<span>zockt</span></a>
+<nav class="nav open" style="display:flex">
+<a href="/pages/dashboard.html">DASHBOARD</a>
+<a href="/pages/games.html">SPIELE</a>
+<a href="/pages/audio-studio.html" class="active">AUDIO</a>
+<a href="/pages/integrations.html">INTEGRATIONEN</a>
+<a href="/pages/nexus.html">NEXUS</a>
+<a href="/pages/account.html">ACCOUNT</a>
+<button data-logout>LOGOUT</button>
+</nav></div></header>
+
+<main class="container">
+<section class="page-hero">
+<div class="eyebrow">AUDIO STUDIO</div>
+<h1>SOUNDS. VOICE. STREAM AUDIO.</h1>
+<p>Die Modulbasis ist vorbereitet. Sobald dein Plan das Modul freischaltet, können Presets serverseitig gespeichert werden. Echte Audioverarbeitung kommt später lokal über den Launcher.</p>
+</section>
+
+<div id="locked" class="notice warn hidden"></div>
+
+<div id="audioApp" class="grid two hidden">
+<section class="panel">
+<h2>Audio Preset</h2>
+<form id="audioForm" class="form-grid">
+<div class="field full"><label>PRESET NAME</label><input name="preset_name" maxlength="80" value="Mein Stream"></div>
+<div class="field"><label>MASTER</label><input name="master" type="range" min="0" max="100" value="80"></div>
+<div class="field"><label>VOICE</label><input name="voice" type="range" min="0" max="100" value="85"></div>
+<div class="field"><label>GAME</label><input name="game" type="range" min="0" max="100" value="65"></div>
+<div class="field"><label>SOUNDBOARD</label><input name="soundboard" type="range" min="0" max="100" value="70"></div>
+<div class="field full"><button class="btn primary">PRESET SPEICHERN</button></div>
+</form>
+<div id="message" class="notice hidden"></div>
+</section>
+<section class="panel">
+<h2>Architektur</h2>
+<div class="feature-list">
+<div>Website speichert Presets und Einstellungen</div>
+<div>Launcher erhält später lokale Audio-Berechtigungen</div>
+<div>NEXUS verteilt Sound- und Stream-Events</div>
+<div>Keine Audio-Dateien werden in dieser V1 verarbeitet</div>
+</div>
+</section>
+</div>
+
+<section class="section">
+<div class="grid">
+<article class="card"><span class="badge lock">ROADMAP</span><h3>Soundboard</h3><p>Eigene Sounds und Hotkeys.</p></article>
+<article class="card"><span class="badge lock">ROADMAP</span><h3>Voice Chain</h3><p>Gate, Compressor, EQ und weitere Effekte.</p></article>
+<article class="card"><span class="badge lock">ROADMAP</span><h3>Stream Mixer</h3><p>Game, Voice, Musik und Browser getrennt steuern.</p></article>
+</div>
+</section>
+</main>
+
+<script src="/assets/js/app.js"></script>
+<script src="/assets/js/page-audio-studio.js"></script>
+</body></html>

@@ -1,0 +1,17 @@
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import {createRequire} from "node:module";
+const require=createRequire(import.meta.url),{MediaSourceStore}=require("../src/media-source-store.js");
+const dir=fs.mkdtempSync(path.join(os.tmpdir(),"cfs-media-source-")),db=path.join(dir,"sources.json"),video=path.join(dir,"stream.mp4");
+fs.writeFileSync(video,"fake-video");
+let store=new MediaSourceStore(db);
+const item=store.set("project-1",{sourceName:"cloud-name.mp4",filePath:video});
+if(!item.exists||item.fileName!=="stream.mp4"||item.sourceName!=="cloud-name.mp4")throw new Error("source mapping");
+store=new MediaSourceStore(db);
+if(!store.get("project-1")?.exists)throw new Error("mapping persistence");
+fs.unlinkSync(video);
+if(store.get("project-1")?.exists)throw new Error("missing file detection");
+store.remove("project-1");
+if(store.get("project-1"))throw new Error("remove");
+console.log(JSON.stringify({ok:true,persistent:true,local_only:true,missing_file_detected:true}));

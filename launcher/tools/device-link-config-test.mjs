@@ -1,0 +1,14 @@
+import fs from "node:fs";import os from "node:os";import path from "node:path";import {createRequire} from "node:module";
+const require=createRequire(import.meta.url);const {ConfigStore}=require("../src/config-store.js");
+const dir=fs.mkdtempSync(path.join(os.tmpdir(),"cfs-device-config-")),file=path.join(dir,"config.json");
+const safe={isEncryptionAvailable:()=>true,encryptString:s=>Buffer.from("enc:"+s,"utf8"),decryptString:b=>b.toString("utf8").replace(/^enc:/,"")};
+const store=new ConfigStore(file,safe,{warn(){}});
+store.save({backendUrl:"https://example.test",machineName:"PC"});
+store.savePendingDeviceLink({device_link_id:"dev-1",device_secret:"cfsd_abcdefghijklmnopqrstuvwxyz123456",bridge_token:"cfsb_abcdefghijklmnopqrstuvwxyz123456",user_code:"CFS-ABCD-EFGH",verification_url:"https://example.test/link",expires_at:new Date(Date.now()+600000).toISOString()});
+if(!store.publicSettings().deviceLinkPending)throw new Error("pending not public");
+const pending=store.getPendingDeviceLink();if(!pending.deviceSecret.startsWith("cfsd_")||!pending.bridgeToken.startsWith("cfsb_"))throw new Error("pending decrypt failed");
+store.completeDeviceLink();
+if(!store.publicSettings().tokenStored||store.publicSettings().deviceLinkPending)throw new Error("complete failed");
+if(!store.getToken().startsWith("cfsb_"))throw new Error("bridge token missing");
+const raw=fs.readFileSync(file,"utf8");if(raw.includes("cfsb_abcdefghijklmnopqrstuvwxyz123456")||raw.includes("cfsd_abcdefghijklmnopqrstuvwxyz123456"))throw new Error("secret stored in plaintext");
+console.log(JSON.stringify({ok:true,encrypted:true,tokenStored:store.publicSettings().tokenStored}));

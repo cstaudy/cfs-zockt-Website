@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#030711">
+<title>Creator Setup | cfs_zockt</title>
+<link rel="stylesheet" href="/assets/css/styles.css">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+</head>
+<body>
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="brand" href="/">cfs_<span>zockt</span></a>
+    <nav class="nav open" style="display:flex">
+      <a href="/pages/dashboard.html">DASHBOARD</a>
+      <a class="active" href="/pages/setup.html">SETUP</a>
+      <a href="/pages/launcher.html">LAUNCHER</a>
+      <a href="/pages/games.html">SPIELE</a>
+      <a href="/pages/nexus.html">NEXUS</a>
+      <a href="/pages/account.html">ACCOUNT</a>
+      <button data-logout>LOGOUT</button>
+    </nav>
+  </div>
+</header>
+
+<main class="container">
+<section class="beginner-hero">
+  <div class="eyebrow">CREATOR SETUP</div>
+  <h1>DEIN STREAM.<br><span>EINFACH EINRICHTEN.</span></h1>
+  <p>Für den Start brauchst du nur Theme, Widgets und dein Ziel. Alles Weitere ist unter „Erweiterte Einstellungen“ eingeklappt.</p>
+</section>
+
+<div class="grid two">
+  <section class="panel">
+    <h2>Stream Setup</h2>
+
+    <form id="setupForm" class="form-grid">
+      <div class="field">
+        <label>THEME</label>
+        <select name="theme" id="themeSelect"></select>
+      </div>
+
+      <div class="field">
+        <label>FOLLOWER-ZIEL</label>
+        <input name="follower_goal" type="number" min="1" max="10000000" value="200">
+      </div>
+
+      <div class="field full">
+        <label>WIDGETS</label>
+        <div class="feature-list" id="widgetList"></div>
+      </div>
+
+      <details class="beginner-advanced full">
+        <summary>ERWEITERTE EINSTELLUNGEN</summary>
+        <div class="beginner-advanced-body">
+          <div class="form-grid">
+            <div class="field">
+              <label>STARTMODUL</label>
+              <select name="start_module">
+                <option value="dashboard">Dashboard</option>
+                <option value="tiktok">TikTok Hub</option>
+                <option value="launcher">Launcher</option>
+                <option value="games">Interaktive Spiele</option>
+                <option value="cut_studio">Cut Studio</option>
+                <option value="nexus">NEXUS</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label>SHOW MODE</label>
+              <select name="show_mode">
+                <option value="standard">Standard</option>
+                <option value="minimal">Minimal</option>
+                <option value="game">Game Fokus</option>
+              </select>
+            </div>
+
+            <div class="field full">
+              <label>AKTIVES GAME</label>
+              <select name="active_game">
+                <option value="">Kein Game</option>
+                <option value="chat_battle">Chat Battle</option>
+                <option value="community_quiz">Community Quiz</option>
+                <option value="gift_rush">Gift Rush</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <div class="field full">
+        <button class="btn primary" type="submit">SETUP SPEICHERN</button>
+      </div>
+    </form>
+
+    <div id="message" class="notice hidden"></div>
+  </section>
+
+  <section class="panel">
+    <div class="meta">LIVE ZUSAMMENFASSUNG</div>
+    <h2 id="previewTitle">Mein Creator Setup</h2>
+
+    <div class="grid two" style="margin-top:18px">
+      <article class="card">
+        <div class="meta">PLAN</div>
+        <div class="kpi" id="previewPlan">FREE</div>
+      </article>
+
+      <article class="card">
+        <div class="meta">THEME</div>
+        <div class="kpi" id="previewTheme">CFS</div>
+      </article>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <div class="meta">AKTIVE WIDGETS</div>
+      <p id="previewWidgets">Follower-Ziel</p>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <div class="meta">START</div>
+      <p id="previewStart">Dashboard</p>
+    </div>
+
+    <div class="notice" style="margin-top:18px" id="syncInfo">
+      Setup wird geladen…
+    </div>
+  </section>
+</div>
+</main>
+
+<script src="/assets/js/app.js?v=v42-r9"></script>
+<script src="/assets/js/page-setup.js"></script>
+</body>
+</html>

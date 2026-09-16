@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#020711">
+<title>Launcher verbinden | cfs_zockt</title>
+<link rel="stylesheet" href="/assets/css/styles.css">
+<link rel="stylesheet" href="/assets/css/launcher-connect.css">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+</head>
+<body>
+<header class="site-header"><div class="container header-inner"><a class="brand" href="/">cfs_<span>zockt</span></a><nav class="nav"><a href="/pages/dashboard.html">DASHBOARD</a><a href="/pages/launcher.html">LAUNCHER</a><a href="/pages/account.html">ACCOUNT</a></nav></div></header>
+<main class="container connect-shell">
+  <section class="connect-card">
+    <span class="eyebrow">CREATOR SUITE · DEVICE LINK</span>
+    <h1>LAUNCHER<br><span>VERBINDEN.</span></h1>
+    <p>Bestätige nur einen PC, dessen Geräte-Code du gerade selbst im CFS Launcher gestartet hast.</p>
+    <div class="connect-code" id="deviceCode">–</div>
+    <div class="connect-device" id="deviceInfo"><strong>Gerät wird geprüft…</strong></div>
+    <div class="connect-account" id="accountInfo"></div>
+    <div class="connect-actions">
+      <button class="btn primary" id="confirmDevice" disabled>DIESEN PC VERBINDEN</button>
+      <a class="btn" href="/pages/launcher.html">ABBRECHEN</a>
+    </div>
+    <div class="connect-result" id="connectResult" hidden></div>
+  </section>
+</main>
+<script src="/assets/js/app.js"></script>
+<script src="/assets/js/launcher-connect.js"></script>
+</body>
+</html>

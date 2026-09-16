@@ -1,0 +1,14 @@
+import fs from "node:fs";import path from "node:path";
+const root=path.resolve(process.argv[2]||path.join(import.meta.dirname,"..")),must=(v,m)=>{if(!v)throw new Error(m)};
+const s=fs.readFileSync(path.join(root,"server.js"),"utf8"),p=fs.readFileSync(path.join(root,"lib/creator-plan-policy.js"),"utf8");
+for(const route of ["/api/plans/catalog","/api/creator/access","/api/creator/widget-studio/scenes","/api/bridge/widget-studio/session/start","/api/bridge/widget-studio/events"])must(s.includes(route),`missing ${route}`);
+must(s.includes("creator_billing_subscriptions"),"billing state table missing");
+must(s.includes("creatorAccessProfile"),"effective access helper missing");
+must(s.includes("requireCreatorFeatureAccess"),"server feature guard missing");
+must(s.includes("templateAllowed(templateKey,entitlements)"),"template enforcement missing");
+must(s.includes("max_scenes"),"scene limit missing");
+must(s.includes('requireCreatorFeatureAccess(creatorId,"live_bridge","creator")'),"live bridge enforcement missing");
+must(s.includes('requireCreatorFeatureAccess(req.creatorAccount,"auto_thanks","creator")'),"autothanks enforcement missing");
+must(p.includes("BETA_GRANTS")&&p.includes('access_source=betaActive?"plan_plus_beta":"plan"'),"beta separation missing");
+must(p.includes("max_stream_deck_buttons:8")&&p.includes("max_stream_deck_buttons:12"),"deck limits missing");
+console.log(JSON.stringify({ok:true,server_enforcement:true,billing_foundation:true,beta_separate:true}));

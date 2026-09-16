@@ -1,0 +1,6 @@
+import {createRequire} from "node:module";const require=createRequire(import.meta.url);const {buildCutJobManifest,canTransitionCutJob,sanitizeCutJobResult}=require("../lib/creator-cut-jobs.js");
+const manifest=buildCutJobManifest({id:"p1",title:"Highlight",source_name:"stream.mp4",format:"vertical",export_preset:{width:1080,height:1920,fps:30}},[{id:"c1",label:"A",in_ms:0,out_ms:1000,selected:true},{id:"c2",label:"B",in_ms:2000,out_ms:2500,selected:false}]);
+if(manifest.clips.length!==1||manifest.clips[0].clip_id!=="c1"||manifest.source_name!=="stream.mp4")throw new Error("manifest");
+if(!canTransitionCutJob("queued","claimed")||!canTransitionCutJob("claimed","processing")||!canTransitionCutJob("processing","completed")||canTransitionCutJob("completed","queued"))throw new Error("transitions");
+const result=sanitizeCutJobResult({output_name:"clip.mp4",duration_ms:1234,bytes:999,codec:"h264",note:"ok"});if(result.output_name!=="clip.mp4"||result.duration_ms!==1234)throw new Error("result");
+console.log(JSON.stringify({ok:true,manifest_clips:manifest.clips.length,transitions:true,no_media_bytes_in_manifest:true}));

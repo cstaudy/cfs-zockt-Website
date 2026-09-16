@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#030711">
+<title>System Check v2 | cfs_zockt</title>
+<style>
+:root{--bg:#030711;--panel:#091525;--line:#173657;--text:#f5f8ff;--muted:#8fa5bf;--accent:#148cff;--accent2:#27d0ff;--ok:#48dc95;--warn:#ffc75c;--danger:#ff7589}
+*{box-sizing:border-box}html{color-scheme:dark}
+body{margin:0;min-height:100vh;background:radial-gradient(circle at 50% -10%,rgba(20,140,255,.18),transparent 38%),linear-gradient(180deg,#02060d,#030711 40%,#02060d);color:var(--text);font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+a{color:inherit;text-decoration:none}.top{position:sticky;top:0;z-index:20;min-height:70px;display:flex;align-items:center;justify-content:space-between;gap:20px;padding:12px max(18px,calc((100vw - 1180px)/2));border-bottom:1px solid rgba(43,95,143,.55);background:rgba(2,7,17,.92);backdrop-filter:blur(18px)}
+.brand{font-size:24px;font-weight:1000;letter-spacing:-1px}.brand span{color:var(--accent)}.back{font-size:11px;font-weight:900;color:#9fb6d0}
+.wrap{width:min(1180px,calc(100% - 30px));margin:auto;padding:54px 0 70px}.eyebrow{color:var(--accent2);font-size:10px;font-weight:1000;letter-spacing:.18em}
+h1{margin:10px 0 12px;font-size:clamp(42px,7vw,74px);line-height:.92;letter-spacing:-3px}.intro{max-width:800px;color:var(--muted);line-height:1.65;font-size:16px}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin:24px 0 28px}button{min-height:44px;padding:0 16px;border:1px solid #27547f;border-radius:10px;background:#081727;color:#d7e8fb;font:inherit;font-size:11px;font-weight:1000;letter-spacing:.05em;cursor:pointer}
+button.primary{background:linear-gradient(135deg,#0775e9,#1298ff);border-color:#2da8ff;color:#fff}button:disabled{opacity:.55;cursor:wait}
+.summary{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}.summary-card{padding:18px;border:1px solid var(--line);border-radius:14px;background:linear-gradient(145deg,#091727,#040a12)}
+.summary-card span{display:block;color:#708daa;font-size:9px;font-weight:1000;letter-spacing:.13em}.summary-card strong{display:block;margin-top:7px;font-size:28px}
+.panel{border:1px solid var(--line);border-radius:18px;overflow:hidden;background:linear-gradient(145deg,#091727,#040a12)}
+.panel-head{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:17px 18px;border-bottom:1px solid var(--line)}.panel-head h2{margin:0;font-size:18px}.panel-head small{color:var(--muted)}
+.checks{display:grid}.check{display:grid;grid-template-columns:34px minmax(0,1fr) auto;gap:12px;align-items:center;padding:15px 18px;border-bottom:1px solid rgba(23,54,87,.7)}.check:last-child{border-bottom:0}
+.icon{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;border:1px solid #355b80;background:#081625;color:#9cb4ce;font-size:13px;font-weight:1000}
+.check.ok .icon{border-color:#2b7f5a;background:#0b2a1e;color:#8ff0be}.check.warn .icon{border-color:#8a6b28;background:#2b210c;color:#ffd879}.check.bad .icon{border-color:#8a3948;background:#2b0e15;color:#ffb4c0}
+.name{font-size:13px;font-weight:900}.detail{margin-top:3px;color:var(--muted);font-size:11px;line-height:1.45;word-break:break-word}.status{font-size:10px;font-weight:1000;letter-spacing:.06em;color:#8ba4bf;white-space:nowrap}
+.check.ok .status{color:var(--ok)}.check.warn .status{color:var(--warn)}.check.bad .status{color:var(--danger)}
+.note{margin-top:18px;padding:14px 16px;border:1px solid #27547f;border-radius:12px;background:#071729;color:#9fc9ee;font-size:12px;line-height:1.6}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+@media(max-width:760px){.summary{grid-template-columns:repeat(2,1fr)}.check{grid-template-columns:32px 1fr}.status{grid-column:2}}
+</style>
+  <meta name="robots" content="noindex,nofollow,noarchive">
+</head>
+<body>
+<header class="top"><a class="brand" href="/">cfs_<span>zockt</span></a><a class="back" href="/">← ZUR STARTSEITE</a></header>
+<main class="wrap">
+<div class="eyebrow">cfs_zockt SYSTEM CHECK V2</div>
+<h1>PRE-DEPLOY & BACKEND TEST.</h1>
+<p class="intro">Prüft die komplette Website-Struktur sowie die neuen Backend-v3-Endpunkte für Account, Creator Settings, Module, Launcher-State, NEXUS und TikTok.</p>
+
+<div class="toolbar">
+<button class="primary" id="runButton" type="button">SYSTEM CHECK STARTEN</button>
+<button id="copyButton" type="button">ERGEBNIS KOPIEREN</button>
+</div>
+
+<section class="summary">
+<div class="summary-card"><span>GESAMT</span><strong id="totalCount">0</strong></div>
+<div class="summary-card"><span>OK</span><strong id="okCount">0</strong></div>
+<div class="summary-card"><span>WARNUNG</span><strong id="warnCount">0</strong></div>
+<div class="summary-card"><span>FEHLER</span><strong id="badCount">0</strong></div>
+</section>
+
+<section class="panel">
+<div class="panel-head"><h2>Prüfungen</h2><small id="lastRun">Noch nicht gestartet</small></div>
+<div class="checks" id="checks"></div>
+</section>
+
+<div class="note">
+Ein <strong>401</strong> bei geschützten Creator-APIs bedeutet meist nur, dass keine aktive Session vorhanden ist.
+Ein <strong>403</strong> bei NEXUS/Games/Audio kann bei FREE ebenfalls korrekt sein, wenn der Server die Plan-Sperre durchsetzt.
+</div>
+</main>
+
+<script src="/assets/js/page-system-check.js"></script>
+</body>
+</html>

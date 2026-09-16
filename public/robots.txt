@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /auth/
+Disallow: /widgets/
+Disallow: /games/runtime.html
+
+Sitemap: https://cfs-zockt.de/sitemap.xml

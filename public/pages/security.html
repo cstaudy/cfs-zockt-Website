@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#020711">
+  <title>Sicherheit &amp; Schutz der Creator Suite | cfs_zockt</title>
+<link rel="stylesheet" href="/assets/css/styles.css">
+  <style>
+    .security-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+    .security-card{padding:22px;border:1px solid #173756;border-radius:16px;background:linear-gradient(145deg,#081725,#030910)}
+    .security-card h3{margin-top:6px}.security-card p{color:#8da4c1;line-height:1.65}
+    .security-card .state{display:inline-flex;padding:6px 9px;border:1px solid #23577d;border-radius:999px;color:#19c2ff;font-size:10px;font-weight:900;letter-spacing:.08em}
+    .security-note{margin-top:22px;padding:18px;border:1px solid #234b70;border-radius:14px;background:#06111d;color:#9bb2cb;line-height:1.7}
+    .security-flow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:18px}
+    .security-flow div{padding:16px;border:1px solid #173756;border-radius:12px;background:#071321;text-align:center}
+    .security-flow b{display:block;color:#19c2ff;margin-bottom:6px}
+    .security-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:0 0 22px}
+    .security-summary div{padding:14px 16px;border:1px solid #173756;border-radius:13px;background:#06111d}
+    .security-summary strong,.security-summary small{display:block}.security-summary strong{color:#fff;font-size:12px}.security-summary small{margin-top:4px;color:#8da4c1;font-size:10px;line-height:1.45}
+    .security-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+    .security-card .state.active{border-color:#226b4a;color:#43d68f;background:rgba(30,125,83,.08)}
+    .security-card .state.partial{border-color:#7b6326;color:#efc65a;background:rgba(139,103,18,.08)}
+    @media(max-width:820px){.security-grid,.security-flow,.security-summary{grid-template-columns:1fr}}
+  </style>
+  <!-- SEO · WEBSITE PASS -->
+  <meta name="description" content="So schützt cfs_zockt Accounts, Sessions und sensible Creator-Daten mit serverseitigen Prüfungen und technischen Sicherheitsmaßnahmen.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <link rel="canonical" href="https://cfs-zockt.de/pages/security.html">
+  <link rel="manifest" href="/site.webmanifest">
+  <link rel="icon" href="/assets/img/favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="600x600" href="/assets/img/app-icon.png">
+  <link rel="apple-touch-icon" href="/assets/img/apple-touch-icon.png">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="cfs_zockt">
+  <meta property="og:locale" content="de_AT">
+  <meta property="og:title" content="Sicherheit &amp; Schutz der Creator Suite | cfs_zockt">
+  <meta property="og:description" content="So schützt cfs_zockt Accounts, Sessions und sensible Creator-Daten mit serverseitigen Prüfungen und technischen Sicherheitsmaßnahmen.">
+  <meta property="og:url" content="https://cfs-zockt.de/pages/security.html">
+  <meta property="og:image" content="https://cfs-zockt.de/assets/img/social-preview.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="cfs_zockt – Gaming, Community und Creator Suite">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Sicherheit &amp; Schutz der Creator Suite | cfs_zockt">
+  <meta name="twitter:description" content="So schützt cfs_zockt Accounts, Sessions und sensible Creator-Daten mit serverseitigen Prüfungen und technischen Sicherheitsmaßnahmen.">
+  <meta name="twitter:image" content="https://cfs-zockt.de/assets/img/social-preview.jpg">
+  <!-- /SEO · WEBSITE PASS -->
+</head>
+<body>
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="brand" href="/">cfs_<span>zockt</span></a>
+    <button class="mobile-toggle" data-mobile-toggle type="button" aria-label="Menü öffnen">MENÜ</button>
+    <nav class="nav" data-nav>
+      <a href="/">HOME</a>
+      <a class="active" href="/pages/security.html">SICHERHEIT</a>
+      <a href="/pages/datenschutz.html">DATENSCHUTZ</a>
+      <a href="/pages/support.html">SUPPORT</a>
+      <a href="/pages/login.html">ANMELDEN</a>
+      <a class="cta" href="/pages/login.html#regForm">KOSTENLOS STARTEN</a>
+    </nav>
+  </div>
+</header>
+
+<main class="container">
+  <section class="page-hero">
+    <div class="eyebrow">SECURITY & PRIVACY</div>
+    <h1>SICHERHEIT OHNE SHOW.</h1>
+    <p>cfs_zockt setzt auf mehrere Schutzschichten statt auf ein einzelnes „Security“-Label. Hier steht konkret, was bereits aktiv ist, was nur im Produktivbetrieb greift und was noch nicht als fertig behauptet wird.</p>
+  </section>
+
+  <section class="security-summary" aria-label="Sicherheitsgrundsätze">
+    <div><strong>Serverseitige Authentisierung</strong><small>Account- und Berechtigungsprüfungen passieren im Backend.</small></div>
+    <div><strong>Keine Klartext-Passwörter</strong><small>Passwörter werden mit versioniertem scrypt + individuellem Salt gehasht.</small></div>
+    <div><strong>Geschützte Schreibzugriffe</strong><small>Origin, Fetch Metadata und CSRF-Token werden geprüft.</small></div>
+    <div><strong>Optionale starke Anmeldung</strong><small>Passkeys/WebAuthn oder TOTP + einmalige Recovery-Codes ergänzen das Passwort.</small></div>
+  </section>
+
+  <section class="security-grid">
+    <article class="security-card">
+      <span class="state active">AKTIV</span>
+      <h3>Passwort-Hashing</h3>
+      <p>Creator-Passwörter werden serverseitig mit scrypt und einem zufälligen individuellen Salt verarbeitet. Neue Hashes verwenden eine stärkere, versionierte scrypt-Konfiguration; ältere Hashes werden nach erfolgreicher Anmeldung automatisch migriert. Neue Passwörter benötigen mindestens 15 Zeichen und besonders vorhersehbare Werte werden blockiert.</p>
+    </article>
+
+    <article class="security-card">
+      <span class="state active">AKTIV</span>
+      <h3>Host-gebundene Session-Cookies</h3>
+      <p>Produktive Creator-Sessions verwenden das <code>__Host-</code>-Präfix, Secure, HttpOnly und einen festen Root-Pfad. Das reduziert Cookie-Tossing- und Subdomain-Risiken.</p>
+    </article>
+
+    <article class="security-card">
+      <span class="state active">AKTIV</span>
+      <h3>Login- & Registrierungs-Schutz</h3>
+      <p>Anmelde- und Registrierungsversuche werden begrenzt. Fehlermeldungen verraten bewusst nicht, ob eine konkrete E-Mail-Adresse als Account existiert.</p>
+    </article>
+
+    <article class="security-card">
+      <span class="state active">AKTIV</span>
+      <h3>Sicherer Passwortwechsel</h3>
+      <p>Ein Passwortwechsel erfordert eine aktive Session und die erneute Eingabe des aktuellen Passworts. Nach erfolgreicher Änderung werden bestehende Login-Sitzungen widerrufen und eine neue Sitzung für den aktuellen Browser ausgegeben.</p>
+    </article>
+
+    <article class="security-card">
+      <span class="state active">OPTIONAL · AKTIVIERBAR</span>
+      <h3>Passkeys / WebAuthn</h3>
+      <p>Creator können optional einen Passkey registrieren. Die Anmeldung nutzt WebAuthn und ist an die konfigurierte cfs_zockt-Domain gebunden. Der private Schlüssel bleibt im Authenticator bzw. auf dem Gerät; der Server speichert nur Credential-ID, öffentlichen Schlüssel, Signaturzähler und minimale Authenticator-Metadaten. User Verification ist für Registrierung und Anmeldung erforderlich. Passkeys bieten damit eine phishing-resistentere Anmeldestufe als TOTP.</p>
+    </article>
+
+    <article class="security-card">
+      <span class="state active">OPTIONAL · AKTIVIERBAR</span>
+      <h3>Zwei-Faktor-Schutz mit TOTP</h3>
+      <p>Creator können zusätzlich zum Passwort einen zeitbasierten 6-stelligen Authenticator-Code aktivieren. Das TOTP-Secret wird serverseitig verschlüsselt gespeichert; ein bereits akzeptierter Zeitschritt wird nicht erneut angenommen. Recovery-Codes sind Einmalcodes und werden nur gehasht persistiert. TOTP bleibt eine zusätzliche Schutzschicht und wird nicht als phishing-resistent dargestellt.</p>
+    </article>
+
+    <article class="security-card">
+      <span class="state active">AKTIV</span>
+      <h3>Session-Sicherheit</h3>
+      <p>Creator-Sessions laufen über serverseitig verwaltete Session-Tokens. Im Produktivbetrieb werden Session-Cookies mit HttpOnly und Secure gesetzt; SameSite begrenzt zusätzliche Cross-Site-Risiken.</p>
+    </article>
+
+    <article class="security-card">
+      <span class="state active">AKTIV</span>
+      <h3>CSRF- & Origin-Schutz</h3>
+      <p>Zustandsändernde Browser-Anfragen werden über exakte Origin-/Referer-Prüfungen, Fetch Metadata und einen signierten, sessiongebundenen CSRF-Token abgesichert.</p>
+    </article>
+
+    <article class="security-card">
+      <span class="state active">AKTIV</span>
+      <h3>Browser-Schutzschichten</h3>
+      <p>Die Website setzt unter anderem Content-Security-Policy, Frame-Schutz, MIME-Schutz, Referrer Policy, Permissions Policy und weitere Security Header ein.</p>
+    </article>
+
+    <article class="security-card">
+      <span class="state active">AKTIV</span>
+      <h3>Geheime Schlüssel serverseitig</h3>
+      <p>TikTok-Secrets, Access-/Refresh-Tokens und andere vertrauliche Zugangsdaten werden nicht als öffentliche Konfiguration in Browser-JavaScript ausgeliefert.</p>
+    </article>
+
+    <article class="security-card">
+      <span class="state active">AKTIV</span>
+      <h3>Review-Missbrauchsschutz</h3>
+      <p>Öffentliche Rezensionen besitzen Rate Limits, Duplikat-/Submitter-Schutz und Moderationsstatus. Für den Missbrauchsschutz wird keine rohe IP-Adresse als Review-Datensatz gespeichert.</p>
+    </article>
+
+    <article class="security-card">
+      <span class="state active">AKTIV</span>
+      <h3>Privater Security-Meldeweg</h3>
+      <p>Sicherheits-, Datenschutz- und Technikprobleme können über einen nicht-öffentlichen Meldeweg eingereicht werden. Der Missbrauchsschutz speichert auch dort keine rohe IP-Adresse als Meldungsdatensatz.</p>
+    </article>
+
+    <article class="security-card">
+      <span class="state active">AKTIV</span>
+      <h3>Kontrolle über Sessions & Daten</h3>
+      <p>Creator können einzelne Sitzungen oder alle Geräte abmelden, einen bereinigten JSON-Datenexport erstellen, TikTok trennen und das Creator-Konto nach erneuter Passwortprüfung dauerhaft löschen.</p>
+    </article>
+
+    <article class="security-card">
+      <span class="state active">AKTIV</span>
+      <h3>Login-Warnungen & Anomalie-Signale</h3>
+      <p>Erfolgreiche Sitzungen zeigen ihre Anmeldemethode im Account. Wird zuerst das korrekte Passwort verwendet und scheitert danach TOTP, Recovery-Code oder Passkey, wird das als Sicherheitsereignis gespeichert. Zusätzlich ergänzt ein persistenter, kontoweiter Passwort-Throttle die IP-/Request-Limits über Server-Neustarts und mehrere Instanzen hinweg. Ist der Mail-Relay aktiv, werden wichtige Warnungen gebündelt versendet – ohne Standorttracking oder Browser-Fingerprinting.</p>
+    </article>
+
+    <article class="security-card">
+      <span class="state active">AKTIV</span>
+      <h3>Admin-Step-up & Audit</h3>
+      <p>Privilegierte Admin-Schreibaktionen benötigen zusätzlich zur angemeldeten Admin-Session eine frische Passwortbestätigung. Die Freigabe ist kurzlebig und an genau diese Session gebunden. Änderungen werden intern ohne Request-Body, rohe IP oder User-Agent als minimales Admin-Audit protokolliert. Neue Audit-Einträge werden zusätzlich HMAC-verkettet, damit nachträgliche Änderungen oder Lücken innerhalb der aufbewahrten Kette erkennbar werden.</p>
+    </article>
+
+    <article class="security-card">
+      <span class="state active">AKTIV</span>
+      <h3>CSP-Verstoß-Telemetrie</h3>
+      <p>Die erzwungene Content-Security-Policy meldet Browser-Verstöße an einen eigenen Same-Origin-Endpunkt. Gespeichert werden nur normalisierte Muster: keine rohe IP, kein User-Agent, keine Query-Strings und keine vollständigen tokenartigen Pfadsegmente. Admins können die aggregierten Muster intern prüfen.</p>
+    </article>
+
+    <article class="security-card">
+      <span class="state active">AKTIV</span>
+      <h3>Fehlerseiten ohne interne Details</h3>
+      <p>Unbekannte Seiten und interne Fehler landen auf eigenen noindex-Fehlerseiten. API-Fehler bleiben generisch und erhalten eine serverseitig erzeugte Request-Referenz; Stacktraces oder interne Secrets werden nicht an Besucher ausgegeben.</p>
+    </article>
+
+    <article class="security-card">
+      <span class="state active">AKTIV</span>
+      <h3>Incident- und Wartungsmodus</h3>
+      <p>Bei Wartung oder einem Sicherheitsvorfall können riskante Account-, Creator-, Review- und Billing-Schreibwege zentral pausiert werden, während die öffentliche Website, der knappe Systemstatus, der private Security-Support und der Admin-Zugang erreichbar bleiben. Ein Security Lockdown kann optional gleichzeitig andere Login-Sitzungen widerrufen.</p>
+    </article>
+
+    <article class="security-card">
+      <span class="state partial">UNTERBAU AKTIV · MAIL-RELAY OFFEN</span>
+      <h3>E-Mail-Verifizierung & Recovery</h3>
+      <p>Bestätigungs- und Recovery-Tokens werden kryptografisch zufällig erzeugt, nur gehasht gespeichert, zeitlich begrenzt und einmal verwendet. Links tragen den Token im URL-Fragment, damit er nicht schon beim ersten Seitenaufruf an den Server gesendet wird. Der eigentliche Mailversand bleibt deaktiviert, bis ein signierter HTTPS-Mail-Relay real konfiguriert wurde.</p>
+    </article>
+  </section>
+
+  <section class="section">
+    <div class="section-head">
+      <div class="eyebrow">SCHREIBZUGRIFF IM BROWSER</div>
+      <h2>MEHRERE PRÜFUNGEN STATT NUR EINER.</h2>
+      <p>Eine angemeldete Session allein reicht für kritische Browseraktionen nicht aus.</p>
+    </div>
+    <div class="security-flow">
+      <div><b>1</b>Session wird geprüft</div>
+      <div><b>2</b>Origin / Fetch Metadata wird geprüft</div>
+      <div><b>3</b>CSRF-Token wird geprüft</div>
+      <div><b>4</b>Berechtigung entscheidet über die Aktion</div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="security-note">
+      <strong>Standardisierter Vulnerability-Disclosure-Einstieg:</strong> Unter <a href="/.well-known/security.txt">/.well-known/security.txt</a> veröffentlicht cfs_zockt den bevorzugten privaten Kontakt- und Policy-Pfad für Sicherheitsmeldungen. Der Eintrag enthält keine geheimen Kontaktdaten und verweist auf den privaten Support-Weg.
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="security-note">
+      <strong>Was wir bewusst nicht versprechen:</strong> Kein Onlinedienst kann seriös garantieren, zu 100 % unangreifbar zu sein. Auch „HTTPS“ allein macht eine Anwendung nicht automatisch sicher. cfs_zockt setzt deshalb auf mehrere Schutzschichten, kleine Berechtigungsflächen, gezielte Tests und transparente Hinweise auf noch offene Punkte.<br><br><strong>Fail-closed in Produktion:</strong> Token-Verschlüsselung, CSRF-Signierung sowie getrennte HMAC-Schlüssel für öffentliche Reviews und Support sowie ein eigenes Signing-Secret für Admin-Step-up müssen als eigene Produktions-Secrets vorhanden sein; fehlen sie, startet das Backend nicht.
+      <div class="security-actions"><a class="btn primary" href="/pages/support.html#support-report">SICHERHEITSPROBLEM PRIVAT MELDEN</a><a class="btn" href="/pages/login.html#regForm">KOSTENLOS STARTEN</a><a class="btn" href="/pages/datenschutz.html">DATENSCHUTZ</a></div>
+    </div>
+  </section>
+</main>
+
+<footer class="footer"><div class="container footer-row"><div>© cfs_zockt Creator Suite</div><div><a href="/pages/impressum.html">Impressum</a> · <a href="/pages/datenschutz.html">Datenschutz</a> · <a href="/pages/nutzungsbedingungen.html">Nutzungsbedingungen</a></div></div></footer>
+<script src="/assets/js/app.js"></script>
+</body>
+</html>

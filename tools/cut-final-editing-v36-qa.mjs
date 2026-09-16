@@ -1,0 +1,14 @@
+import fs from "node:fs";import path from "node:path";
+const root=path.resolve(process.argv[2]||path.join(import.meta.dirname,"..")),must=(v,m)=>{if(!v)throw new Error(m)};
+const model=fs.readFileSync(path.join(root,"lib/creator-cut-studio.js"),"utf8"),jobs=fs.readFileSync(path.join(root,"lib/creator-cut-jobs.js"),"utf8"),html=fs.readFileSync(path.join(root,"public/pages/cut-studio.html"),"utf8"),ui=fs.readFileSync(path.join(root,"public/assets/js/cut-studio.js"),"utf8"),engine=fs.readFileSync(path.join(root,"launcher/src/cut-media-engine.js"),"utf8"),store=fs.readFileSync(path.join(root,"launcher/src/media-source-store.js"),"utf8"),main=fs.readFileSync(path.join(root,"launcher/main.js"),"utf8"),preload=fs.readFileSync(path.join(root,"launcher/preload.js"),"utf8"),renderer=fs.readFileSync(path.join(root,"launcher/renderer/app.js"),"utf8");
+must(model.includes('"bezier"')&&model.includes("sanitizeExtraAudioTracks"),"model bezier/tracks");
+must(jobs.includes("schema:7")&&jobs.includes("music_tracks")&&jobs.includes("voice_tracks")&&jobs.includes("bezier_y1"),"manifest7");
+for(const id of ["cutMusicTrackList","cutVoiceTrackList","addCutMusicTrack","addCutVoiceTrack"])must(html.includes(`id="${id}"`),id);
+must(ui.includes("CUBIC BEZIER")&&ui.includes("bezier_y1")&&ui.includes('readExtraTracks("music")')&&ui.includes('readExtraTracks("voice")'),"website editor");
+must(engine.includes("analyzeAudio")&&engine.includes("showwavespic")&&engine.includes("musicTrackSources")&&engine.includes("voiceTrackSources")&&engine.includes("musicbus"),"engine");
+must(store.includes("schema:4")&&store.includes("musicTracks")&&store.includes("voiceTracks")&&store.includes("analysis"),"source store");
+must(main.includes("launcher:cut-music-track-select")&&main.includes("launcher:cut-voice-track-select")&&main.includes("analyzeSelectedAudio"),"launcher IPC");
+must(preload.includes("selectCutMusicTrack")&&preload.includes("selectCutVoiceTrack"),"preload");
+must(renderer.includes("tools-waveform")&&renderer.includes("musicTrackMap")&&renderer.includes("voiceTrackMap"),"renderer");
+must(!main.includes("uploadAudio")&&!fs.readFileSync(path.join(root,"server.js"),"utf8").includes("audio-upload"),"local only");
+console.log(JSON.stringify({ok:true,schema:7,multi_music:true,multi_voice:true,bezier:true,waveform_analysis:true,local_only:true}));

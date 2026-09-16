@@ -1,0 +1,10 @@
+import fs from "node:fs";import path from "node:path";import {createRequire} from "node:module";
+const require=createRequire(import.meta.url),{runProductionCanary}=require("../lib/production-canary.js");
+const args=process.argv.slice(2),value=name=>{const i=args.indexOf(name);return i>=0?args[i+1]||"":""},has=name=>args.includes(name);
+const url=value("--url")||process.env.CFS_PRODUCTION_URL||"",expected=value("--expected-version")||process.env.CFS_EXPECTED_BACKEND_VERSION||"",mode=value("--mode")||"canary",requireBilling=has("--require-billing")||String(process.env.CFS_CANARY_REQUIRE_BILLING||"").toLowerCase()==="true";
+const report=await runProductionCanary({baseUrl:url,expectedVersion:expected,requireBilling,timeoutMs:Number(value("--timeout-ms")||15000)});
+const out=value("--out")||path.resolve("reports",`production-${mode}-evidence.json`);
+fs.mkdirSync(path.dirname(out),{recursive:true});
+fs.writeFileSync(out,JSON.stringify({...report,mode},null,2),"utf8");
+console.log(JSON.stringify({ok:report.ok,mode,target:report.target,version:report.observed_version,passed:report.passed,total:report.total,out}));
+if(!report.ok)process.exit(1);

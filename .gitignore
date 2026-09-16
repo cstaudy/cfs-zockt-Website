@@ -1,0 +1,60 @@
+# Dependencies
+node_modules/
+launcher/node_modules/
+
+# Local environment / secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.p12
+*.pfx
+*.key
+*.crt
+*.cer
+
+# Generated installers / packages
+*.zip
+*.exe
+*.msi
+*.appx
+*.dmg
+
+# Electron / build output
+dist/
+launcher/dist/
+out/
+build-output/
+
+# Database backups / recovery artifacts
+backups/
+*.cfsbackup
+backups/*.manifest.json
+reports/database-recovery-evidence.json
+
+# Logs / temp / local data
+*.log
+*.tmp
+*.bak
+.DS_Store
+Thumbs.db
+coverage/
+.nyc_output/
+.cache/
+
+# Local CFS runtime state
+data/
+storage/
+uploads/
+launcher/user-data/
+launcher/local-data/
+
+# IDE
+.vscode/
+.idea/
+
+# Application release / recovery evidence
+reports/application-recovery-*.json
+reports/application-recovery-evidence.json
+reports/release-state-snapshot.json
+reports/recovery-target-snapshot.json

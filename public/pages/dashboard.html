@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#030711">
+<title>Dashboard | cfs_zockt</title>
+<link rel="stylesheet" href="/assets/css/styles.css">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+</head>
+<body>
+<header class="site-header"><div class="container header-inner">
+<a class="brand" href="/">cfs_<span>zockt</span></a>
+<button class="mobile-toggle" data-mobile-toggle type="button">MENÜ</button>
+<nav class="nav" data-nav>
+<a class="active" href="/pages/dashboard.html">DASHBOARD</a>
+<a href="/pages/widget-studio.html">WIDGETS</a>
+<a href="/pages/cut-studio.html">CUT STUDIO</a>
+<a href="/pages/launcher.html">LAUNCHER</a>
+<a href="/pages/account.html">ACCOUNT</a>
+<a id="adminCreatorNav" href="/pages/admin-creators.html" hidden>ADMIN</a>
+<button data-logout>LOGOUT</button>
+</nav></div></header>
+
+<main class="container">
+<section class="beginner-hero">
+  <div class="eyebrow">CREATOR SUITE · START</div>
+  <h1>DEIN CREATOR<br><span>COCKPIT.</span></h1>
+  <p>Ein Blick reicht: Was ist verbunden, was ist bereit und was solltest du als Nächstes machen?</p>
+  <div class="access-badges" id="accessBadges"></div>
+</section>
+
+<section class="beginner-status" aria-label="Stream Status">
+  <article class="beginner-status-item ready" id="statusAccount"><span>ACCOUNT</span><strong>VERBUNDEN</strong><small id="statusAccountMeta">Creator Account aktiv</small></article>
+  <article class="beginner-status-item wait" id="statusTikTok"><span>TIKTOK</span><strong>PRÜFEN</strong><small id="statusTikTokMeta">Status wird geladen</small></article>
+  <article class="beginner-status-item wait" id="statusLauncher"><span>LAUNCHER</span><strong>PRÜFEN</strong><small id="statusLauncherMeta">Status wird geladen</small></article>
+  <article class="beginner-status-item wait" id="statusLive"><span>LIVE ZUGRIFF</span><strong>PRÜFEN</strong><small id="statusLiveMeta">Berechtigung wird geladen</small></article>
+  <article class="beginner-status-item wait" id="statusObs"><span>WIDGET / OBS</span><strong>PRÜFEN</strong><small id="statusObsMeta">Widgets werden geladen</small></article>
+</section>
+
+<section class="beginner-system-summary" id="systemSummary">
+  <div class="beginner-system-signal wait" id="systemSignal"><i></i><span>STATUS</span></div>
+  <div class="beginner-system-copy">
+    <small>DEIN SYSTEM AUF EINEN BLICK</small>
+    <strong id="systemHeadline">Verbindungen werden geprüft …</strong>
+    <p id="systemNext">Wir schauen nach Account, TikTok, Launcher und veröffentlichten Widgets.</p>
+  </div>
+  <button class="btn" id="refreshStatus" type="button">STATUS NEU LADEN</button>
+</section>
+
+<div id="setupWarning" class="notice warn hidden" style="margin-bottom:18px">
+  Dein Stream-Setup ist noch nicht gespeichert. <a href="/pages/setup.html" style="font-weight:900;text-decoration:underline">Jetzt einrichten →</a>
+</div>
+
+<section class="beginner-actions">
+  <article class="beginner-action">
+    <span class="step">01 · START</span>
+    <h3>Grundsetup prüfen</h3>
+    <p>Einmal festlegen, wie dein Creator-Setup arbeiten soll. Danach musst du hier nur selten wieder rein.</p>
+    <a class="btn primary" href="/pages/setup.html">SETUP ÖFFNEN</a>
+  </article>
+  <article class="beginner-action">
+    <span class="step">02 · WIDGETS</span>
+    <h3>Widget erstellen</h3>
+    <p>Widget auswählen, gestalten, veröffentlichen und anschließend die OBS-URL kopieren.</p>
+    <a class="btn primary" href="/pages/widget-studio.html">WIDGET STUDIO</a>
+  </article>
+  <article class="beginner-action">
+    <span class="step">03 · VERBINDEN</span>
+    <h3>Launcher & Sync</h3>
+    <p>Prüfen, ob dein PC verbunden ist und Widgets, LIVE-Daten und lokale Tools synchron laufen.</p>
+    <a class="btn primary" href="/pages/launcher.html">LAUNCHER ÖFFNEN</a>
+  </article>
+</section>
+
+<section class="section" style="padding-top:10px">
+  <div class="section-head">
+    <div><div class="eyebrow">DEINE TOOLS</div><h2>EINFACH ÖFFNEN.</h2></div>
+    <p>Nur die wichtigsten Creator-Tools stehen direkt hier. Gesperrte oder technische Bereiche findest du unter „Erweitert“.</p>
+  </div>
+  <div id="simpleToolGrid" class="beginner-tools"></div>
+
+  <details class="beginner-advanced">
+    <summary>ERWEITERTE TOOLS & BERECHTIGUNGEN</summary>
+    <div class="beginner-advanced-body">
+      <div id="moduleGrid" class="tool-grid"></div>
+    </div>
+  </details>
+</section>
+</main>
+
+<script src="/assets/js/app.js?v=v42-r9"></script>
+<script src="/assets/js/page-dashboard.js"></script>
+</body>
+</html>

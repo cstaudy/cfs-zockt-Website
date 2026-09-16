@@ -1,0 +1,24 @@
+{
+  "schema": 1,
+  "service": "cfs_zockt Creator Suite",
+  "database": "PostgreSQL",
+  "production": {
+    "preferred_recovery": "provider_pitr",
+    "provider": "Render",
+    "require_point_in_time_recovery_if_plan_supports_it": true,
+    "require_pre_migration_backup": true
+  },
+  "logical_backup": {
+    "format": "postgres-custom",
+    "encryption": "aes-256-gcm",
+    "require_offsite_copy": true,
+    "recommended_interval_hours": 24,
+    "recommended_retention_days": 30
+  },
+  "restore": {
+    "require_separate_target": true,
+    "require_empty_target_for_logical_restore": true,
+    "never_overwrite_primary_by_default": true,
+    "max_drill_age_days": 90
+  }
+}

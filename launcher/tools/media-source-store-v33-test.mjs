@@ -1,0 +1,13 @@
+import fs from "node:fs";import os from "node:os";import path from "node:path";import {createRequire} from "node:module";
+const require=createRequire(import.meta.url),{MediaSourceStore}=require("../src/media-source-store.js");
+const dir=fs.mkdtempSync(path.join(os.tmpdir(),"cfs-media-v33-")),db=path.join(dir,"sources.json"),video=path.join(dir,"stream.mp4"),music=path.join(dir,"beat.mp3");
+fs.writeFileSync(video,"video");fs.writeFileSync(music,"music");
+fs.writeFileSync(db,JSON.stringify({schema:1,sources:{"p1":{projectId:"p1",sourceName:"old.mp4",filePath:video,fileName:"stream.mp4",updatedAt:new Date().toISOString()}}}));
+let store=new MediaSourceStore(db);
+if(store.snapshot().schema<2||!store.get("p1")?.exists)throw new Error("schema1 migration");
+const m=store.setMusic("p1",{sourceName:"cloud-beat.mp3",filePath:music});
+if(!m.exists||m.fileName!=="beat.mp3"||m.sourceName!=="cloud-beat.mp3")throw new Error("music set");
+store=new MediaSourceStore(db);
+if(!store.getMusic("p1")?.exists||!store.get("p1")?.exists)throw new Error("persistence");
+store.removeMusic("p1");if(store.getMusic("p1"))throw new Error("music remove");
+console.log(JSON.stringify({ok:true,schema:store.snapshot().schema,video:true,music:true,backward_compatible:true}));

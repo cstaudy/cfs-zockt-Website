@@ -1,0 +1,12 @@
+import {createRequire} from "node:module";
+const require=createRequire(import.meta.url);
+const {productionReleaseReadiness}=require("../lib/production-release-readiness.js");
+const billing={enabled:true,webhook_ready:true,plans:{creator:{checkout_available:true},pro:{checkout_available:true}}};
+const blocked=productionReleaseReadiness({billing,appBaseUrl:"https://cfs-zockt.de",releaseCandidate:{ready:true},flags:{}});
+if(blocked.ready||blocked.config_ready!==true||blocked.external_ready!==false||!blocked.blocking.includes("windows_build"))throw new Error("blocked external gates");
+const flags={windows_build_verified:true,code_signing_verified:true,clean_install_verified:true,updater_e2e_verified:true,obs_field_verified:true,tiktok_live_field_verified:true,billing_live_verified:true,two_creators_verified:true,canary_verified:true,rollback_verified:true};
+const ready=productionReleaseReadiness({billing,appBaseUrl:"https://cfs-zockt.de",releaseCandidate:{ready:true},flags});
+if(!ready.ready||ready.score!==100||ready.passed!==ready.total)throw new Error("production ready");
+const noBilling=productionReleaseReadiness({billing:{enabled:false,webhook_ready:false,plans:{}},appBaseUrl:"http://localhost",releaseCandidate:{ready:false},flags});
+if(noBilling.config_ready||!noBilling.blocking.includes("billing_provider")||!noBilling.blocking.includes("app_https"))throw new Error("config blocks");
+console.log(JSON.stringify({ok:true,total:ready.total,default_external_blocked:true,all_verified_ready:true}));

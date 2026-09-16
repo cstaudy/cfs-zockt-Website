@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#030711">
+<title>Login | cfs_zockt</title>
+  <link rel="stylesheet" href="/assets/css/styles.css">
+  <style>
+    .auth-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}.security-note{margin-top:16px;padding:14px;border:1px solid #173756;border-radius:12px;background:#06111d;color:#8da4c1;font-size:14px;line-height:1.55}.password-rules{margin:8px 0 0;padding-left:18px;color:#8da4c1;font-size:13px;line-height:1.6}.password-rules li.ok{color:#43d68f}.submit-row{display:flex;align-items:center;gap:10px}.submit-row .btn{min-width:160px}.small-status{font-size:12px;color:#8da4c1}.auth-badge{display:inline-flex;align-items:center;gap:7px;padding:7px 10px;border:1px solid #173756;border-radius:999px;background:#06111d;color:#9ab4ce;font-size:11px;font-weight:800}.auth-badge::before{content:"●";color:#43d68f}.source-context{margin:0 0 18px;padding:14px 16px;border:1px solid #285d9b;border-radius:14px;background:linear-gradient(135deg,#071b34,#04101f);color:#a9c0d9;line-height:1.55}.source-context strong{display:block;margin-bottom:4px;color:#fff}.source-context a{color:#74abff;font-weight:900}.source-context[hidden]{display:none!important}.auth-trust-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:0 0 18px}.auth-trust-row div{padding:12px 13px;border:1px solid #173756;border-radius:12px;background:#06111d}.auth-trust-row strong,.auth-trust-row small{display:block}.auth-trust-row strong{color:#eef7ff;font-size:11px}.auth-trust-row small{margin-top:4px;color:#8da4c1;font-size:10px;line-height:1.45}.mfa-step{margin-top:14px;padding:14px;border:1px solid #285d9b;border-radius:12px;background:#06111d}.mfa-step[hidden]{display:none!important}.mfa-step p{margin:0 0 12px;color:#9ab4ce;font-size:13px;line-height:1.55}.auth-links{display:flex;gap:12px;flex-wrap:wrap;margin-top:12px;font-size:12px}.auth-links a{color:#74abff;font-weight:800}.signup-facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:10px 0 14px}.signup-facts div{padding:10px;border:1px solid #173756;border-radius:10px;background:#04101c}.signup-facts strong,.signup-facts small{display:block}.signup-facts strong{color:#eef7ff;font-size:9px}.signup-facts small{margin-top:4px;color:#7894b1;font-size:9px;line-height:1.45}@media(max-width:850px){.auth-grid,.auth-trust-row,.signup-facts{grid-template-columns:1fr}}
+  </style>
+  <meta name="robots" content="noindex,nofollow,noarchive">
+</head>
+<body>
+<header class="site-header"><div class="container header-inner">
+  <a class="brand" href="/">cfs_<span>zockt</span></a>
+  <button class="mobile-toggle" data-mobile-toggle>MENÜ</button>
+  <nav class="nav" data-nav>
+    <a href="/">HOME</a><a href="/pages/dashboard.html">DASHBOARD</a><a href="/pages/launcher.html">LAUNCHER</a><a href="/pages/games.html">SPIELE</a><a href="/pages/nexus.html">NEXUS</a><a href="/pages/plans.html">PLÄNE</a><a class="cta" href="/pages/account.html">ACCOUNT</a>
+  </nav>
+</div></header>
+
+<main class="container">
+<section class="page-hero">
+  <div class="eyebrow">CREATOR ACCOUNT</div>
+  <h1>SICHER ANMELDEN.</h1>
+  <p>Dein Creator-Konto ist die Basis für Dashboard, Setup und später deine persönlichen Streaming-Tools. Zugangsdaten gehören nur dir.</p>
+  <span class="auth-badge">Serverseitige Prüfung · sichere Session im Produktivbetrieb</span>
+</section>
+
+<div class="source-context" data-login-source-context hidden>
+  <strong>Du kommst von TikTok?</strong>
+  <span>Hier kannst du direkt deinen Creator Account anlegen. Wenn du vorher noch einmal schauen möchtest, <a href="/#creator-preview">geht es hier zurück zur öffentlichen Vorschau.</a></span>
+</div>
+
+<div class="auth-trust-row" aria-label="Account-Sicherheitsmaßnahmen">
+  <div><strong>Passwörter mit scrypt</strong><small>Serverseitig gehasht und mit individuellem Salt verarbeitet.</small></div>
+  <div><strong>Login begrenzt</strong><small>IP-/Request-Limits plus ein persistenter kontoweiter Fehlversuchs-Throttle erschweren automatisierte Anmeldeversuche.</small></div>
+  <div><strong>Browser-Schutz + optional 2FA</strong><small>Origin-/CSRF-Prüfungen schützen Schreibzugriffe; TOTP plus Recovery-Codes können zusätzlich aktiviert werden.</small></div>
+</div>
+
+<div class="auth-grid">
+<section class="panel">
+  <h2>Anmelden</h2>
+  <p class="muted">Mit deinem bestehenden Creator-Konto.</p>
+  <form id="loginForm" class="form-grid" novalidate>
+    <div class="field full"><label for="loginEmail">E-MAIL</label><input id="loginEmail" name="email" type="email" required maxlength="254" autocomplete="email" inputmode="email" spellcheck="false"></div>
+    <div class="field full"><label for="loginPassword">PASSWORT</label><input id="loginPassword" name="password" type="password" required minlength="8" maxlength="128" autocomplete="current-password"></div>
+    <div class="field full submit-row"><button id="loginButton" class="btn primary" type="submit">ANMELDEN</button><span id="loginBusy" class="small-status" aria-live="polite"></span></div>
+  </form>
+  <form id="mfaLoginForm" class="mfa-step" hidden autocomplete="one-time-code">
+    <strong>ZWEITER FAKTOR</strong>
+    <p>Gib den aktuellen 6-stelligen Code deiner Authenticator-App ein. Falls du keinen Zugriff darauf hast, kannst du stattdessen einen unbenutzten Recovery-Code verwenden.</p>
+    <div id="mfaTotpField" class="field full"><label for="mfaCode">AUTHENTICATOR-CODE</label><input id="mfaCode" name="code" type="text" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code"></div>
+    <div id="mfaRecoveryField" class="field full"><label for="mfaRecoveryCode">ODER RECOVERY-CODE</label><input id="mfaRecoveryCode" name="recovery_code" type="text" maxlength="20" autocomplete="off" spellcheck="false"></div>
+    <div class="field full submit-row"><button id="mfaLoginButton" class="btn primary" type="submit">CODE PRÜFEN</button><button id="passkeyLoginButton" class="btn" type="button" hidden>MIT PASSKEY BESTÄTIGEN</button><button id="mfaRestartButton" class="btn ghost" type="button">NEU ANMELDEN</button><span id="mfaBusy" class="small-status" aria-live="polite"></span></div>
+  </form>
+  <div id="loginMsg" class="notice hidden" role="status" aria-live="polite"></div>
+  <div class="auth-links"><a href="/pages/forgot-password.html">PASSWORT VERGESSEN?</a><a href="/pages/verify-email.html">E-MAIL BESTÄTIGEN</a></div>
+  <div class="security-note">Bei falschen Zugangsdaten verraten wir nicht, ob eine bestimmte E-Mail-Adresse registriert ist. Anmelde- und Recovery-Anfragen werden zusätzlich begrenzt, damit automatisiertes Ausprobieren erschwert wird.</div>
+</section>
+
+<section class="panel">
+  <h2>Registrieren</h2>
+  <p class="muted">Neue Creator-Konten starten im FREE Plan.</p>
+  <div class="signup-facts" aria-label="Was bei der Registrierung gilt">
+    <div><strong>FREE START</strong><small>Der Account startet im kostenlosen Basisplan.</small></div>
+    <div><strong>KEINE ZAHLUNGSDATEN</strong><small>Beim Anlegen des Accounts werden keine Zahlungsdaten abgefragt.</small></div>
+    <div><strong>DATENKONTROLLE</strong><small>Sessions, Datenexport und Kontolöschung stehen im Account bereit.</small></div>
+  </div>
+  <form id="regForm" class="form-grid" novalidate>
+    <div class="field full"><label for="displayName">CREATOR NAME</label><input id="displayName" name="display_name" required minlength="2" maxlength="80" autocomplete="nickname"></div>
+    <div class="field full"><label for="regEmail">E-MAIL</label><input id="regEmail" name="email" type="email" required maxlength="254" autocomplete="email" inputmode="email" spellcheck="false"></div>
+    <div class="field full"><label for="regPassword">PASSWORT</label><input id="regPassword" name="password" type="password" minlength="15" maxlength="128" required autocomplete="new-password" aria-describedby="passwordRules"></div>
+    <div class="field full"><label for="regPasswordConfirm">PASSWORT WIEDERHOLEN</label><input id="regPasswordConfirm" type="password" minlength="15" maxlength="128" required autocomplete="new-password"></div>
+    <div class="field full">
+      <ul id="passwordRules" class="password-rules">
+        <li data-rule="length">Mindestens 15 Zeichen</li>
+        <li data-rule="match">Beide Passwörter stimmen überein</li>
+        <li>Lange Passphrasen mit Leerzeichen sind erlaubt; keine Pflicht für Sonderzeichen oder Zahlen.</li>
+      </ul>
+    </div>
+    <div class="field full submit-row"><button id="regButton" class="btn primary" type="submit">KONTO ERSTELLEN</button><span id="regBusy" class="small-status" aria-live="polite"></span></div>
+  </form>
+  <div id="regMsg" class="notice hidden" role="status" aria-live="polite"></div>
+  <div class="security-note">Passwörter werden serverseitig mit <strong>scrypt</strong> und einem individuellen Salt gehasht. Neue Passwörter benötigen mindestens 15 Zeichen; typische bzw. vorhersehbare Werte werden serverseitig abgewiesen. Es gibt keine künstliche Pflicht für Großbuchstaben, Zahlen oder Sonderzeichen.</div>
+  <div class="auth-links"><a href="/pages/security.html">Sicherheit im Detail</a><a href="/pages/datenschutz.html">Datenschutz</a><a href="/pages/nutzungsbedingungen.html">Nutzungsbedingungen</a></div>
+</section>
+</div>
+</main>
+
+<footer class="footer"><div class="container footer-row"><div>© cfs_zockt Creator Suite</div><div>Streaming · Tools · Community · NEXUS</div></div></footer>
+<script src="/assets/js/app.js"></script>
+<script src="/assets/js/webauthn-browser.js"></script>
+<script src="/assets/js/page-login.js"></script>
+</body>
+</html>

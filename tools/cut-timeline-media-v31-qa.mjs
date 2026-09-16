@@ -1,0 +1,11 @@
+import fs from "node:fs";import path from "node:path";
+const root=path.resolve(process.argv[2]||path.join(import.meta.dirname,"..")),must=(v,m)=>{if(!v)throw new Error(m)};
+const server=fs.readFileSync(path.join(root,"server.js"),"utf8"),cut=fs.readFileSync(path.join(root,"public/assets/js/cut-studio.js"),"utf8"),html=fs.readFileSync(path.join(root,"public/pages/cut-studio.html"),"utf8"),engine=fs.readFileSync(path.join(root,"launcher/src/cut-media-engine.js"),"utf8");
+for(const col of ["sort_order","caption_enabled","caption_position","caption_size","caption_style"])must(server.includes(col),col);
+must(server.includes("/api/creator/cut-studio/projects/:projectId/clips/order"),"timeline reorder route");
+must(server.includes("ORDER BY sort_order ASC, created_at ASC"),"timeline query");
+must(html.includes('id="cutTimeline"')&&html.includes('id="cutExportMode"'),"timeline/export UI");
+must(cut.includes("saveTimelineOrder")&&cut.includes("caption_enabled"),"timeline JS");
+must(engine.includes("drawtext=")&&engine.includes("buildConcatArgs")&&engine.includes('mode==="reel"||mode==="both"'),"media features");
+must(!server.includes("cut-studio/video-upload"),"unexpected cloud video upload");
+console.log(JSON.stringify({ok:true,timeline:true,captions:true,reel:true,no_cloud_video:true}));

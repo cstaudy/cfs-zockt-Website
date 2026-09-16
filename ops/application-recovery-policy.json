@@ -1,0 +1,33 @@
+{
+  "schema": 1,
+  "provider": "render",
+  "canonical_origin": "https://cfs-zockt.de",
+  "backend_version": "3.12.0",
+  "launcher_version": "0.42.0",
+  "rollback": {
+    "preferred_method": "render_artifact_rollback",
+    "fallback_method": "specific_commit_redeploy",
+    "require_known_good_commit": true,
+    "require_manual_confirmation": true,
+    "require_canary_after_recovery": true,
+    "require_external_edge_gate_after_recovery": true,
+    "never_restore_database_as_part_of_app_rollback": true
+  },
+  "evidence": {
+    "path": "reports/application-recovery-evidence.json",
+    "max_age_days": 90,
+    "required_fields": [
+      "verified_at",
+      "target_origin",
+      "target_commit_sha",
+      "expected_backend_version",
+      "canary_ok",
+      "edge_ok",
+      "method"
+    ]
+  },
+  "release_snapshot": {
+    "path": "reports/release-state-snapshot.json",
+    "contains_secret_values": false
+  }
+}

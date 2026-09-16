@@ -1,0 +1,11 @@
+import fs from "node:fs";import path from "node:path";
+const root=path.resolve(process.argv[2]||path.join(import.meta.dirname,"..")),must=(v,m)=>{if(!v)throw new Error(m)};
+const server=fs.readFileSync(path.join(root,"server.js"),"utf8"),html=fs.readFileSync(path.join(root,"public/pages/admin-creators.html"),"utf8"),ui=fs.readFileSync(path.join(root,"public/assets/js/admin-creators.js"),"utf8"),workflow=fs.readFileSync(path.join(root,".github/workflows/launcher-release.yml"),"utf8");
+for(const table of ["creator_release_acceptances","creator_release_cohorts","creator_release_cohort_members","creator_release_decisions"])must(server.includes(table),table);
+for(const route of ["/api/admin/creator-suite/release-operations","/api/admin/creator-suite/release-acceptance","/api/admin/creator-suite/release-cohorts","/api/admin/creator-suite/release-decisions"])must(server.includes(route),route);
+for(const id of ["releaseGoStatus","acceptanceProtocol","acceptanceSteps","releaseCohortList","releaseDecision","saveReleaseDecision"])must(html.includes(`id="${id}"`),id);
+must(ui.includes("renderReleaseOps")&&ui.includes("saveAcceptance")&&ui.includes("saveCohortMember")&&ui.includes("saveReleaseDecision"),"admin release ops js");
+must(workflow.includes("windows-install-acceptance-template.json")&&workflow.includes("updater-e2e-acceptance-template.json"),"workflow acceptance templates");
+const backendVersion=server.match(/\bBACKEND_VERSION\s*=\s*["\'](\d+)\.(\d+)\.(\d+)["\']/);
+must(backendVersion&&(Number(backendVersion[1])>3||(Number(backendVersion[1])===3&&Number(backendVersion[2])>=9)),"backend 3.9+");
+console.log(JSON.stringify({ok:true,backend:"3.9+",release_ops:true,admin:true,templates:true}));

@@ -1,0 +1,13 @@
+import fs from "node:fs";import os from "node:os";import path from "node:path";import {createRequire} from "node:module";
+const require=createRequire(import.meta.url);const {OutputGateStore,CHECKS}=require("../src/output-gate-store.js");
+const dir=fs.mkdtempSync(path.join(os.tmpdir(),"cfs-output-gate-")),file=path.join(dir,"gate.json");
+let store=new OutputGateStore(file,{version:"0.24.0",platform:"win32"});
+if(store.snapshot().summary.total!==CHECKS.length||store.snapshot().summary.pass!==0)throw new Error("initial summary");
+store.setScene({id:"s1",name:"Scene",profile:"tiktok_vertical",source_url:"https://example.test/widgets/scene.html#token=SECRET"});
+store.update("local_output_opens","pass");
+store.update("obs_transparency","fail","Alpha fehlt");
+let snap=store.snapshot();if(snap.summary.pass!==1||snap.summary.fail!==1)throw new Error("update summary");
+const raw=fs.readFileSync(file,"utf8");if(raw.includes("SECRET"))throw new Error("scene token leaked");
+store=new OutputGateStore(file,{version:"0.24.0",platform:"win32"});snap=store.snapshot();if(snap.summary.pass!==1||snap.summary.fail!==1)throw new Error("persistence");
+store.reset();if(store.snapshot().summary.untested!==CHECKS.length)throw new Error("reset");
+console.log(JSON.stringify({ok:true,checks:CHECKS.length,persisted:true,token_masked:true}));

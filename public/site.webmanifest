@@ -1,0 +1,25 @@
+{
+  "name": "cfs_zockt Creator Suite",
+  "short_name": "cfs_zockt",
+  "description": "Gaming, Community und Creator Tools von cfs_zockt.",
+  "lang": "de-AT",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#020711",
+  "theme_color": "#0066ff",
+  "icons": [
+    {
+      "src": "/assets/img/app-icon.png",
+      "sizes": "600x600",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/img/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

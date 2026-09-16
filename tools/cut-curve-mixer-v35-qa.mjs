@@ -1,0 +1,11 @@
+import fs from "node:fs";import path from "node:path";
+const root=path.resolve(process.argv[2]||path.join(import.meta.dirname,"..")),must=(v,m)=>{if(!v)throw new Error(m)};
+const model=fs.readFileSync(path.join(root,"lib/creator-cut-studio.js"),"utf8"),jobs=fs.readFileSync(path.join(root,"lib/creator-cut-jobs.js"),"utf8"),html=fs.readFileSync(path.join(root,"public/pages/cut-studio.html"),"utf8"),ui=fs.readFileSync(path.join(root,"public/assets/js/cut-studio.js"),"utf8"),engine=fs.readFileSync(path.join(root,"launcher/src/cut-media-engine.js"),"utf8");
+must(model.includes("rotation:Number(clamp")&&model.includes("opacity:Number(clamp"),"rotation opacity model");
+must((jobs.includes("schema:6")||jobs.includes("schema:7"))&&jobs.includes("source_audio_solo")&&jobs.includes("music_pan")&&jobs.includes("voiceover_pan"),"manifest6+ mixer");
+for(const id of ["cutSourceMute","cutSourceSolo","cutSourcePan","cutMusicMute","cutMusicSolo","cutMusicPan","cutVoiceMute","cutVoiceSolo","cutVoicePan"])must(html.includes(`id="${id}"`),id);
+must(ui.includes("data-kf-curve-param")&&ui.includes("onpointerdown")&&ui.includes("applyCurveDrag"),"drag curve");
+must(ui.includes('data-kf="rotation"')&&ui.includes('data-kf="opacity"'),"rotation opacity UI");
+must(engine.includes("rotate=angle=")&&engine.includes("blend=all_expr"),"rotation opacity render");
+must(engine.includes("panFilter")&&engine.includes("anySolo")&&engine.includes("source_audio_mute"),"mixer render");
+console.log(JSON.stringify({ok:true,schema:"6+",curve_drag:true,rotation:true,opacity:true,mute_solo_pan:true}));

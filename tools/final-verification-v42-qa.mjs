@@ -1,0 +1,11 @@
+import fs from "node:fs";import path from "node:path";
+const root=path.resolve(process.argv[2]||path.join(import.meta.dirname,"..")),must=(v,m)=>{if(!v)throw new Error(m)};
+const wf=fs.readFileSync(path.join(root,".github/workflows/final-verification.yml"),"utf8");
+const plan=fs.readFileSync(path.join(root,"lib/final-test-plan.js"),"utf8");
+const runner=fs.readFileSync(path.join(root,"tools/final-verification-v42.mjs"),"utf8");
+must(wf.includes("workflow_dispatch:")&&wf.includes("Final Automated Verification"),"manual final workflow");
+must(wf.includes("final-test-matrix.csv")&&wf.includes("release-gate.json"),"verification artifacts");
+for(const area of ["website_account","widget_studio","launcher","live_provider","games","cut_studio","obs","tiktok_output","billing","release"])must(plan.includes(`id:"${area}"`),area);
+must(runner.includes("manual_real_world_tests_required")&&runner.includes("launcher_release_gate"),"runner boundaries");
+must(!runner.includes("manual_real_world_tests_passed"),"must not fake manual pass");
+console.log(JSON.stringify({ok:true,workflow:true,manual_boundary:true,coverage:true}));

@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#00000000">
+  <title>Follower Goal Widget | cfs_zockt</title>
+  <style>
+    :root{
+      --accent:#0a8cff;
+      --bg:rgba(7,19,33,.9);
+      --text:#f4f8ff;
+      --font-size:24px;
+      --radius:18px;
+      --border-width:1px;
+    }
+    *{box-sizing:border-box}
+    html,body{width:100%;height:100%;margin:0;background:transparent;overflow:hidden}
+    body{display:grid;place-items:center;padding:12px;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--text)}
+    [hidden]{display:none!important}
+    .widget{width:min(100%,760px);padding:18px 20px;border:var(--border-width) solid var(--accent);border-radius:var(--radius);background:var(--bg);box-shadow:0 18px 60px rgba(0,0,0,.24);font-size:var(--font-size);transition:opacity .2s ease}
+    .widget[data-preset="compact"]{padding:12px 16px}
+    .widget[data-preset="card"]{max-width:440px;padding:24px;text-align:center}
+    .head{display:flex;align-items:center;justify-content:space-between;gap:16px}
+    .widget[data-preset="card"] .head{flex-direction:column;justify-content:center}
+    .brand{display:flex;align-items:center;gap:12px;min-width:0}
+    .brand img{height:30px;width:auto;object-fit:contain;flex:0 0 auto}
+    .widget[data-preset="compact"] .brand img{height:24px}
+    .label{min-width:0;font-weight:900;letter-spacing:.01em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-shadow:0 2px 12px rgba(0,0,0,.25)}
+    .count{font-size:1.15em;font-weight:950;white-space:nowrap;text-shadow:0 2px 12px rgba(0,0,0,.25)}
+    .count strong{color:var(--accent)}
+    .progress{height:15px;margin-top:15px;border-radius:999px;background:rgba(141,164,193,.18);overflow:hidden}
+    .widget[data-preset="compact"] .progress{height:9px;margin-top:10px}
+    .progress>span{display:block;height:100%;width:0;border-radius:inherit;background:linear-gradient(90deg,var(--accent),#19c2ff);transition:width .35s ease}
+    .meta{display:flex;justify-content:space-between;gap:12px;margin-top:9px;color:rgba(180,199,220,.82);font-size:.56em;font-weight:800}
+    .widget[data-preset="card"] .meta{justify-content:center}
+    .status{position:fixed;right:8px;bottom:5px;font-size:10px;font-weight:800;color:rgba(244,248,255,.28);letter-spacing:.04em}
+    .error{padding:12px 16px;border:1px solid rgba(255,100,120,.55);border-radius:12px;background:rgba(40,4,10,.72);color:#ffc4cc;font:700 14px/1.4 system-ui,sans-serif}
+    @media(max-width:520px){body{padding:6px}.widget{font-size:20px}.head{align-items:flex-start;flex-direction:column}.widget[data-preset="card"] .head{align-items:center}}
+  </style>
+  <meta name="robots" content="noindex,nofollow,noarchive">
+</head>
+<body>
+  <div id="widget" class="widget" data-preset="bar" hidden>
+    <div class="head">
+      <div class="brand">
+        <img id="logo" src="/assets/img/logo-header.png" alt="cfs_zockt">
+        <div id="label" class="label">Follower-Ziel</div>
+      </div>
+      <div id="count" class="count"><strong>0</strong> / 200</div>
+    </div>
+    <div id="progress" class="progress"><span id="bar"></span></div>
+    <div class="meta"><span id="percent">0%</span><span id="creator">TikTok</span></div>
+  </div>
+  <div id="error" class="error" hidden>Widget konnte nicht geladen werden.</div>
+  <div id="status" class="status" hidden></div>
+
+<script src="/assets/js/widget-follower-goal.js"></script>
+</body>
+</html>

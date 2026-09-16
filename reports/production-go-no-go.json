@@ -1,0 +1,44 @@
+{
+  "schema": 1,
+  "generated_at": "2026-09-16T01:55:32.426Z",
+  "target": "https://cfs-zockt.de",
+  "status": "NO-GO",
+  "checks": [
+    {
+      "id": "internal_preflight",
+      "label": "Internal release preflight",
+      "ok": true,
+      "detail": "skipped by --external-only; run npm run release:preflight separately"
+    },
+    {
+      "id": "supply_baseline",
+      "label": "Supply-chain baseline",
+      "ok": true,
+      "exit_code": 0
+    },
+    {
+      "id": "root_lock",
+      "label": "Backend lockfile",
+      "ok": false,
+      "detail": "package-lock.json"
+    },
+    {
+      "id": "launcher_lock",
+      "label": "Launcher lockfile",
+      "ok": false,
+      "detail": "launcher/package-lock.json"
+    },
+    {
+      "id": "lock_integrity",
+      "label": "Lockfile integrity",
+      "ok": false,
+      "detail": "skipped because lockfiles are missing"
+    },
+    {
+      "id": "edge",
+      "label": "Production DNS/TLS/headers",
+      "ok": false,
+      "exit_code": 1
+    }
+  ]
+}

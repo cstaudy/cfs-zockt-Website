@@ -1,0 +1,12 @@
+import fs from "node:fs";import path from "node:path";
+const root=path.resolve(process.argv[2]||path.join(import.meta.dirname,"..")),must=(v,m)=>{if(!v)throw new Error(m)};
+const server=fs.readFileSync(path.join(root,"server.js"),"utf8"),main=fs.readFileSync(path.join(root,"launcher/main.js"),"utf8"),preload=fs.readFileSync(path.join(root,"launcher/preload.js"),"utf8"),html=fs.readFileSync(path.join(root,"launcher/renderer/index.html"),"utf8"),renderer=fs.readFileSync(path.join(root,"launcher/renderer/app.js"),"utf8"),engine=fs.readFileSync(path.join(root,"launcher/src/cut-media-engine.js"),"utf8");
+for(const file of ["launcher/src/media-source-store.js","launcher/src/cut-media-engine.js","launcher/tools/media-source-store-v30-test.mjs","launcher/tools/cut-media-engine-v30-test.mjs","launcher/tools/cut-job-retry-v30-test.mjs"])must(fs.existsSync(path.join(root,file)),file);
+must(server.includes('/api/bridge/cut-studio/jobs/:id/retry'),"retry route");
+for(const ipc of ["launcher:media-engine-probe","launcher:cut-source-select","launcher:cut-job-process","launcher:cut-export-folder"])must(main.includes(ipc),ipc);
+for(const api of ["probeMediaEngine","selectCutSource","processCutJob","openCutExportFolder"])must(preload.includes(api),api);
+must(html.includes('id="toolsMediaStatus"')&&html.includes("LOKAL")||html.includes("FFMPEG"),"media engine UI");
+must(renderer.includes("data-process-cut-job")&&renderer.includes("data-select-cut-source"),"job actions UI");
+must(engine.includes("libx264")&&engine.includes('"-map",hasAudio?"0:a:0":"1:a:0"')&&engine.includes("anullsrc=channel_layout=stereo"),"ffmpeg render args");
+must(!server.includes("multipart/form-data")||!server.includes("cut-studio/video-upload"),"unexpected cloud video upload route");
+console.log(JSON.stringify({ok:true,local_source_mapping:true,ffmpeg_engine:true,retry:true,no_video_upload:true}));

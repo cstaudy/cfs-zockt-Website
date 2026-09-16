@@ -1,0 +1,882 @@
+<!doctype html>
+<html lang="de" data-experience="simple">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>cfs_zockt Creator Suite</title>
+<link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+<div class="shell">
+  <aside class="sidebar" id="launcherSidebar">
+    <div class="brand">cfs_<span>zockt</span></div>
+    <div class="product">CREATOR SUITE</div>
+
+    <nav>
+      <button class="nav active" data-view="live"><span>●</span> LIVE CONTROL</button>
+      <button class="nav" data-view="deck"><span>▦</span> STREAM DECK</button>
+      <button class="nav" data-view="tools"><span>◇</span> CREATOR TOOLS</button>
+      <button class="nav" data-view="bridge" data-experience="pro"><span>⌁</span> BRIDGE</button>
+      <button class="nav" data-view="sync" data-experience="pro"><span>↻</span> SYNC STATUS</button>
+      <button class="nav" data-view="audio" data-experience="pro"><span>♫</span> AUTOTHANKS</button>
+      <button class="nav" data-view="events" data-experience="pro"><span>⌁</span> LIVE EVENTS</button>
+      <button class="nav" data-view="bot" data-experience="pro"><span>⌘</span> STREAM BOT</button>
+      <button class="nav" data-view="output" data-experience="pro"><span>◈</span> LIVE OUTPUT</button>
+      <button class="nav" data-view="obs" data-experience="pro"><span>▣</span> OBS DOCTOR</button>
+      <button class="nav" data-view="system" data-experience="pro"><span>◆</span> SYSTEM</button>
+      <button class="nav" data-view="beta" data-experience="pro"><span>β</span> BETA TEST</button>
+      <button class="nav" data-view="settings"><span>⚙</span> EINSTELLUNGEN</button>
+    </nav>
+
+    <div class="side-status">
+      <span class="dot" id="sideDot"></span>
+      <div><small>CREATOR CLOUD</small><strong id="sideStatus">OFFLINE</strong></div>
+    </div>
+  </aside>
+  <button class="sidebar-backdrop" id="sidebarBackdrop" aria-label="Menü schließen" hidden></button>
+
+  <main>
+    <header class="topbar">
+      <div class="topbar-start">
+        <button class="menu-toggle" id="launcherMenuToggle" type="button" aria-label="Menü öffnen" aria-controls="launcherSidebar" aria-expanded="true"><span></span><span></span><span></span></button>
+        <div class="topbar-title">
+          <small>cfs_zockt CREATOR SUITE</small>
+          <strong id="pageTitle">LIVE CONTROL</strong>
+        </div>
+      </div>
+      <div class="top-actions">
+        <div class="experience-switch" id="experienceSwitch" aria-label="Ansicht wählen">
+          <button type="button" data-experience-mode="simple" aria-pressed="true"><span>🌱</span> EINFACH</button>
+          <button type="button" data-experience-mode="pro" aria-pressed="false"><span>⚙</span> PROFI</button>
+        </div>
+        <span class="pill" id="providerPill">SIMULATOR</span>
+        <span class="pill status" id="bridgePill">BRIDGE OFFLINE</span>
+      </div>
+    </header>
+
+    <section class="experience-help" id="experienceHelp">
+      <div class="experience-help-icon">?</div>
+      <div><small>EINFACH STARTEN</small><strong id="experienceHelpTitle">Hier siehst du nur das Wichtigste.</strong><p id="experienceHelpText">Der Launcher zeigt dir deinen nächsten Schritt. Profi-Einstellungen bleiben im Hintergrund.</p></div>
+      <button type="button" id="experienceHelpPro">ALLE EINSTELLUNGEN</button>
+    </section>
+
+    <section class="view active" data-page="live">
+      <div class="hero">
+        <div>
+          <span class="eyebrow">DESKTOP LIVE BRIDGE</span>
+          <h1>DEIN LIVE. EINE ZENTRALE.</h1>
+          <p>Der Launcher verbindet LIVE-Ereignisse mit Widget Studio, OBS und AutoThanks. Ohne dass der Browser offen bleiben muss.</p>
+        </div>
+        <div class="live-orb" id="liveOrb"><span></span><b id="liveOrbText">OFFLINE</b></div>
+      </div>
+
+      <section class="launcher-home-hub" id="launcherHomeHub">
+        <div class="home-hub-head">
+          <div>
+            <span>DEIN STREAM-SETUP</span>
+            <h2>Was ist schon bereit?</h2>
+            <p>Vier Schritte statt Technik-Suche. Der Launcher zeigt dir, was verbunden ist und was du als Nächstes tun solltest.</p>
+          </div>
+          <div class="home-next-step">
+            <small>NÄCHSTER SCHRITT</small>
+            <strong id="homeNextTitle">Status wird geprüft…</strong>
+            <button class="btn primary" id="homeNextAction" type="button">ÖFFNEN</button>
+          </div>
+        </div>
+        <div class="home-hub-grid">
+          <button class="home-hub-card" type="button" data-hub-action="bridge" id="homeCardBridge">
+            <span class="home-step">01</span><div><small>CREATOR + PC</small><strong id="homeBridgeState">OFFEN</strong><p id="homeBridgeMeta">Device-Link prüfen</p></div><b>›</b>
+          </button>
+          <button class="home-hub-card" type="button" data-hub-action="tiktok" id="homeCardTikTok">
+            <span class="home-step">02</span><div><small>TIKTOK LIVE</small><strong id="homeTikTokState">OFFEN</strong><p id="homeTikTokMeta">Provider prüfen</p></div><b>›</b>
+          </button>
+          <button class="home-hub-card" type="button" data-hub-action="widgets" id="homeCardWidgets">
+            <span class="home-step">03</span><div><small>WIDGETS</small><strong id="homeWidgetsState">OFFEN</strong><p id="homeWidgetsMeta">Bibliothek prüfen</p></div><b>›</b>
+          </button>
+          <button class="home-hub-card" type="button" data-hub-action="output" id="homeCardOutput">
+            <span class="home-step">04</span><div><small>OBS / OUTPUT</small><strong id="homeOutputState">OFFEN</strong><p id="homeOutputMeta">Scene prüfen</p></div><b>›</b>
+          </button>
+        </div>
+      </section>
+
+      <section class="creator-identity" id="creatorIdentity">
+        <div class="creator-avatar" id="creatorAvatar">CFS</div>
+        <div class="creator-identity-copy">
+          <span>VERBUNDENER CREATOR</span>
+          <strong id="creatorDisplayName">Noch kein Creator verbunden</strong>
+          <small id="creatorAccountMeta">Bridge verbinden, damit dein eigenes Creator-Profil geladen wird.</small>
+        </div>
+        <div class="creator-profile-stats">
+          <div><span>FOLLOWER</span><strong id="creatorFollowers">–</strong></div>
+          <div><span>PROFIL-LIKES</span><strong id="creatorLikes">–</strong></div>
+          <div><span>PLAN</span><strong id="creatorPlan">–</strong></div>
+          <div><span>WIDGETS</span><strong id="creatorWidgetCount">–</strong></div>
+          <div><span>SCENES</span><strong id="creatorSceneCount">–</strong></div>
+        </div>
+      </section>
+
+      <section class="panel live-panel home-live-panel">
+        <div class="panel-head">
+          <div><span>LIVE CONTROL</span><h2>Bereit zum Streamen?</h2><p id="homeLiveHint">Der Launcher prüft dein Setup und zeigt dir den nächsten Schritt.</p></div>
+          <div class="session-actions">
+            <button class="btn primary" id="startLive">LIVE STARTEN</button>
+            <button class="btn danger" id="endLive" disabled>LIVE BEENDEN</button>
+          </div>
+        </div>
+        <div class="connection-flow compact-flow">
+          <div class="flow-node"><span>1</span><b>TikTok / Quelle</b><small>LIVE Events</small></div>
+          <i></i>
+          <div class="flow-node"><span>2</span><b>Launcher</b><small>Sync & Bot</small></div>
+          <i></i>
+          <div class="flow-node"><span>3</span><b>Widgets</b><small>Creator Cloud</small></div>
+          <i></i>
+          <div class="flow-node"><span>4</span><b>OBS / Output</b><small>Stream-Ausgabe</small></div>
+        </div>
+      </section>
+
+      <details class="home-tech-details" data-experience="pro">
+        <summary><span>TECHNIK & TESTS</span><strong>Details, Sync und Simulator anzeigen</strong><b>+</b></summary>
+        <div class="home-tech-body">
+      <div class="grid stats">
+        <article><span>BRIDGE</span><strong id="statBridge">OFFLINE</strong><small id="statHeartbeat">Noch keine Verbindung</small></article>
+        <article><span>LIVE SESSION</span><strong id="statSession">GESTOPPT</strong><small id="statSessionId">Keine aktive Session</small></article>
+        <article><span>EVENT QUEUE</span><strong id="statQueue">0</strong><small id="statQueueMeta">persistent gespeichert</small></article>
+        <article><span>EVENT DELIVERY</span><strong id="statDelivery">0</strong><small id="statDeliveryMeta">0 Batches</small></article>
+        <article><span>PROVIDER</span><strong id="statProvider">SIMULATOR</strong><small id="statProviderDetail">Bereit zum Testen</small></article>
+      </div>
+
+      <section class="sync-glance" id="syncGlance">
+        <div class="sync-glance-copy">
+          <span class="sync-led" id="syncGlanceLed"></span>
+          <div><small>SYNC STATUS</small><strong id="syncGlanceTitle">Synchronisierung wird geprüft…</strong><p id="syncGlanceText">Creator Cloud, Bridge und Widget-Bibliothek werden automatisch überwacht.</p></div>
+        </div>
+        <button class="btn" id="openSyncTerminal">SYNC TERMINAL</button>
+      </section>
+
+      <section class="panel readiness-panel">
+        <div class="panel-head">
+          <div><span>STREAM PREFLIGHT</span><h2>Bereit für LIVE?</h2><p>Der Launcher prüft Bridge, Schlüssel, Provider und Recovery-Queue vor dem Streamstart.</p></div>
+          <span class="pill" id="preflightPill">PRÜFEN</span>
+        </div>
+        <div class="preflight-grid" id="preflightGrid"></div>
+        <div class="inline readiness-actions">
+          <button class="btn" id="runPreflight">PREFLIGHT STARTEN</button>
+          <button class="btn primary" id="recoverLive" hidden>SESSION FORTSETZEN</button>
+        </div>
+      </section>
+
+      <section class="panel simulator">
+        <div class="panel-head">
+          <div><span>LIVE SIMULATOR</span><h2>Events testen</h2><p>Diese Events sind klar als Simulator-Daten gedacht und testen die komplette Bridge bis OBS.</p></div>
+        </div>
+        <div class="sim-grid">
+          <button data-sim="follow"><b>+1 FOLLOW</b><small>Follow Alert / Counter</small></button>
+          <button data-sim="like" data-amount="25"><b>+25 LIKES</b><small>LIVE Like Goal</small></button>
+          <button data-sim="gift"><b>GIFT · ROSE</b><small>Gift Alert / AutoThanks</small></button>
+          <button data-sim="share"><b>+1 SHARE</b><small>Share Alert / Counter</small></button>
+          <button data-sim="viewer_update" data-amount="86"><b>86 VIEWER</b><small>Viewer Snapshot</small></button>
+          <button data-sim="chat" data-message="!discord"><b>CHAT · !DISCORD</b><small>Chat Widget / Stream Bot</small></button>
+        </div>
+      </section>
+        </div>
+      </details>
+    </section>
+
+    <section class="view" data-page="deck">
+      <div class="page-head">
+        <span class="eyebrow">CREATOR DAILY CONTROL · V42</span>
+        <h1>CFS STREAM DECK.</h1>
+        <p>Deine wichtigsten Stream-Aktionen an einem Ort. Alle 12 Felder sind frei mit sicheren Creator-Aktionen belegbar.</p>
+        <div class="entitlement-banner" id="deckEntitlementBanner">Creator-Zugriff wird geprüft…</div>
+      </div>
+
+      <section class="deck-creator-bar">
+        <div class="deck-avatar" id="deckAvatar">CFS</div>
+        <div class="deck-creator-copy">
+          <span>CREATOR</span>
+          <strong id="deckCreatorName">Nicht verbunden</strong>
+          <small id="deckCreatorMeta">Verbinde deinen Creator Account.</small>
+        </div>
+        <div class="deck-kpis">
+          <div><span>FOLLOWER</span><strong id="deckFollowers">–</strong></div>
+          <div><span>LIKES</span><strong id="deckLikes">–</strong></div>
+          <div><span>PLAN</span><strong id="deckPlan">–</strong></div>
+          <div><span>LIVE</span><strong id="deckLiveState">OFF</strong></div>
+          <div><span>OUTPUT</span><strong id="deckOutputState">OFF</strong></div>
+          <div><span>AUTOTHANKS</span><strong id="deckTtsState">OFF</strong></div>
+        </div>
+      </section>
+
+      <section class="panel deck-pages-panel">
+        <div class="panel-head">
+          <div><span>DECK-SEITEN</span><h2>Was willst du gerade steuern?</h2><p>Jede Seite hat ihre eigenen 12 Tasten. Deine Anpassungen bleiben beim Wechsel erhalten.</p></div>
+          <span class="pill" id="deckPagePill">TIKTOK LIVE</span>
+        </div>
+        <div class="deck-page-tabs" id="deckPageTabs">
+          <button class="deck-page-tab active" type="button" data-deck-profile="live"><b>● TikTok LIVE</b><span>LIVE, Alerts & AutoThanks</span></button>
+          <button class="deck-page-tab" type="button" data-deck-profile="gaming"><b>◆ Gaming</b><span>Siege, Tode, Timer & Games</span></button>
+          <button class="deck-page-tab" type="button" data-deck-profile="obs"><b>▣ OBS / Output</b><span>Szenen, Widgets & Ausgabe</span></button>
+          <button class="deck-page-tab" type="button" data-deck-profile="creator"><b>◇ Creator Tools</b><span>Studios, Dashboard & Sync</span></button>
+        </div>
+        <div class="deck-page-help">
+          <div><small>AKTIVE SEITE</small><strong id="deckPageTitle">TikTok LIVE</strong><span id="deckPageDescription">LIVE, Alerts, AutoThanks und Creator-Tools</span></div>
+          <div class="deck-page-tip"><b>12</b><span>Tasten pro Seite</span></div>
+        </div>
+      </section>
+
+      <section class="panel stream-deck-panel">
+        <div class="panel-head">
+          <div><span>DEINE STREAM-TASTEN</span><h2 id="deckControlsTitle">TikTok LIVE</h2><p id="deckControlsDescription">Ein Klick führt die Aktion aus. Bearbeiten ändert nur diese Deck-Seite.</p></div>
+          <div class="inline">
+            <button class="btn" id="streamDeckEdit">BEARBEITEN</button>
+            <button class="btn" id="streamDeckReset">STANDARD</button>
+          </div>
+        </div>
+        <div class="stream-deck-grid" id="streamDeckGrid"></div>
+      </section>
+
+      <section class="panel deck-editor" id="streamDeckEditor" hidden>
+        <div class="panel-head">
+          <div><span>TASTE ANPASSEN</span><h2 id="deckEditorTitle">Button</h2><p>Nur drei Schritte: Name, Aktion und – falls nötig – dein Widget auswählen.</p></div>
+          <button class="btn" id="closeDeckEditor">SCHLIESSEN</button>
+        </div>
+
+        <div class="deck-editor-layout">
+          <aside class="deck-editor-preview">
+            <span class="deck-editor-kicker">VORSCHAU</span>
+            <div id="deckButtonPreview" class="stream-key deck-button-preview-key tone-neutral">
+              <span class="stream-key-slot">01</span>
+              <span class="stream-key-icon" id="deckButtonPreviewIcon">·</span>
+              <span class="stream-key-label" id="deckButtonPreviewLabel">BUTTON</span>
+              <span class="stream-key-action" id="deckButtonPreviewAction">Nicht belegt</span>
+            </div>
+            <small>So sieht die Taste auf deinem CFS Stream Deck aus.</small>
+          </aside>
+
+          <div class="deck-editor-controls">
+            <div class="deck-simple-steps">
+              <label><b>1</b><span>NAME DER TASTE</span><input id="deckButtonLabel" maxlength="28" placeholder="z. B. SIEG +1"></label>
+              <label><b>2</b><span>WAS SOLL PASSIEREN?</span><select id="deckButtonAction"></select></label>
+              <label id="deckTargetWrap" hidden><b>3</b><span id="deckTargetLabel">ZIEL</span><select id="deckButtonTarget"></select></label>
+            </div>
+
+            <div class="deck-target-preview" id="deckTargetPreview" hidden></div>
+            <div class="notice compact" id="deckActionHint">Wähle eine sichere Creator-Aktion.</div>
+
+            <details class="deck-design-options">
+              <summary>Farbe & Icon anpassen <small>optional</small></summary>
+              <div class="deck-design-inner">
+                <div class="deck-design-group">
+                  <span>BUTTON-FARBE</span>
+                  <div class="deck-color-row" id="deckColorChoices">
+                    <button type="button" data-deck-color="auto" class="selected"><i class="deck-color-auto"></i>Auto</button>
+                    <button type="button" data-deck-color="cyan"><i class="deck-color-cyan"></i>Cyan</button>
+                    <button type="button" data-deck-color="blue"><i class="deck-color-blue"></i>Blau</button>
+                    <button type="button" data-deck-color="green"><i class="deck-color-green"></i>Grün</button>
+                    <button type="button" data-deck-color="orange"><i class="deck-color-orange"></i>Orange</button>
+                    <button type="button" data-deck-color="red"><i class="deck-color-red"></i>Rot</button>
+                    <button type="button" data-deck-color="white"><i class="deck-color-white"></i>Weiß</button>
+                  </div>
+                </div>
+                <div class="deck-design-group">
+                  <span>ICON</span>
+                  <div class="deck-icon-row" id="deckIconChoices">
+                    <button type="button" data-deck-icon="">AUTO</button>
+                    <button type="button" data-deck-icon="+1">+1</button>
+                    <button type="button" data-deck-icon="▶">▶</button>
+                    <button type="button" data-deck-icon="■">■</button>
+                    <button type="button" data-deck-icon="↻">↻</button>
+                    <button type="button" data-deck-icon="★">★</button>
+                    <button type="button" data-deck-icon="W">W</button>
+                  </div>
+                  <label class="deck-custom-icon"><span>Oder eigenes Kurz-Icon</span><input id="deckButtonIcon" maxlength="4" placeholder="AUTO"></label>
+                </div>
+              </div>
+            </details>
+
+            <div class="inline deck-editor-actions"><button class="btn primary" id="saveDeckButton">SPEICHERN</button></div>
+          </div>
+        </div>
+      </section>
+
+      <details class="panel deck-more" data-experience="pro">
+        <summary>Weitere mögliche Aktionen anzeigen</summary>
+        <div class="deck-capabilities">
+          <span>LIVE Start / Stop</span>
+          <span>Scene wechseln</span>
+          <span>Widget lokal An / Aus</span>
+          <span>Counter +1 / -1 / +5 / Reset</span>
+          <span>Timer Start / Pause / ±1 Min / Reset</span>
+          <span>Follow / Gift / Share Test</span>
+          <span>AutoThanks An / Aus</span>
+          <span>Output Stop / Reload</span>
+          <span>Widget Studio</span>
+          <span>Scene Studio</span>
+          <span>Games + Score</span>
+          <span>Cut Studio</span>
+        </div>
+        <div class="notice compact">Alert-Tests wirken nur lokal im aktiven Output und verändern keine echten LIVE-Metriken.</div>
+      </details>
+    </section>
+
+    <section class="view" data-page="tools">
+      <div class="page-head">
+        <span class="eyebrow">GAMES + CUT STUDIO · V42</span>
+        <h1>CREATOR TOOLS.</h1>
+        <p>Game Runtime, LIVE-Regeln und echte lokale Cut-Exporte laufen jetzt über denselben Creator Account und dieselbe Launcher-Bridge.</p>
+      </div>
+
+      <div class="tools-columns">
+        <section class="panel">
+          <div class="panel-head">
+            <div><span>GAME RUNTIME</span><h2 id="toolsGameTitle">Community Battle</h2><p>Start/Stop, Score und Overlay direkt aus dem Launcher.</p></div>
+            <span class="pill" id="toolsGamePill">IDLE</span>
+          </div>
+          <div class="tools-game-score">
+            <div><span id="toolsTeamA">TEAM A</span><strong id="toolsScoreA">0</strong><button class="btn" id="toolsScoreAPlus">+1</button></div>
+            <div class="tools-game-vs">VS</div>
+            <div><span id="toolsTeamB">TEAM B</span><strong id="toolsScoreB">0</strong><button class="btn" id="toolsScoreBPlus">+1</button></div>
+          </div>
+          <div class="output-local-status">
+            <div><span>ZIEL</span><strong id="toolsGameTarget">100</strong></div>
+            <div><span>RUNDE</span><strong id="toolsGameRound">1</strong></div>
+            <div><span>SCENE LAYER</span><strong>GAME RUNTIME</strong></div>
+            <div><span>PLAN</span><strong id="toolsGameAccess">–</strong></div>
+            <div><span>LIVE REGELN</span><strong id="toolsGameRuleCount">0</strong></div>
+            <div><span>REGEL-TREFFER</span><strong id="toolsGameHitCount">0</strong></div>
+          </div>
+          <div class="inline">
+            <button class="btn primary" id="toolsGameStart">GAME STARTEN</button>
+            <button class="btn" id="toolsGameReset">RESET</button>
+            <button class="btn danger" id="toolsGameStop">STOPPEN</button>
+          </div>
+          <div class="tool-url-row">
+            <input id="toolsGameUrl" readonly placeholder="Game Output URL">
+            <button class="btn" id="toolsCopyGameUrl">URL KOPIEREN</button>
+            <button class="btn" id="toolsPreviewGame">VORSCHAU</button>
+          </div>
+          <div class="notice compact">V29 kann echte Follow-, Like-, Gift- und Share-Events über Creator-Regeln auf Game-Punkte abbilden. Manuelle Punkte bleiben zusätzlich möglich.</div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <div><span>CUT STUDIO</span><h2>Meine Projekte</h2><p>Projekt- und Clip-Metadaten aus deinem Creator Account.</p></div>
+            <button class="btn" id="toolsOpenCutStudio">CUT STUDIO</button>
+          </div>
+          <div class="tools-cut-summary">
+            <div><span>PROJEKTE</span><strong id="toolsCutCount">0</strong></div>
+            <div><span>CLIPS</span><strong id="toolsCutClips">0</strong></div>
+            <div><span>EXPORT JOBS</span><strong id="toolsCutJobs">0</strong></div>
+          </div>
+          <div class="media-engine-strip">
+            <div><span>FFMPEG</span><strong id="toolsMediaStatus">NICHT GEPRÜFT</strong><small id="toolsMediaVersion">–</small></div>
+            <div><span>FILTER</span><strong id="toolsMediaFilters">–</strong><small id="toolsMediaSource">Quelle unbekannt</small></div>
+            <div><span>GPU ENCODER</span><strong id="toolsMediaGpu">SOFTWARE</strong><small>Verfügbarkeit ≠ Hardware-Realtest</small></div>
+            <div><span>ENGINE</span><strong id="toolsMediaProgress">IDLE</strong><small id="toolsMediaError">Lokale Verarbeitung</small></div>
+            <div class="inline"><button class="btn" id="toolsProbeMedia">FFMPEG PRÜFEN</button><button class="btn" id="toolsOpenExports">EXPORT-ORDNER</button></div>
+          </div>
+          <div id="toolsCutProjects" class="tools-cut-projects"><div class="launcher-scene-empty">Noch keine Cut-Projekte geladen.</div></div>
+          <div class="mini-head tools-job-head">EXPORT JOB QUEUE</div>
+          <div id="toolsCutJobList" class="tools-cut-jobs"><div class="launcher-scene-empty">Noch keine Export-Jobs.</div></div>
+          <div class="notice compact">V42 friert den Feature-Ausbau ein und bündelt alle automatischen und manuellen Prüfungen in einem finalen Test- und Verification-Pack.</div>
+        </section>
+      </div>
+
+      <section class="panel">
+        <div class="panel-head"><div><span>CREATOR TOOL PIPELINE</span><h2>Ein Account · eine Suite</h2></div><button class="btn" id="refreshCreatorTools">DATEN AKTUALISIEREN</button></div>
+        <div class="output-pipeline">
+          <span>CREATOR ACCOUNT</span><b>→</b><span>GAME / CUT</span><b>→</b><span>LAUNCHER</span><b>→</b><span>SCENE / CONTENT</span>
+        </div>
+      </section>
+    </section>
+
+    <section class="view" data-page="bridge">
+      <div class="page-head"><span class="eyebrow">CREATOR CLOUD</span><h1>LAUNCHER BRIDGE.</h1><p>Der Bridge-Schlüssel kommt aus dem Widget Studio und wird lokal verschlüsselt gespeichert.</p></div>
+      <section class="panel">
+        <div class="form-grid">
+          <label><span>BACKEND URL</span><input id="backendUrl" placeholder="https://cfs-zockt.de"></label>
+          <label><span>PC / MASCHINENNAME</span><input id="machineName" maxlength="120"></label>
+          <label class="full"><span>BRIDGE-SCHLÜSSEL</span><input id="bridgeToken" type="password" placeholder="cfsb_..."><small>Leer lassen, wenn bereits sicher gespeichert.</small></label>
+          <label><span>LIVE PROVIDER</span><select id="providerSelect"><option value="mock">Simulator</option><option value="tiktool">TikTok LIVE · TikTool (Drittanbieter)</option></select></label>
+          <label><span>TIKTOK USERNAME</span><input id="tiktokUsername" placeholder="@cfs_zockt"></label>
+          <label class="full"><span>TIKTOOL API-KEY</span><input id="tiktoolApiKey" type="password" placeholder="Provider-Key"><small>Nur für den optionalen Drittanbieter-LIVE-Provider. Leer lassen, wenn bereits sicher gespeichert.</small></label>
+          <div class="full inline">
+            <button class="btn primary" id="saveBridge">SPEICHERN & VERBINDEN</button>
+            <button class="btn" id="connectBridge">VERBINDUNG TESTEN</button>
+            <button class="btn danger ghost" id="clearToken">BRIDGE-KEY LÖSCHEN</button>
+            <button class="btn danger ghost" id="clearProviderKey">PROVIDER-KEY LÖSCHEN</button>
+          </div>
+        </div>
+        <div class="notice" id="encryptionNotice"></div>
+        <div class="notice warn">TikTool ist ein unabhängiger Drittanbieter und nicht TikTok. Bei Auswahl dieses Providers verbindet sich der Launcher mit dessen LIVE-Service. Der API-Key bleibt lokal verschlüsselt gespeichert.</div>
+      </section>
+      <section class="panel">
+        <div class="panel-head"><div><span>DIAGNOSE</span><h2>Bridge Status</h2></div></div>
+        <div class="diag" id="diag"></div>
+        <div class="inline diag-actions">
+          <button class="btn" id="bridgeSelfTest">BRIDGE SELBSTTEST</button>
+          <button class="btn" id="exportDiagnostics">DIAGNOSEBERICHT</button>
+        </div>
+        <div class="self-test" id="selfTestResult" hidden></div>
+      </section>
+    </section>
+
+    <section class="view" data-page="sync">
+      <div class="page-head sync-page-head">
+        <div>
+          <span class="eyebrow">LAUNCHER ↔ CREATOR CLOUD</span>
+          <h1>SYNC STATUS.</h1>
+          <p>Hier siehst du ohne technische Vorkenntnisse, ob PC, Creator Cloud, Widgets und LIVE-Events sauber miteinander synchronisieren.</p>
+        </div>
+        <span class="sync-overall-pill" id="syncOverallPill">PRÜFEN</span>
+      </div>
+
+      <section class="sync-summary-grid">
+        <article class="sync-summary-card" id="syncCardCloud"><span class="sync-card-dot"></span><div><small>CREATOR CLOUD</small><strong id="syncCloudState">WIRD GEPRÜFT</strong><p id="syncCloudMeta">Noch kein Healthcheck.</p></div></article>
+        <article class="sync-summary-card" id="syncCardBridge"><span class="sync-card-dot"></span><div><small>PC / DEVICE LINK</small><strong id="syncBridgeState">OFFLINE</strong><p id="syncBridgeMeta">Noch keine Bridge-Verbindung.</p></div></article>
+        <article class="sync-summary-card" id="syncCardLibrary"><span class="sync-card-dot"></span><div><small>WIDGETS & SCENES</small><strong id="syncLibraryState">WARTET</strong><p id="syncLibraryMeta">Bibliothek noch nicht synchronisiert.</p></div></article>
+        <article class="sync-summary-card" id="syncCardEvents"><span class="sync-card-dot"></span><div><small>LIVE EVENTS</small><strong id="syncEventState">BEREIT</strong><p id="syncEventMeta">Keine Events in der Warteschlange.</p></div></article>
+      </section>
+
+      <section class="panel sync-terminal-panel">
+        <div class="panel-head">
+          <div><span>LIVE SYNC TERMINAL</span><h2>Was passiert gerade?</h2><p>Nur Statusmeldungen – keine Tokens, Keys oder geheimen Zugangsdaten werden angezeigt.</p></div>
+          <div class="inline">
+            <button class="btn primary" id="syncRefresh">SYNC PRÜFEN</button>
+            <button class="btn" id="syncClear">ANZEIGE LEEREN</button>
+          </div>
+        </div>
+        <div class="sync-terminal" id="syncTerminal" role="log" aria-live="polite"><div class="sync-terminal-empty">Sync Monitor startet…</div></div>
+        <div class="sync-terminal-help"><span><b>GRÜN</b> synchronisiert</span><span><b>BLAU</b> arbeitet</span><span><b>GELB</b> wartet</span><span><b>ROT</b> Verbindung prüfen</span></div>
+      </section>
+
+      <section class="panel sync-explain">
+        <div class="panel-head"><div><span>EINFACH ERKLÄRT</span><h2>Wann ist alles okay?</h2></div></div>
+        <div class="sync-explain-grid">
+          <div><b>1</b><strong>Cloud online</strong><small>Das Backend und die Datenbank sind erreichbar.</small></div>
+          <div><b>2</b><strong>PC verbunden</strong><small>Der Device-Link / Bridge-Heartbeat funktioniert.</small></div>
+          <div><b>3</b><strong>Widgets geladen</strong><small>Deine veröffentlichten Widgets und Scenes wurden vom Launcher geladen.</small></div>
+          <div><b>4</b><strong>Queue leer</strong><small>LIVE-Events wurden übertragen oder es wartet gerade nichts.</small></div>
+        </div>
+      </section>
+    </section>
+
+    <section class="view" data-page="audio">
+      <div class="page-head"><span class="eyebrow">INTERACTIONS</span><h1>AUTOTHANKS.</h1><p>Die Website erzeugt TTS-Aktionen aus Follow-, Gift- und Share-Regeln. Der Launcher spielt sie lokal ab und bestätigt sie anschließend.</p></div>
+      <section class="panel">
+        <div class="form-grid">
+          <label><span>TTS</span><select id="ttsEnabled"><option value="true">Aktiv</option><option value="false">Aus</option></select></label>
+          <label><span>STIMME</span><select id="ttsVoiceName"><option value="">Systemstandard</option></select></label>
+          <label><span>GESCHWINDIGKEIT</span><input id="ttsRate" type="number" min="0.5" max="2" step="0.1"></label>
+          <label><span>TONHÖHE</span><input id="ttsPitch" type="number" min="0.5" max="2" step="0.1"></label>
+          <label><span>LAUTSTÄRKE</span><input id="ttsVolume" type="number" min="0" max="1" step="0.1"></label>
+          <div class="full inline"><button class="btn primary" id="saveAudio">AUDIO SPEICHERN</button><button class="btn" id="testTts">TTS TESTEN</button></div>
+        </div>
+      </section>
+      <section class="panel">
+        <div class="panel-head"><div><span>ACTION QUEUE</span><h2>Letzte Ausgabe</h2></div></div>
+        <div class="action-log" id="actionLog"><span>Noch keine AutoThanks-Aktion empfangen.</span></div>
+      </section>
+    </section>
+
+
+    <section class="view" data-page="events">
+      <div class="page-head">
+        <span class="eyebrow">FIELD TEST</span>
+        <h1>LIVE EVENT MONITOR.</h1>
+        <p>Beim echten Teststream siehst du hier sofort, welche TikTok-LIVE-Ereignisse den Launcher tatsächlich erreichen. Exportberichte pseudonymisieren Nutzernamen.</p>
+      </div>
+
+      <div class="grid event-stats">
+        <article><span>FOLLOW</span><strong id="eventFollow">0</strong><small id="eventFollowState">noch nicht gesehen</small></article>
+        <article><span>LIKES</span><strong id="eventLikes">0</strong><small id="eventLikesState">noch nicht gesehen</small></article>
+        <article><span>GIFTS</span><strong id="eventGifts">0</strong><small id="eventGiftsState">noch nicht gesehen</small></article>
+        <article><span>SHARES</span><strong id="eventShares">0</strong><small id="eventSharesState">noch nicht gesehen</small></article>
+        <article><span>VIEWER PEAK</span><strong id="eventViewerPeak">0</strong><small id="eventViewerState">noch nicht gesehen</small></article>
+        <article><span>CHAT</span><strong id="eventChat">0</strong><small id="eventChatState">noch keine Nachricht</small></article>
+      </div>
+
+      <section class="panel field-coverage-panel">
+        <div class="panel-head">
+          <div><span>REAL-WORLD COVERAGE</span><h2>LIVE Provider Check</h2><p>Für den finalen Gate müssen alle fünf Kernereignisse mindestens einmal real beobachtet werden.</p></div>
+          <span class="pill" id="coveragePill">0 / 5</span>
+        </div>
+        <div class="coverage-grid" id="coverageGrid"></div>
+        <div class="inline field-actions">
+          <button class="btn" id="clearEventMonitor">MONITOR LEEREN</button>
+          <button class="btn primary" id="exportFieldTest">FIELD-TEST EXPORTIEREN</button>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <div><span>EVENT TRACE</span><h2>Letzte LIVE Events</h2><p>Maximal 50 aktuelle Einträge werden in der Oberfläche angezeigt.</p></div>
+          <span class="pill" id="eventTraceCount">0 EVENTS</span>
+        </div>
+        <div class="event-trace" id="eventTrace">
+          <div class="event-trace-empty">Noch keine LIVE Events empfangen.</div>
+        </div>
+      </section>
+    </section>
+
+
+    <section class="view" data-page="bot">
+      <div class="page-head">
+        <span class="eyebrow">CREATOR CHAT AUTOMATION</span>
+        <h1>cfs_zockt STREAM BOT.</h1>
+        <p>Eigene Chat-Kommandos pro Creator. Antworten erscheinen im Chat-Overlay, per Launcher-TTS oder in beiden Ausgaben.</p>
+      </div>
+
+      <section class="panel bot-overview">
+        <div class="panel-head">
+          <div><span>CREATORBEZOGEN</span><h2>Bot Status</h2><p>Diese Einstellungen gehören nur zu dem Creator Account, mit dem dieser PC verbunden ist.</p></div>
+          <span class="pill" id="streamBotPill">NICHT GELADEN</span>
+        </div>
+        <div class="bot-safe-note"><b>WICHTIG</b><span>Der Bot liest TikTok-LIVE-Chat und kann Overlay/TTS auslösen. Er schreibt aktuell <strong>nicht automatisch zurück</strong> in TikTok- oder Twitch-Chats.</span></div>
+        <div class="form-grid bot-settings-grid">
+          <label><span>STREAM BOT</span><select id="streamBotEnabled"><option value="false">Aus</option><option value="true">Aktiv</option></select></label>
+          <label><span>COMMAND PREFIX</span><input id="streamBotPrefix" maxlength="3" value="!" placeholder="!"></label>
+        </div>
+        <div class="inline">
+          <button class="btn" id="refreshStreamBot">NEU LADEN</button>
+          <button class="btn primary" id="saveStreamBot">BOT SPEICHERN</button>
+          <button class="btn" id="addStreamBotCommand">+ COMMAND</button>
+        </div>
+        <small class="muted" id="streamBotCreatorMeta">Bridge verbinden, um creatorbezogene Bot-Regeln zu laden.</small>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <div><span>COMMANDS</span><h2>Was soll der Bot erkennen?</h2><p>Beispiel: <b>!discord</b> blendet eine Antwort im Chat-Widget ein. Mit TTS kann dieselbe Antwort lokal vorgelesen werden.</p></div>
+          <span class="pill" id="streamBotCommandCount">0 COMMANDS</span>
+        </div>
+        <div class="bot-command-list" id="streamBotCommands">
+          <div class="bot-empty">Bot-Regeln werden nach der Bridge-Verbindung geladen.</div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head"><div><span>TEST</span><h2>Command testen</h2><p>Im Simulator-Provider wird eine echte Chat-Event-Kette durch Launcher → Creator Cloud → Chat-Widget/Bot geschickt.</p></div></div>
+        <div class="bot-test-row">
+          <input id="streamBotTestMessage" value="!discord" maxlength="280" placeholder="!discord">
+          <button class="btn primary" id="testStreamBotChat">CHAT EVENT SENDEN</button>
+        </div>
+        <small class="muted">Der Test ist nur bei aktiver LIVE-Session mit dem Simulator verfügbar.</small>
+      </section>
+    </section>
+
+    <section class="view" data-page="obs">
+      <div class="page-head">
+        <span class="eyebrow">BROWSER SOURCE</span>
+        <h1>OBS DOCTOR.</h1>
+        <p>Prüft eine veröffentlichte Widget-URL direkt von diesem PC: HTTPS, HTTP-Status, Antwortzeit, Runtime-Erkennung und Transparenz-Hinweise.</p>
+      </div>
+      <section class="panel obs-doctor-panel">
+        <div class="form-grid">
+          <label class="full">
+            <span>OBS BROWSER-SOURCE-URL</span>
+            <input id="obsDoctorUrl" type="url" placeholder="https://.../widgets/studio.html?token=...">
+            <small>Die URL wird nur für den Test verwendet. Token-/Key-Parameter werden in Ergebnissen maskiert.</small>
+          </label>
+          <div class="full inline">
+            <button class="btn primary" id="runObsDoctor">OBS SOURCE PRÜFEN</button>
+            <button class="btn" id="clearObsDoctor">ERGEBNIS LEEREN</button>
+          </div>
+        </div>
+        <div class="obs-doctor-result" id="obsDoctorResult">
+          <div class="obs-doctor-empty">Noch keine Browser Source geprüft.</div>
+        </div>
+      </section>
+      <section class="panel obs-help">
+        <div class="panel-head"><div><span>OBS EMPFEHLUNG</span><h2>Browser Source</h2></div></div>
+        <div class="obs-recipe">
+          <div><b>01</b><strong>URL</strong><small>Veröffentlichte Widget-URL aus der Creator Suite.</small></div>
+          <div><b>02</b><strong>Größe</strong><small>Canvas-Größe des Widgets verwenden.</small></div>
+          <div><b>03</b><strong>Shutdown</strong><small>Browser Source nicht an den offenen Launcher koppeln.</small></div>
+          <div><b>04</b><strong>Reload</strong><small>Nach Publish kann OBS die stabile URL weiterverwenden.</small></div>
+        </div>
+      </section>
+    </section>
+
+
+    <section class="view" data-page="system">
+      <div class="page-head">
+        <span class="eyebrow">RECOVERY & CLOUD</span>
+        <h1>CREATOR READY.</h1>
+        <p>Ein Gesamtcheck für Cloud, Bridge, Provider und Event-Recovery – plus portable Konfigurationsbackups und lokale Restore Points.</p>
+      </div>
+
+      <section class="panel creator-ready-panel">
+        <div class="ready-score-wrap">
+          <div class="ready-score" id="creatorReadyScore"><strong>0%</strong><span>CREATOR READY</span></div>
+          <div class="ready-copy">
+            <span id="creatorReadyKicker">SYSTEMCHECK</span>
+            <h2 id="creatorReadyTitle">System wird geprüft…</h2>
+            <p id="creatorReadyText">Creator Suite prüft automatisch Cloud, Datenbank, Bridge, Verschlüsselung und Event Recovery.</p>
+          </div>
+          <button class="btn primary" id="refreshSystemHealth">SYSTEM NEU PRÜFEN</button>
+        </div>
+        <div class="ready-check-grid" id="creatorReadyChecks"></div>
+      </section>
+
+      <div class="system-columns">
+        <section class="panel">
+          <div class="panel-head">
+            <div><span>CREATOR CLOUD</span><h2>Backend Health</h2></div>
+            <span class="pill" id="cloudHealthPill">PRÜFEN</span>
+          </div>
+          <div class="cloud-health-grid">
+            <div><span>STATUS</span><strong id="cloudHealthStatus">–</strong></div>
+            <div><span>DATENBANK</span><strong id="cloudHealthDb">–</strong></div>
+            <div><span>BACKEND VERSION</span><strong id="cloudHealthVersion">–</strong></div>
+            <div><span>LATENZ</span><strong id="cloudHealthLatency">–</strong></div>
+          </div>
+          <div class="cloud-module-grid" id="cloudModules"></div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <div><span>PC WECHSEL</span><h2>Konfiguration</h2><p>Portable Backups enthalten bewusst keine Bridge- oder Provider-Schlüssel.</p></div>
+          </div>
+          <div class="backup-cards">
+            <button class="backup-action" id="exportConfig"><b>⇩</b><span><strong>EXPORTIEREN</strong><small>Einstellungen + Prüfsumme</small></span></button>
+            <button class="backup-action" id="importConfig"><b>⇧</b><span><strong>IMPORTIEREN</strong><small>Secrets danach neu eingeben</small></span></button>
+          </div>
+          <div class="notice compact">Lokale Restore Points können verschlüsselte Secrets enthalten und sind deshalb nur für denselben Windows-Benutzer auf diesem PC gedacht.</div>
+        </section>
+      </div>
+
+      <section class="panel">
+        <div class="panel-head">
+          <div><span>LOCAL RECOVERY</span><h2>Restore Points</h2><p>Vor Konfigurationsimporten und Updates wird automatisch ein lokaler Wiederherstellungspunkt erstellt.</p></div>
+          <button class="btn" id="createRestorePoint">RESTORE POINT ERSTELLEN</button>
+        </div>
+        <div class="recovery-list" id="recoveryList">
+          <div class="recovery-empty">Noch keine Restore Points.</div>
+        </div>
+      </section>
+    </section>
+
+    <section class="view" data-page="output">
+      <div class="page-head">
+        <span class="eyebrow">LOCAL SCENE OUTPUT · REAL-WORLD GATE</span>
+        <h1>LIVE OUTPUT.</h1>
+        <p>Starte eine veröffentlichte Scene als eigenes Capture-Fenster auf diesem PC und prüfe sie anschließend real in OBS und TikTok LIVE Studio.</p>
+        <div class="entitlement-banner" id="outputEntitlementBanner">Local Output Zugriff wird geprüft…</div>
+      </div>
+
+      <section class="panel">
+        <div class="panel-head">
+          <div><span>PUBLISHED SCENES</span><h2>Meine Outputs</h2><p>Wähle eine Scene und starte daraus den lokalen Capture-Output.</p></div>
+          <button class="btn" id="refreshScenes">SCENES LADEN</button>
+        </div>
+        <div class="launcher-scene-grid" id="launcherSceneGrid"><div class="launcher-scene-empty">Noch keine Scene geladen.</div></div>
+      </section>
+
+      <div class="output-columns">
+        <section class="panel">
+          <div class="panel-head">
+            <div><span>LOCAL OUTPUT WINDOW</span><h2>Capture-Ausgabe</h2><p>Für echten OBS-/TikTok-Test. Die Cloud-Scene läuft in einem eigenen frameless Fenster.</p></div>
+            <span class="pill" id="localOutputPill">GESTOPPT</span>
+          </div>
+          <div class="form-grid">
+            <label class="full"><span>SCENE</span><select id="outputSceneSelect"><option value="">Scene auswählen…</option></select></label>
+            <label><span>DISPLAY</span><select id="outputDisplaySelect"></select></label>
+            <label><span>HINTERGRUND</span><select id="outputBackgroundMode"><option value="transparent">Transparent</option><option value="black">Schwarz</option><option value="chroma_green">Chroma Grün</option></select></label>
+            <label class="toggle-row"><input id="outputAlwaysOnTop" type="checkbox"><span>Always on Top</span></label>
+          </div>
+          <div class="output-local-status">
+            <div><span>STATUS</span><strong id="localOutputStatus">Nicht gestartet</strong></div>
+            <div><span>FORMAT</span><strong id="localOutputFormat">–</strong></div>
+            <div><span>SCENE</span><strong id="localOutputScene">–</strong></div>
+            <div><span>GELADEN</span><strong id="localOutputLoaded">–</strong></div>
+          </div>
+          <div class="inline">
+            <button class="btn primary" id="startLocalOutput">LOKALEN OUTPUT STARTEN</button>
+            <button class="btn" id="reloadLocalOutput" disabled>NEU LADEN</button>
+            <button class="btn danger" id="stopLocalOutput" disabled>STOPPEN</button>
+          </div>
+          <div class="notice compact">Transparent ist der Zielmodus. Schwarz und Chroma Grün sind Testmodi, falls eine Capture-Quelle Alpha nicht sauber übernimmt. Ob TikTok LIVE Studio den gewünschten Weg zuverlässig unterstützt, wird erst im echten Windows-Test bestätigt.</div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <div><span>CAPTURE RECIPE</span><h2>Testablauf</h2></div>
+          </div>
+          <div class="output-pipeline vertical">
+            <span>01 · Scene veröffentlichen</span><b>↓</b>
+            <span>02 · Lokalen Output starten</span><b>↓</b>
+            <span>03 · OBS Window Capture testen</span><b>↓</b>
+            <span>04 · TikTok LIVE Studio testen</span><b>↓</b>
+            <span>05 · LIVE Daten + Alerts prüfen</span>
+          </div>
+        </section>
+      </div>
+
+      <section class="panel output-gate-panel">
+        <div class="panel-head">
+          <div><span>REAL-WORLD TEST GATE</span><h2>Windows / OBS / TikTok</h2><p>Diese Punkte werden bewusst nur manuell auf echter Streaming-Hardware auf PASS gesetzt.</p></div>
+          <div class="inline"><button class="btn" id="resetOutputGate">ZURÜCKSETZEN</button><button class="btn primary" id="exportOutputGate">BERICHT EXPORTIEREN</button></div>
+        </div>
+        <div class="output-gate-summary">
+          <div><span>PASS</span><strong id="outputGatePass">0</strong></div>
+          <div><span>FAIL</span><strong id="outputGateFail">0</strong></div>
+          <div><span>OFFEN</span><strong id="outputGateUntested">0</strong></div>
+          <div><span>GESAMT</span><strong id="outputGateTotal">0</strong></div>
+        </div>
+        <div class="output-gate-list" id="outputGateList"><div class="launcher-scene-empty">Testliste wird geladen.</div></div>
+      </section>
+    </section>
+
+    <section class="view" data-page="beta">
+      <div class="page-head"><span class="eyebrow">BETA TEST · RELEASE CANDIDATE</span><h1>TEST & FEEDBACK.</h1><p>Aktive Beta-Tester können reproduzierbare Test-Sessions starten und Feedback direkt mit einer sicheren Diagnose-Zusammenfassung senden.</p><div class="entitlement-banner" id="betaAccessBanner">Beta-Status wird geprüft…</div></div>
+      <div class="beta-columns">
+        <section class="panel"><div class="panel-head"><div><span>TEST SESSION</span><h2>Aktueller Testlauf</h2><p>Version, Provider und Output-Gate werden automatisch mitprotokolliert.</p></div><span class="pill" id="betaSessionPill">OFF</span></div><div class="form-grid"><label class="full"><span>TESTBEZEICHNUNG</span><input id="betaSessionLabel" maxlength="120" value="Creator Suite Beta Test"></label><label class="full"><span>ERGEBNIS / NOTIZ BEIM BEENDEN</span><textarea id="betaSessionSummary" maxlength="2000" placeholder="Was wurde getestet? Was ist aufgefallen?"></textarea></label></div><div class="output-local-status"><div><span>SESSION</span><strong id="betaSessionId">–</strong></div><div><span>GESTARTET</span><strong id="betaSessionStarted">–</strong></div><div><span>FEEDBACK</span><strong id="betaRecentFeedback">0</strong></div><div><span>LAUNCHER</span><strong id="betaLauncherVersion">0.42.0</strong></div></div><div class="inline"><button class="btn primary" id="startBetaSession">TESTSESSION STARTEN</button><button class="btn danger" id="endBetaSession" disabled>TESTSESSION BEENDEN</button><button class="btn" id="refreshBetaCenter">STATUS LADEN</button></div></section>
+        <section class="panel"><div class="panel-head"><div><span>AUTOMATISCH ANGEHÄNGT</span><h2>Diagnose-Snapshot</h2></div></div><div class="beta-diagnostic-grid"><div><span>BRIDGE</span><strong id="betaDiagBridge">–</strong></div><div><span>LIVE</span><strong id="betaDiagLive">–</strong></div><div><span>LOCAL OUTPUT</span><strong id="betaDiagOutput">–</strong></div><div><span>OUTPUT GATE</span><strong id="betaDiagGate">–</strong></div></div><div class="notice compact">Es werden keine Bridge-Keys, Provider-Keys oder kompletten Logs an das Feedback angehängt. Gesendet wird nur eine begrenzte technische Zusammenfassung.</div></section>
+      </div>
+      <section class="panel beta-feedback-panel"><div class="panel-head"><div><span>FEEDBACK SENDEN</span><h2>Bug / Idee / UX</h2><p>Je genauer die Schritte, desto leichter lässt sich ein Problem reproduzieren.</p></div></div><div class="form-grid"><label><span>TYP</span><select id="betaFeedbackKind"><option value="bug">Bug</option><option value="ux">UX</option><option value="idea">Idee</option><option value="other">Sonstiges</option></select></label><label><span>PRIORITÄT</span><select id="betaFeedbackSeverity"><option value="low">Low</option><option value="medium" selected>Medium</option><option value="high">High</option><option value="critical">Critical</option></select></label><label><span>BEREICH</span><select id="betaFeedbackCategory"><option value="launcher">Launcher</option><option value="live">LIVE</option><option value="widgets">Widgets</option><option value="scenes">Scenes</option><option value="obs">OBS</option><option value="tiktok">TikTok</option><option value="games">Games</option><option value="cut_studio">Cut Studio</option><option value="account">Account</option><option value="other">Sonstiges</option></select></label><label class="full"><span>TITEL</span><input id="betaFeedbackTitle" maxlength="160" placeholder="Kurz und eindeutig"></label><label class="full"><span>BESCHREIBUNG</span><textarea id="betaFeedbackDescription" maxlength="5000" placeholder="Was ist passiert?"></textarea></label><label class="full"><span>SCHRITTE ZUM NACHSTELLEN</span><textarea id="betaFeedbackSteps" maxlength="5000" placeholder="1. ...&#10;2. ...&#10;3. ..."></textarea></label><label><span>ERWARTET</span><textarea id="betaFeedbackExpected" maxlength="3000"></textarea></label><label><span>TATSÄCHLICH</span><textarea id="betaFeedbackActual" maxlength="3000"></textarea></label></div><div class="inline"><button class="btn primary" id="submitBetaFeedback">FEEDBACK SENDEN</button></div></section>
+    </section>
+
+    <section class="view" data-page="settings">
+      <div class="page-head"><span class="eyebrow">DESKTOP APP</span><h1>EINSTELLUNGEN.</h1><p>Wähle jederzeit, wie viele Einstellungen du sehen möchtest.</p></div>
+      <section class="panel experience-settings-panel">
+        <div class="panel-head"><div><span>ANSICHT</span><h2>Wie möchtest du arbeiten?</h2><p>Die Funktionen bleiben gleich. Nur die Oberfläche wird einfacher oder vollständiger.</p></div><span class="pill" id="experienceSettingsPill">EINFACH</span></div>
+        <div class="experience-choice-grid compact">
+          <button type="button" data-experience-mode="simple"><b>🌱 Einfach starten</b><span>Nur wichtige Aktionen, klare Hinweise und weniger Technik.</span></button>
+          <button type="button" data-experience-mode="pro"><b>⚙ Profi-Modus</b><span>Alle Diagnose-, Provider-, Output- und Feineinstellungen anzeigen.</span></button>
+        </div>
+      </section>
+      <section class="panel">
+        <div class="setting-row"><div><strong>Mit Windows starten</strong><small>Creator Suite beim Anmelden starten.</small></div><input id="autoStart" type="checkbox"></div>
+        <div class="setting-row"><div><strong>Minimiert starten</strong><small>Launcher startet direkt im Tray.</small></div><input id="startMinimized" type="checkbox"></div>
+        <div class="setting-row"><div><strong>Automatische Updates</strong><small>Regelmäßig nach einer neuen Launcher-Version suchen.</small></div><input id="autoUpdate" type="checkbox"></div>
+        <div class="setting-row"><div><strong>LIVE automatisch fortsetzen</strong><small>Nach einem Launcher-Neustart eine noch aktive Cloud-Session wieder aufnehmen.</small></div><input id="autoRecoverLive" type="checkbox"></div>
+        <div class="setting-row" data-experience="pro"><div><strong>Update-Kanal</strong><small>Stable für normale Releases, Beta für Vorabversionen.</small></div><select id="updateChannel"><option value="stable">Stable</option><option value="beta">Beta</option></select></div>
+        <div class="setting-row" data-experience="pro"><div><strong>Lokale Logs</strong><small>Tokens werden in Logs automatisch maskiert.</small></div><button class="btn" id="openLogs">LOG-ORDNER</button></div>
+        <div class="setting-row" data-experience="pro"><div><strong>Recovery Event Queue</strong><small id="spoolSettingMeta">0 Events persistent gespeichert.</small></div><button class="btn danger ghost" id="clearSpool">QUEUE LEEREN</button></div>
+        <div class="setting-row" data-experience="pro"><div><strong>Support-Paket</strong><small>Diagnose, pseudonymisierter Field-Test, Release-Gate und letzte Logs – ohne Secrets.</small></div><button class="btn" id="createSupportBundle">SUPPORT-PAKET</button></div>
+        <div class="setting-row"><div><strong>Einrichtung erneut öffnen</strong><small>Startet den Setup-Assistenten beim nächsten Öffnen erneut.</small></div><button class="btn" id="resetSetup">SETUP ZURÜCKSETZEN</button></div>
+      </section>
+      <section class="panel update-panel" data-experience="pro">
+        <div class="panel-head">
+          <div><span>LAUNCHER UPDATE</span><h2>Release Status</h2></div>
+          <span class="pill" id="updateStatusPill">BEREIT</span>
+        </div>
+        <div class="update-grid">
+          <div><span>INSTALLIERT</span><strong id="updateCurrentVersion">–</strong></div>
+          <div><span>VERFÜGBAR</span><strong id="updateLatestVersion">–</strong></div>
+          <div><span>STATUS</span><strong id="updateStatusText">Bereit.</strong></div>
+        </div>
+        <div class="cloud-release-policy" id="cloudReleasePolicy">
+          <div><span>CLOUD POLICY</span><strong id="policyStatus">Wird geladen…</strong></div>
+          <div><span>MINIMUM</span><strong id="policyMinimum">–</strong></div>
+          <div><span>EMPFOHLEN</span><strong id="policyRecommended">–</strong></div>
+          <div><span>KANAL</span><strong id="policyChannel">–</strong></div>
+          <div><span>ROLLOUT</span><strong id="policyRollout">–</strong></div>
+          <div><span>LIVE GATE</span><strong id="policyLiveGate">–</strong></div>
+        </div>
+        <div class="policy-notice" id="policyNotice">Creator Cloud Release-Policy wird über die Bridge geladen.</div>
+        <div class="update-progress"><i id="updateProgress" style="width:0%"></i></div>
+        <div class="inline">
+          <button class="btn" id="checkUpdate">NACH UPDATE SUCHEN</button>
+          <button class="btn primary" id="downloadUpdate" hidden>UPDATE LADEN</button>
+          <button class="btn primary" id="installUpdate" hidden>NEU STARTEN & INSTALLIEREN</button>
+        </div>
+      </section>
+      <section class="panel">
+        <div class="panel-head">
+          <div><span>CREATOR ACCOUNT</span><h2>Dieses Gerät</h2><p>Device-Link ersetzt die manuelle Bridge-Key-Einrichtung für normale Creator.</p></div>
+        </div>
+        <div class="setting-row"><div><strong>Creator-Bibliothek</strong><small>Plan, TikTok-Profil, Widgets und Scenes werden automatisch aus deinem verbundenen Account geladen.</small></div><button class="btn" id="refreshCreatorLibrary">AKTUALISIEREN</button></div>
+        <div class="setting-row"><div><strong>Launcher abmelden</strong><small>Widerruft dieses Gerät in der Creator Cloud und entfernt den lokalen Bridge-Schlüssel.</small></div><button class="btn danger" id="logoutDevice">GERÄT ABMELDEN</button></div>
+      </section>
+
+      <section class="panel about">
+        <span>VERSION</span><strong id="appVersion">0.42.0</strong>
+        <p>Creator-Isolation- und Beta-Center-Version mit persönlichem TikTok-Sync und Tester-Status.</p>
+      </section>
+    </section>
+
+
+    <div class="setup-overlay" id="setupWizard" hidden>
+      <div class="setup-card">
+        <div class="setup-top">
+          <div><span>CREATOR SUITE V0.42</span><strong>ERSTEINRICHTUNG</strong></div>
+          <span class="setup-progress" id="setupProgress">1 / 4</span>
+        </div>
+
+        <section class="setup-step active" data-setup-step="1">
+          <span class="eyebrow">SCHRITT 1</span>
+          <h2>Creator Suite verbinden.</h2>
+          <p>Wir richten zuerst die Verbindung zwischen diesem PC und deiner Creator Cloud ein.</p>
+          <div class="setup-experience-choice">
+            <span>WIE MÖCHTEST DU STARTEN?</span>
+            <div class="experience-choice-grid">
+              <button type="button" data-setup-experience="simple" class="selected"><b>🌱 Ich möchte geführt werden</b><small>Zeig mir nur das Wichtigste und sag mir, was als Nächstes zu tun ist.</small></button>
+              <button type="button" data-setup-experience="pro"><b>⚙ Ich kenne Streaming bereits</b><small>Zeig mir alle Einstellungen, Diagnosen und erweiterten Optionen.</small></button>
+            </div>
+            <small>Du kannst die Ansicht später jederzeit oben im Launcher wechseln.</small>
+          </div>
+          <div class="setup-form">
+            <label><span>BACKEND URL</span><input id="setupBackendUrl" value="https://cfs-zockt.de"></label>
+            <label><span>PC NAME</span><input id="setupMachineName" maxlength="120"></label>
+          </div>
+        </section>
+
+        <section class="setup-step" data-setup-step="2">
+          <span class="eyebrow">SCHRITT 2</span>
+          <h2>Mit deinem CFS Account verbinden.</h2>
+          <p>Starte die Geräte-Verknüpfung. Danach öffnest du die Website und bestätigst diesen PC in deinem eingeloggten Creator-Account.</p>
+          <div class="device-link-card">
+            <div class="device-code-label">DEIN GERÄTE-CODE</div>
+            <strong class="device-code" id="setupDeviceCode">NOCH NICHT GESTARTET</strong>
+            <small id="setupDeviceStatus">Starte die Verknüpfung, um einen einmaligen Code zu erhalten.</small>
+            <div class="inline">
+              <button class="btn primary" id="setupStartDeviceLink">GERÄT VERKNÜPFEN</button>
+              <button class="btn" id="setupOpenDeviceLink" disabled>WEBSITE ÖFFNEN</button>
+              <button class="btn" id="setupCheckDeviceLink" disabled>STATUS PRÜFEN</button>
+            </div>
+          </div>
+          <div class="notice" id="setupEncryption"></div>
+          <details class="legacy-bridge-fallback">
+            <summary>Erweiterte / alte Bridge-Key Einrichtung</summary>
+            <div class="setup-form">
+              <label><span>BRIDGE KEY</span><input id="setupBridgeToken" type="password" placeholder="cfsb_..."></label>
+            </div>
+          </details>
+        </section>
+
+        <section class="setup-step" data-setup-step="3">
+          <span class="eyebrow">SCHRITT 3</span>
+          <h2>LIVE Quelle wählen.</h2>
+          <p>Für Tests reicht der Simulator. Für echte TikTok-LIVE-Ereignisse kann später der optionale Drittanbieter-Provider verwendet werden.</p>
+          <div class="setup-form">
+            <label><span>PROVIDER</span><select id="setupProvider"><option value="mock">Simulator</option><option value="tiktool">TikTok LIVE · TikTool</option></select></label>
+            <label><span>TIKTOK USERNAME</span><input id="setupTikTokUsername" placeholder="@creator"></label>
+            <label class="full"><span>PROVIDER API KEY</span><input id="setupTiktoolKey" type="password" placeholder="nur bei TikTool"></label>
+          </div>
+        </section>
+
+        <section class="setup-step" data-setup-step="4">
+          <span class="eyebrow">SCHRITT 4</span>
+          <h2>Systemcheck.</h2>
+          <p>Creator Suite prüft die gespeicherte Konfiguration und die Bridge, bevor wir den Assistenten abschließen.</p>
+          <div class="setup-checks" id="setupChecks"><span>Noch nicht geprüft.</span></div>
+          <button class="btn" id="setupRunCheck">VERBINDUNG & PREFLIGHT PRÜFEN</button>
+        </section>
+
+        <div class="setup-actions">
+          <button class="btn" id="setupBack">ZURÜCK</button>
+          <button class="btn primary" id="setupNext">WEITER</button>
+          <button class="btn primary" id="setupFinish" hidden>SETUP ABSCHLIESSEN</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="toast" id="toast" hidden></div>
+  </main>
+</div>
+<script src="./app.js"></script>
+</body>
+</html>

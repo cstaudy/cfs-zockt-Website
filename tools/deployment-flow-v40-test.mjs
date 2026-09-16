@@ -1,0 +1,12 @@
+import fs from "node:fs";import path from "node:path";
+const root=path.resolve(process.argv[2]||path.join(import.meta.dirname,"..")),must=(v,m)=>{if(!v)throw new Error(m)};
+const deploy=fs.readFileSync(path.join(root,".github/workflows/production-deploy.yml"),"utf8");
+const quality=fs.readFileSync(path.join(root,".github/workflows/quality-gate.yml"),"utf8");
+const verify=fs.readFileSync(path.join(root,".github/workflows/production-verification.yml"),"utf8");
+must(/default: "3\.(?:10|11|12)\.0"/.test(deploy),"deploy expected backend 3.10+");
+must(/default: "3\.(?:10|11|12)\.0"/.test(verify),"verification expected backend 3.10+");
+must(deploy.includes("production-canary-check.mjs"),"canary after deploy");
+must(deploy.includes("concurrency:")&&deploy.includes("cancel-in-progress: false"),"deploy concurrency");
+must(quality.includes("cancel-in-progress: true"),"quality concurrency");
+must(!deploy.includes("push:\\n    branches:"),"production deploy must not auto-run on push");
+console.log(JSON.stringify({ok:true,backend:"3.10+",manual_deploy:true,canary:true,concurrency:true}));

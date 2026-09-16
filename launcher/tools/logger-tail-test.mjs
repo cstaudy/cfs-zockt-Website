@@ -1,0 +1,13 @@
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import { createRequire } from "node:module";
+const require=createRequire(import.meta.url);
+const {Logger}=require("../src/logger.js");
+const dir=fs.mkdtempSync(path.join(os.tmpdir(),"cfs-log-tail-")),file=path.join(dir,"launcher.log"),logger=new Logger(file);
+for(let i=0;i<300;i++)logger.info(`row-${i}`,i===299?"Authorization: Bearer SECRET":"");
+const tail=logger.tail(1200);
+if(!tail.includes("row-299"))throw new Error("tail missing final row");
+if(tail.includes("SECRET"))throw new Error("tail leaked bearer secret");
+if(tail.length>1300)throw new Error("tail exceeded requested byte window");
+console.log(JSON.stringify({ok:true,length:tail.length,redacted:true}));

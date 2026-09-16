@@ -1,0 +1,46 @@
+name: Generate Dependency Lockfiles
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Generate exact lockfiles
+        run: npm run lockfiles:generate
+
+      - name: Verify lockfile structure
+        run: npm run lockfiles:check
+
+      - name: Verify backend clean install
+        run: |
+          rm -rf node_modules
+          npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Verify launcher clean install
+        working-directory: launcher
+        run: |
+          rm -rf node_modules
+          npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Upload lockfiles
+        uses: actions/upload-artifact@v4
+        with:
+          name: cfs-zockt-package-lockfiles
+          path: |
+            package-lock.json
+            launcher/package-lock.json
+          if-no-files-found: error

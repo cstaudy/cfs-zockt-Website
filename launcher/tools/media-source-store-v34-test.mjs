@@ -1,0 +1,16 @@
+import fs from "node:fs";import os from "node:os";import path from "node:path";import {createRequire} from "node:module";
+const require=createRequire(import.meta.url),{MediaSourceStore}=require("../src/media-source-store.js");
+const dir=fs.mkdtempSync(path.join(os.tmpdir(),"cfs-source-v34-")),db=path.join(dir,"sources.json");
+const files={video:"video.mp4",music:"music.wav",voice:"voice.wav",boom:"boom.wav",ding:"ding.wav"};
+for(const name of Object.values(files))fs.writeFileSync(path.join(dir,name),name);
+fs.writeFileSync(db,JSON.stringify({schema:2,sources:{p1:{projectId:"p1",sourceName:"video",filePath:path.join(dir,files.video),fileName:files.video}},music:{p1:{projectId:"p1",sourceName:"music",filePath:path.join(dir,files.music),fileName:files.music}}}));
+let store=new MediaSourceStore(db);
+if(store.snapshot().schema<3||!store.get("p1")?.exists||!store.getMusic("p1")?.exists)throw new Error("schema2 migration");
+store.setVoice("p1",{sourceName:"voice.wav",filePath:path.join(dir,files.voice)});
+store.setSfx("p1","boom",{sourceName:"boom.wav",filePath:path.join(dir,files.boom)});
+store.setSfx("p1","ding",{sourceName:"ding.wav",filePath:path.join(dir,files.ding)});
+store=new MediaSourceStore(db);
+if(!store.getVoice("p1")?.exists||!store.getSfx("p1","boom")?.exists||Object.keys(store.snapshot().sfx.p1||{}).length!==2)throw new Error("voice/sfx persistence");
+store.removeSfx("p1","ding");if(store.getSfx("p1","ding"))throw new Error("sfx remove");
+store.removeVoice("p1");if(store.getVoice("p1"))throw new Error("voice remove");
+console.log(JSON.stringify({ok:true,schema:3,voice:true,sfx:true,migration:true}));

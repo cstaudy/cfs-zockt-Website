@@ -1,0 +1,1426 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#030711">
+<title>Widget Studio | cfs_zockt Creator Suite</title>
+<link rel="stylesheet" href="/assets/css/styles.css">
+<link rel="stylesheet" href="/assets/css/widget-studio.css?v=v42-r20">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+</head>
+<body>
+<header class="site-header"><div class="container header-inner">
+<a class="brand" href="/">cfs_<span>zockt</span></a>
+<button class="mobile-toggle" type="button" id="mobileNavToggle">MENÜ</button>
+<nav class="nav" id="mainNav">
+<a href="/pages/dashboard.html">DASHBOARD</a>
+<a href="/pages/setup.html">SETUP</a>
+<a class="active" href="/pages/widget-studio.html">WIDGET STUDIO</a>
+<a href="/pages/editor.html">EDITOR</a>
+<a href="/pages/scene-studio.html">SCENE STUDIO</a>
+      <a href="/pages/launcher.html">LAUNCHER</a>
+<a href="/pages/tiktok.html">TIKTOK</a>
+<a href="/pages/account.html">ACCOUNT</a>
+<button data-logout>LOGOUT</button>
+</nav></div></header>
+
+<main class="ws-page">
+<section class="ws-topbar container">
+  <div>
+    <div class="eyebrow">cfs_zockt CREATOR SUITE</div>
+    <h1>WIDGET STUDIO</h1>
+    <p>Wähle zuerst deinen Stream-Bereich: TikTok LIVE oder OBS. Gemeinsame Widgets erscheinen in beiden Bereichen, TikTok-Daten bleiben klar gekennzeichnet.</p>
+  </div>
+  <div class="ws-topbar-side">
+    <div class="ws-experience-switch ws-experience-switch-top" role="group" aria-label="Widget Studio Modus">
+      <button class="active" type="button" data-experience-mode="simple"><span>🌱</span><strong>EINFACH</strong><small>geführt</small></button>
+      <button type="button" data-experience-mode="pro"><span>⚙</span><strong>PROFI</strong><small>alle Optionen</small></button>
+    </div>
+    <div class="ws-account-card">
+      <span id="wsPlanBadge" class="badge">LÄDT…</span>
+      <strong id="wsCreatorName">Creator</strong>
+      <small id="wsTikTokSummary">TikTok wird geprüft…</small>
+      <small id="wsStudioSyncStatus" class="ws-studio-sync-status local">Studio-Daten werden vorbereitet…</small>
+    </div>
+  </div>
+</section>
+
+<section class="container ws-shell" id="wsApp">
+  <div class="notice" id="wsMessage" role="status" aria-live="polite" aria-atomic="true" tabindex="-1" hidden></div>
+
+  <section class="ws-simple-guide ws-simple-guide-dashboard" data-experience-scope="simple">
+    <div class="ws-simple-guide-icon">🌱</div>
+    <div>
+      <span>EINFACH STARTEN</span>
+      <strong>Ein klarer Weg vom Widget bis zur Live-Version.</strong>
+      <p>Widget wählen → Vorlage → Inhalt → Design → Position → Effekte → testen &amp; veröffentlichen. Technische Details bleiben im Hintergrund.</p>
+    </div>
+    <button class="btn primary" type="button" data-action="open-create">WIDGET STARTEN</button>
+  </section>
+
+  <section class="ws-view ws-dashboard-v2" data-view="dashboard">
+    <div class="ws-dashboard-head">
+      <div>
+        <div class="eyebrow">DEIN CREATOR WORKSPACE</div>
+        <h2>DEINE STREAM-WIDGETS.</h2>
+        <p>TikTok-LIVE-Daten, manuelle Stream-Widgets und freie Overlays sind klar gekennzeichnet. So siehst du sofort, was wo funktioniert.</p>
+      </div>
+      <div class="ws-dashboard-head-actions">
+        <button class="btn ws-assets-open" type="button" data-action="open-assets">
+          <span>▧</span> DEINE DATEIEN
+        </button>
+        <button class="btn ws-stream-board-open" type="button" data-action="open-stream-board">
+          <span>▣</span> STREAM BOARD
+        </button>
+        <button class="btn primary ws-dashboard-create" type="button" data-action="open-create">
+          <span>+</span> NEUES WIDGET
+        </button>
+      </div>
+    </div>
+
+    <section class="ws-simple-start-hub" data-experience-scope="simple" aria-label="Schnellstart im Widget Studio">
+      <div class="ws-simple-start-head">
+        <div><span>DEIN SCHNELLSTART</span><strong>Was möchtest du machen?</strong><small>Die wichtigsten Wege ohne technische Umwege.</small></div>
+        <button type="button" class="ws-simple-brand-button" data-action="open-brand"><span>◆</span><strong>MEINE MARKE</strong><small id="wsSimpleBrandMeta">Farben, Schrift &amp; Logo</small></button>
+      </div>
+      <div class="ws-simple-start-grid">
+        <button class="primary" type="button" data-action="open-create"><b>＋</b><span><strong>Neues Widget</strong><small>Geführt in wenigen Schritten</small></span></button>
+        <button type="button" data-action="open-latest-widget"><b>↺</b><span><strong>Weiterarbeiten</strong><small id="wsSimpleContinueMeta">Letztes Widget öffnen</small></span></button>
+        <button type="button" data-dashboard-filter="favorites"><b>★</b><span><strong>Favoriten</strong><small>Schnell wiederfinden</small></span></button>
+        <button type="button" data-dashboard-filter="draft"><b>✎</b><span><strong>Entwürfe</strong><small>Noch nicht veröffentlicht</small></span></button>
+        <button type="button" data-dashboard-filter="live"><b>●</b><span><strong>Veröffentlicht</strong><small>Aktuell im Stream</small></span></button>
+      </div>
+      <div class="ws-simple-status-strip">
+        <span><b id="wsSimpleWidgetStatus">0 Widgets</b><small>deine Bibliothek</small></span>
+        <span><b id="wsSimpleTikTokStatus">TikTok wird geprüft</b><small>Profil-Daten</small></span>
+        <span><b id="wsSimpleLiveStatus">LIVE-Daten werden geprüft</b><small>Launcher Bridge</small></span>
+        <button type="button" data-action="open-bridge">LIVE-DATEN STATUS</button>
+      </div>
+    </section>
+
+    <div class="ws-dashboard-overview" data-experience-scope="pro">
+      <section class="ws-plan-card">
+        <div class="ws-overview-icon">▦</div>
+        <div class="ws-plan-copy">
+          <div class="ws-overview-label">DEIN WIDGET-LIMIT</div>
+          <div class="ws-plan-line">
+            <strong id="wsWidgetCount">0 / 0</strong>
+            <span id="wsPlanUsageText">0 % genutzt</span>
+          </div>
+          <div class="ws-plan-progress"><i id="wsPlanUsageBar" style="width:0%"></i></div>
+          <small id="wsPlanMeta">Dein aktueller Creator-Plan.</small>
+        </div>
+      </section>
+
+      <section class="ws-overview-card">
+        <div class="ws-overview-icon live">●</div>
+        <div>
+          <div class="ws-overview-label">VERÖFFENTLICHT</div>
+          <strong class="ws-overview-value" id="wsLiveCount">0</strong>
+          <small>Aktive Stream-Widgets</small>
+        </div>
+      </section>
+
+      <section class="ws-overview-card ws-tiktok-overview" id="wsTikTokOverview">
+        <div class="ws-overview-avatar" id="wsDashboardAvatar">TT</div>
+        <div class="ws-overview-grow">
+          <div class="ws-overview-label">TIKTOK PROFIL</div>
+          <strong class="ws-overview-value ws-follower-value" id="wsFollowerCount">–</strong>
+          <small id="wsFollowerMeta">Profil wird geladen.</small>
+        </div>
+        <span class="ws-connection-pill" id="wsTikTokConnection">PRÜFEN…</span>
+      </section>
+
+      <section class="ws-overview-card ws-live-bridge-overview" id="wsLiveBridgeOverview">
+        <div class="ws-overview-icon bridge">↯</div>
+        <div class="ws-overview-grow">
+          <div class="ws-overview-label">LAUNCHER BRIDGE</div>
+          <strong class="ws-overview-value ws-bridge-value" id="wsBridgeValue">NICHT EINGERICHTET</strong>
+          <small id="wsBridgeMeta">Verbindet Likes, Gifts, Shares, Viewer & Events mit dem Widget Studio.</small>
+        </div>
+        <div class="ws-bridge-card-actions">
+          <span class="ws-connection-pill offline" id="wsBridgeConnection">OFFLINE</span>
+          <button type="button" class="ws-bridge-manage" data-action="open-bridge">EINRICHTEN</button>
+        </div>
+      </section>
+    </div>
+
+    <section class="ws-library">
+      <div class="ws-library-head">
+        <div>
+          <div class="ws-section-label">WIDGET BIBLIOTHEK</div>
+          <h3>Deine Widgets</h3>
+        </div>
+
+        <div class="ws-library-tools">
+          <label class="ws-search">
+            <span aria-hidden="true">⌕</span>
+            <input id="wsWidgetSearch" type="search" placeholder="Widget suchen…" autocomplete="off">
+          </label>
+          <details class="ws-library-options" data-experience-scope="pro">
+            <summary>Filter & Sortierung</summary>
+            <div class="ws-library-options-body">
+              <div class="ws-platform-mini-filter" role="tablist" aria-label="Plattform Filter">
+                <button class="active" type="button" data-dashboard-platform="all">ALLE</button>
+                <button type="button" data-dashboard-platform="tiktok">TIKTOK</button>
+                <button type="button" data-dashboard-platform="obs">OBS</button>
+              </div>
+              <div class="ws-filter-tabs" role="tablist" aria-label="Widget Filter">
+                <button class="active" type="button" data-dashboard-filter="all">ALLE</button>
+                <button type="button" data-dashboard-filter="live">LIVE</button>
+                <button type="button" data-dashboard-filter="draft">ENTWÜRFE</button>
+              </div>
+              <label class="ws-sort"><span>SORTIEREN</span><select id="wsWidgetSort"><option value="updated">Zuletzt bearbeitet</option><option value="live">Live zuerst</option><option value="name">Name A–Z</option><option value="type">Widget-Typ</option></select></label>
+            </div>
+          </details>
+        </div>
+      </div>
+
+      <div class="ws-library-quick-access" aria-label="Schnellzugriff auf Widgets">
+        <button class="active" type="button" data-dashboard-filter="all"><span>ALLE</span><small>Alle Widgets</small></button>
+        <button type="button" data-dashboard-filter="favorites"><span>★ FAVORITEN</span><small><b id="wsFavoriteCount">0</b> markiert</small></button>
+        <button type="button" data-dashboard-filter="recent"><span>↺ ZULETZT</span><small><b id="wsRecentCount">0</b> verwendet</small></button>
+        <button type="button" data-dashboard-filter="draft"><span>✎ ENTWÜRFE</span><small><b id="wsDraftCount">0</b> offen</small></button>
+        <button type="button" data-dashboard-filter="live"><span>● LIVE</span><small><b id="wsPublishedCount">0</b> veröffentlicht</small></button>
+      </div>
+
+      <div id="wsEmpty" class="ws-empty ws-empty-v2" hidden>
+        <div class="ws-empty-art">
+          <div class="ws-empty-mini-widget">
+            <div><span>FOLLOWER GOAL</span><strong>1.284 / 2.000</strong></div>
+            <div class="ws-empty-progress"><i></i></div>
+          </div>
+          <div class="ws-empty-plus">+</div>
+        </div>
+        <div>
+          <span class="ws-empty-kicker">DEIN ERSTER START</span>
+          <h3>ERSTELLE DEIN ERSTES STREAM-WIDGET.</h3>
+          <p>Wähle den passenden Bereich, gestalte dein Widget und veröffentliche es anschließend für deinen Stream.</p>
+          <button class="btn primary" type="button" data-action="open-create">WIDGET ERSTELLEN</button>
+        </div>
+      </div>
+
+      <div id="wsNoResults" class="ws-no-results" hidden>
+        <span>⌕</span>
+        <strong>Keine Widgets gefunden</strong>
+        <p>Ändere deine Suche oder setze die Filter mit einem Klick zurück.</p>
+        <button class="btn" type="button" data-action="reset-dashboard-filters">FILTER ZURÜCKSETZEN</button>
+      </div>
+
+      <div class="ws-widget-grid ws-widget-grid-v2" id="wsWidgetGrid"></div>
+    </section>
+
+    <section class="ws-dashboard-bottom">
+      <article class="ws-tip-card">
+        <div class="ws-tip-icon">OBS</div>
+        <div>
+          <span>STREAM-TIPP</span>
+          <strong>Eine URL. Immer aktuell.</strong>
+          <p>Deine OBS Browser Source bleibt stabil. Erst wenn du veröffentlichst, wird dein neuer Entwurf live.</p>
+        </div>
+      </article>
+      <article class="ws-tip-card ws-session-card" data-experience-scope="pro">
+        <div class="ws-tip-icon cyan">◉</div>
+        <div>
+          <span>LETZTE LIVE SESSION</span>
+          <strong id="wsLastSessionTitle">Noch keine Session gespeichert.</strong>
+          <p id="wsLastSessionMeta">Sobald eine Bridge- oder Simulator-Session endet, erscheint hier die Zusammenfassung.</p>
+        </div>
+      </article>
+      <article class="ws-tip-card ws-interaction-card" data-experience-scope="pro">
+        <div class="ws-tip-icon">AI</div>
+        <div>
+          <span>LIVE INTERACTIONS</span>
+          <strong>AutoThanks für Follow, Gift & Share.</strong>
+          <p>Regeln und Launcher-Aktionsqueue sind vorbereitet. Audio/TTS selbst wird später im PC-Launcher ausgegeben.</p>
+          <button class="ws-tip-action" type="button" data-action="open-interactions">REGELN VERWALTEN</button>
+        </div>
+      </article>
+    </section>
+  </section>
+
+  <section class="ws-view ws-create-view" data-view="create" hidden>
+    <div class="ws-create-head">
+      <div class="ws-create-nav-row">
+        <button class="ws-back ws-back-pill" type="button" data-action="dashboard"><span aria-hidden="true">←</span> Zurück zu Widgets</button>
+        <div class="ws-experience-switch ws-experience-switch-inline" role="group" aria-label="Widget Studio Modus">
+          <button class="active" type="button" data-experience-mode="simple"><span>🌱</span><strong>EINFACH</strong></button>
+          <button type="button" data-experience-mode="pro"><span>⚙</span><strong>PROFI</strong></button>
+        </div>
+      </div>
+      <div class="ws-create-headline">
+        <div>
+          <div class="eyebrow">WIDGET STUDIO · NEUES WIDGET</div>
+          <h2>BAUE DEIN STREAM-WIDGET.</h2>
+          <p>Wähle zuerst, was dein Widget anzeigen soll. Danach entscheidest du dich für ein Startdesign und öffnest es im Studio.</p>
+        </div>
+        <div class="ws-create-steps" aria-label="Erstellungsfortschritt">
+          <div class="ws-create-step active"><span>1</span><strong>Widget</strong></div>
+          <div class="ws-create-step"><span>2</span><strong>Design</strong></div>
+          <div class="ws-create-step"><span>3</span><strong>Anpassen</strong></div>
+          <div class="ws-create-step"><span>4</span><strong>Prüfen</strong></div>
+          <div class="ws-create-step"><span>5</span><strong>Live</strong></div>
+        </div>
+      </div>
+    </div>
+
+    <section class="ws-platform-picker">
+      <div class="ws-section-label">1 · STREAM-BEREICH</div>
+      <h3>Wo möchtest du das Widget einsetzen?</h3>
+      <p class="ws-platform-intro">TikTok LIVE zeigt echte TikTok-Daten und gemeinsame Stream-Widgets. OBS enthält nur Widgets, die ohne fertige Twitch-Anbindung bereits zuverlässig funktionieren.</p>
+      <div class="ws-platform-cards">
+        <button class="ws-platform-card active" type="button" data-platform-filter="tiktok">
+          <span class="ws-platform-logo">TT</span>
+          <div><strong>TikTok LIVE</strong><small>Follower, Likes, Gifts, Shares, Viewer, Alerts + manuelle Widgets</small></div>
+          <b>LIVE-DATEN</b>
+        </button>
+        <button class="ws-platform-card" type="button" data-platform-filter="obs">
+          <span class="ws-platform-logo obs">OBS</span>
+          <div><strong>OBS Streaming</strong><small>Counter, Timer, manuelle Goals, Text, Bilder und Branding</small></div>
+          <b>OHNE TWITCH-DATEN</b>
+        </button>
+      </div>
+      <div class="ws-platform-rule">
+        <span>KLARE TRENNUNG</span>
+        <p><strong>TikTok LIVE</strong> enthält echte TikTok-Daten. <strong>OBS</strong> enthält aktuell allgemeine und manuelle Stream-Widgets. Twitch-Follower, Subs und Twitch-Alerts werden erst angezeigt, wenn die Anbindung wirklich vorhanden ist.</p>
+      </div>
+      <div id="wsPlatformNotice" class="ws-platform-notice"></div>
+    </section>
+
+    <section class="ws-quickstart-30" data-experience-scope="simple" aria-label="30-Sekunden Schnellstart">
+      <div class="ws-quickstart-30-head">
+        <div><span>30-SEKUNDEN-START</span><strong>Direkt mit einem fertigen Ausgangspunkt loslegen.</strong><small>Ein Klick erstellt den empfohlenen Typ mit einem passenden Grunddesign. Danach landest du sofort bei Inhalt oder Design.</small></div>
+        <b>OHNE TECHNIK-UMWEG</b>
+      </div>
+      <div class="ws-quickstart-30-grid">
+        <button type="button" data-quick-create="goal"><b>◎</b><span><strong>Goal</strong><small data-quick-start-meta="goal">Passendes Goal wird gewählt</small></span><em>STARTEN →</em></button>
+        <button type="button" data-quick-create="counter"><b>#</b><span><strong>Counter</strong><small data-quick-start-meta="counter">Passender Counter wird gewählt</small></span><em>STARTEN →</em></button>
+        <button type="button" data-quick-create="timer"><b>◷</b><span><strong>Timer</strong><small data-quick-start-meta="timer">Passender Timer wird gewählt</small></span><em>STARTEN →</em></button>
+        <button type="button" data-quick-create="chat"><b>⌁</b><span><strong>Chat</strong><small data-quick-start-meta="chat">TikTok LIVE Chat</small></span><em>STARTEN →</em></button>
+        <button type="button" data-quick-create="camera"><b>▣</b><span><strong>Kamera</strong><small data-quick-start-meta="camera">Passender Kamera-Rahmen</small></span><em>STARTEN →</em></button>
+      </div>
+      <p class="ws-quickstart-30-note">Du kannst danach weiterhin alle sechs Einfach-Schritte oder jederzeit den Profi-Modus nutzen. Es wird nichts automatisch veröffentlicht.</p>
+    </section>
+
+    <section class="ws-type-library">
+      <div class="ws-type-library-head">
+        <div><div class="ws-section-label">WIDGET-TYP</div><h3>Was möchtest du im Stream zeigen?</h3></div>
+        <div class="ws-simple-type-picker" data-experience-scope="simple" aria-label="Einfache Widget-Kategorien">
+          <span>WAS MÖCHTEST DU BAUEN?</span>
+          <div class="ws-simple-category-grid">
+            <button class="active" type="button" data-type-filter="recommended"><b>★</b><span><strong>Start</strong><small>Empfohlen</small></span></button>
+            <button type="button" data-type-filter="goals"><b>◎</b><span><strong>Goals</strong><small>Ziele &amp; Fortschritt</small></span></button>
+            <button type="button" data-type-filter="counter"><b>#</b><span><strong>Counter</strong><small>Zahlen &amp; Stats</small></span></button>
+            <button type="button" data-type-filter="timer"><b>◷</b><span><strong>Timer</strong><small>Zeit &amp; Sessions</small></span></button>
+            <button type="button" data-type-filter="chat"><b>⌁</b><span><strong>Chat</strong><small>TikTok LIVE Chat</small></span></button>
+            <button type="button" data-type-filter="latest"><b>↗</b><span><strong>Latest</strong><small>Letzte Events</small></span></button>
+            <button type="button" data-type-filter="manual"><b>＋</b><span><strong>Manuell</strong><small>Gaming &amp; eigene Werte</small></span></button>
+            <button type="button" data-type-filter="overlay"><b>▣</b><span><strong>Overlays</strong><small>Rahmen, Kamera &amp; Szenen</small></span></button>
+          </div>
+          <label class="ws-simple-type-search">
+            <span aria-hidden="true">⌕</span>
+            <input id="wsSimpleTypeSearch" type="search" placeholder="Direkt suchen: z. B. Kamera, Timer, Gift oder Social Bar" autocomplete="off">
+            <small>Durchsucht alle passenden Widget-Typen in deinem gewählten Stream-Bereich.</small>
+          </label>
+          <small>Wähle nur die Kategorie, die du brauchst. Kamera-Rahmen, Szenen, Branding und freie Overlays findest du gesammelt unter „Overlays“.</small>
+          <div id="wsSimpleCategoryGuide" class="ws-simple-category-guide" aria-live="polite"></div>
+        </div>
+        <div class="ws-widget-finder" data-experience-scope="pro" aria-label="Widget-Bibliothek filtern">
+          <label class="ws-type-search">
+            <span>WIDGET SUCHEN</span>
+            <input id="wsTypeSearch" type="search" placeholder="z. B. Kamera 9:16, Halloween, Timer, Social Bar oder Gift" autocomplete="off">
+          </label>
+          <div class="ws-type-filter" id="wsTypeFilter" aria-label="Widget-Kategorien">
+            <button class="active" type="button" data-type-filter="all">ALLE</button>
+            <button type="button" data-type-filter="recommended">EMPFOHLEN</button>
+            <button type="button" data-type-filter="counter">COUNTER</button>
+            <button type="button" data-type-filter="manual">GAMING &amp; MANUELL</button>
+            <button type="button" data-type-filter="timer">TIMER</button>
+            <button type="button" data-type-filter="goals">GOALS</button>
+            <button type="button" data-type-filter="live">LIVE</button>
+            <button type="button" data-type-filter="chat">CHAT</button>
+            <button type="button" data-type-filter="alerts">ALERTS</button>
+            <button type="button" data-type-filter="latest">LETZTE EVENTS</button>
+            <button type="button" data-type-filter="camera">KAMERA</button>
+            <button type="button" data-type-filter="scene">SZENEN &amp; FRAMES</button>
+            <button type="button" data-type-filter="branding">BRANDING &amp; INFOS</button>
+            <button type="button" data-type-filter="overlay">ALLE OVERLAYS</button>
+          </div>
+          <small class="ws-finder-help">Tipp: Starte mit „Empfohlen“. Kamera, Szenen, Branding, Goals, Counter, Alerts und Chat sind getrennt gruppiert. Alle Typen verwenden dieselbe Designbibliothek.</small>
+        </div>
+      </div>
+      <div class="ws-widget-type-grid" id="wsWidgetTypeGrid"></div>
+      <section class="ws-selection-preview" id="wsSelectionPreview" aria-live="polite">
+        <div class="ws-selection-preview-head">
+          <div>
+            <div class="ws-section-label">AUSWAHL-VORSCHAU</div>
+            <h3 id="wsSelectionPreviewTitle">So sieht dein Widget ungefähr aus</h3>
+            <p id="wsSelectionPreviewText">Wähle oben einen Widget-Typ. Die Vorschau nutzt Beispieldaten und erstellt noch nichts.</p>
+          </div>
+          <span class="ws-preview-example-badge">BEISPIEL</span>
+        </div>
+        <div class="ws-selection-preview-body">
+          <div class="ws-selection-stream-stage">
+            <div class="ws-selection-stream-toolbar"><span>STREAM-VORSCHAU</span><b>LAYOUT</b></div>
+            <div class="ws-selection-stream-safe">
+              <div id="wsSelectionPreviewWidget" class="ws-selection-preview-widget"></div>
+            </div>
+          </div>
+          <div class="ws-selection-preview-info">
+            <span>WAS DU HIER SIEHST</span>
+            <strong id="wsSelectionPreviewData">Beispieldaten</strong>
+            <p>Farben, Rahmen, Schrift und Position kannst du danach im Studio ändern. Das fertige Design bleibt für deinen gewählten Stream-Bereich erhalten.</p>
+            <small>Hinweis: Die Werte in dieser Vorschau sind nur Beispiele.</small>
+          </div>
+        </div>
+      </section>
+      <div class="ws-create-availability"><span id="wsAvailableTypes">–</span><p>Alle Widgets nutzen dieselben Designvorlagen, Farben und Rahmen. Wähle zuerst den Inhalt – den Look kannst du danach jederzeit ändern.</p></div>
+    </section>
+
+    <div class="ws-create-layout ws-create-layout-v2 ws-create-design-area">
+      <section class="ws-template-section">
+        <div class="ws-template-section-head">
+          <div><div class="ws-section-label">STARTDESIGNS</div><h3 id="wsTemplateHeading">Wähle einen Look.</h3></div>
+          <div class="ws-template-count">6 Designs + Blank</div>
+        </div>
+        <div class="ws-create-source-note" id="wsCreateSourceNote"></div>
+        <div class="ws-template-grid ws-template-grid-v2" id="wsTemplateGrid"></div>
+        <div class="ws-personal-template-area" id="wsPersonalTemplateArea" hidden></div>
+      </section>
+      <aside class="ws-create-summary ws-create-summary-v2" id="wsCreateSummary"></aside>
+    </div>
+  </section>
+
+  <section class="ws-view ws-editor-view ws-editor-v2" data-view="editor" hidden>
+    <div class="ws-editor-appbar">
+      <div class="ws-editor-appbar-left">
+        <button class="ws-editor-icon-btn ws-editor-back" type="button" data-action="dashboard" aria-label="Zurück zu Widgets">←</button>
+        <div class="ws-editor-product">
+          <span>WIDGET STUDIO</span>
+          <strong id="wsEditorWidgetType">Widget</strong>
+        </div>
+        <div class="ws-editor-divider"></div>
+        <div class="ws-editor-name-wrap">
+          <input id="wsWidgetName" maxlength="80" value="Mein Widget" aria-label="Widget Name">
+          <span id="wsWidgetStatus" class="ws-editor-status">ENTWURF</span>
+        </div>
+        <span id="wsSaveState" class="ws-save-state">Gespeichert</span>
+      </div>
+
+      <div class="ws-editor-appbar-center">
+        <button class="ws-editor-icon-btn" type="button" data-action="undo" title="Rückgängig (Strg+Z)">↶</button>
+        <button class="ws-editor-icon-btn" type="button" data-action="redo" title="Wiederholen (Strg+Shift+Z)">↷</button>
+        <span class="ws-editor-appbar-separator"></span>
+        <button class="ws-editor-icon-btn" type="button" data-action="copy-elements" title="Kopieren (Strg+C)">⧉</button>
+        <button class="ws-editor-icon-btn" type="button" data-action="paste-elements" title="Einfügen (Strg+V)">▣</button>
+        <button class="ws-editor-icon-btn ws-help-button" type="button" data-action="open-help" title="Studio Hilfe">?</button>
+      </div>
+
+      <div class="ws-editor-actions">
+        <div class="ws-experience-switch ws-experience-switch-editor" role="group" aria-label="Widget Studio Modus">
+          <button class="active" type="button" data-experience-mode="simple" title="Geführte Ansicht"><span>🌱</span><strong>EINFACH</strong></button>
+          <button type="button" data-experience-mode="pro" title="Alle Werkzeuge"><span>⚙</span><strong>PROFI</strong></button>
+        </div>
+        <button class="btn ws-template-save-btn" type="button" data-action="save-template">ALS VORLAGE</button>
+        <button class="btn ws-preview-btn" type="button" data-action="preview">VORSCHAU</button>
+        <button class="btn primary ws-publish-btn" type="button" data-action="publish">PRÜFEN &amp; VERÖFFENTLICHEN</button>
+      </div>
+    </div>
+
+    <div class="ws-editor-grid ws-editor-grid-v2">
+      <aside class="ws-editor-panel ws-editor-left ws-editor-left-v2">
+        <div class="ws-editor-side-head">
+          <span>WERKZEUGE</span>
+          <small>Element hinzufügen</small>
+        </div>
+
+        <div class="ws-tool-list">
+          <button class="ws-tool-item ws-tool-blocks" type="button" data-action="open-content-blocks">
+            <span class="ws-tool-icon">✦</span>
+            <span><strong>Bausteine</strong><small>Fertige Creator-Elemente</small></span>
+          </button>
+          <button class="ws-tool-item" type="button" data-add="text">
+            <span class="ws-tool-icon">T</span>
+            <span><strong>Text</strong><small>Freier Text</small></span>
+          </button>
+          <button class="ws-tool-item" type="button" data-add="counter">
+            <span class="ws-tool-icon">#</span>
+            <span><strong>Zähler</strong><small>Follower / Ziel</small></span>
+          </button>
+          <button class="ws-tool-item" type="button" data-add="progress">
+            <span class="ws-tool-icon">▰</span>
+            <span><strong>Fortschritt</strong><small>Progress Bar</small></span>
+          </button>
+          <button class="ws-tool-item" type="button" data-add="shape">
+            <span class="ws-tool-icon">□</span>
+            <span><strong>Form</strong><small>Fläche / Hintergrund</small></span>
+          </button>
+          <button class="ws-tool-item" type="button" data-add="image">
+            <span class="ws-tool-icon">◎</span>
+            <span><strong>Bild</strong><small>Avatar / eigenes Asset</small></span>
+          </button>
+          <button class="ws-tool-item ws-tool-assets" type="button" data-action="open-assets">
+            <span class="ws-tool-icon">▧</span>
+            <span><strong>Deine Dateien</strong><small>Bilder · Sounds · Videos</small></span>
+          </button>
+        </div>
+
+        <div class="ws-layer-panel" data-mode-scope="free">
+          <div class="ws-layer-panel-head">
+            <div>
+              <span>EBENEN</span>
+              <small id="wsLayerCount">0 Elemente</small>
+            </div>
+            <div class="ws-layer-panel-actions">
+              <button type="button" data-action="layer-back" title="Eine Ebene nach hinten">↓</button>
+              <button type="button" data-action="layer-front" title="Eine Ebene nach vorn">↑</button>
+              <button type="button" data-action="duplicate-element" title="Duplizieren">⧉</button>
+              <button type="button" data-action="delete-element" title="Löschen">⌫</button>
+            </div>
+          </div>
+          <div id="wsLayers" class="ws-layers ws-layers-v2"></div>
+        </div>
+      </aside>
+
+      <section class="ws-canvas-column ws-canvas-column-v2">
+        <div class="ws-canvas-toolbar ws-canvas-toolbar-v2">
+          <div class="ws-live-data-bar">
+            <span class="ws-live-dot"></span>
+            <div>
+              <small>DATENQUELLE</small>
+              <strong id="wsLiveMetricText">Daten werden geladen</strong>
+            </div>
+          </div>
+
+          <div class="ws-test-controls ws-test-controls-v2">
+            <span>TEST</span>
+            <button class="ws-event-simulator-open" type="button" data-action="open-event-simulator">EVENTS</button>
+            <button type="button" data-test="plus1">+1</button>
+            <button type="button" data-test="plus10">+10</button>
+            <button type="button" data-test="goal">ZIEL</button>
+            <button type="button" data-test="reset">LIVE</button>
+          </div>
+
+          <div class="ws-canvas-tools">
+            <button type="button" data-action="toggle-guides" id="wsGuidesButton" class="active" title="Safe Area und Mittelachsen anzeigen">SAFE</button>
+            <button type="button" data-action="toggle-snap" id="wsSnapButton" class="active" title="Am Raster ausrichten">SNAP</button>
+            <div class="ws-zoom-control">
+              <button type="button" data-zoom="out" aria-label="Verkleinern">−</button>
+              <button type="button" data-zoom="reset" id="wsZoomLabel">100%</button>
+              <button type="button" data-zoom="in" aria-label="Vergrößern">+</button>
+            </div>
+            <button type="button" data-zoom="fit">FIT</button>
+          </div>
+        </div>
+
+        <div class="ws-stage-wrap ws-stage-wrap-v2" id="wsStageWrap">
+          <div class="ws-stage-viewport" id="wsStageViewport">
+            <div class="ws-stage" id="wsStage">
+              <div class="ws-widget-canvas" id="wsCanvas"></div>
+              <div class="ws-testdata-badge" id="wsTestDataBadge" hidden>TESTDATEN · NICHT LIVE</div>
+              <div class="ws-safe-guides" id="wsSafeGuides" aria-hidden="true">
+                <span class="ws-safe-box"></span>
+                <span class="ws-guide-v"></span>
+                <span class="ws-guide-h"></span>
+              </div>
+              <div class="ws-selection" id="wsSelection" hidden>
+                <span class="ws-selection-label" id="wsSelectionLabel"></span>
+                <span class="ws-resize-handle"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="ws-canvas-footer ws-canvas-footer-v2">
+          <div>
+            <span class="ws-footer-label">CANVAS</span>
+            <strong id="wsCanvasSize">600 × 120</strong>
+          </div>
+          <div>
+            <span class="ws-footer-label">ANSICHT</span>
+            <strong id="wsZoomFooter">100%</strong>
+          </div>
+          <div class="ws-footer-spacer"></div>
+          <div class="ws-footer-hint">Shift-Klick = Multi-Select · Strg+C/V · Pfeiltasten · Shift = 10 px</div>
+        </div>
+      </section>
+
+      <aside class="ws-editor-panel ws-editor-right ws-editor-right-v2">
+        <div class="ws-inspector-head">
+          <div>
+            <span>GESTALTUNG</span>
+            <strong id="wsInspectorTitle">Widget</strong>
+          </div>
+          <span class="ws-inspector-type" id="wsInspectorType">FOLLOWER GOAL</span>
+        </div>
+
+        <div class="ws-experience-switch ws-experience-switch-inspector" role="group" aria-label="Widget Studio Modus">
+          <button class="active" type="button" data-experience-mode="simple"><span>🌱</span><strong>EINFACH</strong></button>
+          <button type="button" data-experience-mode="pro"><span>⚙</span><strong>PROFI</strong></button>
+        </div>
+
+        <div class="ws-simple-editor-guide" data-experience-scope="simple">
+          <span>DEIN WEG</span>
+          <div><b>1</b> Vorlage <i>→</i> <b>2</b> Inhalt <i>→</i> <b>3</b> Design <i>→</i> <b>4</b> Position <i>→</i> <b>5</b> Effekte <i>→</i> <b>6</b> Testen</div>
+          <small>Ein Schritt nach dem anderen. HEX, Ebenen, exakte Pixelwerte und technische Ausgabe bleiben im Profi-Modus.</small>
+        </div>
+
+        <nav class="ws-simple-editor-nav" data-experience-scope="simple" aria-label="Einfache Gestaltungsschritte">
+          <button class="active" type="button" data-simple-section="template"><b>1</b><span><strong>Vorlage</strong><small>Layout &amp; Themen</small></span></button>
+          <button type="button" data-simple-section="content"><b>2</b><span><strong>Inhalt</strong><small>Text, Wert oder Datei</small></span></button>
+          <button type="button" data-simple-section="design"><b>3</b><span><strong>Design</strong><small>Farben &amp; Rahmen</small></span></button>
+          <button type="button" data-simple-section="position"><b>4</b><span><strong>Position</strong><small>Platz &amp; Größe</small></span></button>
+          <button type="button" data-simple-section="effects"><b>5</b><span><strong>Effekte</strong><small>Bewegung &amp; Glow</small></span></button>
+          <button type="button" data-simple-section="test"><b>6</b><span><strong>Testen</strong><small>Vorschau &amp; Live-Check</small></span></button>
+        </nav>
+        <div class="ws-simple-editor-utility" data-experience-scope="simple">
+          <button type="button" data-simple-undo title="Letzte Änderung rückgängig">↶ <span>Rückgängig</span></button>
+          <button type="button" data-simple-redo title="Änderung wiederholen">↷ <span>Wiederholen</span></button>
+          <button type="button" data-simple-reset title="Änderungen seit dem Öffnen des Widgets zurücksetzen">↺ <span>Änderungen zurück</span></button>
+        </div>
+        <div class="ws-simple-step-controls" data-experience-scope="simple">
+          <button type="button" data-simple-step-direction="-1">← ZURÜCK</button>
+          <div><span id="wsSimpleStepStatus">SCHRITT 1 VON 6</span><strong id="wsSimpleStepTitle">Vorlage wählen</strong></div>
+          <button class="primary" type="button" data-simple-step-direction="1">WEITER →</button>
+        </div>
+
+        <div class="ws-pro-workspace" data-experience-scope="pro">
+          <div class="ws-pro-workspace-head">
+            <span>PROFI-WERKZEUGE</span>
+            <strong id="wsProSectionTitle">Designbibliothek</strong>
+            <small>Alle Werkzeuge bleiben erhalten, sind aber nach Aufgabe getrennt.</small>
+          </div>
+          <nav class="ws-pro-section-nav" aria-label="Profi-Bereiche">
+            <button class="active" type="button" data-pro-section="design"><b>◆</b><span><strong>Design</strong><small>Layouts, Themes, Farben</small></span></button>
+            <button type="button" data-pro-section="element"><b>◇</b><span><strong>Element</strong><small>Text, Position, Ebenen</small></span></button>
+            <button type="button" data-pro-section="data"><b>≋</b><span><strong>Daten</strong><small>Werte, Medien, Canvas</small></span></button>
+            <button type="button" data-pro-section="output"><b>↗</b><span><strong>Ausgabe</strong><small>OBS, TikTok, URL</small></span></button>
+          </nav>
+        </div>
+
+        <div class="ws-editor-mode-switch" data-experience-scope="pro" role="tablist" aria-label="Gestaltungsmodus">
+          <button class="active" type="button" data-editor-mode="quick" role="tab" aria-selected="true">
+            <span>⚡</span><strong>Kompakt</strong><small>Wichtige Profi-Optionen</small>
+          </button>
+          <button type="button" data-editor-mode="free" role="tab" aria-selected="false">
+            <span>◇</span><strong>Detail-Editor</strong><small>Exakte Werte & Ebenen</small>
+          </button>
+        </div>
+        <div class="ws-editor-mode-hint" id="wsModeHint" data-experience-scope="pro">Kompakt zeigt die wichtigsten Profi-Werkzeuge. Im Detail-Editor erhältst du exakte Werte, Ebenen und freie Gestaltung.</div>
+        <div class="ws-editor-mode-hint ws-simple-mode-hint" data-experience-scope="simple"><strong>🌱 ANFÄNGER-MODUS:</strong> Du siehst nur die Entscheidung des aktuellen Schritts. Für HEX, Ebenen, exakte Positionen und technische Ausgabe wechselst du auf „Profi“.</div>
+        <div class="ws-free-mode-guide" data-mode-scope="free" hidden>
+          <div class="ws-free-mode-guide-head">
+            <span>FREI GESTALTEN</span>
+            <strong>Einfach in 4 Schritten</strong>
+          </div>
+          <div class="ws-free-mode-steps" aria-label="Gestaltungsablauf">
+            <span><b>1</b> Inhalt</span>
+            <span><b>2</b> Position</span>
+            <span><b>3</b> Look</span>
+            <span><b>4</b> Effekte</span>
+          </div>
+          <small>Klicke ein Element in der Vorschau an. Es bleibt immer nur ein Hauptbereich offen; genaue Zahlen stehen optional unter „Exakte Werte“.</small>
+        </div>
+
+        <div class="ws-inspector-scroll">
+          <details id="wsGlobalDesignPanel" class="ws-inspector-section ws-global-design-section" data-simple-panel="template" data-pro-panel="design" open>
+            <summary class="ws-global-design-summary">
+              <div class="ws-inspector-section-title">
+                <span>GANZES WIDGET</span>
+                <small>Layouts, Themen, Farben, Rahmen, Schrift & eigene Designs</small>
+              </div>
+              <b>DESIGN-BIBLIOTHEK</b>
+            </summary>
+            <div class="ws-global-design-content">
+              <p class="ws-global-design-copy">Starte mit einer passenden Layout-Vorlage oder Themenwelt. Danach kannst du Farben, Rahmen, Schrift, Animation und Effekte getrennt anpassen. Eigene Paletten und Designs kannst du speichern und wiederverwenden.</p>
+              <button class="ws-brand-apply-launch" type="button" data-action="open-brand">
+                <span>◆</span><div><strong>MEINE MARKE</strong><small>Creator-Farben, Schrift und Logo einmal speichern und auf Widgets anwenden.</small></div><b>ÖFFNEN</b>
+              </button>
+              <div id="wsWidgetQuickDesign" class="ws-widget-quick-design"></div>
+            </div>
+          </details>
+
+          <section class="ws-inspector-section" data-simple-panel="content" data-pro-panel="data">
+            <div class="ws-inspector-section-title">
+              <span id="wsContentDataTitle">INHALT &amp; DATEN</span>
+              <small id="wsContentDataSubtitle">Live-Daten & Canvas</small>
+            </div>
+            <button class="ws-simple-block-launch" type="button" data-action="open-content-blocks" data-experience-scope="simple">
+              <span>✦</span><div><strong>FERTIGEN BAUSTEIN HINZUFÜGEN</strong><small>Creator-Tag, Social-Leiste, Game-Info, Challenge, Partnerfeld & mehr</small></div><b>+</b>
+            </button>
+            <div class="ws-editor-asset-shelf" id="wsEditorAssetShelf" data-experience-scope="simple">
+              <div class="ws-editor-asset-shelf-head">
+                <div><span>MEINE MEDIEN</span><strong>Eigene Dateien direkt einsetzen</strong><small>Logo, Bild, transparentes Overlay oder Video hochladen und danach im Widget bearbeiten.</small></div>
+                <button type="button" data-action="open-assets">ALLE MEDIEN</button>
+              </div>
+              <div class="ws-media-shortcuts" aria-label="Medien schnell filtern">
+                <button type="button" data-asset-shortcut="image"><span>▧</span><strong>BILDER &amp; LOGOS</strong><small>PNG, JPG, WebP, GIF</small></button>
+                <button type="button" data-asset-shortcut="video"><span>▶</span><strong>VIDEOS</strong><small>MP4 &amp; WebM</small></button>
+                <button type="button" data-asset-shortcut="all"><span>＋</span><strong>UPLOAD &amp; BIBLIOTHEK</strong><small>Alle eigenen Medien</small></button>
+              </div>
+              <div class="ws-editor-asset-shelf-grid" id="wsEditorAssetShelfGrid"></div>
+            </div>
+            <label class="ws-field" id="wsGoalField">
+              <span id="wsGoalLabel">Zielwert</span>
+              <input id="wsGoal" type="number" min="1" max="1000000000">
+            </label>
+            <div id="wsManualCounterControl" class="ws-manual-counter-control" hidden>
+              <div class="ws-manual-counter-head">
+                <div><span id="wsManualCounterLabel">MANUELLER COUNTER</span><strong id="wsManualCounterValue">0</strong></div>
+                <small id="wsManualCounterNote">Änderungen werden bei einem veröffentlichten Widget direkt übernommen.</small>
+              </div>
+              <div class="ws-manual-counter-actions">
+                <button type="button" data-manual-counter="-5">−5</button>
+                <button type="button" data-manual-counter="-1">−1</button>
+                <button type="button" data-manual-counter="1">+1</button>
+                <button type="button" data-manual-counter="5">+5</button>
+                <button type="button" data-manual-counter="10">+10</button>
+                <button type="button" data-manual-counter="reset">RESET</button>
+              </div>
+            </div>
+            <div id="wsManualTimerControl" class="ws-manual-counter-control ws-manual-timer-control" hidden>
+              <div class="ws-manual-counter-head">
+                <div>
+                  <span>STREAM TIMER · <b id="wsManualTimerState">PAUSIERT</b></span>
+                  <strong id="wsManualTimerValue">00:00</strong>
+                </div>
+                <small>Start/Pause steuert denselben Timer im Studio und im veröffentlichten Stream-Widget.</small>
+              </div>
+              <div class="ws-manual-counter-actions ws-manual-timer-main">
+                <button class="primary" type="button" data-manual-timer="start">▶ START</button>
+                <button type="button" data-manual-timer="pause">Ⅱ PAUSE</button>
+                <button type="button" data-manual-timer="reset">↺ RESET</button>
+              </div>
+              <div class="ws-manual-counter-actions ws-manual-timer-adjust">
+                <button type="button" data-manual-timer="-300">−5 MIN</button>
+                <button type="button" data-manual-timer="-60">−1 MIN</button>
+                <button type="button" data-manual-timer="60">+1 MIN</button>
+                <button type="button" data-manual-timer="300">+5 MIN</button>
+              </div>
+            </div>
+            <label class="ws-field" id="wsGoalMetricField" hidden>
+              <span>Ziel-Datenquelle</span>
+              <select id="wsGoalMetric"></select>
+            </label>
+            <label class="ws-field" id="wsAlertDurationField" hidden>
+              <span>Alert-Dauer (Sekunden)</span>
+              <input id="wsAlertDuration" type="number" min="1" max="20" step="0.5">
+            </label>
+            <div class="ws-field ws-alert-sound-field" id="wsAlertSoundField" hidden>
+              <span>Alert-Ton</span>
+              <div class="ws-alert-sound-row">
+                <select id="wsAlertSound" aria-label="Alert-Ton auswählen">
+                  <option value="off">Aus</option>
+                  <option value="cfs_pop">cfs_zockt Pop</option>
+                  <option value="chime">Chime</option>
+                  <option value="pulse">Pulse</option>
+                  <option value="success">Success</option>
+                  <option value="soft_bell">Soft Bell</option>
+                  <option value="custom">Eigene Datei</option>
+                </select>
+                <button class="ws-mini-button" id="wsAlertSoundTest" type="button">TON TESTEN</button>
+              </div>
+              <label class="ws-alert-volume">
+                <span>Lautstärke <b id="wsAlertVolumeValue">70%</b></span>
+                <input id="wsAlertVolume" type="range" min="0" max="100" step="5" value="70">
+              </label>
+              <small class="ws-field-help">Der Ton wird nur bei echten Alerts abgespielt. In OBS kann die Browser-Source-Audioausgabe separat geregelt werden.</small>
+            </div>
+            <div class="ws-field ws-latest-timeout-field" id="wsLatestTimeoutField" hidden>
+              <span>Latest sichtbar lassen</span>
+              <div class="ws-latest-timeout-presets" aria-label="Latest Anzeigezeit">
+                <button type="button" data-latest-timeout-preset="0">IMMER</button>
+                <button type="button" data-latest-timeout-preset="15">15 S</button>
+                <button type="button" data-latest-timeout-preset="30">30 S</button>
+                <button type="button" data-latest-timeout-preset="60">60 S</button>
+              </div>
+              <label class="ws-latest-timeout-exact"><span>Eigene Zeit</span><input id="wsLatestTimeout" type="number" min="0" max="3600" step="1"><b>Sek.</b></label>
+              <small class="ws-field-help">„Immer“ bleibt sichtbar, bis das nächste Event kommt. Die Einstellung gilt auch im veröffentlichten Widget.</small>
+            </div>
+            <label class="ws-field" id="wsOfflineBehaviorField" hidden>
+              <span>Wenn LIVE-Daten offline/stale sind</span>
+              <select id="wsOfflineBehavior"><option value="hold">Letzten Wert halten</option><option value="zero">Auf 0 setzen</option><option value="hide">Widget ausblenden</option></select>
+            </label>
+            <details class="ws-technical-panel" data-mode-scope="free">
+              <summary>CANVAS & HINTERGRUND</summary>
+              <div class="ws-technical-panel-body">
+                <div class="ws-property-row">
+                  <label class="ws-field">
+                    <span>Canvas Breite</span>
+                    <input id="wsCanvasWidth" type="number" min="120" max="1920">
+                  </label>
+                  <label class="ws-field">
+                    <span>Canvas Höhe</span>
+                    <input id="wsCanvasHeight" type="number" min="60" max="1080">
+                  </label>
+                </div>
+                <div class="ws-canvas-background-controls">
+                  <label class="ws-field">
+                    <span>Canvas Hintergrund</span>
+                    <div class="ws-color-control">
+                      <input id="wsCanvasBackground" class="ws-color-input" type="color" value="#020711" aria-label="Canvas Hintergrund wählen">
+                      <input id="wsCanvasBackgroundHex" class="ws-color-hex" type="text" value="#020711" maxlength="7" spellcheck="false" aria-label="Canvas Hintergrund als HEX">
+                    </div>
+                  </label>
+                  <label class="ws-output-check"><input id="wsCanvasTransparent" type="checkbox"><span>Transparent</span></label>
+                </div>
+                <small class="ws-field-help">Die Canvas-Größe entspricht der Browser-Source-Fläche des Widgets.</small>
+              </div>
+            </details>
+          </section>
+
+          <section class="ws-inspector-section ws-simple-test-panel" data-simple-panel="test" data-experience-scope="simple">
+            <div class="ws-inspector-section-title">
+              <span>TESTEN &amp; ABSCHLIESSEN</span>
+              <small>Erst prüfen, dann veröffentlichen</small>
+            </div>
+            <div class="ws-simple-test-intro">
+              <strong>Sieht alles so aus, wie du es möchtest?</strong>
+              <p>Teste das Widget mit Beispieldaten, öffne die große Vorschau und veröffentliche erst danach.</p>
+            </div>
+            <div class="ws-simple-readiness" id="wsSimpleReadiness" aria-live="polite">
+              <div class="ws-simple-readiness-head"><span>BEREIT-FÜR-LIVE-CHECK</span><strong id="wsSimpleReadinessTitle">Widget wird geprüft…</strong></div>
+              <div class="ws-simple-readiness-grid">
+                <div data-readiness="content"><b>1</b><span><strong>Inhalt</strong><small>Widget & Datenquelle</small></span><i>…</i></div>
+                <div data-readiness="design"><b>2</b><span><strong>Design</strong><small>Layout & sichtbare Elemente</small></span><i>…</i></div>
+                <div data-readiness="test"><b>3</b><span><strong>Test</strong><small>Vorschau kontrollieren</small></span><i>○</i></div>
+                <div data-readiness="output"><b>4</b><span><strong>Ausgabe</strong><small>Nach Publish stabile URL</small></span><i>…</i></div>
+              </div>
+            </div>
+            <div class="ws-simple-test-steps">
+              <article><b>1</b><div><strong>Events testen</strong><small>Follow, Like, Gift, Share, Viewer und Chat simulieren.</small></div><button type="button" data-action="open-event-simulator">TESTDATEN</button></article>
+              <article><b>2</b><div><strong>Große Vorschau</strong><small>Widget ohne Editor-Oberfläche kontrollieren.</small></div><button type="button" data-action="preview">VORSCHAU</button></article>
+              <article><b>3</b><div><strong>Veröffentlichen</strong><small>Erst dann wird dein gespeicherter Entwurf zur Live-Version.</small></div><button class="primary" type="button" data-action="publish">PRÜFEN &amp; LIVE</button></article>
+            </div>
+            <div class="ws-simple-test-note"><span>✓</span><p>Testdaten verändern keine echten TikTok-LIVE-Zähler. Mit „Echte Daten“ springt die Vorschau wieder zurück.</p></div>
+          </section>
+
+          <section class="ws-inspector-section" data-simple-element-panel data-pro-panel="element">
+            <div class="ws-inspector-section-title">
+              <span>ELEMENT</span>
+              <small>Position & Design</small>
+            </div>
+            <div class="ws-align-tools" id="wsAlignTools" data-mode-scope="free">
+              <button type="button" data-align="left" title="Links ausrichten">⇤</button>
+              <button type="button" data-align="hcenter" title="Horizontal zentrieren">↔</button>
+              <button type="button" data-align="right" title="Rechts ausrichten">⇥</button>
+              <span></span>
+              <button type="button" data-align="top" title="Oben ausrichten">⇡</button>
+              <button type="button" data-align="vcenter" title="Vertikal zentrieren">↕</button>
+              <button type="button" data-align="bottom" title="Unten ausrichten">⇣</button>
+            </div>
+            <div id="wsProperties" class="ws-properties">
+              <div class="ws-inspector-empty">
+                <span>◇</span>
+                <strong>Kein Element ausgewählt</strong>
+                <p>Wähle ein Element auf dem Canvas oder in der Ebenenliste aus.</p>
+              </div>
+            </div>
+          </section>
+
+          <details class="ws-inspector-section ws-output-panel ws-technical-panel" id="wsOutputPanel" data-mode-scope="free" data-pro-panel="output">
+            <summary><span>AUSGABE / ZIEL</span><small>Technische Platzierung</small></summary>
+            <div class="ws-technical-panel-body">
+            <label class="ws-field">
+              <span>Ausgabeprofil</span>
+              <select id="wsOutputProfile">
+                <option value="obs">Widget Originalgröße</option>
+                <option value="tiktok_vertical">TikTok LIVE · 9:16 · 1080 × 1920</option>
+                <option value="landscape">OBS Streaming · 16:9 · 1920 × 1080</option>
+              </select>
+            </label>
+            <div id="wsOutputPlacementFields">
+              <label class="ws-field">
+                <span>Position</span>
+                <select id="wsOutputAnchor">
+                  <option value="top-left">Oben links</option>
+                  <option value="top-center">Oben mittig</option>
+                  <option value="top-right">Oben rechts</option>
+                  <option value="center-left">Mitte links</option>
+                  <option value="center">Mitte</option>
+                  <option value="center-right">Mitte rechts</option>
+                  <option value="bottom-left">Unten links</option>
+                  <option value="bottom-center">Unten mittig</option>
+                  <option value="bottom-right">Unten rechts</option>
+                </select>
+              </label>
+              <div class="ws-property-row">
+                <label class="ws-field"><span>Offset X</span><input id="wsOutputX" type="number" min="-4000" max="4000"></label>
+                <label class="ws-field"><span>Offset Y</span><input id="wsOutputY" type="number" min="-4000" max="4000"></label>
+              </div>
+              <label class="ws-field">
+                <span>Skalierung</span>
+                <input id="wsOutputScale" type="number" min="0.25" max="3" step="0.05">
+              </label>
+              <label class="ws-output-check"><input id="wsOutputSafeArea" type="checkbox"><span>Safe Area berücksichtigen</span></label>
+            </div>
+            <div class="ws-output-summary">
+              <span id="wsOutputDimensions">Widgetgröße</span>
+              <strong id="wsOutputStatus">ENTWURF</strong>
+            </div>
+            <input id="wsOutputUrl" class="ws-obs-url" readonly placeholder="Nach Publish verfügbar">
+            <div class="ws-inline-actions">
+              <button class="btn" type="button" data-action="copy-output">URL KOPIEREN</button>
+              <a class="btn" id="wsOpenOutput" target="_blank" rel="noopener">ÖFFNEN</a>
+            </div>
+            <small class="muted">Datenquelle und Stream-Bereich bleiben klar: TikTok-Datenwidgets sind als TikTok gekennzeichnet. Gemeinsame manuelle Widgets funktionieren auch in OBS, ohne eine Twitch-Verbindung vorzutäuschen.</small>
+            </div>
+          </details>
+
+          <section class="ws-inspector-section ws-obs-panel" id="wsObsPanel" data-pro-panel="output" hidden>
+            <div class="ws-inspector-section-title">
+              <span>OBS BROWSER SOURCE</span>
+              <small>Veröffentlichte Version</small>
+            </div>
+            <div class="ws-obs-live-row"><span class="ws-live-dot"></span><strong>Widget ist live</strong></div>
+            <input id="wsObsUrl" class="ws-obs-url" readonly>
+            <div class="ws-inline-actions">
+              <button class="btn" type="button" data-action="copy-obs">URL KOPIEREN</button>
+              <a class="btn" id="wsOpenObs" target="_blank" rel="noopener">ÖFFNEN</a>
+            </div>
+            <small class="muted">Die URL bleibt stabil. Änderungen werden erst nach „Veröffentlichen“ für OBS übernommen.</small>
+          </section>
+        </div>
+      </aside>
+    </div>
+  </section>
+</section>
+</main>
+
+<div class="ws-modal ws-stream-board-modal" id="wsStreamBoardModal" hidden>
+  <div class="ws-modal-card ws-stream-board-card">
+    <div class="ws-modal-head ws-stream-board-head">
+      <div>
+        <span class="ws-modal-kicker">STREAM-VORSCHAU</span>
+        <strong>DEIN STREAM BOARD</strong>
+        <small>Baue deine komplette Stream-Vorschau für OBS 16:9 oder TikTok 9:16 und speichere sie anschließend als echte Scene.</small>
+      </div>
+      <button type="button" data-action="close-stream-board">✕</button>
+    </div>
+
+    <div class="ws-stream-board-body">
+      <aside class="ws-stream-board-sidebar">
+        <section class="ws-board-help">
+          <span>SO FUNKTIONIERT ES</span>
+          <strong>Auswählen → platzieren → speichern</strong>
+          <p>Füge Widgets hinzu, ordne Ebenen, sperre fertige Positionen und prüfe die Safe Area. Erst „Speichern &amp; Veröffentlichen“ ändert die echte cfs_zockt Scene.</p>
+        </section>
+
+        <section class="ws-board-side-section">
+          <div class="ws-board-side-title"><span>DEINE WIDGETS</span><small id="wsBoardWidgetCount">0 ausgewählt</small></div>
+          <div id="wsBoardWidgetList" class="ws-board-widget-list"></div>
+        </section>
+
+        <section class="ws-board-side-section">
+          <div class="ws-board-side-title"><span>VORSCHAU-HINTERGRUND</span><small>Nur zur Orientierung</small></div>
+          <div class="ws-board-backgrounds">
+            <button type="button" data-board-background="gameplay">Gameplay</button>
+            <button type="button" data-board-background="dark">Dunkel</button>
+            <button type="button" data-board-background="camera">Kamera</button>
+          </div>
+        </section>
+
+        <section class="ws-board-side-section">
+          <div class="ws-board-side-title"><span>EBENEN</span><small id="wsBoardLayerCount">0 Ebenen</small></div>
+          <div id="wsBoardLayerList" class="ws-board-layer-list"></div>
+        </section>
+
+        <section class="ws-board-side-section">
+          <div class="ws-board-side-title"><span>GESPEICHERTE LAYOUTS</span><small id="wsBoardSceneCount">0</small></div>
+          <div id="wsBoardSceneQuickList" class="ws-board-scene-quick-list"></div>
+        </section>
+      </aside>
+
+      <section class="ws-stream-board-main">
+        <div class="ws-board-toolbar">
+          <div><span>STREAM-FLÄCHE</span><strong id="wsBoardProfileLabel">OBS · 16:9 · 1920 × 1080</strong></div>
+          <div class="ws-board-profile-switch" aria-label="Stream-Format">
+            <button type="button" class="active" data-board-profile="landscape">OBS · 16:9</button>
+            <button type="button" data-board-profile="tiktok_vertical">TIKTOK · 9:16</button>
+          </div>
+          <div class="ws-board-view-controls" aria-label="Vorschau Hilfen">
+            <button type="button" class="active" data-action="toggle-board-snap" id="wsBoardSnapButton">SNAP</button>
+            <button type="button" class="active" data-action="toggle-board-grid" id="wsBoardGridButton">RASTER</button>
+            <button type="button" class="active" data-action="toggle-board-safe-area" id="wsBoardSafeButton" title="cfs_zockt Empfehlung zur Orientierung – keine offizielle TikTok/OBS UI-Garantie">SAFE AREA</button>
+          </div>
+          <div class="ws-board-toolbar-note"><span class="ws-live-dot"></span><strong>VORSCHAU</strong><small>Hilfslinien sind nur im Studio sichtbar</small></div>
+        </div>
+
+        <div class="ws-board-viewport" id="wsBoardViewport">
+          <div class="ws-board-scene" id="wsBoardScene">
+            <div class="ws-board-background-layer"><span>STREAM / GAMEPLAY VORSCHAU</span></div>
+            <div class="ws-board-grid-layer" aria-hidden="true"></div>
+            <div class="ws-board-safe-area" id="wsBoardSafeArea" aria-hidden="true"><span>EMPFOHLENE SAFE AREA</span></div>
+            <div id="wsBoardItems" class="ws-board-items"></div>
+          </div>
+        </div>
+
+        <div class="ws-board-selection-panel" id="wsBoardSelectionPanel" hidden>
+          <div class="ws-board-selection-copy">
+            <span>AUSGEWÄHLTES WIDGET</span>
+            <strong id="wsBoardSelectedName">Widget</strong>
+            <small>Ziehen = Position ändern · Regler = Größe ändern</small>
+          </div>
+          <label class="ws-board-size-control">
+            <span>GRÖSSE</span>
+            <input id="wsBoardScale" type="range" min="35" max="180" step="5" value="100">
+            <strong id="wsBoardScaleValue">100 %</strong>
+          </label>
+          <div class="ws-board-selection-actions">
+            <button type="button" data-board-position="top-left" title="Oben links">↖</button>
+            <button type="button" data-board-position="top-right" title="Oben rechts">↗</button>
+            <button type="button" data-board-position="center" title="Zentrieren">●</button>
+            <button type="button" data-board-position="bottom-left" title="Unten links">↙</button>
+            <button type="button" data-board-position="bottom-right" title="Unten rechts">↘</button>
+            <button type="button" data-action="board-layer-back" title="Eine Ebene nach hinten">↓</button>
+            <button type="button" data-action="board-layer-front" title="Eine Ebene nach vorne">↑</button>
+            <button type="button" data-action="duplicate-board-widget" title="In dieser Scene duplizieren">KOPIE</button>
+            <button type="button" data-action="toggle-board-widget-visible" id="wsBoardVisibleButton">AUS</button>
+            <button type="button" data-action="toggle-board-widget-lock" id="wsBoardLockButton">SPERREN</button>
+            <button class="danger" type="button" data-action="remove-board-widget">ENTFERNEN</button>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div class="ws-board-cloud-panel">
+      <div class="ws-board-cloud-head">
+        <div><span>STREAM-LAYOUT SPEICHERN</span><strong>Vorschau → Scene → Output</strong><small>Speichere deine Anordnung dauerhaft. Veröffentlichen erzeugt eine stabile Scene-URL für den Stream.</small></div>
+        <span class="ws-board-cloud-state" id="wsBoardCloudState">LOKAL</span>
+      </div>
+      <div class="ws-board-cloud-fields">
+        <label><span>LAYOUT-NAME</span><input id="wsBoardSceneName" maxlength="120" placeholder="z. B. Main Stream"></label>
+        <label><span>GESPEICHERTE LAYOUTS</span><select id="wsBoardSceneSelect"><option value="">Neues Layout</option></select></label>
+        <button class="btn" type="button" data-action="load-board-scene">LADEN</button>
+        <button class="btn" type="button" data-action="new-board-scene">NEUES LAYOUT</button>
+      </div>
+      <div class="ws-board-next-step" id="wsBoardNextStep">
+        <div class="ws-board-next-copy">
+          <span>NÄCHSTER SCHRITT</span>
+          <strong id="wsBoardNextTitle">Stream-Aufbau prüfen</strong>
+          <small id="wsBoardNextText">cfs_zockt zeigt dir hier automatisch, was für den echten Output noch fehlt.</small>
+        </div>
+        <div class="ws-board-next-checklist" id="wsBoardNextChecklist"></div>
+        <div class="ws-board-next-actions" id="wsBoardNextActions"></div>
+      </div>
+      <div class="ws-board-readiness" id="wsBoardReadiness">
+        <div class="ws-board-readiness-copy"><span>OUTPUT CHECK</span><strong id="wsBoardReadyTitle">Noch nicht bereit</strong><small id="wsBoardReadyHint">Füge Widgets hinzu und veröffentliche anschließend deine Scene.</small></div>
+        <div class="ws-board-readiness-steps">
+          <span id="wsBoardReadyWidgets">WIDGETS</span>
+          <span id="wsBoardReadyScene">SCENE</span>
+          <span id="wsBoardReadyLauncher">LAUNCHER</span>
+          <span id="wsBoardReadyData">DATEN</span>
+        </div>
+        <button class="btn" type="button" data-action="refresh-board-connections">STATUS AKTUALISIEREN</button>
+      </div>
+      <div class="ws-board-output" id="wsBoardOutput" hidden>
+        <div><span id="wsBoardOutputLabel">OBS BROWSER SOURCE</span><strong id="wsBoardOutputSize">1920 × 1080</strong><small id="wsBoardOutputHelp">Veröffentliche das Layout, um die stabile Output-URL zu erhalten.</small></div>
+        <input id="wsBoardOutputUrl" class="ws-obs-url" readonly>
+        <button class="btn" type="button" data-action="copy-board-output">URL KOPIEREN</button>
+        <a class="btn" id="wsBoardOpenOutput" target="_blank" rel="noopener">ÖFFNEN</a>
+      </div>
+      <div class="ws-board-connection-guide" id="wsBoardConnectionGuide">
+        <div class="ws-board-connection-guide-head">
+          <span>SO VERBINDEST DU ES</span>
+          <strong id="wsBoardConnectionTitle">OBS Browser Source</strong>
+          <small id="wsBoardConnectionHint">cfs_zockt zeigt dir nur die Schritte, die für dein aktuelles Format relevant sind.</small>
+        </div>
+        <div class="ws-board-connection-steps" id="wsBoardConnectionSteps"></div>
+      </div>
+    </div>
+
+    <div class="ws-stream-board-footer">
+      <div>
+        <span id="wsBoardStatus">Noch nicht bestätigt</span>
+        <small id="wsBoardStatusHint">Die Vorschau wird automatisch lokal gesichert. Für OBS/TikTok das Layout anschließend als Scene speichern und veröffentlichen.</small>
+      </div>
+      <div class="ws-stream-board-footer-actions">
+        <button class="btn" type="button" data-action="reset-stream-board">BOARD ZURÜCKSETZEN</button>
+        <button class="btn" type="button" data-action="save-board-scene">LAYOUT SPEICHERN</button>
+        <button class="btn primary" type="button" data-action="publish-board-scene">SPEICHERN &amp; VERÖFFENTLICHEN</button>
+        <button class="btn" type="button" data-action="confirm-stream-board" id="wsBoardConfirm">LAYOUT PASST</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="ws-modal ws-content-blocks-modal" id="wsContentBlocksModal" hidden>
+  <div class="ws-modal-card ws-content-blocks-card">
+    <div class="ws-modal-head">
+      <div><span class="ws-modal-kicker">WIDGET STUDIO</span><strong>INHALTS-BAUSTEINE</strong></div>
+      <button type="button" data-action="close-content-blocks">✕</button>
+    </div>
+    <div class="ws-content-blocks-intro">
+      <div><strong>Ein Klick fügt einen fertigen Baustein ein.</strong><small>Danach bleiben Text, Fläche, Farben und Position vollständig einzeln bearbeitbar.</small></div>
+      <span id="wsContentBlockCount">12 Bausteine</span>
+    </div>
+    <div class="ws-content-blocks-tools">
+      <label><span>BAUSTEIN SUCHEN</span><input id="wsContentBlockSearch" type="search" placeholder="z. B. Social, Game, Challenge, Partner"></label>
+      <div class="ws-content-block-filter" aria-label="Baustein Kategorien">
+        <button class="active" type="button" data-content-block-filter="all">ALLE</button>
+        <button type="button" data-content-block-filter="identity">CREATOR</button>
+        <button type="button" data-content-block-filter="community">COMMUNITY</button>
+        <button type="button" data-content-block-filter="partner">PARTNER</button>
+        <button type="button" data-content-block-filter="decor">DEKO</button>
+      </div>
+    </div>
+    <div id="wsContentBlockLibrary" class="ws-content-block-library"></div>
+  </div>
+</div>
+
+<div class="ws-modal ws-assets-modal" id="wsAssetsModal" hidden>
+  <div class="ws-modal-card ws-assets-card">
+    <div class="ws-modal-head">
+      <div><span class="ws-modal-kicker">CREATOR BIBLIOTHEK</span><strong>DEINE DATEIEN</strong></div>
+      <button type="button" data-action="close-assets">✕</button>
+    </div>
+    <div class="ws-assets-body">
+      <section class="ws-assets-upload" id="wsAssetsDropzone">
+        <div class="ws-assets-upload-icon">＋</div>
+        <div><span>DATEIEN HOCHLADEN</span><strong>Die Suite erkennt automatisch, was du hochlädst.</strong><p>PNG, JPG, WebP, GIF, MP3, WAV, OGG, MP4 oder WebM · maximal 20 MB pro Datei. Kein HTML, JavaScript oder SVG.</p></div>
+        <label class="btn primary ws-assets-upload-button">DATEIEN AUSWÄHLEN<input id="wsAssetUpload" type="file" multiple accept="image/png,image/jpeg,image/webp,image/gif,audio/mpeg,audio/wav,audio/ogg,video/mp4,video/webm"></label>
+      </section>
+      <div class="ws-assets-progress" id="wsAssetsProgress" hidden><span>UPLOAD</span><strong id="wsAssetsProgressText">Datei wird geprüft…</strong></div>
+      <section class="ws-asset-decision" id="wsAssetDecision" hidden>
+        <div class="ws-asset-decision-preview" id="wsAssetDecisionPreview"></div>
+        <div class="ws-asset-decision-copy">
+          <div class="ws-asset-decision-kicker"><span id="wsAssetDecisionBadge">UPLOAD ERKANNT</span><b>AUTOMATISCHE DATEIERKENNUNG</b></div>
+          <strong id="wsAssetDecisionTitle">Creator Datei</strong>
+          <p id="wsAssetDecisionMeta">Datei erkannt.</p>
+          <small>Was möchtest du damit machen? Die Suite zeigt nur Aktionen, die zu diesem Dateityp passen.</small>
+          <div class="ws-asset-decision-actions" id="wsAssetDecisionActions"></div>
+          <button class="btn primary ws-asset-decision-starter" id="wsAssetDecisionStarter" type="button">NEUES OVERLAY DAMIT ERSTELLEN</button>
+        </div>
+        <button class="ws-asset-decision-dismiss" type="button" data-action="dismiss-asset-decision" title="Später entscheiden">✕</button>
+      </section>
+      <section class="ws-assets-toolbar">
+        <div class="ws-assets-quick-row">
+          <div><span>SCHNELLBEREICHE</span><small id="wsAssetFilterSummary">Alle eigenen Medien</small></div>
+          <div id="wsAssetQuickCategories" class="ws-asset-quick-categories" aria-label="Medien-Kategorien"></div>
+        </div>
+        <div class="ws-asset-type-filter" role="tablist" aria-label="Dateityp Filter">
+          <button class="active" type="button" data-asset-type="all">ALLE</button>
+          <button type="button" data-asset-type="image">BILDER</button>
+          <button type="button" data-asset-type="audio">AUDIO</button>
+          <button type="button" data-asset-type="video">VIDEO</button>
+        </div>
+        <label class="ws-search ws-assets-search"><span>⌕</span><input id="wsAssetSearch" type="search" placeholder="Datei suchen…" autocomplete="off"></label>
+        <label class="ws-assets-category"><span>KATEGORIE</span><select id="wsAssetCategoryFilter"><option value="all">Alle Kategorien</option></select></label>
+      </section>
+      <div class="ws-assets-usage"><span id="wsAssetUsageText">0 Dateien</span><i><b id="wsAssetUsageBar"></b></i><small id="wsAssetUsageMeta">Bibliothek wird geladen…</small></div>
+      <div id="wsAssetEmpty" class="ws-assets-empty" hidden><span>▧</span><strong>Noch keine eigenen Dateien</strong><p>Lade deine erste Grafik, deinen eigenen Alert-Sound oder ein Video hoch. Die passenden Optionen erscheinen danach automatisch.</p></div>
+      <div id="wsAssetNoResults" class="ws-assets-empty" hidden><span>⌕</span><strong>Nichts gefunden</strong><p>Ändere Suche, Dateityp oder Kategorie.</p><button class="btn" type="button" data-action="reset-asset-filters">FILTER ZURÜCKSETZEN</button></div>
+      <div id="wsAssetGrid" class="ws-asset-grid"></div>
+    </div>
+  </div>
+</div>
+
+
+<div class="ws-modal ws-image-editor-modal" id="wsImageEditorModal" hidden aria-labelledby="wsImageEditorTitle">
+  <div class="ws-modal-card ws-image-editor-card">
+    <div class="ws-modal-head">
+      <div><span class="ws-modal-kicker">CREATOR MEDIA STUDIO</span><strong id="wsImageEditorTitle">BILD BEARBEITEN</strong></div>
+      <button type="button" data-action="close-image-editor" aria-label="Bildeditor schließen">✕</button>
+    </div>
+    <div class="ws-image-editor-body">
+      <section class="ws-image-editor-preview-panel">
+        <div class="ws-image-editor-preview-head"><div><span>LIVE-VORSCHAU</span><strong id="wsImageEditorName">Eigenes Bild</strong></div><small id="wsImageEditorMeta">Nicht-destruktiv</small></div>
+        <div class="ws-image-editor-stage" id="wsImageEditorStage"><div id="wsImageEditorPreview" class="ws-image-editor-preview"></div></div>
+        <div class="ws-image-editor-note"><span>✓</span><div><strong>Original bleibt erhalten</strong><small>Zuschneiden, Filter und Masken werden nur als Widget-Einstellungen gespeichert. Die hochgeladene Datei wird nicht überschrieben.</small></div></div>
+      </section>
+      <section class="ws-image-editor-controls">
+        <div class="ws-image-editor-section">
+          <div class="ws-image-editor-section-head"><div><span>1 · AUSSCHNITT</span><strong>Format &amp; Fokus</strong></div><small>Ohne Bilddatei zu verändern</small></div>
+          <div class="ws-image-editor-choice-row" aria-label="Bildformat">
+            <button type="button" data-image-aspect="original">ORIGINAL</button>
+            <button type="button" data-image-aspect="square">1:1</button>
+            <button type="button" data-image-aspect="landscape">16:9</button>
+            <button type="button" data-image-aspect="portrait">9:16</button>
+            <button type="button" data-image-aspect="social">4:5</button>
+          </div>
+          <div class="ws-image-editor-choice-row" aria-label="Einpassung">
+            <button type="button" data-image-fit="contain">EINPASSEN</button>
+            <button type="button" data-image-fit="cover">FÜLLEN / CROP</button>
+            <button type="button" data-image-fit="fill" data-experience-scope="pro">STRECKEN</button>
+          </div>
+          <label class="ws-image-editor-slider"><span>Zoom <b id="wsImageZoomValue">100%</b></span><input id="wsImageZoom" type="range" min="100" max="300" step="1" value="100"></label>
+          <div class="ws-image-editor-slider-row">
+            <label class="ws-image-editor-slider"><span>Fokus links/rechts <b id="wsImagePosXValue">50%</b></span><input id="wsImagePosX" type="range" min="0" max="100" step="1" value="50"></label>
+            <label class="ws-image-editor-slider"><span>Fokus oben/unten <b id="wsImagePosYValue">50%</b></span><input id="wsImagePosY" type="range" min="0" max="100" step="1" value="50"></label>
+          </div>
+        </div>
+
+        <div class="ws-image-editor-section">
+          <div class="ws-image-editor-section-head"><div><span>2 · LOOK</span><strong>Bildwirkung</strong></div><small>Schnell oder fein</small></div>
+          <div class="ws-image-editor-preset-row">
+            <button type="button" data-image-filter-preset="original">ORIGINAL</button>
+            <button type="button" data-image-filter-preset="clear">KLAR</button>
+            <button type="button" data-image-filter-preset="soft">SOFT</button>
+            <button type="button" data-image-filter-preset="vivid">KRÄFTIG</button>
+            <button type="button" data-image-filter-preset="mono">S/W</button>
+          </div>
+          <div class="ws-image-editor-slider-row">
+            <label class="ws-image-editor-slider"><span>Helligkeit <b id="wsImageBrightnessValue">100%</b></span><input id="wsImageBrightness" type="range" min="50" max="150" step="1" value="100"></label>
+            <label class="ws-image-editor-slider"><span>Kontrast <b id="wsImageContrastValue">100%</b></span><input id="wsImageContrast" type="range" min="50" max="180" step="1" value="100"></label>
+          </div>
+          <label class="ws-image-editor-slider"><span>Sättigung <b id="wsImageSaturationValue">100%</b></span><input id="wsImageSaturation" type="range" min="0" max="200" step="1" value="100"></label>
+          <div class="ws-image-editor-slider-row" data-experience-scope="pro">
+            <label class="ws-image-editor-slider"><span>Graustufe <b id="wsImageGrayscaleValue">0%</b></span><input id="wsImageGrayscale" type="range" min="0" max="100" step="1" value="0"></label>
+            <label class="ws-image-editor-slider"><span>Weichzeichnen <b id="wsImageBlurValue">0px</b></span><input id="wsImageBlur" type="range" min="0" max="20" step="0.5" value="0"></label>
+          </div>
+        </div>
+
+        <div class="ws-image-editor-section">
+          <div class="ws-image-editor-section-head"><div><span>3 · FORM &amp; RAHMEN</span><strong>Maske &amp; Feinschliff</strong></div><small>Direkt streamfähig</small></div>
+          <div class="ws-image-editor-choice-row" aria-label="Bildmaske">
+            <button type="button" data-image-mask="none">FREI</button>
+            <button type="button" data-image-mask="rounded">RUND</button>
+            <button type="button" data-image-mask="circle">KREIS</button>
+            <button type="button" data-image-mask="hex">HEX</button>
+            <button type="button" data-image-mask="diamond">RAUTE</button>
+          </div>
+          <div class="ws-image-editor-slider-row">
+            <label class="ws-image-editor-slider"><span>Deckkraft <b id="wsImageOpacityValue">100%</b></span><input id="wsImageOpacity" type="range" min="0" max="100" step="1" value="100"></label>
+            <label class="ws-image-editor-slider"><span>Rotation <b id="wsImageRotationValue">0°</b></span><input id="wsImageRotation" type="range" min="-180" max="180" step="1" value="0"></label>
+          </div>
+          <div class="ws-image-editor-slider-row" data-experience-scope="pro">
+            <label class="ws-image-editor-slider"><span>Eckenradius <b id="wsImageRadiusValue">0px</b></span><input id="wsImageRadius" type="range" min="0" max="240" step="1" value="0"></label>
+            <label class="ws-image-editor-slider"><span>Rahmen <b id="wsImageBorderValue">0px</b></span><input id="wsImageBorder" type="range" min="0" max="20" step="1" value="0"></label>
+          </div>
+          <label class="ws-image-editor-slider" data-experience-scope="pro"><span>Schatten <b id="wsImageShadowValue">0px</b></span><input id="wsImageShadow" type="range" min="0" max="80" step="1" value="0"></label>
+        </div>
+      </section>
+    </div>
+    <div class="ws-image-editor-footer">
+      <button class="btn" id="wsImageEditorReset" type="button">BILDANPASSUNG ZURÜCKSETZEN</button>
+      <div><span>Alle Änderungen werden am Widget gespeichert.</span><button class="btn primary" type="button" data-action="close-image-editor">FERTIG</button></div>
+    </div>
+  </div>
+</div>
+
+<div class="ws-modal ws-event-simulator-modal" id="wsEventSimulatorModal" hidden aria-labelledby="wsEventSimulatorTitle">
+  <div class="ws-modal-card ws-event-simulator-card">
+    <div class="ws-modal-head">
+      <div><span class="ws-modal-kicker">WIDGET STUDIO</span><strong id="wsEventSimulatorTitle">LIVE-EVENT SIMULATOR</strong></div>
+      <button type="button" data-action="close-event-simulator" aria-label="Simulator schließen">✕</button>
+    </div>
+    <div class="ws-sim-warning">
+      <span>TESTDATEN</span>
+      <div><strong>Nur Vorschau – niemals echte LIVE-Werte.</strong><small>Die Simulation bleibt ausschließlich in diesem Browser-Editor. Nichts davon wird als echter Follow, Like, Gift, Share, Viewer oder Chat gespeichert.</small></div>
+      <b id="wsSimStatus" class="ws-sim-status">BEREIT</b>
+    </div>
+    <div class="ws-sim-body">
+      <section class="ws-sim-event-panel">
+        <div class="ws-sim-section-head"><div><span>EINZELTEST</span><strong>LIVE-Event auslösen</strong></div><small>Alle 6 Eventtypen</small></div>
+        <div class="ws-sim-event-grid">
+          <button type="button" data-sim-event="follow"><span>＋</span><strong>FOLLOW</strong><small>Follower +1</small></button>
+          <button type="button" data-sim-event="like"><span>♥</span><strong>LIKE</strong><small>Likes erhöhen</small></button>
+          <button type="button" data-sim-event="gift"><span>◆</span><strong>GIFT</strong><small>Gift auslösen</small></button>
+          <button type="button" data-sim-event="share"><span>↗</span><strong>SHARE</strong><small>Share +1</small></button>
+          <button type="button" data-sim-event="viewer"><span>◎</span><strong>VIEWER</strong><small>Viewer setzen</small></button>
+          <button type="button" data-sim-event="chat"><span>▤</span><strong>CHAT</strong><small>Nachricht senden</small></button>
+        </div>
+        <div class="ws-sim-fields">
+          <label><span>Test-Username</span><input id="wsSimActor" value="Test_Creator" maxlength="40"></label>
+          <label><span>Like-Anzahl</span><input id="wsSimLikes" type="number" min="1" max="100000" value="50"></label>
+          <label><span>Gift</span><input id="wsSimGiftName" value="Rose" maxlength="60"></label>
+          <label><span>Gift-Anzahl</span><input id="wsSimGiftAmount" type="number" min="1" max="1000" value="1"></label>
+          <label><span>Gift-Wert</span><input id="wsSimGiftValue" type="number" min="0" max="1000000" value="10"></label>
+          <label><span>Viewer-Ziel</span><input id="wsSimViewers" type="number" min="0" max="1000000" value="75"></label>
+          <label class="wide"><span>Chat-Nachricht</span><input id="wsSimChat" maxlength="280" value="Hi Chat! Das ist eine Testnachricht 👋"></label>
+          <label><span>Testtempo</span><select id="wsSimSpeed"><option value="slow">Langsam · gut zum Anschauen</option><option value="normal" selected>Normal</option><option value="fast">Schnell</option></select></label>
+        </div>
+        <div class="ws-sim-actions">
+          <button class="btn" id="wsSimRunAll" type="button">ALLE 6 TESTEN</button>
+          <button class="btn" id="wsSimGoal" type="button" hidden>GOAL REACHED</button>
+          <button class="btn" id="wsSimBurst" type="button">DATEN-BURST 120</button>
+          <button class="btn primary" id="wsSimVisualBurst" type="button">VISUELLER BURST 60</button>
+          <button class="btn" id="wsSimRestart" type="button">TEST RESET</button>
+          <button class="btn danger" id="wsSimReset" type="button">ECHTE DATEN</button>
+        </div>
+      </section>
+      <aside class="ws-sim-monitor">
+        <div class="ws-sim-section-head"><div><span>TEST-MONITOR</span><strong>Aktueller Simulationsstand</strong></div><small><b id="wsSimEventTotal">0</b> Events</small></div>
+        <div class="ws-sim-metrics">
+          <div><span>Follower</span><strong id="wsSimFollowers">0</strong></div>
+          <div><span>LIVE Likes</span><strong id="wsSimLiveLikes">0</strong></div>
+          <div><span>Gifts</span><strong id="wsSimGiftCount">0</strong></div>
+          <div><span>Shares</span><strong id="wsSimShares">0</strong></div>
+          <div><span>Viewer</span><strong id="wsSimViewerCount">0</strong></div>
+          <div><span>Chat</span><strong id="wsSimChatCount">0</strong></div>
+        </div>
+        <div class="ws-sim-log" id="wsSimLog"><div class="ws-sim-empty">Noch kein Testevent ausgelöst.</div></div>
+      </aside>
+    </div>
+    <div class="ws-sim-footer"><span>Hinweis</span><p>„Alle 6 testen“ zeigt die Events sichtbar nacheinander. „Daten-Burst 120“ prüft Zähler/State ohne 120 Zwischenrenderings. „Visueller Burst 60“ rendert jedes Event in der Preview. TEST RESET startet wieder beim echten Ausgangsstand; ECHTE DATEN beendet die Simulation vollständig.</p></div>
+  </div>
+</div>
+
+<div class="ws-modal" id="wsPreviewModal" hidden>
+  <div class="ws-modal-card ws-output-preview-card">
+    <div class="ws-modal-head"><strong>AUSGABE-VORSCHAU</strong><button type="button" data-action="close-preview">✕</button></div>
+    <div class="ws-preview-profile-switch">
+      <button type="button" data-preview-profile="obs">OBS · ORIGINAL</button>
+      <button type="button" data-preview-profile="tiktok_vertical">TIKTOK · 9:16</button>
+      <button type="button" data-preview-profile="landscape">OBS · 16:9</button>
+    </div>
+    <div class="ws-preview-stage ws-universal-preview-stage">
+      <div id="wsPreviewViewport">
+        <div id="wsPreviewScene">
+          <div id="wsPreviewCanvas" class="ws-widget-canvas"></div>
+          <div id="wsPreviewSafeArea"></div>
+        </div>
+      </div>
+    </div>
+    <div class="ws-preview-meta"><span id="wsPreviewProfileLabel">OBS Widget</span><strong id="wsPreviewProfileSize">–</strong></div>
+  </div>
+</div>
+
+<div class="ws-modal ws-bridge-modal" id="wsBridgeModal" hidden>
+  <div class="ws-modal-card ws-bridge-modal-card">
+    <div class="ws-modal-head">
+      <div><span class="ws-modal-kicker">CREATOR SUITE</span><strong>LAUNCHER BRIDGE</strong></div>
+      <button type="button" data-action="close-bridge">✕</button>
+    </div>
+    <div class="ws-bridge-modal-body">
+      <section class="ws-bridge-status-panel">
+        <div class="ws-bridge-status-main">
+          <span class="ws-live-dot" id="wsBridgeModalDot"></span>
+          <div><small>BRIDGE STATUS</small><strong id="wsBridgeModalStatus">Wird geladen…</strong><p id="wsBridgeModalMeta">Der Launcher sendet Heartbeats und LIVE-Events an die Creator Suite.</p></div>
+        </div>
+        <div class="ws-bridge-status-grid">
+          <div><span>Schlüssel</span><strong id="wsBridgeConfigured">–</strong></div>
+          <div><span>Launcher</span><strong id="wsBridgeOnline">–</strong></div>
+          <div><span>LIVE Session</span><strong id="wsBridgeLiveSession">–</strong></div>
+          <div><span>Letzter Heartbeat</span><strong id="wsBridgeLastSeen">–</strong></div>
+        </div>
+      </section>
+
+      <section class="ws-bridge-key-panel">
+        <div class="ws-bridge-section-head"><div><span>BRIDGE-SCHLÜSSEL</span><strong>Website ↔ Launcher</strong></div><button class="btn" type="button" data-action="create-bridge-key">NEUEN SCHLÜSSEL ERSTELLEN</button></div>
+        <p>Der Schlüssel authentifiziert später ausschließlich deinen Creator Suite Launcher. Ein neuer Schlüssel widerruft den bisherigen automatisch.</p>
+        <div class="ws-bridge-secret" id="wsBridgeSecret" hidden>
+          <div><span>NUR JETZT SICHTBAR</span><strong>Kopiere den Schlüssel in deinen Launcher.</strong></div>
+          <div class="ws-bridge-secret-row"><input id="wsBridgeToken" readonly><button type="button" data-action="copy-bridge-token">KOPIEREN</button></div>
+        </div>
+        <div id="wsBridgeKeys" class="ws-bridge-keys"></div>
+      </section>
+
+      <section class="ws-bridge-protocol-panel">
+        <div class="ws-bridge-section-head"><div><span>BRIDGE PROTOKOLL V1</span><strong>Bereit für den PC-Launcher</strong></div><span class="ws-bridge-protocol-badge">V6</span></div>
+        <div class="ws-bridge-flow">
+          <span>TikTok LIVE Provider</span><b>→</b><span>Creator Suite Launcher</span><b>→</b><span>Bridge API</span><b>→</b><span>Widgets / OBS</span>
+        </div>
+        <p>Heartbeat, Session Start/Ende und gebündelte Follow-, Like-, Gift-, Share- und Viewer-Events sind serverseitig vorbereitet. Der TikTok-LIVE-Provider selbst wird im PC-Launcher angeschlossen.</p>
+      </section>
+    </div>
+  </div>
+</div>
+
+
+<div class="ws-modal ws-interactions-modal" id="wsInteractionsModal" hidden>
+  <div class="ws-modal-card ws-interactions-card-modal">
+    <div class="ws-modal-head"><div><span class="ws-modal-kicker">LIVE INTERACTIONS</span><strong>AUTOTHANKS REGELN</strong></div><button type="button" data-action="close-interactions">✕</button></div>
+    <div class="ws-interactions-body">
+      <section class="ws-interactions-info"><span>WEBSITE-SEITE FERTIG</span><strong>Events → Regel → Launcher Action Queue</strong><p>Die Creator Suite erzeugt bei passenden Follow-, Gift- und Share-Events eine Aktion für den späteren Launcher. Audio/TTS wird hier noch nicht abgespielt.</p></section>
+      <div id="wsInteractionRules" class="ws-interaction-rules"></div>
+      <div class="ws-interaction-footer"><span>OUTPUT</span><strong>Creator Suite Launcher · TTS/Audio vorbereitet</strong></div>
+    </div>
+  </div>
+</div>
+
+<div class="ws-modal ws-brand-modal" id="wsBrandModal" hidden aria-labelledby="wsBrandTitle">
+  <div class="ws-modal-card ws-brand-card">
+    <div class="ws-modal-head">
+      <div><span class="ws-modal-kicker">CREATOR PROFIL</span><strong id="wsBrandTitle">MEINE MARKE</strong></div>
+      <button type="button" data-action="close-brand">✕</button>
+    </div>
+    <div class="ws-brand-body">
+      <section class="ws-brand-intro">
+        <div class="ws-brand-preview" id="wsBrandPreview"><span>cfs</span><strong>DEIN LOOK</strong><small>Creator Brand</small></div>
+        <div><span>EINMAL FESTLEGEN</span><h3>Dein Stream-Look für alle Widgets.</h3><p>Speichere Creator-Name, Farben, Schrift und optional dein Logo. Danach kannst du den Look mit einem Klick auf das aktuell geöffnete Widget anwenden.</p></div>
+      </section>
+      <div class="ws-brand-form">
+        <label class="ws-field"><span>Creator Name</span><input id="wsBrandCreatorName" type="text" maxlength="60" placeholder="z. B. cfs_zockt"></label>
+        <label class="ws-field"><span>Schrift</span><select id="wsBrandFont"></select></label>
+        <label class="ws-field"><span>Hauptfarbe</span><div class="ws-color-control"><input id="wsBrandPrimary" class="ws-color-input" type="color" value="#148cff"><input id="wsBrandPrimaryHex" class="ws-color-hex" type="text" value="#148CFF" maxlength="7"></div></label>
+        <label class="ws-field"><span>Zweitfarbe</span><div class="ws-color-control"><input id="wsBrandSecondary" class="ws-color-input" type="color" value="#20d4e6"><input id="wsBrandSecondaryHex" class="ws-color-hex" type="text" value="#20D4E6" maxlength="7"></div></label>
+        <label class="ws-field"><span>Textfarbe</span><div class="ws-color-control"><input id="wsBrandText" class="ws-color-input" type="color" value="#f4f8ff"><input id="wsBrandTextHex" class="ws-color-hex" type="text" value="#F4F8FF" maxlength="7"></div></label>
+        <label class="ws-field ws-brand-logo-field"><span>Logo aus Meine Medien</span><select id="wsBrandLogo"><option value="">Kein Logo festgelegt</option></select><small class="ws-field-help">Bei vorhandenen Logo-/Brand-Bildelementen wird diese Datei übernommen. Neue Logos kannst du jederzeit über „Meine Medien“ einsetzen.</small></label>
+      </div>
+      <div class="ws-brand-actions">
+        <button class="btn" type="button" data-action="save-brand">MARKENLOOK SPEICHERN</button>
+        <button class="btn primary" type="button" id="wsBrandApplyButton" data-action="apply-brand">SPEICHERN &amp; AUF WIDGET ANWENDEN</button>
+      </div>
+      <small class="ws-brand-sync-note">Wird zusammen mit deinen Widget-Studio-Einstellungen im Creator-Account synchronisiert.</small>
+    </div>
+  </div>
+</div>
+
+<div class="ws-modal ws-confirm-modal" id="wsConfirmModal" hidden aria-labelledby="wsConfirmTitle" aria-describedby="wsConfirmText">
+  <div class="ws-modal-card ws-confirm-card">
+    <div class="ws-modal-head">
+      <div><span class="ws-modal-kicker" id="wsConfirmKicker">SICHERHEIT</span><strong id="wsConfirmTitle">Aktion bestätigen</strong></div>
+      <button type="button" data-confirm-cancel aria-label="Dialog schließen">✕</button>
+    </div>
+    <div class="ws-confirm-body">
+      <div class="ws-confirm-icon" aria-hidden="true">!</div>
+      <p id="wsConfirmText">Möchtest du diese Aktion wirklich ausführen?</p>
+      <small id="wsConfirmDetail"></small>
+      <div class="ws-confirm-actions">
+        <button class="btn" type="button" data-confirm-cancel>ABBRECHEN</button>
+        <button class="btn danger" type="button" id="wsConfirmAccept">BESTÄTIGEN</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="ws-modal ws-help-modal" id="wsHelpModal" hidden>
+  <div class="ws-modal-card ws-help-card">
+    <div class="ws-modal-head">
+      <div><span class="ws-modal-kicker">WIDGET STUDIO V42</span><strong>SCHNELLSTART</strong></div>
+      <button type="button" data-action="close-help">✕</button>
+    </div>
+    <div class="ws-help-body">
+      <section class="ws-help-mode-choice">
+        <span>WIE MÖCHTEST DU ARBEITEN?</span>
+        <div class="ws-experience-switch ws-experience-switch-help" role="group" aria-label="Widget Studio Modus">
+          <button class="active" type="button" data-experience-mode="simple"><span>🌱</span><strong>Einfach starten</strong><small>geführt · nur das Wichtigste</small></button>
+          <button type="button" data-experience-mode="pro"><span>⚙</span><strong>Profi-Modus</strong><small>freie Gestaltung · alle Werkzeuge</small></button>
+        </div>
+      </section>
+      <section class="ws-help-hero">
+        <span>CREATOR WORKFLOW</span>
+        <h3>Erst Widget wählen. Dann gemeinsam gestalten.</h3>
+        <p>TikTok LIVE und OBS sind klar getrennte Einstiege. Gemeinsame manuelle Widgets und freie Overlays erscheinen bewusst in beiden Bereichen und nutzen dieselben Designs.</p>
+      </section>
+      <div class="ws-help-simple-flow ws-help-simple-flow-six" data-experience-scope="simple">
+        <article><b>1</b><strong>Vorlage</strong><p>Einen passenden Grundlook auswählen.</p></article>
+        <article><b>2</b><strong>Inhalt</strong><p>Wert, Ziel, Text oder eigenes Medium festlegen.</p></article>
+        <article><b>3</b><strong>Design</strong><p>Farben, Rahmen oder deinen Markenlook anwenden.</p></article>
+        <article><b>4</b><strong>Position</strong><p>Eine von neun Positionen und eine passende Größe wählen.</p></article>
+        <article><b>5</b><strong>Effekte</strong><p>Ruhig, Soft, Pop oder Pulse – ohne Technikwerte.</p></article>
+        <article><b>6</b><strong>Testen &amp; live</strong><p>Vorschau prüfen und erst danach veröffentlichen.</p></article>
+      </div>
+      <div class="ws-help-grid" data-experience-scope="pro">
+        <article><b>01</b><strong>Elemente bauen</strong><p>Text, Counter, Progress, Formen und eigene Bilder kombinieren.</p></article>
+        <article><b>02</b><strong>Mehrfach auswählen</strong><p>Shift-Klick wählt mehrere Ebenen für gemeinsames Verschieben und Ausrichten.</p></article>
+        <article><b>03</b><strong>Copy & Paste</strong><p>Strg+C / Strg+V kopiert auch komplette Mehrfachauswahlen.</p></article>
+        <article><b>04</b><strong>Testen</strong><p>Simuliere Werte und Events, ohne LIVE-Daten vorzutäuschen.</p></article>
+        <article><b>05</b><strong>Stream Board prüfen</strong><p>Lege deine fertigen Widgets auf einer 16:9-Streamfläche ab und prüfe das Gesamtbild vor dem Veröffentlichen.</p></article>
+        <article><b>06</b><strong>Ausgabe</strong><p>Veröffentliche dein Widget und kopiere anschließend die OBS Browser-Source-URL.</p></article>
+      </div>
+      <div class="ws-help-shortcuts" data-experience-scope="pro">
+        <span><kbd>Shift</kbd> + Klick · Multi-Select</span><span><kbd>Ctrl</kbd> + C/V · Kopieren</span><span><kbd>Ctrl</kbd> + Z · Undo</span><span><kbd>Delete</kbd> · Löschen</span><span><kbd>Esc</kbd> · Dialog schließen</span><span><kbd>?</kbd> · Hilfe</span>
+      </div>
+      <button class="btn primary" type="button" data-action="close-help">STUDIO VERSTANDEN</button>
+    </div>
+  </div>
+</div>
+
+<script src="/assets/js/app.js?v=v42-r10"></script>
+<script src="/assets/js/cfs-widget-renderer.js?v=v42-r13"></script>
+<script src="/assets/js/widget-studio.js?v=v42-r20"></script>
+</body>
+</html>

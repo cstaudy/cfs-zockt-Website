@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#030711">
+<title>NEXUS | cfs_zockt</title>
+<link rel="stylesheet" href="/assets/css/styles.css">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+</head>
+<body>
+<header class="site-header"><div class="container header-inner">
+<a class="brand" href="/">cfs_<span>zockt</span></a>
+<nav class="nav open" style="display:flex"><a href="/pages/dashboard.html">DASHBOARD</a><a href="/pages/editor.html">EDITOR</a><a class="active" href="/pages/nexus.html">NEXUS</a><a href="/pages/account.html">ACCOUNT</a><button data-logout>LOGOUT</button></nav>
+</div></header>
+
+<main class="container">
+<section class="page-hero"><div class="eyebrow">NEXUS V1</div><h1>ECHTER BACKEND-STATUS.</h1><p>NEXUS zeigt jetzt live, welche Komponenten bereits online, vorbereitet oder noch Roadmap sind.</p></section>
+
+<div class="grid">
+<article class="card"><div class="meta">SERVICE</div><div class="kpi" id="service">Lädt…</div><p id="serviceStatus">–</p></article>
+<article class="card"><div class="meta">PLAN</div><div class="kpi" id="plan">–</div><p id="allowed">–</p></article>
+<article class="card"><div class="meta">VERSION</div><div class="kpi" id="version">–</div><p>NEXUS Backend Basis</p></article>
+</div>
+
+<section class="section">
+<div class="section-head"><div><div class="eyebrow">INTEGRATIONEN</div><h2>SYSTEM STATUS.</h2></div></div>
+<div id="integrations" class="grid"></div>
+<div id="notice" class="notice hidden" style="margin-top:18px"></div>
+</section>
+</main>
+
+<script src="/assets/js/app.js"></script>
+<script src="/assets/js/page-nexus.js"></script>
+</body></html>

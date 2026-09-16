@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#030711">
+<title>Pläne | cfs_zockt</title>
+<link rel="stylesheet" href="/assets/css/styles.css">
+<link rel="stylesheet" href="/assets/css/billing.css">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+</head>
+<body>
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="brand" href="/">cfs_<span>zockt</span></a>
+    <nav class="nav open" style="display:flex">
+      <a href="/">HOME</a>
+      <a href="/pages/dashboard.html">DASHBOARD</a>
+      <a class="active" href="/pages/plans.html">PLÄNE</a>
+      <a href="/pages/account.html">ACCOUNT</a>
+    </nav>
+  </div>
+</header>
+
+<main class="container">
+<section class="page-hero">
+  <div class="eyebrow">cfs_zockt PLÄNE</div>
+  <h1>STARTE FREE. WACHSE MIT DEINEM STREAM.</h1>
+  <p>
+    V37 verbindet die technischen FREE / CREATOR / PRO Rechte mit Stripe Hosted Checkout und dem Stripe Customer Portal.
+    Checkout wird nur freigeschaltet, wenn die benötigten Price-IDs und Server-Secrets auf der Zielumgebung konfiguriert sind.
+  </p>
+</section>
+
+<section class="grid">
+  <article class="card" data-plan-card="free">
+    <span class="badge ok">FREE</span>
+    <h3>Starter</h3>
+    <div class="plan-price">0 € <small>/ Monat</small></div>
+    <p>Für Creator, die die Suite kennenlernen und die Basisfunktionen nutzen möchten.</p>
+    <div class="feature-list">
+      <div>Creator Account</div>
+      <div>Dashboard</div>
+      <div>Basis Creator Editor</div>
+      <div>TikTok Profil-Sync</div>
+      <div>Profil-Widgets & Follower-Ziel</div>
+      <div>1 Scene</div>
+      <div>CFS Theme + Minimal</div>
+      <div>Launcher Basis / Device-Link</div>
+      <div>Bis zu 2 Widgets</div>
+    </div>
+    <div class="card-actions">
+      <a class="btn primary" href="/pages/login.html">FREE STARTEN</a>
+    </div>
+  </article>
+
+  <article class="card" data-plan-card="creator">
+    <span class="badge">CREATOR</span>
+    <h3>Creator</h3>
+    <div class="plan-price">6,99 €* <small>/ Monat</small></div>
+    <p>Für aktive Streamer, die mehr Live-Tools und Creator-Funktionen benötigen.</p>
+    <div class="feature-list">
+      <div>Alles aus FREE</div>
+      <div>Cut Studio</div>
+      <div>Interaktive Spiele</div>
+      <div>LIVE Likes / Viewer / Gifts / Shares</div>
+      <div>Alerts + AutoThanks</div>
+      <div>Local Scene Output</div>
+      <div>CFS Stream Deck · 8 Tasten</div>
+      <div>4 Scenes · bis zu 6 Widgets</div>
+      <div>Neon / Glass / Compact / Wide</div>
+    </div>
+    <div class="card-actions">
+      <button class="btn billing-plan-btn" type="button" data-checkout-plan="creator">CREATOR BUCHEN</button>
+    </div>
+  </article>
+
+  <article class="card" data-plan-card="pro">
+    <span class="badge lock">PRO</span>
+    <h3>Pro</h3>
+    <div class="plan-price">12,99 €* <small>/ Monat</small></div>
+    <p>Für Creator, die die komplette cfs_zockt Plattform und NEXUS nutzen möchten.</p>
+    <div class="feature-list">
+      <div>Alles aus CREATOR</div>
+      <div>NEXUS</div>
+      <div>Audio Studio</div>
+      <div>Twitch Integration</div>
+      <div>OBS Integration</div>
+      <div>Custom Branding + Blank Template</div>
+      <div>Void Theme</div>
+      <div>CFS Stream Deck · 12 Tasten</div>
+      <div>12 Scenes · bis zu 12 Widgets</div>
+      <div>Bis zu 5 Launcher-Geräte</div>
+    </div>
+    <div class="card-actions">
+      <button class="btn billing-plan-btn" type="button" data-checkout-plan="pro">PRO BUCHEN</button>
+    </div>
+  </article>
+</section>
+
+<section class="section">
+  <div class="section-head"><div><div class="eyebrow">V37 · BILLING STATUS</div><h2>DEIN ZUGRIFF.</h2></div></div>
+  <div id="billingAlert" class="billing-alert" hidden></div>
+  <div class="billing-status">
+    <article><span>EFFEKTIVER PLAN</span><strong id="billingCurrentPlan">–</strong></article>
+    <article><span>ZUGRIFFSQUELLE</span><strong id="billingSource">–</strong></article>
+    <article><span>SUBSCRIPTION</span><strong id="billingSubStatus">–</strong></article>
+    <article><span>PERIODE / GRACE</span><strong id="billingPeriodEnd">–</strong><div class="billing-note" id="billingGrace">–</div></article>
+  </div>
+  <div class="billing-actions"><button class="btn" id="openBillingPortal" type="button" hidden>BILLING VERWALTEN</button></div>
+  <p class="billing-note">Upgrade, Downgrade, Zahlungsmethode und Kündigung werden über das Stripe Customer Portal verwaltet. Eine Kündigung zum Periodenende lässt den Zugriff bis zum Ende der bezahlten Periode aktiv.</p>
+</section>
+
+<section class="section">
+  <div class="section-head">
+    <div>
+      <div class="eyebrow">FEATURE MATRIX</div>
+      <h2>WAS IST WO DRIN?</h2>
+    </div>
+  </div>
+
+  <div class="panel" style="overflow:auto">
+    <table style="width:100%;border-collapse:collapse;min-width:760px">
+      <thead>
+        <tr>
+          <th style="text-align:left;padding:14px;border-bottom:1px solid #173657">Funktion</th>
+          <th style="padding:14px;border-bottom:1px solid #173657">FREE</th>
+          <th style="padding:14px;border-bottom:1px solid #173657">CREATOR</th>
+          <th style="padding:14px;border-bottom:1px solid #173657">PRO</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td style="padding:13px">Creator Account & Dashboard</td><td align="center">✓</td><td align="center">✓</td><td align="center">✓</td></tr>
+        <tr><td style="padding:13px">TikTok Profil-Sync</td><td align="center">✓</td><td align="center">✓</td><td align="center">✓</td></tr>
+        <tr><td style="padding:13px">Creator Editor</td><td align="center">Basis</td><td align="center">Erweitert</td><td align="center">Komplett</td></tr>
+        <tr><td style="padding:13px">Widgets</td><td align="center">2 · Profil</td><td align="center">6 · inkl. LIVE</td><td align="center">12 · inkl. LIVE</td></tr>
+        <tr><td style="padding:13px">Scenes</td><td align="center">1</td><td align="center">4</td><td align="center">12</td></tr>
+        <tr><td style="padding:13px">LIVE Alerts & AutoThanks</td><td align="center">—</td><td align="center">✓</td><td align="center">✓</td></tr>
+        <tr><td style="padding:13px">Local Output</td><td align="center">—</td><td align="center">✓</td><td align="center">✓</td></tr>
+        <tr><td style="padding:13px">CFS Stream Deck</td><td align="center">—</td><td align="center">8 Tasten</td><td align="center">12 Tasten</td></tr>
+        <tr><td style="padding:13px">Launcher-Geräte</td><td align="center">1</td><td align="center">3</td><td align="center">5</td></tr>
+        <tr><td style="padding:13px">Creator Games Runtime</td><td align="center">—</td><td align="center">✓</td><td align="center">✓</td></tr>
+        <tr><td style="padding:13px">Game LIVE Regeln</td><td align="center">—</td><td align="center">8</td><td align="center">24</td></tr>
+        <tr><td style="padding:13px">Cut Studio Projekte</td><td align="center">—</td><td align="center">5</td><td align="center">25</td></tr>
+        <tr><td style="padding:13px">Clips je Cut-Projekt</td><td align="center">—</td><td align="center">20</td><td align="center">100</td></tr>
+        <tr><td style="padding:13px">Ausstehende Cut Export-Jobs</td><td align="center">—</td><td align="center">10</td><td align="center">50</td></tr>
+        <tr><td style="padding:13px">Cut Reel Übergänge + Audio</td><td align="center">—</td><td align="center">✓</td><td align="center">✓</td></tr>
+        <tr><td style="padding:13px">Cut Voiceover / SFX / Ducking</td><td align="center">—</td><td align="center">✓</td><td align="center">✓</td></tr>
+        <tr><td style="padding:13px">Cut Studio</td><td align="center">—</td><td align="center">✓</td><td align="center">✓</td></tr>
+        <tr><td style="padding:13px">Interaktive Spiele</td><td align="center">—</td><td align="center">✓</td><td align="center">✓</td></tr>
+        <tr><td style="padding:13px">NEXUS</td><td align="center">—</td><td align="center">—</td><td align="center">✓</td></tr>
+        <tr><td style="padding:13px">Audio Studio</td><td align="center">—</td><td align="center">—</td><td align="center">✓</td></tr>
+        <tr><td style="padding:13px">Twitch / OBS</td><td align="center">—</td><td align="center">—</td><td align="center">Geplant</td></tr>
+        <tr><td style="padding:13px">Custom Branding</td><td align="center">—</td><td align="center">—</td><td align="center">✓</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="section">
+  <div class="grid two">
+    <article class="card">
+      <div class="meta">SPÄTER</div>
+      <h3>Creator Packs</h3>
+      <p>
+        Einzelkäufe für Themes, Game-Packs, Soundpacks und Presets können später
+        zusätzlich zu den Abos angeboten werden.
+      </p>
+    </article>
+    <article class="card">
+      <div class="meta">SPÄTER</div>
+      <h3>Marketplace</h3>
+      <p>
+        Langfristig kann ein Marketplace entstehen, auf dem Creator oder Partner
+        eigene Erweiterungen anbieten.
+      </p>
+    </article>
+  </div>
+</section>
+
+<section class="section">
+  <div class="notice">
+    Die angezeigten CFS-Preise müssen mit den in Stripe hinterlegten Price-IDs übereinstimmen. Der Stripe Checkout zeigt vor Abschluss den tatsächlich abgerechneten Betrag.
+  </div>
+</section>
+<section class="section"><article class="card"><span class="badge">BETA-ZUGRIFF</span><h3>Tester bleiben FREE / CREATOR / PRO.</h3><p>Eine aktive Beta-Freigabe kann zusätzliche Testfunktionen öffnen, ohne den bezahlten Plan auf PRO umzuschreiben. Billing und Beta bleiben technisch getrennt.</p></article></section>
+</main>
+
+<script src="/assets/js/app.js"></script>
+<script src="/assets/js/billing-plans.js"></script>
+</body>
+</html>

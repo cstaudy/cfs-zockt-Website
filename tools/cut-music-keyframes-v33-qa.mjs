@@ -1,0 +1,13 @@
+import fs from "node:fs";import path from "node:path";
+const root=path.resolve(process.argv[2]||path.join(import.meta.dirname,"..")),must=(v,m)=>{if(!v)throw new Error(m)};
+const server=fs.readFileSync(path.join(root,"server.js"),"utf8"),model=fs.readFileSync(path.join(root,"lib/creator-cut-studio.js"),"utf8"),jobs=fs.readFileSync(path.join(root,"lib/creator-cut-jobs.js"),"utf8"),html=fs.readFileSync(path.join(root,"public/pages/cut-studio.html"),"utf8"),ui=fs.readFileSync(path.join(root,"public/assets/js/cut-studio.js"),"utf8"),engine=fs.readFileSync(path.join(root,"launcher/src/cut-media-engine.js"),"utf8"),main=fs.readFileSync(path.join(root,"launcher/main.js"),"utf8"),preload=fs.readFileSync(path.join(root,"launcher/preload.js"),"utf8");
+for(const col of ["keyframe_enabled","keyframe_zoom_start","keyframe_zoom_end","keyframe_pan_x_start","keyframe_pan_y_end","keyframe_easing"])must(server.includes(col),col);
+must(model.includes("music_enabled")&&model.includes("music_gain_db")&&model.includes("CUT_KEYFRAME_EASINGS"),"model");
+must((jobs.includes("schema:4")||jobs.includes("schema:5")||jobs.includes("schema:6")||jobs.includes("schema:7"))&&jobs.includes("keyframe_zoom_end")&&jobs.includes("music_fade_out_ms"),"manifest schema4+");
+for(const id of ["cutMusicEnabled","cutMusicGain","cutMusicStart","cutMusicLoop"])must(html.includes(`id="${id}"`),id);
+must(ui.includes("keyframe_zoom_start")&&ui.includes("keyframe_easing"),"keyframe UI");
+must(engine.includes("zoompan=z=")&&engine.includes("buildMultitrackMixArgs")&&engine.includes("amix=inputs="),"engine");
+must(main.includes("launcher:cut-music-select")&&main.includes("musicPath:music?.filePath||null"),"main local music");
+must(preload.includes("selectCutMusic")&&preload.includes("clearCutMusic"),"preload local music");
+must(!server.includes("music-upload")&&!server.includes("video-upload"),"no media upload");
+console.log(JSON.stringify({ok:true,schema:"4+",keyframes:true,music_track:true,local_only:true}));

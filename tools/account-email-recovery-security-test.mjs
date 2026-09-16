@@ -1,0 +1,93 @@
+import fs from "node:fs";
+import path from "node:path";
+import {createRequire} from "node:module";
+const require=createRequire(import.meta.url);
+const root=path.resolve(process.argv[2]||".");
+const read=f=>fs.readFileSync(path.join(root,f),"utf8");
+const server=read("server.js");
+const env=read(".env.example");
+const account=read("public/pages/account.html");
+const login=read("public/pages/login.html");
+const forgot=read("public/pages/forgot-password.html");
+const reset=read("public/pages/reset-password.html");
+const verify=read("public/pages/verify-email.html");
+const resetJs=read("public/assets/js/page-reset-password.js");
+const verifyJs=read("public/assets/js/page-verify-email.js");
+const security=read("public/pages/security.html");
+const privacy=read("public/pages/datenschutz.html");
+const configDoctor=read("lib/config-doctor.js");
+const mail=require(path.join(root,"lib/account-mail-security.js"));
+
+let passed=0;
+const checks=[];
+function check(name,condition){if(!condition)throw new Error(`FAIL: ${name}`);passed++;checks.push(name);}
+
+const disabled=mail.accountMailConfig({},"production");
+check("mail disabled by default",disabled.mode==="disabled"&&!disabled.enabled&&!disabled.verificationRequired);
+check("disabled config validates",mail.validateAccountMailConfig(disabled)===true);
+let invalidUrl=false;try{mail.validateAccountMailConfig(mail.accountMailConfig({CFS_ACCOUNT_MAIL_MODE:"webhook",CFS_ACCOUNT_MAIL_WEBHOOK_URL:"http://bad.example",CFS_ACCOUNT_MAIL_WEBHOOK_SECRET:"x".repeat(40)},"production"));}catch{invalidUrl=true}
+check("webhook requires HTTPS",invalidUrl);
+let invalidSecret=false;try{mail.validateAccountMailConfig(mail.accountMailConfig({CFS_ACCOUNT_MAIL_MODE:"webhook",CFS_ACCOUNT_MAIL_WEBHOOK_URL:"https://mail.example/hook",CFS_ACCOUNT_MAIL_WEBHOOK_SECRET:"short"},"production"));}catch{invalidSecret=true}
+check("webhook requires strong separate secret",invalidSecret);
+let requiredWithoutMail=false;try{mail.validateAccountMailConfig(mail.accountMailConfig({CFS_EMAIL_VERIFICATION_REQUIRED:"true"},"production"));}catch{requiredWithoutMail=true}
+check("required verification fails closed without mail",requiredWithoutMail);
+const enabled=mail.accountMailConfig({CFS_ACCOUNT_MAIL_MODE:"webhook",CFS_ACCOUNT_MAIL_WEBHOOK_URL:"https://mail.example/hook",CFS_ACCOUNT_MAIL_WEBHOOK_SECRET:"S".repeat(40),CFS_EMAIL_VERIFICATION_REQUIRED:"true"},"production");
+check("valid webhook enables verification",enabled.enabled&&enabled.verificationRequired&&mail.validateAccountMailConfig(enabled));
+const token1=mail.createAccountActionToken(),token2=mail.createAccountActionToken();
+check("action tokens are strong base64url",token1!==token2&&mail.validAccountActionToken(token1)&&token1.length>=40);
+check("token hashes are purpose bound",mail.accountActionTokenHash("verify_email",token1)!==mail.accountActionTokenHash("password_reset",token1));
+check("token hash hides raw token",!mail.accountActionTokenHash("verify_email",token1).includes(token1));
+const sigA=mail.mailWebhookSignature("Z".repeat(40),123,"{\"a\":1}");
+const sigB=mail.mailWebhookSignature("Z".repeat(40),124,"{\"a\":1}");
+check("mail signature binds timestamp",sigA!==sigB&&/^[a-f0-9]{64}$/.test(sigA));
+let captured=null;
+await mail.sendAccountMail(enabled,{kind:"password_reset",to:"creator@example.com",subject:"Test",text:"No secrets here"},async(url,opts)=>{captured={url,opts};return{ok:true,status:202};});
+check("mail relay uses configured HTTPS URL",captured.url==="https://mail.example/hook");
+check("mail relay signs request",String(captured.opts.headers["X-CFS-Mail-Signature"]||"").startsWith("v1="));
+check("mail relay does not put secret in body",!captured.opts.body.includes("S".repeat(40)));
+
+check("account table has email verification timestamp",server.includes("email_verified_at TIMESTAMPTZ"));
+check("account action table exists",server.includes("CREATE TABLE IF NOT EXISTS creator_account_action_tokens"));
+check("account action tokens store hash not raw token column",server.includes("token_hash CHAR(64) NOT NULL UNIQUE")&&!server.includes("creator_account_action_tokens (\n            id UUID PRIMARY KEY,\n            creator_id TEXT NOT NULL REFERENCES creator_accounts(id) ON DELETE CASCADE,\n            purpose VARCHAR(32) NOT NULL CHECK (purpose IN ('verify_email','password_reset')),\n            token TEXT"));
+check("action token issuance serializes on creator row",server.includes("SELECT id FROM creator_accounts WHERE id=$1 FOR UPDATE"));
+check("action token consumption locks token row",server.includes("FOR UPDATE OF t"));
+check("verification token TTL is eight hours",server.includes("EMAIL_VERIFICATION_TOKEN_TTL_MS =\n    8 * 60 * 60 * 1000"));
+check("password reset TTL is thirty minutes",server.includes("PASSWORD_RESET_TOKEN_TTL_MS =\n    30 * 60 * 1000"));
+check("mail status endpoint exists",server.includes('app.get("/api/account/mail/status"'));
+check("verification request endpoint exists",server.includes('"/api/account/email/verification/request"'));
+check("verification consume endpoint exists",server.includes('"/api/account/email/verify"'));
+check("forgot password endpoint exists",server.includes('"/api/account/password/forgot"'));
+check("reset password endpoint exists",server.includes('"/api/account/password/reset"'));
+check("public recovery endpoints exempt only from session CSRF",server.includes('req.path === "/api/account/password/reset"')&&server.includes("browserWriteSourceAllowed(req, res)"));
+check("verification request uses generic anti-enumeration response",server.includes("Wenn für diese Adresse eine Bestätigung möglich ist, wurde ein neuer Link angefordert."));
+check("forgot password uses generic anti-enumeration response",server.includes("Wenn ein passendes Konto existiert, wurde ein zeitlich begrenzter Recovery-Link angefordert."));
+check("generic mail responses have a minimum timing floor",server.includes("genericAccountMailResponse")&&server.includes("350 - elapsed"));
+check("reset revokes all sessions",server.includes("DELETE FROM creator_sessions WHERE creator_id=$1"));
+check("verification activates pending account",server.includes("status=CASE WHEN status='pending_email' THEN 'active' ELSE status END"));
+const resetRouteStart=server.indexOf('app.post(\n    "/api/account/password/reset"');
+const resetRouteEnd=server.indexOf('// ============================================================\n// ACCOUNT REGISTRIEREN',resetRouteStart);
+const resetRouteBlock=server.slice(resetRouteStart,resetRouteEnd);
+check("reset never auto creates session",!resetRouteBlock.includes("createCreatorSession"));
+const loginStart=server.indexOf('// ACCOUNT LOGIN');
+const loginEnd=server.indexOf('// ACCOUNT LOGOUT',loginStart);
+const loginBlock=server.slice(loginStart,loginEnd);
+check("pending status checked after password verification",loginBlock.indexOf("const passwordOk")<loginBlock.indexOf('account.status === "pending_email"'));
+check("new registration can be pending email",server.includes('ACCOUNT_MAIL_CONFIG.verificationRequired ? "pending_email" : "active"'));
+check("existing sessions expose email verification state",server.includes("email_verified:\n            Boolean(account.email_verified_at)"));
+check("account export includes verification timestamp",server.includes("status,email_verified_at,created_at,updated_at FROM creator_accounts"));
+check("verification links use URL fragments",server.includes("/pages/verify-email.html#token=")&&server.includes("/pages/reset-password.html#token="));
+check("reset page scrubs fragment",resetJs.includes('history.replaceState(null,"",location.pathname)'));
+check("verify page scrubs fragment",verifyJs.includes('history.replaceState(null,"",location.pathname)'));
+check("forgot page is noindex",forgot.includes('name="robots" content="noindex,nofollow,noarchive"'));
+check("reset page is noindex",reset.includes('name="robots" content="noindex,nofollow,noarchive"'));
+check("verify page is noindex",verify.includes('name="robots" content="noindex,nofollow,noarchive"'));
+check("login links recovery and verification",login.includes("/pages/forgot-password.html")&&login.includes("/pages/verify-email.html"));
+check("account shows verification status",account.includes('id="emailVerificationStatus"')&&account.includes('id="requestVerificationBtn"'));
+check("security page documents hashed single use recovery",security.includes("nur gehasht gespeichert")&&security.includes("einmal verwendet"));
+check("privacy page documents token retention",privacy.includes("Passwort-Recovery-Links nach 30 Minuten")&&privacy.includes("kryptografischer Hash"));
+check("env defaults mail transport off",env.includes("CFS_ACCOUNT_MAIL_MODE=disabled"));
+check("env documents verification enforcement",env.includes("CFS_EMAIL_VERIFICATION_REQUIRED=false"));
+check("config doctor treats mail webhook secret as secret",configDoctor.includes('"CFS_ACCOUNT_MAIL_WEBHOOK_SECRET"'));
+check("config doctor requires relay if verification mandatory",configDoctor.includes("CFS_EMAIL_VERIFICATION_TRANSPORT"));
+
+console.log(JSON.stringify({ok:true,passed,total:passed,checks},null,2));

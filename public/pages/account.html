@@ -1,0 +1,589 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#030711">
+<title>Account | cfs_zockt</title>
+  <link rel="stylesheet" href="/assets/css/styles.css">
+
+  <style>
+    .brand-logo {
+      display: block;
+      height: 34px;
+      width: auto;
+      object-fit: contain;
+    }
+
+    .security-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+
+    .security-item {
+      padding: 16px;
+      border: 1px solid #173756;
+      border-radius: 13px;
+      background: #06111d;
+    }
+
+    .security-item strong {
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    .security-item p {
+      margin: 0;
+      color: #8da4c1;
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      margin-top: 10px;
+      padding: 6px 9px;
+      border: 1px solid #295273;
+      border-radius: 999px;
+      color: #9dc0dd;
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .status-pill.active {
+      border-color: #1d6e52;
+      color: #8df1c0;
+      background: rgba(17, 99, 72, .12);
+    }
+
+    .status-pill.planned {
+      border-color: #6f5520;
+      color: #ffd97d;
+      background: rgba(119, 83, 13, .10);
+    }
+
+    .security-actions {
+      margin-top: 18px;
+      padding-top: 18px;
+      border-top: 1px solid #173756;
+    }
+
+    .security-actions h3,
+    .danger-zone h3 {
+      margin: 0 0 8px;
+    }
+
+    .security-actions p,
+    .danger-zone p {
+      margin: 0 0 15px;
+      color: #8da4c1;
+      line-height: 1.55;
+    }
+
+    .danger-button {
+      border-color: #8d3340 !important;
+      color: #ffb4bd !important;
+    }
+
+    .danger-button:hover:not(:disabled) {
+      border-color: #c94f60 !important;
+    }
+
+    .danger-button:disabled {
+      opacity: .45;
+      cursor: not-allowed;
+    }
+
+    .danger-zone {
+      margin-top: 18px;
+      border: 1px solid #71303a;
+      background: rgba(83, 18, 27, .12);
+    }
+
+    .danger-zone .meta {
+      color: #ff9fac;
+    }
+
+    .danger-list {
+      margin: 0 0 18px;
+      padding-left: 20px;
+      color: #aebfd2;
+      font-size: 14px;
+      line-height: 1.65;
+    }
+
+    .danger-form {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 18px;
+    }
+
+    .danger-form .full {
+      grid-column: 1 / -1;
+    }
+
+    .danger-note {
+      padding: 12px 14px;
+      border: 1px solid #6f5520;
+      border-radius: 12px;
+      background: rgba(119, 83, 13, .10);
+      color: #ffd97d;
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .activity-panel {
+      margin-top: 18px;
+    }
+
+    .activity-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 14px;
+    }
+
+    .activity-head h3 {
+      margin: 3px 0 6px;
+    }
+
+    .activity-head p {
+      margin: 0;
+      color: #8da4c1;
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    .activity-list {
+      display: grid;
+      gap: 9px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .activity-entry {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 12px 14px;
+      border: 1px solid #173756;
+      border-radius: 12px;
+      background: #06111d;
+    }
+
+    .activity-entry strong {
+      font-size: 14px;
+    }
+
+    .activity-entry time {
+      color: #8da4c1;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .activity-empty {
+      padding: 14px;
+      border: 1px dashed #295273;
+      border-radius: 12px;
+      color: #8da4c1;
+      font-size: 14px;
+    }
+
+    .lifecycle-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+      margin-top: 18px;
+    }
+
+    .session-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .session-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 12px 14px;
+      border: 1px solid #173756;
+      border-radius: 12px;
+      background: #06111d;
+    }
+
+    .session-row p { margin: 3px 0 0; color: #8da4c1; font-size: 12px; }
+    .session-row .btn { flex: 0 0 auto; }
+
+    .privacy-form {
+      display: grid;
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .privacy-note {
+      color: #8da4c1;
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    @media (max-width: 800px) {
+      .security-grid,
+      .danger-form,
+      .lifecycle-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+  <meta name="robots" content="noindex,nofollow,noarchive">
+</head>
+
+<body>
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="brand" href="/" aria-label="cfs_zockt Startseite">
+      <img class="brand-logo" src="/assets/img/logo-header.png" alt="cfs_zockt">
+    </a>
+
+    <button class="mobile-toggle" data-mobile-toggle type="button">MENÜ</button>
+
+    <nav class="nav" data-nav>
+      <a href="/">HOME</a>
+      <a href="/pages/dashboard.html">DASHBOARD</a>
+      <a href="/pages/setup.html">SETUP</a>
+      <a href="/pages/launcher.html">LAUNCHER</a>
+      <a href="/pages/games.html">SPIELE</a>
+      <a href="/pages/nexus.html">NEXUS</a>
+      <a class="cta" href="/pages/account.html">ACCOUNT</a>
+    </nav>
+  </div>
+</header>
+
+<main class="container">
+  <section class="page-hero">
+    <div class="eyebrow">ACCOUNT & SICHERHEIT</div>
+    <h1>DEIN CREATOR PROFIL.</h1>
+    <p>Deine Accountdaten, dein Plan und der aktuelle Sicherheitsstatus an einem Ort.</p>
+  </section>
+
+  <div class="grid two">
+    <section class="panel">
+      <h2>Profil</h2>
+
+      <form id="profileForm" class="form-grid">
+        <div class="field full">
+          <label for="displayName">CREATOR NAME</label>
+          <input id="displayName" name="display_name" required minlength="2" maxlength="80" autocomplete="nickname">
+        </div>
+
+        <div class="field full">
+          <label for="email">E-MAIL</label>
+          <input id="email" type="email" disabled>
+        </div>
+
+        <div class="field full">
+          <button class="btn primary" type="submit">SPEICHERN</button>
+        </div>
+      </form>
+
+      <div id="saveMsg" class="notice hidden" role="status" aria-live="polite"></div>
+    </section>
+
+    <section class="panel">
+      <div class="meta">DEIN ZUGRIFF</div>
+      <div class="plan-price" id="plan">–</div>
+      <div class="access-badges" id="accountAccessBadges"></div>
+      <p class="muted" id="accountAccessText">Berechtigungen werden geladen…</p>
+      <div class="access-feature-grid" id="accountFeatureGrid"></div>
+
+      <div class="card-actions">
+        <a class="btn" href="/pages/plans.html">PLÄNE & BILLING</a>
+        <button class="btn ghost" type="button" data-logout>LOGOUT</button>
+      </div>
+    </section>
+  </div>
+
+  <section class="section">
+    <div class="section-head">
+      <div>
+        <div class="eyebrow">SECURITY STATUS</div>
+        <h2>ACCOUNT-SCHUTZ.</h2>
+      </div>
+    </div>
+
+    <div class="security-grid">
+      <div class="security-item">
+        <strong>Sichere Sessions</strong>
+        <p>Login-Sessions werden serverseitig gespeichert, zeitlich begrenzt und über sichere HttpOnly-Cookies übertragen. Pro Creator sind maximal acht aktive Sitzungen erlaubt.</p>
+        <span class="status-pill active">AKTIV · SERVERSEITIG</span>
+      </div>
+
+      <div class="security-item">
+        <strong>Passwörter</strong>
+        <p>Passwörter werden nicht im Klartext gespeichert. Neue Passwörter benötigen mindestens 15 Zeichen. Das Backend verwendet eine versionierte scrypt-Konfiguration mit individuellem Salt; ältere Hashes werden nach erfolgreicher Anmeldung automatisch auf die stärkere Konfiguration migriert.</p>
+        <span class="status-pill active">AKTIV · 15 ZEICHEN + SCRYPT V2</span>
+      </div>
+
+      <div class="security-item">
+        <strong>Login-Schutz</strong>
+        <p>Rate Limits erschweren automatisierte Login-Versuche und Brute-Force-Angriffe.</p>
+        <span class="status-pill active">AKTIV · RATE LIMITS</span>
+      </div>
+
+      <div class="security-item">
+        <strong>Browser-Schutz</strong>
+        <p>Schreibzugriffe auf Account- und Creator-APIs werden gegen fremde Browser-Origins geschützt. Zusätzlich sendet der Server Sicherheits-Header.</p>
+        <span class="status-pill active">AKTIV · SECURITY HEADERS</span>
+      </div>
+
+      <div class="security-item">
+        <strong>TikTok Token-Schutz</strong>
+        <p>Das Backend unterstützt AES-256-GCM für TikTok-Tokens. Der serverseitige Encryption Key wurde für den Produktivbetrieb eingerichtet.</p>
+        <span class="status-pill active">AKTIV · SERVER-KEY</span>
+      </div>
+
+      <div class="security-item">
+        <strong>Account löschen</strong>
+        <p>Die Löschung ist durch aktive Session, CSRF-Schutz, Passwortbestätigung, Bestätigungsphrase und ein eigenes Rate Limit geschützt. Accountbezogene TikTok-OAuth-Daten werden lokal entfernt; eine verknüpfte Autorisierung wird zusätzlich best-effort bei TikTok widerrufen.</p>
+        <span class="status-pill active">AKTIV · PASSWORT + CSRF</span>
+      </div>
+
+      <div class="security-item">
+        <strong>Sicherheitsaktivität</strong>
+        <p>Wichtige Account-Ereignisse werden für 180 Tage gespeichert. Klartext-IP, User-Agent und Browser-Fingerprints werden dabei nicht gespeichert.</p>
+        <span class="status-pill active">AKTIV · DATENSPARSAM</span>
+      </div>
+
+      <div class="security-item">
+        <strong>E-Mail-Verifizierung</strong>
+        <p id="emailVerificationText">Verifizierungsstatus wird geladen …</p>
+        <span id="emailVerificationStatus" class="status-pill planned">STATUS WIRD GELADEN</span>
+        <div class="card-actions"><button id="requestVerificationBtn" class="btn ghost" type="button" hidden>BESTÄTIGUNG NEU SENDEN</button></div>
+        <div id="emailVerificationMsg" class="notice hidden" role="status" aria-live="polite"></div>
+      </div>
+
+      <div class="security-item">
+        <strong>Passwort-Recovery</strong>
+        <p>Recovery-Tokens werden zufällig erzeugt, nur gehasht gespeichert, laufen nach 30 Minuten ab und sind nur einmal verwendbar. Nach einem Reset werden alle bestehenden Login-Sitzungen beendet.</p>
+        <span class="status-pill active">UNTERBAU AKTIV · MAIL-RELAY ABHÄNGIG</span>
+        <div class="card-actions"><a class="btn ghost" href="/pages/forgot-password.html">RECOVERY ÖFFNEN</a></div>
+      </div>
+
+      <div class="security-item">
+        <strong>Zwei-Faktor-Schutz (TOTP)</strong>
+        <p id="mfaSummaryText">MFA-Status wird geladen …</p>
+        <span id="mfaSummaryStatus" class="status-pill planned">STATUS WIRD GELADEN</span>
+      </div>
+
+      <div class="security-item">
+        <strong>Passkeys / WebAuthn</strong>
+        <p id="passkeySummaryText">Passkey-Status wird geladen …</p>
+        <span id="passkeySummaryStatus" class="status-pill planned">STATUS WIRD GELADEN</span>
+      </div>
+    </div>
+
+    <div class="panel security-actions">
+      <div class="meta">ANMELDE-SICHERHEIT</div>
+      <h3>Anomalie-Signale ohne Tracking-Profil</h3>
+      <p id="securitySignalText">Sicherheitsstatus wird geladen …</p>
+      <span id="securitySignalStatus" class="status-pill planned">STATUS WIRD GELADEN</span>
+      <p class="muted">cfs_zockt wertet hier bewusst keine Standortverläufe, Browser-Fingerprints oder dauerhaften Geräteprofile aus. Ein starkes Signal ist dagegen ein korrektes Passwort mit anschließend fehlgeschlagenem TOTP-, Recovery- oder Passkey-Schritt.</p>
+    </div>
+
+    <div class="panel activity-panel">
+      <div class="activity-head">
+        <div>
+          <div class="meta">SICHERHEITSAKTIVITÄT</div>
+          <h3>Letzte Account-Ereignisse</h3>
+          <p>Hier siehst du wichtige Sicherheitsaktionen deines Creator-Kontos. Die Einträge werden automatisch nach 180 Tagen entfernt.</p>
+        </div>
+        <span class="status-pill active">AKTIV · SERVERSEITIG</span>
+      </div>
+
+      <ul id="securityEventList" class="activity-list" aria-live="polite">
+        <li class="activity-empty">Sicherheitsaktivität wird geladen …</li>
+      </ul>
+    </div>
+
+    <div class="panel security-actions">
+      <div class="meta">SESSION-VERWALTUNG</div>
+      <h3>Auf allen Geräten abmelden</h3>
+      <p>Damit werden alle aktiven Login-Sitzungen deines Creator-Kontos beendet – auch auf anderen Browsern und Geräten.</p>
+
+      <button id="logoutAllBtn" class="btn ghost danger-button" type="button">AUF ALLEN GERÄTEN ABMELDEN</button>
+
+      <div id="securityMsg" class="notice hidden" role="status" aria-live="polite"></div>
+    </div>
+
+    <div class="lifecycle-grid">
+      <section class="panel">
+        <div class="meta">AKTIVE SITZUNGEN</div>
+        <h3>Gerätezugriffe verwalten</h3>
+        <p class="muted">Du siehst Start- und Ablaufzeit deiner Login-Sitzungen. IP-Adresse, Browser-Fingerprint und User-Agent werden dafür bewusst nicht gespeichert.</p>
+        <div id="sessionList" class="session-list" aria-live="polite">
+          <div class="activity-empty">Sitzungen werden geladen …</div>
+        </div>
+        <div id="sessionMsg" class="notice hidden" role="status" aria-live="polite"></div>
+      </section>
+
+      <section class="panel">
+        <div class="meta">PHISHING-RESISTENTER SCHUTZ</div>
+        <h3>Passkeys & Sicherheitsschlüssel</h3>
+        <p class="privacy-note">Passkeys verwenden WebAuthn und binden die Anmeldung kryptografisch an die echte cfs_zockt Domain. Der private Schlüssel bleibt auf deinem Gerät bzw. im Authenticator.</p>
+        <div id="passkeyList" class="session-list" aria-live="polite"><div class="activity-empty">Passkeys werden geladen …</div></div>
+        <form id="passkeyAddForm" class="privacy-form" autocomplete="off">
+          <div class="field"><label for="passkeyLabel">NAME</label><input id="passkeyLabel" type="text" maxlength="80" value="Mein Passkey" autocomplete="off"></div>
+          <div class="field"><label for="passkeyPassword">AKTUELLES PASSWORT</label><input id="passkeyPassword" type="password" maxlength="128" autocomplete="current-password" required></div>
+          <button id="passkeyAddBtn" class="btn" type="submit">PASSKEY HINZUFÜGEN</button>
+        </form>
+        <div class="field"><label for="passkeyRemovePassword">PASSWORT FÜR ENTFERNEN</label><input id="passkeyRemovePassword" type="password" maxlength="128" autocomplete="current-password" placeholder="Nur nötig, wenn du einen Passkey entfernst"></div>
+        <p class="privacy-note">Beim ersten Passkey ohne TOTP werden einmalige Recovery-Codes erzeugt. Registrieren und Verwenden setzt Browser-/Geräteunterstützung für WebAuthn voraus.</p>
+        <div id="passkeyMsg" class="notice hidden" role="status" aria-live="polite"></div>
+      </section>
+
+      <section class="panel">
+        <div class="meta">ZWEI-FAKTOR-SCHUTZ</div>
+        <h3>Authenticator-App & Recovery-Codes</h3>
+        <p id="mfaManageText" class="privacy-note">Status wird geladen …</p>
+        <div id="mfaSetupBlock">
+          <form id="mfaSetupForm" class="privacy-form" autocomplete="off">
+            <div class="field"><label for="mfaSetupPassword">AKTUELLES PASSWORT</label><input id="mfaSetupPassword" type="password" maxlength="128" autocomplete="current-password"></div>
+            <button id="mfaSetupBtn" class="btn" type="submit">2FA EINRICHTEN</button>
+          </form>
+          <div id="mfaEnrollBlock" hidden>
+            <p class="privacy-note">Hinterlege dieses Secret in deiner Authenticator-App. Es wird nach dem Neuladen nicht erneut angezeigt.</p>
+            <div class="field"><label for="mfaSecret">TOTP SECRET</label><input id="mfaSecret" type="text" readonly autocomplete="off"></div>
+            <div class="field"><label for="mfaOtpUri">OTPAUTH URI</label><input id="mfaOtpUri" type="text" readonly autocomplete="off"></div>
+            <form id="mfaEnableForm" class="privacy-form" autocomplete="off">
+              <div class="field"><label for="mfaEnableCode">6-STELLIGER CODE</label><input id="mfaEnableCode" type="text" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" required></div>
+              <button id="mfaEnableBtn" class="btn" type="submit">2FA AKTIVIEREN</button>
+            </form>
+          </div>
+        </div>
+        <div id="mfaActiveBlock" hidden>
+          <p class="privacy-note">Recovery-Codes sind Einmalcodes. Erstelle neue Codes nur, wenn du die aktuellen verloren hast – die bisherigen werden dabei sofort ungültig.</p>
+          <form id="mfaRecoveryForm" class="privacy-form" autocomplete="off">
+            <div class="field"><label for="mfaRecoveryPassword">AKTUELLES PASSWORT</label><input id="mfaRecoveryPassword" type="password" maxlength="128" autocomplete="current-password"></div>
+            <div class="field"><label for="mfaRecoveryTotp">AUTHENTICATOR-CODE</label><input id="mfaRecoveryTotp" type="text" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code"></div>
+            <button id="mfaRecoveryBtn" class="btn ghost" type="submit">NEUE RECOVERY-CODES</button>
+          </form>
+          <form id="mfaDisableForm" class="privacy-form" autocomplete="off">
+            <div class="field"><label for="mfaDisablePassword">AKTUELLES PASSWORT</label><input id="mfaDisablePassword" type="password" maxlength="128" autocomplete="current-password"></div>
+            <div class="field"><label for="mfaDisableCode">AUTHENTICATOR- ODER RECOVERY-CODE</label><input id="mfaDisableCode" type="text" maxlength="20" autocomplete="one-time-code"></div>
+            <button id="mfaDisableBtn" class="btn ghost danger-button" type="submit">2FA DEAKTIVIEREN</button>
+          </form>
+        </div>
+        <div id="mfaCodesBlock" hidden>
+          <p class="danger-note"><strong>Jetzt sichern:</strong> Diese Recovery-Codes werden nur einmal angezeigt. Jeder Code funktioniert genau einmal.</p>
+          <pre id="mfaRecoveryCodes" class="activity-empty" style="white-space:pre-wrap;user-select:all"></pre>
+        </div>
+        <div id="mfaMsg" class="notice hidden" role="status" aria-live="polite"></div>
+      </section>
+
+      <section class="panel">
+        <div class="meta">PASSWORT & ZUGANG</div>
+        <h3>Passwort sicher ändern</h3>
+        <p class="privacy-note">Zur Änderung musst du dein aktuelles Passwort erneut eingeben. Danach werden alle bisherigen Login-Sitzungen beendet und für diesen Browser eine neue Sitzung erstellt.</p>
+        <form id="passwordChangeForm" class="privacy-form" autocomplete="off">
+          <div class="field">
+            <label for="currentPassword">AKTUELLES PASSWORT</label>
+            <input id="currentPassword" type="password" maxlength="128" autocomplete="current-password" required>
+          </div>
+          <div class="field">
+            <label for="newPassword">NEUES PASSWORT</label>
+            <input id="newPassword" type="password" minlength="15" maxlength="128" autocomplete="new-password" required>
+          </div>
+          <div class="field">
+            <label for="newPasswordConfirm">NEUES PASSWORT WIEDERHOLEN</label>
+            <input id="newPasswordConfirm" type="password" minlength="15" maxlength="128" autocomplete="new-password" required>
+          </div>
+          <p class="privacy-note">Mindestens 15 Zeichen. Lange Passphrasen und Leerzeichen sind erlaubt; keine Pflicht für Großbuchstaben, Zahlen oder Sonderzeichen. Besonders häufige bzw. accountbezogene Werte werden serverseitig abgewiesen.</p>
+          <button id="passwordChangeBtn" class="btn" type="submit">PASSWORT ÄNDERN</button>
+        </form>
+        <div id="passwordChangeMsg" class="notice hidden" role="status" aria-live="polite"></div>
+      </section>
+
+      <section class="panel">
+        <div class="meta">DATENSCHUTZ & EXPORT</div>
+        <h3>Deine Daten als JSON exportieren</h3>
+        <p class="privacy-note">Der Export enthält deine Accountdaten, Einstellungen und bereinigte Creator-Daten. Passwörter, Hashes, OAuth-Tokens, Source-/Bridge-Keys, Roh-Mediendateien und detaillierte LIVE-Daten anderer Personen werden nicht exportiert.</p>
+        <form id="dataExportForm" class="privacy-form" autocomplete="off">
+          <div class="field">
+            <label for="exportPassword">AKTUELLES PASSWORT</label>
+            <input id="exportPassword" type="password" maxlength="128" autocomplete="current-password" required>
+          </div>
+          <button id="dataExportBtn" class="btn" type="submit">DATENEXPORT ERSTELLEN</button>
+        </form>
+        <div id="exportMsg" class="notice hidden" role="status" aria-live="polite"></div>
+      </section>
+
+      <section class="panel">
+        <div class="meta">VERBUNDENE DIENSTE</div>
+        <h3>TikTok-Verbindung</h3>
+        <p id="tiktokLifecycleText" class="muted">Status wird geladen …</p>
+        <button id="disconnectTikTokBtn" class="btn ghost danger-button" type="button" hidden>TIKTOK TRENNEN</button>
+        <div id="tiktokLifecycleMsg" class="notice hidden" role="status" aria-live="polite"></div>
+      </section>
+
+      <section class="panel">
+        <div class="meta">DATENSCHUTZ-INFO</div>
+        <h3>Was passiert beim Löschen?</h3>
+        <p class="privacy-note">Accountbezogene Daten mit Datenbank-Verknüpfung werden per Löschkaskade entfernt. Sicherheitsereignisse verschwinden dabei ebenfalls mit dem Konto. Gesetzlich oder abrechnungstechnisch unabhängig aufzubewahrende externe Datensätze sind davon nicht automatisch umfasst.</p>
+        <a class="btn ghost" href="/pages/datenschutz.html">DATENSCHUTZ LESEN</a>
+      </section>
+    </div>
+
+    <div class="panel danger-zone">
+      <div class="meta">GEFAHRENBEREICH</div>
+      <h3>Creator-Konto dauerhaft löschen</h3>
+      <p>Diese Aktion kann nicht rückgängig gemacht werden. Dein Website-Account und die direkt zugeordneten Creator-Daten werden dauerhaft entfernt.</p>
+
+      <ul class="danger-list">
+        <li>Creator-Account und Login-Sessions</li>
+        <li>Creator-Einstellungen und persönliches Setup</li>
+        <li>Launcher- und andere accountbezogene Modul-States</li>
+        <li>accountbezogene TikTok-OAuth-Daten und TikTok-Verbindungen, sofern sie bereits deiner Account-ID zugeordnet sind</li>
+      </ul>
+
+      <div class="danger-note">
+        Eine historische serverweite TikTok-Owner-Verbindung mit der internen ID „default“ ist technisch kein Bestandteil deines Website-Accounts und wird daher nicht durch dessen Löschung verändert. Eine direkt mit deinem Creator-Konto verknüpfte TikTok-Autorisierung wird dagegen lokal gelöscht und best-effort bei TikTok widerrufen.
+      </div>
+
+      <form id="deleteAccountForm" class="danger-form" autocomplete="off">
+        <div class="field">
+          <label for="deletePassword">AKTUELLES PASSWORT</label>
+          <input id="deletePassword" type="password" maxlength="128" autocomplete="current-password" required>
+        </div>
+
+        <div class="field">
+          <label for="deleteConfirmation">ZUR BESTÄTIGUNG „LÖSCHEN“ EINGEBEN</label>
+          <input id="deleteConfirmation" type="text" maxlength="20" autocomplete="off" required>
+        </div>
+
+        <div class="full">
+          <button id="deleteAccountBtn" class="btn ghost danger-button" type="submit" disabled>CREATOR-KONTO DAUERHAFT LÖSCHEN</button>
+        </div>
+      </form>
+
+      <div id="deleteMsg" class="notice hidden" role="status" aria-live="polite"></div>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="container footer-row">
+    <div>© cfs_zockt Creator Suite</div>
+    <div>Streaming · Tools · Community · NEXUS</div>
+  </div>
+</footer>
+
+<script src="/assets/js/app.js?v=v42-r9"></script>
+<script src="/assets/js/webauthn-browser.js"></script>
+<script src="/assets/js/page-account.js"></script>
+</body>
+</html>

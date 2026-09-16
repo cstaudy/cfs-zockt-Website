@@ -1,0 +1,18 @@
+import fs from "node:fs";import path from "node:path";
+const root=path.resolve(process.argv[2]||path.join(import.meta.dirname,"..")),must=(v,m)=>{if(!v)throw new Error(m)};
+const main=fs.readFileSync(path.join(root,"launcher/main.js"),"utf8");
+const preload=fs.readFileSync(path.join(root,"launcher/preload.js"),"utf8");
+const html=fs.readFileSync(path.join(root,"launcher/renderer/index.html"),"utf8");
+const js=fs.readFileSync(path.join(root,"launcher/renderer/app.js"),"utf8");
+const scene=fs.readFileSync(path.join(root,"public/assets/js/cfs-scene-runtime.js"),"utf8");
+const widget=fs.readFileSync(path.join(root,"public/assets/js/cfs-widget-runtime.js"),"utf8");
+const deck=fs.readFileSync(path.join(root,"launcher/src/stream-deck-store.js"),"utf8");
+for(const ipc of ["launcher:stream-deck-action","launcher:stream-deck-button-save","launcher:stream-deck-reset"])must(main.includes(ipc),`missing ${ipc}`);
+must(preload.includes("runStreamDeckAction")&&preload.includes("saveStreamDeckButton"),"preload deck API");
+must(html.includes('data-page="deck"')&&html.includes('id="streamDeckGrid"'),"deck page missing");
+must(js.includes("renderStreamDeck")&&js.includes("renderDeckEditor"),"deck renderer missing");
+must(scene.includes("cfs:widget-visibility")&&scene.includes("cfs:test-event"),"scene local controls missing");
+must(widget.includes("showLocalTestEvent")&&widget.includes("payload:{...(event?.payload||{}),test:true}"),"widget local test mode missing");
+must(deck.includes("MAX_BUTTONS=12")&&deck.includes("open_cut_studio"),"deck catalog missing");
+must(!deck.includes("shell_exec")&&!deck.includes("arbitrary_url"),"unsafe deck action found");
+console.log(JSON.stringify({ok:true,buttons:12,local_alerts:true,widget_toggle:true,customizable:true}));

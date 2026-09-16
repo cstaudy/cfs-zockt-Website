@@ -1,0 +1,16 @@
+import fs from "node:fs";import path from "node:path";
+const root=path.resolve(process.argv[2]||path.join(import.meta.dirname,".."));
+const must=(v,m)=>{if(!v)throw new Error(m)};
+const main=fs.readFileSync(path.join(root,"launcher/main.js"),"utf8");
+const preload=fs.readFileSync(path.join(root,"launcher/preload.js"),"utf8");
+const html=fs.readFileSync(path.join(root,"launcher/renderer/index.html"),"utf8");
+const js=fs.readFileSync(path.join(root,"launcher/renderer/app.js"),"utf8");
+const manager=fs.readFileSync(path.join(root,"launcher/src/output-window-manager.js"),"utf8");
+for(const ipc of ["launcher:output-start","launcher:output-stop","launcher:output-reload","launcher:output-gate-update","launcher:output-gate-export"])must(main.includes(ipc),`missing ${ipc}`);
+must(preload.includes("startLocalOutput")&&preload.includes("updateOutputGate"),"preload output API missing");
+must(html.includes("LOCAL OUTPUT WINDOW")&&html.includes("REAL-WORLD TEST GATE"),"output UI missing");
+must(js.includes("startSelectedLocalOutput")&&js.includes("renderOutputGate"),"output renderer logic missing");
+must(manager.includes("transparent")&&manager.includes("chroma_green"),"background modes missing");
+must(manager.includes("backgroundThrottling:false"),"background throttling not disabled");
+must(main.includes("creatorLibrary.scenes"),"creator scene ownership source missing");
+console.log(JSON.stringify({ok:true,ipc:5,local_output:true,manual_gate:true}));

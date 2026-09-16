@@ -1,0 +1,11 @@
+import fs from "node:fs";import path from "node:path";const root=path.resolve(process.argv[2]||path.join(import.meta.dirname,"..")),must=(v,m)=>{if(!v)throw new Error(m)};
+const s=fs.readFileSync(path.join(root,"server.js"),"utf8"),g=fs.readFileSync(path.join(root,"public/pages/games.html"),"utf8"),c=fs.readFileSync(path.join(root,"public/pages/cut-studio.html"),"utf8"),scene=fs.readFileSync(path.join(root,"public/assets/js/scene-studio.js"),"utf8"),launcher=fs.readFileSync(path.join(root,"launcher/renderer/index.html"),"utf8");
+for(const route of ["/api/creator/games/runtime","/api/creator/games/runtime/start","/api/creator/games/runtime/score","/api/games/runtime/:token","/api/creator/cut-studio/projects","/api/creator/cut-studio/projects/:id/clips","/api/bridge/games/runtime","/api/bridge/cut-studio/projects"])must(s.includes(route),route);
+must(s.includes("creator_game_runtime")&&s.includes("creator_cut_projects")&&s.includes("creator_cut_clips"),"tables");
+must(s.includes('id=ANY($2::text[])'),"scene text query not fixed");
+must(s.includes('game_runtime')&&s.includes("getCreatorSceneSources"),"game scene source missing");
+must(g.includes("GAME CONTROL")&&g.includes('id="gameOutputUrl"'),"games UI");
+must((c.includes("CLIP QUEUE")||c.includes("TIMELINE"))&&c.includes('id="cutProjectList"'),"cut studio UI");
+must(launcher.includes('data-page="tools"')&&launcher.includes("CREATOR TOOLS."),"launcher tools");
+must(scene.includes("widgetLibrary"),"scene studio regression");
+console.log(JSON.stringify({ok:true,routes:8,game_scene_layer:true,cut_projects:true,launcher_tools:true}));

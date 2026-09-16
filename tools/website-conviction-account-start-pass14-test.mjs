@@ -1,0 +1,46 @@
+import fs from 'node:fs';
+import path from 'node:path';
+const root=path.resolve(process.argv[2]||'.');
+const read=rel=>fs.readFileSync(path.join(root,rel),'utf8');
+const home=read('public/index.html');
+const login=read('public/pages/login.html');
+const css=read('public/assets/css/styles.css');
+const server=read('server.js');
+const pkg=JSON.parse(read('package.json'));
+const state=read('PROJECT_CURRENT_STATE.md');
+const checks=[]; const check=(name,ok)=>checks.push({name,ok:Boolean(ok)});
+
+check('Homepage marks creator preview as example view',home.includes('PRODUKTVORSCHAU · BEISPIELANSICHT')&&home.includes('keine Live-, Nutzer- oder Erfolgsstatistiken'));
+check('Homepage removes stale large-tests-open wording',!home.includes('Große Acceptance-, Last- und echte LIVE-Endtests bleiben'));
+check('Homepage reflects current internal release status',home.includes('Automatisierte interne Release-Prüfungen sind grün')&&home.includes('separate Go-Live-Gates'));
+check('Homepage has free-account trust section',home.includes('id="account-start"')&&home.includes('KOSTENLOS STARTEN.')&&home.includes('OHNE BLINDVERTRAUEN.'));
+check('Homepage states new accounts start free',home.includes('Neue Creator-Konten starten im FREE Plan'));
+check('Homepage states signup asks for no payment data',home.includes('Beim Erstellen des Accounts werden keine Zahlungsdaten abgefragt'));
+check('Homepage states registration does not auto-book',home.includes('Registrierung löst keine automatische Buchung aus')&&home.includes('KEINE VERSTECKTE BUCHUNG'));
+check('Homepage explains strong optional factors',home.includes('optionales TOTP-2FA')&&home.includes('Recovery-Codes und Passkeys'));
+check('Homepage explains account data controls',home.includes('Sessions, Export und Löschung im Account')&&home.includes('Accountdaten können exportiert'));
+check('Final CTA repeats no-payment-data promise',home.includes('Für die Registrierung werden keine Zahlungsdaten abgefragt.'));
+check('Login registration repeats free-plan fact',login.includes('Neue Creator-Konten starten im FREE Plan.'));
+check('Login registration explicitly says no payment data',login.includes('KEINE ZAHLUNGSDATEN')&&login.includes('Beim Anlegen des Accounts werden keine Zahlungsdaten abgefragt.'));
+check('Login registration exposes data-control fact',login.includes('DATENKONTROLLE')&&login.includes('Sessions, Datenexport und Kontolöschung'));
+check('Registration form itself contains no billing/payment field',!/(credit|card|stripe|payment|zahlungsdaten|kreditkarte)/i.test((login.match(/<form id="regForm"[\s\S]*?<\/form>/)||[''])[0]));
+const registerRouteStart=server.indexOf('app.post(\n    "/api/account/register"');
+const loginRouteStart=server.indexOf('app.post(\n    "/api/account/login"',registerRouteStart);
+const registerBlock=registerRouteStart>=0&&loginRouteStart>registerRouteStart?server.slice(registerRouteStart,loginRouteStart):'';
+check('Registration backend does not invoke checkout/billing',registerBlock.length>1000&&!/(stripeClient|billing\/checkout|checkout\.sessions|provider_customer)/.test(registerBlock));
+check('Database account default plan is free',server.includes("DEFAULT 'free'")&&server.includes('creator_accounts'));
+check('Account lifecycle provides export endpoint',server.includes('"/api/account/export"'));
+check('Account lifecycle provides deletion endpoint',server.includes('app.delete(\n    "/api/account"'));
+check('Server includes TOTP and passkey account protection',server.includes('creator_mfa_totp')&&server.includes('creator_webauthn_credentials'));
+check('New trust section has responsive styling',css.includes('Website conviction / free-account trust pass 14')&&css.includes('.brand-account-promise-grid')&&css.includes('@media(max-width:620px)'));
+check('Project state mentions Pass 14 website conviction',state.includes('Pass 14')&&state.includes('FREE Plan')&&state.includes('Beispielansicht'));
+check('Package exposes Pass 14 check',pkg.scripts?.['conviction14:check']==='node tools/website-conviction-account-start-pass14-test.mjs .');
+check('Backend version remains 3.12.0',pkg.version==='3.12.0');
+
+const forbidden=[/100\s*%\s+sicher/i,/garantiert\s+sicher/i,/tausende\s+(?:nutzer|creator)/i,/keine\s+risiken?/i];
+check('Homepage still avoids absolute security/scale claims',!forbidden.some(rx=>rx.test(home)));
+
+const failed=checks.filter(x=>!x.ok);
+for(const item of checks) console.log(`${item.ok?'PASS':'FAIL'}  ${item.name}`);
+console.log(`\n${checks.length-failed.length}/${checks.length} conviction/account-start Pass 14 checks passed.`);
+if(failed.length) process.exit(1);

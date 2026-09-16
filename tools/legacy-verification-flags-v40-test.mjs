@@ -1,0 +1,10 @@
+import fs from "node:fs";import path from "node:path";
+const root=path.resolve(process.argv[2]||path.join(import.meta.dirname,"..")),server=fs.readFileSync(path.join(root,"server.js"),"utf8");
+const must=(v,m)=>{if(!v)throw new Error(m)};
+must(server.includes('CFS_ALLOW_LEGACY_VERIFICATION_FLAGS || "false"'),"legacy opt-in default false");
+must(server.includes("ALLOW_LEGACY_PRODUCTION_FLAGS ? {"),"legacy flags gated");
+must(server.includes("} : {});"),"legacy flags empty by default");
+const env=fs.readFileSync(path.join(root,".env.example"),"utf8");
+must(env.includes("CFS_ALLOW_LEGACY_VERIFICATION_FLAGS=false"),"env example safe default");
+must(!env.includes("CFS_WINDOWS_BUILD_VERIFIED=true"),"verified flags not preset");
+console.log(JSON.stringify({ok:true,legacy_flags_default:false,evidence_first:true}));

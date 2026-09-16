@@ -1,0 +1,7141 @@
+<!doctype html>
+<html lang="de">
+
+<head>
+
+  <meta charset="utf-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  >
+<title>
+    Creator Editor & TikTok Widget Studio | cfs_zockt
+  </title>
+<link
+    rel="stylesheet"
+    href="/assets/css/styles.css"
+  >
+
+
+  <style>
+
+    :root{
+
+      --studio-bg:#020711;
+      --studio-panel:#071321;
+      --studio-panel2:#091a2c;
+      --studio-line:#173756;
+
+      --studio-text:#f4f8ff;
+      --studio-muted:#8da4c1;
+
+      --studio-accent:#0a8cff;
+      --studio-accent2:#19c2ff;
+
+      --studio-good:#48dc95;
+      --studio-warn:#ffc75c;
+      --studio-danger:#ff7589;
+
+      --studio-shadow:
+        0 25px 80px
+        rgba(
+          0,
+          70,
+          160,
+          .15
+        );
+
+    }
+
+
+    *{
+      box-sizing:border-box;
+    }
+
+
+    body{
+
+      background:
+
+        radial-gradient(
+          circle
+          at
+          50%
+          -15%,
+          rgba(
+            10,
+            140,
+            255,
+            .08
+          ),
+          transparent
+          34%
+        ),
+
+        var(
+          --studio-bg
+        );
+
+    }
+
+
+    button,
+    input,
+    select,
+    textarea{
+      font:inherit;
+    }
+
+
+    button{
+      cursor:pointer;
+    }
+
+
+    [hidden]{
+      display:none!important;
+    }
+
+
+
+    /* =========================================================
+       PAGE
+       ========================================================= */
+
+
+    .page-hero{
+
+      padding:
+        48px
+        0
+        28px;
+
+    }
+
+
+    .page-hero
+    .eyebrow,
+
+    .meta,
+
+    .mini-title{
+
+      color:
+        var(
+          --studio-accent2
+        );
+
+      font-size:
+        10px;
+
+      font-weight:
+        950;
+
+      letter-spacing:
+        .14em;
+
+      text-transform:
+        uppercase;
+
+    }
+
+
+    .page-hero
+    h1{
+
+      max-width:
+        1000px;
+
+      margin:
+        0;
+
+      font-size:
+        clamp(
+          34px,
+          6vw,
+          68px
+        );
+
+      line-height:
+        .95;
+
+      letter-spacing:
+        -.045em;
+
+    }
+
+
+    .page-hero
+    p{
+
+      max-width:
+        850px;
+
+      margin:
+        18px
+        0
+        0;
+
+      color:
+        var(
+          --studio-muted
+        );
+
+      line-height:
+        1.7;
+
+    }
+
+
+
+    /* =========================================================
+       GENERAL
+       ========================================================= */
+
+
+    .editor-shell{
+
+      display:grid;
+
+      gap:
+        22px;
+
+      padding-bottom:
+        64px;
+
+    }
+
+
+    .panel{
+
+      border:
+        1px solid
+        var(
+          --studio-line
+        );
+
+      border-radius:
+        20px;
+
+      background:
+
+        linear-gradient(
+          180deg,
+          rgba(
+            9,
+            26,
+            44,
+            .96
+          ),
+          rgba(
+            5,
+            16,
+            29,
+            .98
+          )
+        );
+
+      box-shadow:
+        var(
+          --studio-shadow
+        );
+
+    }
+
+
+    .editor-top{
+
+      display:grid;
+
+      grid-template-columns:
+        minmax(
+          0,
+          1fr
+        )
+        minmax(
+          330px,
+          .72fr
+        );
+
+      gap:
+        20px;
+
+    }
+
+
+    .editor-top
+    > .panel{
+
+      padding:
+        24px;
+
+    }
+
+
+
+    /* =========================================================
+       FORM
+       ========================================================= */
+
+
+    .form-grid,
+
+    .field-grid{
+
+      display:grid;
+
+      grid-template-columns:
+        repeat(
+          2,
+          minmax(
+            0,
+            1fr
+          )
+        );
+
+      gap:
+        14px;
+
+    }
+
+
+    .form-grid{
+
+      margin-top:
+        22px;
+
+    }
+
+
+    .field.full{
+
+      grid-column:
+        1 /
+        -1;
+
+    }
+
+
+    .field
+    label{
+
+      display:block;
+
+      margin-bottom:
+        7px;
+
+      color:
+        #a7b9cd;
+
+      font-size:
+        10px;
+
+      font-weight:
+        900;
+
+      letter-spacing:
+        .09em;
+
+      text-transform:
+        uppercase;
+
+    }
+
+
+    .field
+    input,
+
+    .field
+    textarea,
+
+    .field
+    select,
+
+    .source-row
+    input{
+
+      width:
+        100%;
+
+      min-height:
+        44px;
+
+      border:
+        1px solid
+        var(
+          --studio-line
+        );
+
+      border-radius:
+        12px;
+
+      outline:
+        none;
+
+      background:
+        rgba(
+          2,
+          7,
+          17,
+          .72
+        );
+
+      color:
+        var(
+          --studio-text
+        );
+
+    }
+
+
+    .field
+    input,
+
+    .field
+    select,
+
+    .source-row
+    input{
+
+      padding:
+        0
+        12px;
+
+    }
+
+
+    .field
+    textarea{
+
+      min-height:
+        108px;
+
+      resize:
+        vertical;
+
+      padding:
+        11px
+        12px;
+
+      line-height:
+        1.55;
+
+    }
+
+
+    .field
+    input:focus,
+
+    .field
+    textarea:focus,
+
+    .field
+    select:focus{
+
+      border-color:
+        var(
+          --studio-accent
+        );
+
+      box-shadow:
+        0
+        0
+        0
+        3px
+        rgba(
+          10,
+          140,
+          255,
+          .12
+        );
+
+    }
+
+
+    .field
+    input[readonly]{
+
+      opacity:
+        .72;
+
+    }
+
+
+
+    /* =========================================================
+       PROFILE PREVIEW
+       ========================================================= */
+
+
+    .creator-preview{
+
+      display:flex;
+
+      min-height:
+        100%;
+
+      flex-direction:
+        column;
+
+      justify-content:
+        space-between;
+
+      gap:
+        22px;
+
+    }
+
+
+    .creator-preview-head{
+
+      display:flex;
+
+      align-items:center;
+
+      justify-content:
+        space-between;
+
+      gap:
+        12px;
+
+    }
+
+
+    .creator-preview-main{
+
+      display:grid;
+
+      gap:
+        8px;
+
+      padding:
+        22px;
+
+      border:
+        1px solid
+        rgba(
+          25,
+          194,
+          255,
+          .18
+        );
+
+      border-radius:
+        18px;
+
+      background:
+
+        linear-gradient(
+          135deg,
+          rgba(
+            10,
+            140,
+            255,
+            .08
+          ),
+          rgba(
+            25,
+            194,
+            255,
+            .025
+          )
+        );
+
+    }
+
+
+    .creator-preview-main
+    strong{
+
+      font-size:
+        28px;
+
+    }
+
+
+    .creator-preview-main
+    p{
+
+      margin:
+        0;
+
+      color:
+        var(
+          --studio-muted
+        );
+
+      line-height:
+        1.55;
+
+    }
+
+
+    .creator-preview-plan{
+
+      display:inline-flex;
+
+      width:
+        fit-content;
+
+      padding:
+        5px
+        9px;
+
+      border:
+        1px solid
+        rgba(
+          25,
+          194,
+          255,
+          .25
+        );
+
+      border-radius:
+        999px;
+
+      background:
+        rgba(
+          10,
+          140,
+          255,
+          .08
+        );
+
+      color:
+        var(
+          --studio-accent2
+        );
+
+      font-size:
+        10px;
+
+      font-weight:
+        950;
+
+    }
+
+
+    .sync-box{
+
+      padding:
+        13px;
+
+      border:
+        1px solid
+        rgba(
+          23,
+          55,
+          86,
+          .66
+        );
+
+      border-radius:
+        13px;
+
+      background:
+        rgba(
+          2,
+          7,
+          17,
+          .42
+        );
+
+      color:
+        var(
+          --studio-muted
+        );
+
+      font-size:
+        12px;
+
+      line-height:
+        1.55;
+
+    }
+
+
+
+    /* =========================================================
+       STATUS
+       ========================================================= */
+
+
+    .status-row{
+
+      display:flex;
+
+      flex-wrap:
+        wrap;
+
+      gap:
+        8px;
+
+    }
+
+
+    .status-chip{
+
+      display:inline-flex;
+
+      min-height:
+        28px;
+
+      align-items:center;
+
+      gap:
+        7px;
+
+      padding:
+        5px
+        9px;
+
+      border:
+        1px solid
+        var(
+          --studio-line
+        );
+
+      border-radius:
+        999px;
+
+      background:
+        rgba(
+          2,
+          7,
+          17,
+          .5
+        );
+
+      color:
+        #a4b8ce;
+
+      font-size:
+        9px;
+
+      font-weight:
+        950;
+
+      letter-spacing:
+        .07em;
+
+      text-transform:
+        uppercase;
+
+    }
+
+
+    .status-dot{
+
+      width:
+        6px;
+
+      height:
+        6px;
+
+      border-radius:
+        50%;
+
+      background:
+        currentColor;
+
+      box-shadow:
+        0
+        0
+        10px
+        currentColor;
+
+    }
+
+
+    .status-chip.good{
+
+      color:
+        var(
+          --studio-good
+        );
+
+    }
+
+
+    .status-chip.warn{
+
+      color:
+        var(
+          --studio-warn
+        );
+
+    }
+
+
+    .status-chip.info{
+
+      color:
+        var(
+          --studio-accent2
+        );
+
+    }
+
+
+    .status-chip.danger{
+
+      color:
+        var(
+          --studio-danger
+        );
+
+    }
+
+
+
+    /* =========================================================
+       STUDIO HEADER
+       ========================================================= */
+
+
+    .studio-section{
+
+      display:grid;
+
+      gap:
+        16px;
+
+    }
+
+
+    .studio-head{
+
+      display:flex;
+
+      align-items:flex-end;
+
+      justify-content:
+        space-between;
+
+      gap:
+        18px;
+
+      padding:
+        24px;
+
+      border:
+        1px solid
+        var(
+          --studio-line
+        );
+
+      border-radius:
+        20px;
+
+      background:
+
+        linear-gradient(
+          135deg,
+          rgba(
+            10,
+            140,
+            255,
+            .08
+          ),
+          rgba(
+            25,
+            194,
+            255,
+            .025
+          )
+        );
+
+    }
+
+
+    .studio-version{
+
+      display:inline-flex;
+
+      margin-bottom:
+        9px;
+
+      color:
+        var(
+          --studio-accent2
+        );
+
+      font-size:
+        10px;
+
+      font-weight:
+        950;
+
+      letter-spacing:
+        .13em;
+
+    }
+
+
+    .studio-head
+    h2{
+
+      margin:
+        0;
+
+      font-size:
+        clamp(
+          28px,
+          4vw,
+          44px
+        );
+
+    }
+
+
+    .studio-head
+    p{
+
+      max-width:
+        720px;
+
+      margin:
+        9px
+        0
+        0;
+
+      color:
+        var(
+          --studio-muted
+        );
+
+      line-height:
+        1.6;
+
+    }
+
+
+
+    /* =========================================================
+       WIDGET TABS
+       ========================================================= */
+
+
+    .widget-tabs{
+
+      display:grid;
+
+      grid-template-columns:
+        repeat(
+          5,
+          minmax(
+            0,
+            1fr
+          )
+        );
+
+      gap:
+        9px;
+
+    }
+
+
+    .widget-tab{
+
+      min-height:
+        78px;
+
+      padding:
+        13px;
+
+      border:
+        1px solid
+        var(
+          --studio-line
+        );
+
+      border-radius:
+        15px;
+
+      background:
+
+        linear-gradient(
+          180deg,
+          rgba(
+            9,
+            26,
+            44,
+            .82
+          ),
+          rgba(
+            4,
+            13,
+            24,
+            .88
+          )
+        );
+
+      color:
+        var(
+          --studio-text
+        );
+
+      text-align:left;
+
+    }
+
+
+    .widget-tab.active{
+
+      border-color:
+        var(
+          --studio-accent
+        );
+
+      background:
+
+        linear-gradient(
+          135deg,
+          rgba(
+            10,
+            140,
+            255,
+            .18
+          ),
+          rgba(
+            25,
+            194,
+            255,
+            .05
+          )
+        );
+
+    }
+
+
+    .widget-tab.locked{
+
+      opacity:
+        .64;
+
+    }
+
+
+    .widget-tab-top{
+
+      display:flex;
+
+      justify-content:
+        space-between;
+
+      gap:
+        8px;
+
+    }
+
+
+    .widget-tab
+    strong{
+
+      font-size:
+        11px;
+
+      font-weight:
+        950;
+
+    }
+
+
+    .widget-tab
+    small{
+
+      display:block;
+
+      margin-top:
+        8px;
+
+      color:
+        var(
+          --studio-muted
+        );
+
+      font-size:
+        10px;
+
+      line-height:
+        1.35;
+
+    }
+
+
+    .widget-tab-state{
+
+      color:
+        var(
+          --studio-accent2
+        );
+
+      font-size:
+        11px;
+
+      font-weight:
+        950;
+
+    }
+
+
+
+    /* =========================================================
+       STUDIO LAYOUT
+       ========================================================= */
+
+
+    .studio-layout{
+
+      display:grid;
+
+      grid-template-columns:
+        minmax(
+          420px,
+          .95fr
+        )
+        minmax(
+          0,
+          1.05fr
+        );
+
+      align-items:start;
+
+      gap:
+        20px;
+
+    }
+
+
+    .studio-controls{
+
+      overflow:hidden;
+
+    }
+
+
+    .studio-controls-head{
+
+      display:flex;
+
+      align-items:center;
+
+      justify-content:
+        space-between;
+
+      gap:
+        12px;
+
+      padding:
+        19px
+        20px;
+
+      border-bottom:
+        1px solid
+        var(
+          --studio-line
+        );
+
+    }
+
+
+
+    /* =========================================================
+       ACCORDIONS
+       ========================================================= */
+
+
+    .studio-accordion{
+
+      display:grid;
+
+    }
+
+
+    .control-group{
+
+      border-bottom:
+        1px solid
+        rgba(
+          23,
+          55,
+          86,
+          .66
+        );
+
+    }
+
+
+    .control-group-button{
+
+      display:flex;
+
+      width:
+        100%;
+
+      min-height:
+        66px;
+
+      align-items:center;
+
+      justify-content:
+        space-between;
+
+      gap:
+        14px;
+
+      padding:
+        14px
+        20px;
+
+      border:
+        0;
+
+      background:
+        transparent;
+
+      color:
+        var(
+          --studio-text
+        );
+
+      text-align:left;
+
+    }
+
+
+    .control-group-heading{
+
+      display:grid;
+
+      gap:
+        4px;
+
+    }
+
+
+    .control-group-heading
+    strong{
+
+      font-size:
+        11px;
+
+      font-weight:
+        950;
+
+    }
+
+
+    .control-group-heading
+    span{
+
+      color:
+        var(
+          --studio-muted
+        );
+
+      font-size:
+        11px;
+
+    }
+
+
+    .control-group-arrow{
+
+      color:
+        var(
+          --studio-accent2
+        );
+
+      transform:
+        rotate(
+          -90deg
+        );
+
+      transition:
+        .18s;
+
+    }
+
+
+    .control-group.open
+    .control-group-arrow{
+
+      transform:
+        rotate(
+          0
+        );
+
+    }
+
+
+    .control-group-body{
+
+      display:none;
+
+      padding:
+        2px
+        20px
+        20px;
+
+    }
+
+
+    .control-group.open
+    .control-group-body{
+
+      display:block;
+
+    }
+
+
+    .helper{
+
+      margin:
+        9px
+        0
+        0;
+
+      color:
+        var(
+          --studio-muted
+        );
+
+      font-size:
+        11px;
+
+      line-height:
+        1.55;
+
+    }
+
+
+
+    /* =========================================================
+       TOGGLES
+       ========================================================= */
+
+
+    .toggle-grid{
+
+      display:grid;
+
+      grid-template-columns:
+        repeat(
+          2,
+          minmax(
+            0,
+            1fr
+          )
+        );
+
+      gap:
+        9px;
+
+      margin-top:
+        13px;
+
+    }
+
+
+    .toggle-card{
+
+      display:flex!important;
+
+      min-height:
+        43px;
+
+      align-items:center;
+
+      gap:
+        9px;
+
+      margin:
+        0!important;
+
+      padding:
+        10px
+        11px;
+
+      border:
+        1px solid
+        rgba(
+          23,
+          55,
+          86,
+          .66
+        );
+
+      border-radius:
+        11px;
+
+      background:
+        rgba(
+          2,
+          7,
+          17,
+          .34
+        );
+
+      color:
+        #b8c8d8!important;
+
+      font-size:
+        10px!important;
+
+      font-weight:
+        800!important;
+
+      text-transform:
+        none!important;
+
+    }
+
+
+    .toggle-card
+    input{
+
+      width:
+        16px!important;
+
+      height:
+        16px!important;
+
+      min-height:
+        0!important;
+
+      accent-color:
+        var(
+          --studio-accent
+        );
+
+    }
+
+
+
+    /* =========================================================
+       THEMES
+       ========================================================= */
+
+
+    .theme-grid{
+
+      display:grid;
+
+      grid-template-columns:
+        repeat(
+          5,
+          minmax(
+            0,
+            1fr
+          )
+        );
+
+      gap:
+        8px;
+
+    }
+
+
+    .theme-card{
+
+      display:grid;
+
+      min-height:
+        82px;
+
+      align-content:
+        space-between;
+
+      gap:
+        10px;
+
+      padding:
+        10px;
+
+      border:
+        1px solid
+        var(
+          --studio-line
+        );
+
+      border-radius:
+        13px;
+
+      background:
+        rgba(
+          2,
+          7,
+          17,
+          .45
+        );
+
+      color:
+        var(
+          --studio-text
+        );
+
+      text-align:left;
+
+    }
+
+
+    .theme-card.active{
+
+      border-color:
+        var(
+          --studio-accent
+        );
+
+    }
+
+
+    .theme-card
+    strong{
+
+      font-size:
+        8px;
+
+      font-weight:
+        950;
+
+    }
+
+
+    .theme-swatches{
+
+      display:flex;
+
+      gap:
+        4px;
+
+    }
+
+
+    .theme-swatches
+    span{
+
+      width:
+        15px;
+
+      height:
+        15px;
+
+      border-radius:
+        50%;
+
+      border:
+        1px solid
+        rgba(
+          255,
+          255,
+          255,
+          .15
+        );
+
+    }
+
+
+
+    /* =========================================================
+       IDENTITY
+       ========================================================= */
+
+
+    .identity-row{
+
+      display:grid;
+
+      grid-template-columns:
+        84px
+        minmax(
+          0,
+          1fr
+        );
+
+      gap:
+        13px;
+
+      align-items:start;
+
+      margin-top:
+        14px;
+
+    }
+
+
+    .identity-upload-preview{
+
+      display:grid;
+
+      width:
+        84px;
+
+      height:
+        84px;
+
+      place-items:center;
+
+      overflow:hidden;
+
+      border:
+        1px solid
+        var(
+          --studio-line
+        );
+
+      border-radius:
+        16px;
+
+      background:
+        #020711;
+
+      color:
+        var(
+          --studio-muted
+        );
+
+      font-size:
+        10px;
+
+      font-weight:
+        900;
+
+    }
+
+
+    .identity-upload-preview
+    img{
+
+      width:
+        100%;
+
+      height:
+        100%;
+
+      object-fit:
+        cover;
+
+    }
+
+
+    .upload-actions{
+
+      display:grid;
+
+      gap:
+        8px;
+
+    }
+
+
+
+    /* =========================================================
+       BUTTONS
+       ========================================================= */
+
+
+    .btn{
+
+      display:inline-flex;
+
+      min-height:
+        40px;
+
+      align-items:center;
+
+      justify-content:center;
+
+      gap:
+        7px;
+
+      padding:
+        0
+        14px;
+
+      border:
+        1px solid
+        var(
+          --studio-line
+        );
+
+      border-radius:
+        11px;
+
+      background:
+        rgba(
+          9,
+          26,
+          44,
+          .8
+        );
+
+      color:
+        var(
+          --studio-text
+        );
+
+      font-size:
+        10px;
+
+      font-weight:
+        950;
+
+      text-transform:
+        uppercase;
+
+    }
+
+
+    .btn.primary{
+
+      border-color:
+        var(
+          --studio-accent
+        );
+
+      background:
+
+        linear-gradient(
+          135deg,
+          var(
+            --studio-accent
+          ),
+          #0875d8
+        );
+
+      color:
+        white;
+
+    }
+
+
+    .btn.ghost{
+
+      background:
+        transparent;
+
+    }
+
+
+    .btn:disabled{
+
+      opacity:
+        .46;
+
+      cursor:not-allowed;
+
+    }
+
+
+
+    /* =========================================================
+       LAYOUT SELECTOR
+       ========================================================= */
+
+
+    .preset-grid{
+
+      display:grid;
+
+      grid-template-columns:
+        repeat(
+          4,
+          minmax(
+            0,
+            1fr
+          )
+        );
+
+      gap:
+        9px;
+
+    }
+
+
+    .preset-card{
+
+      position:relative;
+
+      min-height:
+        96px;
+
+      overflow:hidden;
+
+      border:
+        1px solid
+        var(
+          --studio-line
+        );
+
+      border-radius:
+        13px;
+
+      background:
+        rgba(
+          2,
+          7,
+          17,
+          .4
+        );
+
+    }
+
+
+    .preset-card:has(input:checked){
+
+      border-color:
+        var(
+          --studio-accent
+        );
+
+    }
+
+
+    .preset-card
+    input{
+
+      position:absolute;
+
+      inset:
+        0;
+
+      width:
+        100%;
+
+      height:
+        100%;
+
+      opacity:
+        0;
+
+      cursor:pointer;
+
+    }
+
+
+    .preset-card-inner{
+
+      display:grid;
+
+      min-height:
+        96px;
+
+      align-content:
+        space-between;
+
+      gap:
+        8px;
+
+      padding:
+        10px;
+
+      pointer-events:none;
+
+    }
+
+
+    .preset-card
+    strong{
+
+      font-size:
+        8px;
+
+      font-weight:
+        950;
+
+    }
+
+
+    .preset-visual{
+
+      display:flex;
+
+      min-height:
+        45px;
+
+      align-items:center;
+
+      justify-content:center;
+
+      gap:
+        5px;
+
+    }
+
+
+    .preset-dot{
+
+      width:
+        13px;
+
+      height:
+        13px;
+
+      border:
+        2px solid
+        var(
+          --studio-accent
+        );
+
+      border-radius:
+        5px;
+
+      background:
+        rgba(
+          10,
+          140,
+          255,
+          .12
+        );
+
+    }
+
+
+    .preset-lines{
+
+      display:grid;
+
+      width:
+        44px;
+
+      gap:
+        4px;
+
+    }
+
+
+    .preset-lines
+    span{
+
+      height:
+        4px;
+
+      border-radius:
+        999px;
+
+      background:
+        #173756;
+
+    }
+
+
+    .preset-lines
+    span:first-child{
+
+      width:
+        72%;
+
+      background:
+        var(
+          --studio-accent2
+        );
+
+    }
+
+
+    .visual-card,
+    .visual-vertical{
+
+      flex-direction:
+        column;
+
+    }
+
+
+    .visual-card
+    .preset-dot{
+
+      width:
+        22px;
+
+      height:
+        22px;
+
+    }
+
+
+    .visual-pill{
+
+      padding:
+        6px
+        9px;
+
+      border:
+        1px solid
+        var(
+          --studio-line
+        );
+
+      border-radius:
+        999px;
+
+    }
+
+
+    .visual-ring
+    .preset-dot{
+
+      width:
+        33px;
+
+      height:
+        33px;
+
+      border-width:
+        5px;
+
+      border-radius:
+        50%;
+
+      border-left-color:
+        rgba(
+          141,
+          164,
+          193,
+          .18
+        );
+
+    }
+
+
+    .visual-minimal{
+
+      justify-content:flex-start;
+
+    }
+
+
+    .visual-minimal
+    .preset-dot{
+
+      display:none;
+
+    }
+
+
+    .visual-creator
+    .preset-dot{
+
+      width:
+        27px;
+
+      height:
+        27px;
+
+      border-radius:
+        50%;
+
+    }
+
+
+
+    /* =========================================================
+       COLORS + RANGE
+       ========================================================= */
+
+
+    .color-control{
+
+      display:grid;
+
+      grid-template-columns:
+        48px
+        minmax(
+          0,
+          1fr
+        );
+
+      gap:
+        8px;
+
+    }
+
+
+    .color-control
+    input[type="color"]{
+
+      min-height:
+        44px;
+
+      padding:
+        4px;
+
+    }
+
+
+    .color-control
+    input[type="text"]{
+
+      text-transform:
+        uppercase;
+
+    }
+
+
+    .range-row{
+
+      display:grid;
+
+      grid-template-columns:
+        minmax(
+          0,
+          1fr
+        )
+        62px;
+
+      align-items:center;
+
+      gap:
+        10px;
+
+    }
+
+
+    .range-row
+    input[type="range"]{
+
+      min-height:
+        30px;
+
+      padding:
+        0;
+
+      accent-color:
+        var(
+          --studio-accent
+        );
+
+    }
+
+
+    .range-row
+    output{
+
+      display:grid;
+
+      min-height:
+        34px;
+
+      place-items:center;
+
+      border:
+        1px solid
+        var(
+          --studio-line
+        );
+
+      border-radius:
+        10px;
+
+      background:
+        rgba(
+          2,
+          7,
+          17,
+          .45
+        );
+
+      color:
+        var(
+          --studio-accent2
+        );
+
+      font-size:
+        10px;
+
+      font-weight:
+        900;
+
+    }
+
+
+
+    /* =========================================================
+       SAVE
+       ========================================================= */
+
+
+    .restore-box{
+
+      display:flex;
+
+      align-items:center;
+
+      justify-content:
+        space-between;
+
+      gap:
+        14px;
+
+      margin:
+        14px
+        20px
+        0;
+
+      padding:
+        13px;
+
+      border:
+        1px dashed
+        rgba(
+          141,
+          164,
+          193,
+          .28
+        );
+
+      border-radius:
+        13px;
+
+      background:
+        rgba(
+          2,
+          7,
+          17,
+          .35
+        );
+
+    }
+
+
+    .restore-box
+    strong,
+
+    .restore-box
+    span{
+
+      display:block;
+
+    }
+
+
+    .restore-box
+    span{
+
+      margin-top:
+        3px;
+
+      color:
+        var(
+          --studio-muted
+        );
+
+      font-size:
+        10px;
+
+    }
+
+
+    .save-bar{
+
+      display:flex;
+
+      align-items:center;
+
+      justify-content:
+        space-between;
+
+      gap:
+        12px;
+
+      margin-top:
+        16px;
+
+      padding:
+        15px
+        20px;
+
+      border-top:
+        1px solid
+        var(
+          --studio-line
+        );
+
+    }
+
+
+    .save-bar-actions{
+
+      display:flex;
+
+      flex-wrap:
+        wrap;
+
+      gap:
+        8px;
+
+    }
+
+
+    .notice{
+
+      margin:
+        14px
+        20px
+        18px;
+
+      padding:
+        11px
+        13px;
+
+      border:
+        1px solid
+        rgba(
+          25,
+          194,
+          255,
+          .23
+        );
+
+      border-radius:
+        12px;
+
+      background:
+        rgba(
+          10,
+          140,
+          255,
+          .07
+        );
+
+      color:
+        #caeaff;
+
+      font-size:
+        11px;
+
+      line-height:
+        1.5;
+
+    }
+
+
+    .notice.danger{
+
+      border-color:
+        rgba(
+          255,
+          117,
+          137,
+          .32
+        );
+
+      color:
+        #ffc7d0;
+
+    }
+
+
+    .notice.hidden{
+
+      display:none;
+
+    }
+
+
+
+    /* =========================================================
+       PREVIEW
+       ========================================================= */
+
+
+    .preview-stage{
+
+      display:grid;
+
+      position:
+        sticky;
+
+      top:
+        18px;
+
+      gap:
+        16px;
+
+    }
+
+
+    .preview-stage
+    > .panel{
+
+      padding:
+        20px;
+
+    }
+
+
+    .preview-toolbar{
+
+      display:flex;
+
+      flex-wrap:
+        wrap;
+
+      align-items:center;
+
+      justify-content:
+        space-between;
+
+      gap:
+        10px;
+
+      margin-top:
+        14px;
+
+    }
+
+
+    .preview-scene-buttons,
+
+    .preview-zoom{
+
+      display:flex;
+
+      gap:
+        6px;
+
+    }
+
+
+    .preview-tool{
+
+      min-height:
+        32px;
+
+      padding:
+        0
+        10px;
+
+      border:
+        1px solid
+        var(
+          --studio-line
+        );
+
+      border-radius:
+        9px;
+
+      background:
+        rgba(
+          2,
+          7,
+          17,
+          .48
+        );
+
+      color:
+        #afc1d5;
+
+      font-size:
+        8px;
+
+      font-weight:
+        950;
+
+    }
+
+
+    .preview-tool.active{
+
+      border-color:
+        var(
+          --studio-accent
+        );
+
+      color:
+        white;
+
+      background:
+        rgba(
+          10,
+          140,
+          255,
+          .13
+        );
+
+    }
+
+
+    .preview-zoom-value{
+
+      display:grid;
+
+      min-width:
+        48px;
+
+      place-items:center;
+
+      color:
+        var(
+          --studio-muted
+        );
+
+      font-size:
+        9px;
+
+      font-weight:
+        900;
+
+    }
+
+
+    .tiktok-stage{
+
+      display:grid;
+
+      min-height:
+        410px;
+
+      position:relative;
+
+      place-items:center;
+
+      overflow:hidden;
+
+      padding:
+        34px;
+
+      border:
+        1px solid
+        var(
+          --studio-line
+        );
+
+      border-radius:
+        18px;
+
+    }
+
+
+    .scene-grid{
+
+      background-color:
+        #030a14;
+
+      background-image:
+
+        linear-gradient(
+          rgba(
+            25,
+            194,
+            255,
+            .045
+          )
+          1px,
+          transparent
+          1px
+        ),
+
+        linear-gradient(
+          90deg,
+          rgba(
+            25,
+            194,
+            255,
+            .045
+          )
+          1px,
+          transparent
+          1px
+        );
+
+      background-size:
+        26px
+        26px;
+
+    }
+
+
+    .scene-stream{
+
+      background:
+
+        radial-gradient(
+          circle
+          at
+          22%
+          20%,
+          rgba(
+            144,
+            93,
+            255,
+            .28
+          ),
+          transparent
+          27%
+        ),
+
+        radial-gradient(
+          circle
+          at
+          80%
+          70%,
+          rgba(
+            10,
+            140,
+            255,
+            .32
+          ),
+          transparent
+          30%
+        ),
+
+        linear-gradient(
+          135deg,
+          #09051a,
+          #061426
+        );
+
+    }
+
+
+    .scene-clean{
+
+      background:
+
+        linear-gradient(
+          145deg,
+          #f5f8fc,
+          #dfeaf5
+        );
+
+    }
+
+
+    .scene-transparent{
+
+      background-color:
+        transparent;
+
+      background-image:
+
+        linear-gradient(
+          45deg,
+          rgba(
+            180,
+            194,
+            210,
+            .11
+          )
+          25%,
+          transparent
+          25%
+        ),
+
+        linear-gradient(
+          -45deg,
+          rgba(
+            180,
+            194,
+            210,
+            .11
+          )
+          25%,
+          transparent
+          25%
+        ),
+
+        linear-gradient(
+          45deg,
+          transparent
+          75%,
+          rgba(
+            180,
+            194,
+            210,
+            .11
+          )
+          75%
+        ),
+
+        linear-gradient(
+          -45deg,
+          transparent
+          75%,
+          rgba(
+            180,
+            194,
+            210,
+            .11
+          )
+          75%
+        );
+
+      background-size:
+        24px
+        24px;
+
+    }
+
+
+    .preview-mode-note{
+
+      position:absolute;
+
+      top:
+        10px;
+
+      left:
+        12px;
+
+      z-index:
+        5;
+
+      padding:
+        4px
+        7px;
+
+      border-radius:
+        999px;
+
+      background:
+        rgba(
+          0,
+          0,
+          0,
+          .4
+        );
+
+      color:
+        rgba(
+          255,
+          255,
+          255,
+          .64
+        );
+
+      font-size:
+        7px;
+
+      font-weight:
+        950;
+
+    }
+
+
+    .preview-canvas{
+
+      display:grid;
+
+      width:
+        100%;
+
+      place-items:center;
+
+      transform-origin:
+        center;
+
+      transition:
+        transform
+        .18s
+        ease;
+
+    }
+
+
+
+    /* =========================================================
+       WIDGET BASE
+       ========================================================= */
+
+
+    .tiktok-widget{
+
+      --w-accent:#0a8cff;
+      --w-accent2:#19c2ff;
+
+      --w-bg:
+        rgba(
+          7,
+          19,
+          33,
+          .9
+        );
+
+      --w-text:#f4f8ff;
+
+      --w-font:22px;
+
+      --w-radius:18px;
+      --w-border:1px;
+
+      --w-avatar-size:68px;
+      --w-progress-height:13px;
+
+      --w-ring-progress:64%;
+
+      width:
+        min(
+          100%,
+          720px
+        );
+
+      position:relative;
+
+      overflow:hidden;
+
+      padding:
+        20px;
+
+      border:
+        var(
+          --w-border
+        )
+        solid
+        var(
+          --w-accent
+        );
+
+      border-radius:
+        var(
+          --w-radius
+        );
+
+      background:
+        var(
+          --w-bg
+        );
+
+      color:
+        var(
+          --w-text
+        );
+
+      font-size:
+        var(
+          --w-font
+        );
+
+    }
+
+
+    .tiktok-widget.has-shadow{
+
+      box-shadow:
+        0 18px 60px
+        rgba(
+          0,
+          0,
+          0,
+          .34
+        );
+
+    }
+
+
+    .tiktok-widget.has-glow{
+
+      box-shadow:
+
+        0
+        0
+        30px
+        color-mix(
+          in srgb,
+          var(
+            --w-accent
+          )
+          33%,
+          transparent
+        ),
+
+        0
+        18px
+        60px
+        rgba(
+          0,
+          0,
+          0,
+          .34
+        );
+
+    }
+
+
+    .tiktok-widget.has-blur{
+
+      backdrop-filter:
+        blur(
+          18px
+        )
+        saturate(
+          125%
+        );
+
+    }
+
+
+    .widget-inner{
+
+      display:flex;
+
+      align-items:center;
+
+      gap:
+        16px;
+
+      min-width:
+        0;
+
+    }
+
+
+    .widget-avatar,
+
+    .thanks-avatar{
+
+      display:grid;
+
+      width:
+        var(
+          --w-avatar-size
+        );
+
+      height:
+        var(
+          --w-avatar-size
+        );
+
+      flex:
+        0
+        0
+        var(
+          --w-avatar-size
+        );
+
+      place-items:center;
+
+      overflow:hidden;
+
+      border:
+        2px solid
+        var(
+          --w-accent
+        );
+
+      border-radius:
+        18px;
+
+      background:
+        #020711;
+
+      color:
+        #91abc3;
+
+      font-size:
+        18px;
+
+      font-weight:
+        950;
+
+    }
+
+
+    .widget-avatar.circle,
+
+    .thanks-avatar.circle{
+
+      border-radius:
+        50%;
+
+    }
+
+
+    .widget-avatar.square,
+
+    .thanks-avatar.square{
+
+      border-radius:
+        4px;
+
+    }
+
+
+    .widget-avatar
+    img,
+
+    .thanks-avatar
+    img{
+
+      width:
+        100%;
+
+      height:
+        100%;
+
+      object-fit:
+        cover;
+
+    }
+
+
+    .widget-copy{
+
+      flex:
+        1;
+
+      min-width:
+        0;
+
+    }
+
+
+    .widget-creator,
+
+    .thanks-creator{
+
+      margin-bottom:
+        3px;
+
+      color:
+        var(
+          --w-accent2
+        );
+
+      font-size:
+        .55em;
+
+      font-weight:
+        950;
+
+      letter-spacing:
+        .06em;
+
+      text-transform:
+        uppercase;
+
+    }
+
+
+    .widget-title{
+
+      color:
+        var(
+          --w-text
+        );
+
+      font-size:
+        1em;
+
+      font-weight:
+        950;
+
+      line-height:
+        1.12;
+
+    }
+
+
+    .widget-support{
+
+      margin-top:
+        5px;
+
+      color:
+        color-mix(
+          in srgb,
+          var(
+            --w-text
+          )
+          72%,
+          transparent
+        );
+
+      font-size:
+        .55em;
+
+      font-weight:
+        700;
+
+    }
+
+
+    .widget-metric{
+
+      flex:
+        0
+        0
+        auto;
+
+      text-align:right;
+
+    }
+
+
+    .widget-value{
+
+      color:
+        var(
+          --w-text
+        );
+
+      font-size:
+        1.12em;
+
+      font-weight:
+        950;
+
+      white-space:
+        nowrap;
+
+    }
+
+
+    .widget-value
+    strong{
+
+      color:
+        var(
+          --w-accent
+        );
+
+    }
+
+
+    .widget-percent{
+
+      margin-top:
+        3px;
+
+      color:
+        color-mix(
+          in srgb,
+          var(
+            --w-text
+          )
+          58%,
+          transparent
+        );
+
+      font-size:
+        .5em;
+
+      font-weight:
+        900;
+
+    }
+
+
+    .widget-progress{
+
+      height:
+        var(
+          --w-progress-height
+        );
+
+      margin-top:
+        15px;
+
+      overflow:hidden;
+
+      border-radius:
+        999px;
+
+      background:
+        rgba(
+          141,
+          164,
+          193,
+          .17
+        );
+
+    }
+
+
+    .widget-progress
+    span{
+
+      display:block;
+
+      width:
+        0;
+
+      height:
+        100%;
+
+      border-radius:
+        inherit;
+
+      background:
+
+        linear-gradient(
+          90deg,
+          var(
+            --w-accent
+          ),
+          var(
+            --w-accent2
+          )
+        );
+
+      transition:
+        width
+        .3s
+        ease;
+
+    }
+
+
+    .widget-progress.progress-solid
+    span{
+
+      background:
+        var(
+          --w-accent
+        );
+
+    }
+
+
+    .widget-progress.progress-segments{
+
+      background:
+
+        repeating-linear-gradient(
+          90deg,
+          rgba(
+            141,
+            164,
+            193,
+            .2
+          )
+          0
+          16px,
+          transparent
+          16px
+          20px
+        );
+
+    }
+
+
+    .widget-progress.progress-segments
+    span{
+
+      background:
+
+        repeating-linear-gradient(
+          90deg,
+          var(
+            --w-accent
+          )
+          0
+          16px,
+          transparent
+          16px
+          20px
+        );
+
+    }
+
+
+
+    /* =========================================================
+       ALIGNMENT / DENSITY
+       ========================================================= */
+
+
+    .tiktok-widget.align-center
+    .widget-copy,
+
+    .tiktok-widget.align-center
+    .widget-metric{
+
+      text-align:center;
+
+    }
+
+
+    .tiktok-widget.align-right
+    .widget-inner{
+
+      flex-direction:
+        row-reverse;
+
+    }
+
+
+    .tiktok-widget.align-right
+    .widget-copy,
+
+    .tiktok-widget.align-right
+    .widget-metric{
+
+      text-align:right;
+
+    }
+
+
+    .tiktok-widget.density-compact{
+
+      padding:
+        14px;
+
+    }
+
+
+    .tiktok-widget.density-compact
+    .widget-inner{
+
+      gap:
+        11px;
+
+    }
+
+
+
+    /* =========================================================
+       8 FINAL LAYOUTS
+       ========================================================= */
+
+
+    .layout-bar{
+
+      width:
+        min(
+          100%,
+          720px
+        );
+
+    }
+
+
+    .layout-bar
+    .widget-metric{
+
+      min-width:
+        145px;
+
+    }
+
+
+
+    .layout-compact{
+
+      width:
+        min(
+          100%,
+          700px
+        );
+
+      padding:
+        13px
+        16px;
+
+    }
+
+
+    .layout-compact
+    .widget-avatar{
+
+      width:
+        min(
+          var(
+            --w-avatar-size
+          ),
+          52px
+        );
+
+      height:
+        min(
+          var(
+            --w-avatar-size
+          ),
+          52px
+        );
+
+      flex-basis:
+        min(
+          var(
+            --w-avatar-size
+          ),
+          52px
+        );
+
+      border-radius:
+        13px;
+
+    }
+
+
+    .layout-compact
+    .widget-support{
+
+      display:none;
+
+    }
+
+
+    .layout-compact
+    .widget-metric{
+
+      min-width:
+        130px;
+
+    }
+
+
+    .layout-compact
+    .widget-progress{
+
+      height:
+        min(
+          var(
+            --w-progress-height
+          ),
+          7px
+        );
+
+      margin-top:
+        10px;
+
+    }
+
+
+
+    .layout-card{
+
+      width:
+        min(
+          100%,
+          430px
+        );
+
+      max-width:
+        430px;
+
+      padding:
+        25px
+        26px
+        24px;
+
+      text-align:center;
+
+    }
+
+
+    .layout-card
+    .widget-inner{
+
+      flex-direction:
+        column;
+
+      align-items:center;
+
+      gap:
+        11px;
+
+    }
+
+
+    .layout-card
+    .widget-copy,
+
+    .layout-card
+    .widget-metric{
+
+      width:
+        100%;
+
+      text-align:center;
+
+    }
+
+
+
+    .layout-pill{
+
+      width:auto;
+
+      max-width:
+        680px;
+
+      padding:
+        11px
+        17px;
+
+      border-radius:
+        999px;
+
+    }
+
+
+    .layout-pill
+    .widget-avatar{
+
+      width:
+        min(
+          var(
+            --w-avatar-size
+          ),
+          52px
+        );
+
+      height:
+        min(
+          var(
+            --w-avatar-size
+          ),
+          52px
+        );
+
+      flex-basis:
+        min(
+          var(
+            --w-avatar-size
+          ),
+          52px
+        );
+
+      border-radius:
+        50%;
+
+    }
+
+
+    .layout-pill
+    .widget-support,
+
+    .layout-pill
+    .widget-progress{
+
+      display:none!important;
+
+    }
+
+
+
+    /* =========================================================
+       RING · DYNAMISCHER ECHTER FORTSCHRITT
+       ========================================================= */
+
+
+    .layout-ring{
+
+      width:
+        min(
+          100%,
+          390px
+        );
+
+      max-width:
+        390px;
+
+      padding:
+        22px
+        24px
+        26px;
+
+      text-align:center;
+
+    }
+
+
+    .layout-ring
+    .widget-inner{
+
+      flex-direction:
+        column;
+
+      align-items:center;
+
+      gap:
+        10px;
+
+    }
+
+
+    .layout-ring
+    .widget-copy{
+
+      width:
+        100%;
+
+      text-align:center;
+
+    }
+
+
+    .layout-ring
+    .widget-metric{
+
+      display:flex;
+
+      width:
+        140px;
+
+      height:
+        140px;
+
+      flex:
+        0
+        0
+        140px;
+
+      flex-direction:
+        column;
+
+      align-items:center;
+
+      justify-content:center;
+
+      position:relative;
+
+      margin:
+        0
+        auto;
+
+      border:
+        12px solid
+        rgba(
+          141,
+          164,
+          193,
+          .17
+        );
+
+      border-radius:
+        50%;
+
+      text-align:center;
+
+    }
+
+
+    .layout-ring
+    .widget-metric::before{
+
+      content:"";
+
+      position:absolute;
+
+      inset:
+        -12px;
+
+      border-radius:
+        50%;
+
+      background:
+
+        conic-gradient(
+          from
+          0deg,
+          var(
+            --w-accent
+          )
+          0
+          var(
+            --w-ring-progress
+          ),
+          transparent
+          var(
+            --w-ring-progress
+          )
+          100%
+        );
+
+      -webkit-mask:
+
+        radial-gradient(
+          farthest-side,
+          transparent
+          calc(
+            100% - 12px
+          ),
+          #000
+          0
+        );
+
+      mask:
+
+        radial-gradient(
+          farthest-side,
+          transparent
+          calc(
+            100% - 12px
+          ),
+          #000
+          0
+        );
+
+      pointer-events:none;
+
+    }
+
+
+    .layout-ring
+    .widget-value,
+
+    .layout-ring
+    .widget-percent{
+
+      position:relative;
+
+      z-index:
+        2;
+
+      width:
+        100%;
+
+      text-align:center;
+
+    }
+
+
+    .layout-ring
+    .widget-percent{
+
+      margin-top:
+        8px;
+
+    }
+
+
+    .layout-ring
+    .widget-progress{
+
+      display:none!important;
+
+    }
+
+
+
+    .layout-vertical{
+
+      width:
+        min(
+          100%,
+          340px
+        );
+
+      max-width:
+        340px;
+
+      padding:
+        22px
+        23px
+        23px;
+
+      text-align:center;
+
+    }
+
+
+    .layout-vertical
+    .widget-inner{
+
+      flex-direction:
+        column;
+
+      align-items:center;
+
+      gap:
+        10px;
+
+    }
+
+
+    .layout-vertical
+    .widget-copy,
+
+    .layout-vertical
+    .widget-metric{
+
+      width:
+        100%;
+
+      text-align:center;
+
+    }
+
+
+
+    .layout-minimal{
+
+      width:auto;
+
+      max-width:
+        680px;
+
+      padding:
+        8px
+        4px;
+
+      border-width:
+        0!important;
+
+      border-radius:
+        0!important;
+
+      background:
+        transparent!important;
+
+      box-shadow:
+        none!important;
+
+      backdrop-filter:
+        none!important;
+
+    }
+
+
+    .layout-minimal
+    .widget-avatar,
+
+    .layout-minimal
+    .widget-support{
+
+      display:none!important;
+
+    }
+
+
+    .layout-minimal
+    .widget-metric{
+
+      min-width:
+        130px;
+
+    }
+
+
+    .layout-minimal
+    .widget-progress{
+
+      height:
+        3px;
+
+      margin-top:
+        7px;
+
+    }
+
+
+
+    .layout-creator-card{
+
+      width:
+        min(
+          100%,
+          620px
+        );
+
+      max-width:
+        620px;
+
+      padding:
+        20px
+        21px
+        19px;
+
+      border-radius:
+        22px;
+
+    }
+
+
+    .layout-creator-card
+    .widget-inner{
+
+      display:grid;
+
+      grid-template-columns:
+        auto
+        minmax(
+          0,
+          1fr
+        )
+        auto;
+
+      align-items:center;
+
+      gap:
+        17px;
+
+    }
+
+
+    .layout-creator-card
+    .widget-creator{
+
+      display:inline-flex;
+
+      width:
+        fit-content;
+
+      padding:
+        2px
+        7px;
+
+      border:
+        1px solid
+        color-mix(
+          in srgb,
+          var(
+            --w-accent2
+          )
+          25%,
+          transparent
+        );
+
+      border-radius:
+        999px;
+
+      background:
+        color-mix(
+          in srgb,
+          var(
+            --w-accent
+          )
+          8%,
+          transparent
+        );
+
+    }
+
+
+
+    /* =========================================================
+       AUTOTHANKS · FINAL
+       ========================================================= */
+
+
+    .widget-thanks{
+
+      display:grid;
+
+      gap:
+        14px;
+
+    }
+
+
+    .thanks-identity{
+
+      display:flex;
+
+      align-items:center;
+
+      gap:
+        12px;
+
+    }
+
+
+    .thanks-avatar{
+
+      width:
+        min(
+          var(
+            --w-avatar-size
+          ),
+          58px
+        );
+
+      height:
+        min(
+          var(
+            --w-avatar-size
+          ),
+          58px
+        );
+
+      flex-basis:
+        min(
+          var(
+            --w-avatar-size
+          ),
+          58px
+        );
+
+    }
+
+
+    .thanks-copy{
+
+      min-width:
+        0;
+
+    }
+
+
+    .thanks-message{
+
+      color:
+        var(
+          --w-text
+        );
+
+      font-size:
+        1.02em;
+
+      font-weight:
+        950;
+
+      line-height:
+        1.35;
+
+    }
+
+
+    .thanks-name{
+
+      color:
+        var(
+          --w-accent2
+        );
+
+    }
+
+
+    .thanks-event{
+
+      display:inline-flex;
+
+      width:
+        fit-content;
+
+      margin-top:
+        7px;
+
+      padding:
+        3px
+        8px;
+
+      border:
+        1px solid
+        color-mix(
+          in srgb,
+          var(
+            --w-accent2
+          )
+          28%,
+          transparent
+        );
+
+      border-radius:
+        999px;
+
+      color:
+        var(
+          --w-accent2
+        );
+
+      font-size:
+        .45em;
+
+      font-weight:
+        950;
+
+      letter-spacing:
+        .08em;
+
+    }
+
+
+    .layout-card
+    .thanks-identity,
+
+    .layout-ring
+    .thanks-identity,
+
+    .layout-vertical
+    .thanks-identity{
+
+      flex-direction:
+        column;
+
+      text-align:center;
+
+    }
+
+
+    .layout-card
+    .thanks-event,
+
+    .layout-ring
+    .thanks-event,
+
+    .layout-vertical
+    .thanks-event{
+
+      margin-left:auto;
+
+      margin-right:auto;
+
+    }
+
+
+    .layout-minimal
+    .thanks-avatar{
+
+      display:none;
+
+    }
+
+
+    .layout-pill
+    .thanks-event{
+
+      display:none;
+
+    }
+
+
+
+    /* =========================================================
+       ANIMATIONS
+       ========================================================= */
+
+
+    .anim-pulse{
+
+      animation:
+        studioPulse
+        2s
+        ease-in-out
+        infinite;
+
+    }
+
+
+    .anim-float{
+
+      animation:
+        studioFloat
+        3s
+        ease-in-out
+        infinite;
+
+    }
+
+
+    .anim-shine::after{
+
+      content:"";
+
+      position:absolute;
+
+      inset:
+        -60%
+        auto
+        -60%
+        -40%;
+
+      z-index:
+        6;
+
+      width:
+        28%;
+
+      background:
+
+        linear-gradient(
+          90deg,
+          transparent,
+          rgba(
+            255,
+            255,
+            255,
+            .18
+          ),
+          transparent
+        );
+
+      transform:
+        rotate(
+          20deg
+        );
+
+      animation:
+        studioShine
+        2.8s
+        linear
+        infinite;
+
+      pointer-events:none;
+
+    }
+
+
+    @keyframes studioPulse{
+
+      0%,
+      100%{
+        transform:scale(1);
+      }
+
+      50%{
+        transform:scale(1.015);
+      }
+
+    }
+
+
+    @keyframes studioFloat{
+
+      0%,
+      100%{
+        transform:translateY(0);
+      }
+
+      50%{
+        transform:translateY(-5px);
+      }
+
+    }
+
+
+    @keyframes studioShine{
+
+      0%{
+        left:-45%;
+      }
+
+      100%{
+        left:125%;
+      }
+
+    }
+
+
+
+    /* =========================================================
+       DATA / STATUS CARDS
+       ========================================================= */
+
+
+    .data-card{
+
+      display:grid;
+
+      gap:
+        8px;
+
+      margin-top:
+        16px;
+
+      padding:
+        13px;
+
+      border:
+        1px solid
+        var(
+          --studio-line
+        );
+
+      border-radius:
+        13px;
+
+      background:
+        rgba(
+          2,
+          7,
+          17,
+          .42
+        );
+
+    }
+
+
+    .data-card-row{
+
+      display:flex;
+
+      justify-content:
+        space-between;
+
+      gap:
+        12px;
+
+      color:
+        var(
+          --studio-muted
+        );
+
+      font-size:
+        10px;
+
+    }
+
+
+    .data-card-row
+    strong{
+
+      color:
+        var(
+          --studio-text
+        );
+
+    }
+
+
+    .phase-grid{
+
+      display:grid;
+
+      grid-template-columns:
+        repeat(
+          3,
+          minmax(
+            0,
+            1fr
+          )
+        );
+
+      gap:
+        9px;
+
+      margin-top:
+        15px;
+
+    }
+
+
+    .phase-card{
+
+      min-height:
+        112px;
+
+      padding:
+        12px;
+
+      border:
+        1px solid
+        var(
+          --studio-line
+        );
+
+      border-radius:
+        13px;
+
+      background:
+        rgba(
+          2,
+          7,
+          17,
+          .38
+        );
+
+    }
+
+
+    .phase-card
+    strong{
+
+      display:block;
+
+      font-size:
+        11px;
+
+    }
+
+
+    .phase-card
+    span{
+
+      display:block;
+
+      margin-top:
+        7px;
+
+      color:
+        var(
+          --studio-muted
+        );
+
+      font-size:
+        10px;
+
+      line-height:
+        1.5;
+
+    }
+
+
+
+    /* =========================================================
+       OBS
+       ========================================================= */
+
+
+    .legacy-obs{
+
+      overflow:hidden;
+
+      border:
+        1px solid
+        var(
+          --studio-line
+        );
+
+      border-radius:
+        16px;
+
+    }
+
+
+    .legacy-obs
+    summary{
+
+      padding:
+        15px
+        16px;
+
+      color:
+        #b9c9d9;
+
+      font-size:
+        10px;
+
+      font-weight:
+        900;
+
+      cursor:pointer;
+
+    }
+
+
+    .legacy-obs-inner{
+
+      padding:
+        0
+        16px
+        16px;
+
+    }
+
+
+    .source-row{
+
+      display:grid;
+
+      grid-template-columns:
+        minmax(
+          0,
+          1fr
+        )
+        auto;
+
+      gap:
+        8px;
+
+      margin-top:
+        12px;
+
+    }
+
+
+    .source-actions{
+
+      display:flex;
+
+      flex-wrap:
+        wrap;
+
+      gap:
+        8px;
+
+      margin-top:
+        9px;
+
+    }
+
+
+
+    /* =========================================================
+       RESPONSIVE
+       ========================================================= */
+
+
+    @media(max-width:1180px){
+
+      .editor-top,
+      .studio-layout{
+
+        grid-template-columns:
+          1fr;
+
+      }
+
+
+      .preview-stage{
+
+        position:static;
+
+      }
+
+
+      .widget-tabs{
+
+        grid-template-columns:
+          repeat(
+            3,
+            1fr
+          );
+
+      }
+
+    }
+
+
+    @media(max-width:760px){
+
+      .form-grid,
+      .field-grid,
+      .toggle-grid,
+      .phase-grid{
+
+        grid-template-columns:
+          1fr;
+
+      }
+
+
+      .field.full{
+
+        grid-column:auto;
+
+      }
+
+
+      .widget-tabs,
+      .preset-grid,
+      .theme-grid{
+
+        grid-template-columns:
+          repeat(
+            2,
+            1fr
+          );
+
+      }
+
+
+      .studio-head,
+      .save-bar,
+      .restore-box{
+
+        align-items:flex-start;
+
+        flex-direction:
+          column;
+
+      }
+
+
+      .layout-bar
+      .widget-inner,
+
+      .layout-creator-card
+      .widget-inner{
+
+        display:flex;
+
+        flex-direction:
+          column;
+
+        align-items:flex-start;
+
+      }
+
+
+      .layout-bar
+      .widget-metric,
+
+      .layout-creator-card
+      .widget-metric{
+
+        width:
+          100%;
+
+        text-align:left;
+
+      }
+
+    }
+
+
+    @media(max-width:480px){
+
+      .widget-tabs,
+      .preset-grid,
+      .theme-grid{
+
+        grid-template-columns:
+          1fr;
+
+      }
+
+    }
+
+  </style>
+
+  <meta name="robots" content="noindex,nofollow,noarchive">
+</head>
+
+
+<body>
+
+
+<header class="site-header">
+
+  <div class="container header-inner">
+
+    <a
+      class="brand"
+      href="/"
+      aria-label="cfs_zockt Startseite"
+    >
+
+      <img
+        class="brand-logo"
+        src="/assets/img/logo-header.png"
+        alt="cfs_zockt"
+      >
+
+    </a>
+
+
+    <button
+      class="mobile-toggle"
+      data-mobile-toggle
+      type="button"
+    >
+      MENÜ
+    </button>
+
+
+    <nav
+      class="nav"
+      data-nav
+    >
+
+      <a href="/pages/dashboard.html">
+        DASHBOARD
+      </a>
+
+      <a
+        class="active"
+        href="/pages/editor.html"
+      >
+        EDITOR
+      </a>
+
+      <a href="/pages/tiktok.html">
+        TIKTOK LIVE
+      </a>
+
+      <a href="/pages/setup.html">
+        SETUP
+      </a>
+
+      <a href="/pages/launcher.html">
+        LAUNCHER
+      </a>
+
+      <a href="/pages/games.html">
+        SPIELE
+      </a>
+
+      <a href="/pages/nexus.html">
+        NEXUS
+      </a>
+
+      <a href="/pages/account.html">
+        ACCOUNT
+      </a>
+
+      <button
+        class="btn ghost"
+        type="button"
+        data-logout
+      >
+        LOGOUT
+      </button>
+
+    </nav>
+
+  </div>
+
+</header>
+
+
+
+<main class="container">
+
+
+  <section class="page-hero">
+
+    <div class="eyebrow">
+      CREATOR EDITOR V5 · TIKTOK WIDGET STUDIO V3
+    </div>
+
+    <h1>
+      DEIN TIKTOK.<br>
+      DEIN LOOK.
+    </h1>
+
+    <p>
+      Erstelle individuelle TikTok-Widgets für deine Community.
+      Follower und Profil-Likes nutzen bereits deine TikTok-Verbindung.
+      Viewer, Gifts und AutoThanks sind für die TikTok-LIVE-Bridge vorbereitet.
+    </p>
+
+  </section>
+
+
+
+  <div class="editor-shell">
+
+
+    <div class="editor-top">
+
+
+      <section class="panel">
+
+        <div class="meta">
+          CREATOR PROFIL
+        </div>
+
+        <h2>
+          Creator Einstellungen
+        </h2>
+
+
+        <form
+          id="editorForm"
+          class="form-grid"
+        >
+
+
+          <div class="field">
+
+            <label for="creatorName">
+              CREATOR NAME
+            </label>
+
+            <input
+              id="creatorName"
+              readonly
+            >
+
+          </div>
+
+
+          <div class="field">
+
+            <label for="creatorPlan">
+              PLAN
+            </label>
+
+            <input
+              id="creatorPlan"
+              readonly
+            >
+
+          </div>
+
+
+          <div class="field full">
+
+            <label for="creatorBio">
+              BIO
+            </label>
+
+            <textarea
+              id="creatorBio"
+              maxlength="300"
+            ></textarea>
+
+          </div>
+
+
+          <div class="field">
+
+            <label for="creatorAccent">
+              CREATOR AKZENT
+            </label>
+
+            <input
+              id="creatorAccent"
+              type="color"
+              value="#148cff"
+            >
+
+          </div>
+
+
+          <div class="field">
+
+            <label for="themeSelect">
+              WEBSITE THEME
+            </label>
+
+            <select id="themeSelect"></select>
+
+          </div>
+
+
+          <div class="field">
+
+            <label for="startModule">
+              STARTMODUL
+            </label>
+
+            <select id="startModule">
+
+              <option value="dashboard">
+                Dashboard
+              </option>
+
+              <option value="editor">
+                Creator Editor
+              </option>
+
+              <option value="tiktok">
+                TikTok Live
+              </option>
+
+              <option value="launcher">
+                Launcher
+              </option>
+
+              <option value="games">
+                Spiele
+              </option>
+
+              <option value="nexus">
+                NEXUS
+              </option>
+
+            </select>
+
+          </div>
+
+
+          <div class="field">
+
+            <label>
+              SPEICHERN
+            </label>
+
+            <button
+              class="btn primary"
+              type="submit"
+              style="width:100%"
+            >
+              CREATOR PROFIL SPEICHERN
+            </button>
+
+          </div>
+
+
+        </form>
+
+
+        <div
+          id="profileMessage"
+          class="notice hidden"
+        ></div>
+
+      </section>
+
+
+
+      <section class="panel creator-preview">
+
+        <div>
+
+          <div class="creator-preview-head">
+
+            <div>
+
+              <div class="meta">
+                PROFIL PREVIEW
+              </div>
+
+              <h3>
+                Deine Creator Identität
+              </h3>
+
+            </div>
+
+
+            <span
+              class="status-chip"
+              id="settingsStatus"
+            >
+
+              <span class="status-dot"></span>
+
+              SETTINGS
+
+            </span>
+
+          </div>
+
+
+          <div
+            class="creator-preview-main"
+            style="margin-top:18px"
+          >
+
+            <span
+              class="creator-preview-plan"
+              id="previewPlan"
+            >
+              FREE
+            </span>
+
+            <strong id="previewName">
+              Creator
+            </strong>
+
+            <p id="previewBio">
+              Deine Bio erscheint hier.
+            </p>
+
+          </div>
+
+        </div>
+
+
+        <div
+          class="sync-box"
+          id="syncInfo"
+        >
+          Creator Settings werden geladen …
+        </div>
+
+      </section>
+
+
+    </div>
+
+
+
+    <section class="studio-section">
+
+
+      <div class="studio-head">
+
+        <div>
+
+          <span class="studio-version">
+            TIKTOK WIDGET STUDIO V3 · FINAL
+          </span>
+
+          <h2>
+            DEIN TIKTOK. DEIN WIDGET.
+          </h2>
+
+          <p>
+            Fünf Widget-Typen, acht Layouts und ein gemeinsames
+            cfs_zockt Designsystem.
+          </p>
+
+        </div>
+
+
+        <span
+          class="status-chip good"
+          id="saveStateChipTop"
+        >
+
+          <span class="status-dot"></span>
+
+          GESPEICHERT
+
+        </span>
+
+      </div>
+
+
+
+      <div
+        class="widget-tabs"
+        id="widgetTabs"
+      >
+
+
+        <button
+          class="widget-tab active"
+          type="button"
+          data-widget-type="follower"
+        >
+
+          <span class="widget-tab-top">
+
+            <strong>FOLLOWER</strong>
+
+            <span class="widget-tab-state">
+              ●
+            </span>
+
+          </span>
+
+          <small>
+            Echter TikTok-Followerstand und Ziel.
+          </small>
+
+        </button>
+
+
+        <button
+          class="widget-tab"
+          type="button"
+          data-widget-type="likes"
+        >
+
+          <span class="widget-tab-top">
+
+            <strong>LIKES</strong>
+
+            <span class="widget-tab-state">
+              🔒
+            </span>
+
+          </span>
+
+          <small>
+            TikTok Profil-Likes.
+          </small>
+
+        </button>
+
+
+        <button
+          class="widget-tab"
+          type="button"
+          data-widget-type="viewer"
+        >
+
+          <span class="widget-tab-top">
+
+            <strong>VIEWER</strong>
+
+            <span class="widget-tab-state">
+              🔒
+            </span>
+
+          </span>
+
+          <small>
+            Zuschauer-Preview für LIVE.
+          </small>
+
+        </button>
+
+
+        <button
+          class="widget-tab"
+          type="button"
+          data-widget-type="gifts"
+        >
+
+          <span class="widget-tab-top">
+
+            <strong>GIFTS</strong>
+
+            <span class="widget-tab-state">
+              🔒
+            </span>
+
+          </span>
+
+          <small>
+            Gift-Ziel und Support.
+          </small>
+
+        </button>
+
+
+        <button
+          class="widget-tab"
+          type="button"
+          data-widget-type="auto_thanks"
+        >
+
+          <span class="widget-tab-top">
+
+            <strong>AUTOTHANKS</strong>
+
+            <span class="widget-tab-state">
+              🔒
+            </span>
+
+          </span>
+
+          <small>
+            Community-Danksagungen.
+          </small>
+
+        </button>
+
+
+      </div>
+
+
+
+      <div class="studio-layout">
+
+
+        <section class="panel studio-controls">
+
+
+          <div class="studio-controls-head">
+
+            <div>
+
+              <div class="meta">
+                WIDGET DESIGN
+              </div>
+
+              <h3>
+                Einstellungen
+              </h3>
+
+            </div>
+
+
+            <span
+              class="status-chip info"
+              id="editorWidgetChip"
+            >
+
+              <span class="status-dot"></span>
+
+              FOLLOWER
+
+            </span>
+
+          </div>
+
+
+
+          <div class="studio-accordion">
+
+
+            <!-- STYLE -->
+
+
+            <section class="control-group open">
+
+
+              <button
+                class="control-group-button"
+                type="button"
+                data-accordion
+              >
+
+                <span class="control-group-heading">
+
+                  <strong>
+                    STYLE PRESET
+                  </strong>
+
+                  <span>
+                    Ein Look als Ausgangspunkt
+                  </span>
+
+                </span>
+
+                <span class="control-group-arrow">
+                  ↓
+                </span>
+
+              </button>
+
+
+              <div class="control-group-body">
+
+
+                <div
+                  class="theme-grid"
+                  id="themePresetGrid"
+                >
+
+
+                  <button
+                    class="theme-card active"
+                    type="button"
+                    data-widget-theme="cfs"
+                  >
+
+                    <div class="theme-swatches">
+                      <span style="background:#0a8cff"></span>
+                      <span style="background:#19c2ff"></span>
+                      <span style="background:#071321"></span>
+                    </div>
+
+                    <strong>CFS CORE</strong>
+
+                  </button>
+
+
+                  <button
+                    class="theme-card"
+                    type="button"
+                    data-widget-theme="neon"
+                  >
+
+                    <div class="theme-swatches">
+                      <span style="background:#905dff"></span>
+                      <span style="background:#ff4ecd"></span>
+                      <span style="background:#10081d"></span>
+                    </div>
+
+                    <strong>NEON PULSE</strong>
+
+                  </button>
+
+
+                  <button
+                    class="theme-card"
+                    type="button"
+                    data-widget-theme="glass"
+                  >
+
+                    <div class="theme-swatches">
+                      <span style="background:#38d8ff"></span>
+                      <span style="background:#4f7dff"></span>
+                      <span style="background:#10223a"></span>
+                    </div>
+
+                    <strong>GLASS BLUE</strong>
+
+                  </button>
+
+
+                  <button
+                    class="theme-card"
+                    type="button"
+                    data-widget-theme="clean"
+                  >
+
+                    <div class="theme-swatches">
+                      <span style="background:#397cc5"></span>
+                      <span style="background:#70b9e8"></span>
+                      <span style="background:#edf4fb"></span>
+                    </div>
+
+                    <strong>CLEAN</strong>
+
+                  </button>
+
+
+                  <button
+                    class="theme-card"
+                    type="button"
+                    data-widget-theme="midnight"
+                  >
+
+                    <div class="theme-swatches">
+                      <span style="background:#2478d1"></span>
+                      <span style="background:#4cb4ff"></span>
+                      <span style="background:#06101e"></span>
+                    </div>
+
+                    <strong>MIDNIGHT</strong>
+
+                  </button>
+
+
+                </div>
+
+              </div>
+
+            </section>
+
+
+
+            <!-- WIDGET -->
+
+
+            <section class="control-group open">
+
+
+              <button
+                class="control-group-button"
+                type="button"
+                data-accordion
+              >
+
+                <span class="control-group-heading">
+
+                  <strong>
+                    WIDGET
+                  </strong>
+
+                  <span>
+                    Titel und sichtbare Inhalte
+                  </span>
+
+                </span>
+
+                <span class="control-group-arrow">
+                  ↓
+                </span>
+
+              </button>
+
+
+              <div class="control-group-body">
+
+
+                <div class="field-grid">
+
+
+                  <div class="field full">
+
+                    <label class="toggle-card">
+
+                      <input
+                        id="widgetEnabled"
+                        type="checkbox"
+                        checked
+                      >
+
+                      Widget aktiviert
+
+                    </label>
+
+                  </div>
+
+
+                  <div class="field full">
+
+                    <label for="widgetTitle">
+                      TITEL
+                    </label>
+
+                    <input
+                      id="widgetTitle"
+                      maxlength="70"
+                    >
+
+                  </div>
+
+
+                  <div class="field full">
+
+                    <label for="supportTemplate">
+                      SUPPORT VORLAGE
+                    </label>
+
+                    <select id="supportTemplate">
+
+                      <option value="">
+                        Eigener Text
+                      </option>
+
+                      <option value="Danke für euren Support ❤️">
+                        Danke für euren Support ❤️
+                      </option>
+
+                      <option value="Gemeinsam schaffen wir das 🚀">
+                        Gemeinsam schaffen wir das 🚀
+                      </option>
+
+                      <option value="Willkommen in der Community 💙">
+                        Willkommen in der Community 💙
+                      </option>
+
+                      <option value="Danke, dass ihr dabei seid ✨">
+                        Danke, dass ihr dabei seid ✨
+                      </option>
+
+                    </select>
+
+                  </div>
+
+
+                  <div class="field full">
+
+                    <label for="supportText">
+                      SUPPORT TEXT
+                    </label>
+
+                    <input
+                      id="supportText"
+                      maxlength="140"
+                    >
+
+                  </div>
+
+
+                </div>
+
+
+                <div class="toggle-grid">
+
+                  <label class="toggle-card">
+                    <input id="showCreatorName" type="checkbox" checked>
+                    Creator Name
+                  </label>
+
+                  <label class="toggle-card">
+                    <input id="showSupportText" type="checkbox" checked>
+                    Support Text
+                  </label>
+
+                  <label class="toggle-card">
+                    <input id="showImage" type="checkbox" checked>
+                    Creator Bild
+                  </label>
+
+                  <label class="toggle-card">
+                    <input id="showValue" type="checkbox" checked>
+                    Wert anzeigen
+                  </label>
+
+                </div>
+
+              </div>
+
+            </section>
+
+
+
+            <!-- CREATOR IDENTITÄT -->
+
+
+            <section class="control-group">
+
+
+              <button
+                class="control-group-button"
+                type="button"
+                data-accordion
+              >
+
+                <span class="control-group-heading">
+
+                  <strong>
+                    CREATOR IDENTITÄT
+                  </strong>
+
+                  <span>
+                    TikTok Avatar oder eigenes Bild
+                  </span>
+
+                </span>
+
+                <span class="control-group-arrow">
+                  ↓
+                </span>
+
+              </button>
+
+
+              <div class="control-group-body">
+
+
+                <div class="field-grid">
+
+
+                  <div class="field full">
+
+                    <label for="widgetCreatorName">
+                      WIDGET CREATOR NAME
+                    </label>
+
+                    <input
+                      id="widgetCreatorName"
+                      maxlength="60"
+                      placeholder="Leer = TikTok / Account Name"
+                    >
+
+                  </div>
+
+
+                  <div class="field full">
+
+                    <label for="imageMode">
+                      BILDQUELLE
+                    </label>
+
+                    <select id="imageMode">
+
+                      <option value="tiktok">
+                        TikTok Avatar
+                      </option>
+
+                      <option value="custom">
+                        Eigenes Bild
+                      </option>
+
+                      <option value="cfs">
+                        cfs_zockt Logo
+                      </option>
+
+                      <option value="none">
+                        Kein Bild
+                      </option>
+
+                    </select>
+
+                  </div>
+
+
+                </div>
+
+
+                <div class="identity-row">
+
+                  <div
+                    class="identity-upload-preview"
+                    id="identityUploadPreview"
+                  >
+                    BILD
+                  </div>
+
+
+                  <div class="upload-actions">
+
+                    <div class="field">
+
+                      <label for="creatorImageFile">
+                        EIGENES BILD
+                      </label>
+
+                      <input
+                        id="creatorImageFile"
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp"
+                      >
+
+                    </div>
+
+
+                    <button
+                      class="btn ghost"
+                      id="removeCreatorImage"
+                      type="button"
+                    >
+                      EIGENES BILD ENTFERNEN
+                    </button>
+
+
+                    <p class="helper">
+                      JPG, PNG oder WebP · maximal 3 MB.
+                    </p>
+
+                  </div>
+
+                </div>
+
+              </div>
+
+            </section>
+
+
+
+            <!-- LAYOUT -->
+
+
+            <section class="control-group open">
+
+
+              <button
+                class="control-group-button"
+                type="button"
+                data-accordion
+              >
+
+                <span class="control-group-heading">
+
+                  <strong>
+                    LAYOUT
+                  </strong>
+
+                  <span>
+                    Acht fertige Varianten
+                  </span>
+
+                </span>
+
+                <span class="control-group-arrow">
+                  ↓
+                </span>
+
+              </button>
+
+
+              <div class="control-group-body">
+
+
+                <div
+                  class="preset-grid"
+                  id="presetGrid"
+                >
+
+
+                  <label class="preset-card">
+
+                    <input
+                      type="radio"
+                      name="layoutPreset"
+                      value="bar"
+                      checked
+                    >
+
+                    <span class="preset-card-inner">
+
+                      <span class="preset-visual">
+                        <span class="preset-dot"></span>
+                        <span class="preset-lines">
+                          <span></span>
+                          <span></span>
+                        </span>
+                      </span>
+
+                      <strong>BAR</strong>
+
+                    </span>
+
+                  </label>
+
+
+                  <label class="preset-card">
+
+                    <input
+                      type="radio"
+                      name="layoutPreset"
+                      value="compact"
+                    >
+
+                    <span class="preset-card-inner">
+
+                      <span class="preset-visual">
+                        <span class="preset-dot"></span>
+                        <span class="preset-lines">
+                          <span></span>
+                          <span></span>
+                        </span>
+                      </span>
+
+                      <strong>COMPACT</strong>
+
+                    </span>
+
+                  </label>
+
+
+                  <label class="preset-card">
+
+                    <input
+                      type="radio"
+                      name="layoutPreset"
+                      value="card"
+                    >
+
+                    <span class="preset-card-inner">
+
+                      <span class="preset-visual visual-card">
+                        <span class="preset-dot"></span>
+                        <span class="preset-lines">
+                          <span></span>
+                          <span></span>
+                        </span>
+                      </span>
+
+                      <strong>CARD</strong>
+
+                    </span>
+
+                  </label>
+
+
+                  <label class="preset-card">
+
+                    <input
+                      type="radio"
+                      name="layoutPreset"
+                      value="pill"
+                    >
+
+                    <span class="preset-card-inner">
+
+                      <span class="preset-visual visual-pill">
+                        <span class="preset-dot"></span>
+                        <span class="preset-lines">
+                          <span></span>
+                          <span></span>
+                        </span>
+                      </span>
+
+                      <strong>PILL</strong>
+
+                    </span>
+
+                  </label>
+
+
+                  <label class="preset-card">
+
+                    <input
+                      type="radio"
+                      name="layoutPreset"
+                      value="ring"
+                    >
+
+                    <span class="preset-card-inner">
+
+                      <span class="preset-visual visual-ring">
+                        <span class="preset-dot"></span>
+                      </span>
+
+                      <strong>RING</strong>
+
+                    </span>
+
+                  </label>
+
+
+                  <label class="preset-card">
+
+                    <input
+                      type="radio"
+                      name="layoutPreset"
+                      value="vertical"
+                    >
+
+                    <span class="preset-card-inner">
+
+                      <span class="preset-visual visual-vertical">
+                        <span class="preset-dot"></span>
+                        <span class="preset-lines">
+                          <span></span>
+                          <span></span>
+                        </span>
+                      </span>
+
+                      <strong>VERTICAL</strong>
+
+                    </span>
+
+                  </label>
+
+
+                  <label class="preset-card">
+
+                    <input
+                      type="radio"
+                      name="layoutPreset"
+                      value="minimal"
+                    >
+
+                    <span class="preset-card-inner">
+
+                      <span class="preset-visual visual-minimal">
+                        <span class="preset-lines">
+                          <span></span>
+                          <span></span>
+                        </span>
+                      </span>
+
+                      <strong>MINIMAL</strong>
+
+                    </span>
+
+                  </label>
+
+
+                  <label class="preset-card">
+
+                    <input
+                      type="radio"
+                      name="layoutPreset"
+                      value="creator-card"
+                    >
+
+                    <span class="preset-card-inner">
+
+                      <span class="preset-visual visual-creator">
+                        <span class="preset-dot"></span>
+                        <span class="preset-lines">
+                          <span></span>
+                          <span></span>
+                        </span>
+                      </span>
+
+                      <strong>
+                        CREATOR CARD
+                      </strong>
+
+                    </span>
+
+                  </label>
+
+
+                </div>
+
+              </div>
+
+            </section>
+                        <!-- =================================================
+                 WIDGET DATEN
+                 ================================================= -->
+
+
+            <section class="control-group open">
+
+
+              <button
+                class="control-group-button"
+                type="button"
+                data-accordion
+              >
+
+                <span class="control-group-heading">
+
+                  <strong>
+                    WIDGET DATEN
+                  </strong>
+
+                  <span>
+                    Ziel, Testwert und Fortschritt
+                  </span>
+
+                </span>
+
+                <span class="control-group-arrow">
+                  ↓
+                </span>
+
+              </button>
+
+
+              <div class="control-group-body">
+
+
+                <div class="field-grid">
+
+
+                  <div
+                    class="field"
+                    id="goalField"
+                  >
+
+                    <label for="widgetGoal">
+                      ZIELWERT
+                    </label>
+
+                    <input
+                      id="widgetGoal"
+                      type="number"
+                      min="1"
+                      max="100000000"
+                      value="250"
+                    >
+
+                  </div>
+
+
+                  <div class="field">
+
+                    <label for="testValue">
+                      TESTWERT
+                    </label>
+
+                    <input
+                      id="testValue"
+                      type="number"
+                      min="0"
+                      max="100000000"
+                      value="160"
+                    >
+
+                  </div>
+
+
+                  <div class="field full">
+
+                    <label class="toggle-card">
+
+                      <input
+                        id="testMode"
+                        type="checkbox"
+                      >
+
+                      Testmodus verwenden
+
+                    </label>
+
+                  </div>
+
+
+                  <div class="field">
+
+                    <label for="numberFormat">
+                      ZAHLENFORMAT
+                    </label>
+
+                    <select id="numberFormat">
+
+                      <option value="full">
+                        Vollständig · 1.873
+                      </option>
+
+                      <option value="compact">
+                        Kompakt · 1,9K
+                      </option>
+
+                    </select>
+
+                  </div>
+
+
+                  <div class="field">
+
+                    <label for="progressStyle">
+                      FORTSCHRITT
+                    </label>
+
+                    <select id="progressStyle">
+
+                      <option value="gradient">
+                        Gradient
+                      </option>
+
+                      <option value="solid">
+                        Einfarbig
+                      </option>
+
+                      <option value="segments">
+                        Segmente
+                      </option>
+
+                    </select>
+
+                  </div>
+
+
+                  <div class="field full">
+
+                    <label for="progressHeight">
+                      FORTSCHRITTS-HÖHE
+                    </label>
+
+                    <div class="range-row">
+
+                      <input
+                        id="progressHeight"
+                        type="range"
+                        min="3"
+                        max="24"
+                        value="13"
+                      >
+
+                      <output id="progressHeightOut">
+                        13 px
+                      </output>
+
+                    </div>
+
+                  </div>
+
+
+                </div>
+
+
+                <div class="toggle-grid">
+
+                  <label class="toggle-card">
+
+                    <input
+                      id="showProgress"
+                      type="checkbox"
+                      checked
+                    >
+
+                    Fortschritt
+
+                  </label>
+
+
+                  <label class="toggle-card">
+
+                    <input
+                      id="showPercent"
+                      type="checkbox"
+                      checked
+                    >
+
+                    Prozent
+
+                  </label>
+
+                </div>
+
+
+                <p
+                  class="helper"
+                  id="widgetDataHint"
+                >
+                  Follower verwendet deinen echten TikTok-Followerstand.
+                </p>
+
+              </div>
+
+            </section>
+
+
+
+            <!-- =================================================
+                 AUTOTHANKS
+                 ================================================= -->
+
+
+            <section
+              class="control-group"
+              id="thanksOptions"
+              hidden
+            >
+
+
+              <button
+                class="control-group-button"
+                type="button"
+                data-accordion
+              >
+
+                <span class="control-group-heading">
+
+                  <strong>
+                    AUTOTHANKS
+                  </strong>
+
+                  <span>
+                    Text und Test-Ereignis
+                  </span>
+
+                </span>
+
+                <span class="control-group-arrow">
+                  ↓
+                </span>
+
+              </button>
+
+
+              <div class="control-group-body">
+
+
+                <div class="field-grid">
+
+
+                  <div class="field full">
+
+                    <label for="thanksText">
+                      DANKE-TEXT
+                    </label>
+
+                    <input
+                      id="thanksText"
+                      maxlength="120"
+                      value="Danke {name} für deinen Support ❤️"
+                    >
+
+                    <p class="helper">
+                      Mit <strong>{name}</strong> wird später
+                      automatisch der Community-Name eingesetzt.
+                    </p>
+
+                  </div>
+
+
+                  <div class="field">
+
+                    <label for="thanksTestName">
+                      TEST-NAME
+                    </label>
+
+                    <input
+                      id="thanksTestName"
+                      maxlength="40"
+                      value="Community"
+                    >
+
+                  </div>
+
+
+                  <div class="field">
+
+                    <label for="thanksEvent">
+                      EVENT
+                    </label>
+
+                    <select id="thanksEvent">
+
+                      <option value="support">
+                        Support
+                      </option>
+
+                      <option value="follow">
+                        Follow
+                      </option>
+
+                      <option value="gift">
+                        Gift
+                      </option>
+
+                      <option value="share">
+                        Share
+                      </option>
+
+                    </select>
+
+                  </div>
+
+
+                </div>
+
+
+                <p class="helper">
+                  Die Vorschau funktioniert bereits.
+                  Die automatische Auslösung folgt später über
+                  die TikTok-LIVE-Bridge.
+                </p>
+
+              </div>
+
+            </section>
+
+
+
+            <!-- =================================================
+                 DESIGN
+                 ================================================= -->
+
+
+            <section class="control-group open">
+
+
+              <button
+                class="control-group-button"
+                type="button"
+                data-accordion
+              >
+
+                <span class="control-group-heading">
+
+                  <strong>
+                    DESIGN DETAILS
+                  </strong>
+
+                  <span>
+                    Farben, Größen und Effekte
+                  </span>
+
+                </span>
+
+                <span class="control-group-arrow">
+                  ↓
+                </span>
+
+              </button>
+
+
+              <div class="control-group-body">
+
+
+                <div class="field-grid">
+
+
+                  <div class="field">
+
+                    <label>
+                      AKZENT 1
+                    </label>
+
+                    <div class="color-control">
+
+                      <input
+                        id="widgetAccent"
+                        type="color"
+                        value="#0a8cff"
+                      >
+
+                      <input
+                        id="widgetAccentHex"
+                        type="text"
+                        maxlength="7"
+                        value="#0A8CFF"
+                      >
+
+                    </div>
+
+                  </div>
+
+
+                  <div class="field">
+
+                    <label>
+                      AKZENT 2
+                    </label>
+
+                    <div class="color-control">
+
+                      <input
+                        id="widgetAccent2"
+                        type="color"
+                        value="#19c2ff"
+                      >
+
+                      <input
+                        id="widgetAccent2Hex"
+                        type="text"
+                        maxlength="7"
+                        value="#19C2FF"
+                      >
+
+                    </div>
+
+                  </div>
+
+
+                  <div class="field">
+
+                    <label>
+                      HINTERGRUND
+                    </label>
+
+                    <div class="color-control">
+
+                      <input
+                        id="widgetBackground"
+                        type="color"
+                        value="#071321"
+                      >
+
+                      <input
+                        id="widgetBackgroundHex"
+                        type="text"
+                        maxlength="7"
+                        value="#071321"
+                      >
+
+                    </div>
+
+                  </div>
+
+
+                  <div class="field">
+
+                    <label>
+                      TEXTFARBE
+                    </label>
+
+                    <div class="color-control">
+
+                      <input
+                        id="widgetTextColor"
+                        type="color"
+                        value="#f4f8ff"
+                      >
+
+                      <input
+                        id="widgetTextColorHex"
+                        type="text"
+                        maxlength="7"
+                        value="#F4F8FF"
+                      >
+
+                    </div>
+
+                  </div>
+
+
+                  <div class="field full">
+
+                    <label for="widgetOpacity">
+                      HINTERGRUND-DECKKRAFT
+                    </label>
+
+                    <div class="range-row">
+
+                      <input
+                        id="widgetOpacity"
+                        type="range"
+                        min="0"
+                        max="100"
+                        value="90"
+                      >
+
+                      <output id="widgetOpacityOut">
+                        90%
+                      </output>
+
+                    </div>
+
+                  </div>
+
+
+                  <div class="field">
+
+                    <label for="widgetFontSize">
+                      SCHRIFTGRÖSSE
+                    </label>
+
+                    <div class="range-row">
+
+                      <input
+                        id="widgetFontSize"
+                        type="range"
+                        min="14"
+                        max="48"
+                        value="22"
+                      >
+
+                      <output id="widgetFontSizeOut">
+                        22 px
+                      </output>
+
+                    </div>
+
+                  </div>
+
+
+                  <div class="field">
+
+                    <label for="avatarSize">
+                      AVATAR-GRÖSSE
+                    </label>
+
+                    <div class="range-row">
+
+                      <input
+                        id="avatarSize"
+                        type="range"
+                        min="34"
+                        max="110"
+                        value="68"
+                      >
+
+                      <output id="avatarSizeOut">
+                        68 px
+                      </output>
+
+                    </div>
+
+                  </div>
+
+
+                  <div class="field">
+
+                    <label for="widgetBorderWidth">
+                      RAHMEN
+                    </label>
+
+                    <div class="range-row">
+
+                      <input
+                        id="widgetBorderWidth"
+                        type="range"
+                        min="0"
+                        max="4"
+                        value="1"
+                      >
+
+                      <output id="widgetBorderWidthOut">
+                        1 px
+                      </output>
+
+                    </div>
+
+                  </div>
+
+
+                  <div class="field">
+
+                    <label for="widgetRadius">
+                      ECKENRADIUS
+                    </label>
+
+                    <div class="range-row">
+
+                      <input
+                        id="widgetRadius"
+                        type="range"
+                        min="0"
+                        max="40"
+                        value="18"
+                      >
+
+                      <output id="widgetRadiusOut">
+                        18 px
+                      </output>
+
+                    </div>
+
+                  </div>
+
+
+                  <div class="field">
+
+                    <label for="avatarShape">
+                      BILDFORM
+                    </label>
+
+                    <select id="avatarShape">
+
+                      <option value="rounded">
+                        Abgerundet
+                      </option>
+
+                      <option value="circle">
+                        Rund
+                      </option>
+
+                      <option value="square">
+                        Eckig
+                      </option>
+
+                    </select>
+
+                  </div>
+
+
+                  <div class="field">
+
+                    <label for="widgetAlignment">
+                      AUSRICHTUNG
+                    </label>
+
+                    <select id="widgetAlignment">
+
+                      <option value="left">
+                        Links
+                      </option>
+
+                      <option value="center">
+                        Mittig
+                      </option>
+
+                      <option value="right">
+                        Rechts
+                      </option>
+
+                    </select>
+
+                  </div>
+
+
+                  <div class="field">
+
+                    <label for="widgetDensity">
+                      DICHTE
+                    </label>
+
+                    <select id="widgetDensity">
+
+                      <option value="comfortable">
+                        Komfortabel
+                      </option>
+
+                      <option value="compact">
+                        Kompakt
+                      </option>
+
+                    </select>
+
+                  </div>
+
+
+                  <div class="field">
+
+                    <label for="widgetAnimation">
+                      ANIMATION
+                    </label>
+
+                    <select id="widgetAnimation">
+
+                      <option value="none">
+                        Keine
+                      </option>
+
+                      <option value="pulse">
+                        Pulse
+                      </option>
+
+                      <option value="float">
+                        Float
+                      </option>
+
+                      <option value="shine">
+                        Shine
+                      </option>
+
+                    </select>
+
+                  </div>
+
+
+                </div>
+
+
+                <div class="toggle-grid">
+
+                  <label class="toggle-card">
+                    <input id="showShadow" type="checkbox" checked>
+                    Schatten
+                  </label>
+
+                  <label class="toggle-card">
+                    <input id="showGlow" type="checkbox">
+                    Glow
+                  </label>
+
+                  <label class="toggle-card">
+                    <input id="showBlur" type="checkbox">
+                    Hintergrund-Blur
+                  </label>
+
+                </div>
+
+              </div>
+
+            </section>
+
+
+          </div>
+
+
+
+          <!-- =================================================
+               PREVIEW-ONLY NOTICE
+               ================================================= -->
+
+
+          <div
+            id="previewOnlyNotice"
+            class="notice hidden"
+          ></div>
+
+
+
+          <!-- =================================================
+               RESTORE + SAVE
+               ================================================= -->
+
+
+          <div class="restore-box">
+
+            <div>
+
+              <strong>
+                Letzten gespeicherten Widget-Stand wiederherstellen
+              </strong>
+
+              <span>
+                Ungespeicherte Änderungen im Widget Studio werden verworfen.
+              </span>
+
+            </div>
+
+
+            <button
+              class="btn ghost"
+              id="restoreSavedBtn"
+              type="button"
+            >
+              WIEDERHERSTELLEN
+            </button>
+
+          </div>
+
+
+          <div class="save-bar">
+
+
+            <span
+              class="status-chip good"
+              id="saveStateChip"
+            >
+
+              <span class="status-dot"></span>
+
+              GESPEICHERT
+
+            </span>
+
+
+            <div class="save-bar-actions">
+
+              <button
+                class="btn ghost"
+                id="resetWidgetBtn"
+                type="button"
+              >
+                WIDGET ZURÜCKSETZEN
+              </button>
+
+              <button
+                class="btn primary"
+                id="saveStudioBtn"
+                type="button"
+              >
+                TIKTOK WIDGETS SPEICHERN
+              </button>
+
+            </div>
+
+          </div>
+
+
+          <div
+            id="studioMessage"
+            class="notice hidden"
+          ></div>
+
+
+        </section>
+
+
+
+        <!-- =====================================================
+             PREVIEW
+             ===================================================== -->
+
+
+        <section class="studio-preview">
+
+
+          <div class="preview-stage">
+
+
+            <section class="panel">
+
+
+              <div class="meta">
+                TIKTOK WIDGET PREVIEW
+              </div>
+
+
+              <div
+                class="status-row"
+                style="margin-top:11px"
+              >
+
+
+                <span
+                  class="status-chip"
+                  id="tiktokStatusChip"
+                >
+                  <span class="status-dot"></span>
+                  TIKTOK LADEN
+                </span>
+
+
+                <span
+                  class="status-chip info"
+                  id="dataModeChip"
+                >
+                  <span class="status-dot"></span>
+                  DATEN
+                </span>
+
+
+                <span
+                  class="status-chip"
+                  id="activeWidgetChip"
+                >
+                  <span class="status-dot"></span>
+                  FOLLOWER
+                </span>
+
+
+                <span
+                  class="status-chip warn"
+                  id="previewAccessChip"
+                  hidden
+                >
+                  <span class="status-dot"></span>
+                  PREVIEW
+                </span>
+
+
+              </div>
+
+
+
+              <div class="preview-toolbar">
+
+
+                <div class="preview-scene-buttons">
+
+                  <button
+                    class="preview-tool active"
+                    type="button"
+                    data-scene="grid"
+                  >
+                    STUDIO
+                  </button>
+
+                  <button
+                    class="preview-tool"
+                    type="button"
+                    data-scene="stream"
+                  >
+                    STREAM
+                  </button>
+
+                  <button
+                    class="preview-tool"
+                    type="button"
+                    data-scene="clean"
+                  >
+                    HELL
+                  </button>
+
+                  <button
+                    class="preview-tool"
+                    type="button"
+                    data-scene="transparent"
+                  >
+                    TRANSPARENT
+                  </button>
+
+                </div>
+
+
+                <div class="preview-zoom">
+
+                  <button
+                    class="preview-tool"
+                    id="zoomOutBtn"
+                    type="button"
+                  >
+                    −
+                  </button>
+
+                  <span
+                    class="preview-zoom-value"
+                    id="zoomValue"
+                  >
+                    100%
+                  </span>
+
+                  <button
+                    class="preview-tool"
+                    id="zoomInBtn"
+                    type="button"
+                  >
+                    +
+                  </button>
+
+                </div>
+
+
+              </div>
+
+
+
+              <div
+                class="tiktok-stage scene-grid"
+                id="tiktokStage"
+                data-scene="grid"
+                style="margin-top:16px"
+              >
+
+
+                <div
+                  class="preview-mode-note"
+                  id="previewModeNote"
+                >
+                  TIKTOK DATEN
+                </div>
+
+
+                <div
+                  class="preview-canvas"
+                  id="previewCanvas"
+                >
+
+
+                  <div
+                    id="tiktokWidgetPreview"
+                    class="tiktok-widget layout-bar widget-type-follower has-shadow align-left density-comfortable"
+                  >
+
+
+                    <!-- =========================================
+                         NORMAL WIDGET
+                         ========================================= -->
+
+
+                    <div id="normalWidgetContent">
+
+
+                      <div class="widget-inner">
+
+
+                        <div
+                          id="widgetAvatar"
+                          class="widget-avatar"
+                        >
+                          CFS
+                        </div>
+
+
+                        <div class="widget-copy">
+
+                          <div
+                            id="previewCreatorName"
+                            class="widget-creator"
+                          >
+                            Creator
+                          </div>
+
+                          <div
+                            id="previewWidgetTitle"
+                            class="widget-title"
+                          >
+                            Road to 250
+                          </div>
+
+                          <div
+                            id="previewSupportText"
+                            class="widget-support"
+                          >
+                            Danke für euren Support ❤️
+                          </div>
+
+                        </div>
+
+
+                        <div class="widget-metric">
+
+                          <div
+                            id="previewValue"
+                            class="widget-value"
+                          >
+                            <strong>
+                              160
+                            </strong>
+                            / 250
+                          </div>
+
+                          <div
+                            id="previewPercent"
+                            class="widget-percent"
+                          >
+                            64%
+                          </div>
+
+                        </div>
+
+
+                      </div>
+
+
+                      <div
+                        id="previewProgress"
+                        class="widget-progress"
+                      >
+                        <span id="previewProgressBar"></span>
+                      </div>
+
+
+                    </div>
+
+
+
+                    <!-- =========================================
+                         AUTOTHANKS
+                         ========================================= -->
+
+
+                    <div
+                      id="thanksWidgetContent"
+                      class="widget-thanks"
+                      hidden
+                    >
+
+
+                      <div class="thanks-identity">
+
+
+                        <div
+                          id="thanksAvatar"
+                          class="thanks-avatar"
+                        >
+                          CFS
+                        </div>
+
+
+                        <div class="thanks-copy">
+
+
+                          <div
+                            id="thanksCreatorName"
+                            class="thanks-creator"
+                          >
+                            Creator
+                          </div>
+
+
+                          <div
+                            id="previewThanksMessage"
+                            class="thanks-message"
+                          >
+                            Danke
+                            <span class="thanks-name">
+                              Community
+                            </span>
+                            für deinen Support ❤️
+                          </div>
+
+
+                          <div
+                            id="previewThanksEvent"
+                            class="thanks-event"
+                          >
+                            SUPPORT
+                          </div>
+
+
+                        </div>
+
+
+                      </div>
+
+
+                    </div>
+
+
+                  </div>
+
+
+                </div>
+
+
+              </div>
+
+
+
+              <!-- ===============================================
+                   DATA
+                   =============================================== -->
+
+
+              <div class="data-card">
+
+
+                <div class="data-card-row">
+                  <span>Creator</span>
+                  <strong id="dataCreatorName">–</strong>
+                </div>
+
+
+                <div class="data-card-row">
+                  <span>TikTok Follower</span>
+                  <strong id="dataFollowers">–</strong>
+                </div>
+
+
+                <div class="data-card-row">
+                  <span>TikTok Profil-Likes</span>
+                  <strong id="dataLikes">–</strong>
+                </div>
+
+
+                <div class="data-card-row">
+                  <span>Aktuelles Widget</span>
+                  <strong id="dataWidgetType">FOLLOWER</strong>
+                </div>
+
+
+              </div>
+
+
+            </section>
+
+
+
+            <!-- =================================================
+                 STATUS
+                 ================================================= -->
+
+
+            <section class="panel">
+
+
+              <div class="mini-title">
+                TIKTOK-FIRST STATUS
+              </div>
+
+              <h3>
+                Widget-System
+              </h3>
+
+
+              <div class="phase-grid">
+
+
+                <div class="phase-card">
+
+                  <strong>
+                    Follower
+                  </strong>
+
+                  <span>
+                    Persönlicher TikTok-Followerstand
+                    und echtes Follower-Ziel.
+                  </span>
+
+                </div>
+
+
+                <div class="phase-card">
+
+                  <strong>
+                    Profil-Likes
+                  </strong>
+
+                  <span>
+                    Nutzt vorhandene TikTok Profil-Likes.
+                    Keine falsche Kennzeichnung als LIVE-Likes.
+                  </span>
+
+                </div>
+
+
+                <div class="phase-card">
+
+                  <strong>
+                    LIVE Bridge
+                  </strong>
+
+                  <span>
+                    Viewer, Gifts und AutoThanks sind
+                    vollständig als Studio-Widgets vorbereitet.
+                  </span>
+
+                </div>
+
+
+              </div>
+
+
+            </section>
+
+
+
+            <!-- =================================================
+                 EXISTING OBS
+                 ================================================= -->
+
+
+            <details class="legacy-obs">
+
+
+              <summary>
+                Bestehende Follower-OBS-Quelle · unverändert
+              </summary>
+
+
+              <div class="legacy-obs-inner">
+
+
+                <p class="helper">
+                  Die funktionierende OBS-Follower-Quelle bleibt
+                  getrennt vom neuen TikTok Widget Studio.
+                </p>
+
+
+                <div class="source-row">
+
+                  <input
+                    id="sourceUrl"
+                    type="text"
+                    readonly
+                    value="Widget-URL wird geladen…"
+                  >
+
+                  <button
+                    class="btn"
+                    id="copySourceBtn"
+                    type="button"
+                  >
+                    KOPIEREN
+                  </button>
+
+                </div>
+
+
+                <div class="source-actions">
+
+                  <button
+                    class="btn ghost"
+                    id="openSourceBtn"
+                    type="button"
+                  >
+                    ÖFFNEN
+                  </button>
+
+                  <button
+                    class="btn ghost"
+                    id="rotateSourceBtn"
+                    type="button"
+                  >
+                    SCHLÜSSEL ERNEUERN
+                  </button>
+
+                </div>
+
+
+              </div>
+
+
+            </details>
+
+
+          </div>
+
+
+        </section>
+
+
+      </div>
+
+
+    </section>
+
+
+  </div>
+
+
+</main>
+
+
+
+<footer class="footer">
+
+  <div class="container footer-row">
+
+    <div>
+      © cfs_zockt Creator Suite
+    </div>
+
+    <div>
+      DEIN STREAM. DEINE TOOLS. DEINE WELT.
+    </div>
+
+  </div>
+
+</footer>
+
+
+
+<script src="/assets/js/app.js"></script>
+
+<script src="/assets/js/page-editor.js"></script>
+
+</body>
+</html>

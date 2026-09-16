@@ -1,0 +1,364 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#020711">
+  <title>Admin Control Center | cfs_zockt</title>
+  <link rel="stylesheet" href="/assets/css/styles.css">
+  <link rel="stylesheet" href="/assets/css/admin-creators.css">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+</head>
+<body>
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="brand" href="/">cfs_<span>zockt</span></a>
+    <nav class="nav open" style="display:flex">
+      <a href="/pages/dashboard.html">DASHBOARD</a>
+      <a href="/pages/widget-studio.html">WIDGET STUDIO</a>
+      <a href="/pages/scene-studio.html">SCENE STUDIO</a>
+      <a class="active" href="/pages/admin-creators.html">ADMIN</a>
+      <button data-logout>LOGOUT</button>
+    </nav>
+  </div>
+</header>
+
+<main class="container admin-shell">
+  <section class="admin-hero admin-hero-simple">
+    <div>
+      <div class="eyebrow">CFS ROOT · BETA CONTROL</div>
+      <h1>Admin Control Center</h1>
+      <p>Creator verwalten, Beta prüfen und Releases kontrollieren – getrennt in klare Arbeitsbereiche.</p>
+    </div>
+    <button class="btn primary" id="adminRefresh">ALLES AKTUALISIEREN</button>
+  </section>
+
+  <section class="admin-root-access" id="adminRootAccess" aria-label="Root Zugriff">
+    <div class="admin-root-identity">
+      <span class="admin-root-dot" aria-hidden="true"></span>
+      <div>
+        <span class="admin-step">DEIN ADMIN-KONTO</span>
+        <strong id="adminRootName">Root-Zugriff wird geprüft…</strong>
+        <small id="adminRootAccessText">Alle nutzbaren Creator-Suite-Werkzeuge werden für Admin freigeschaltet.</small>
+      </div>
+    </div>
+    <div class="admin-root-badges" aria-label="Admin Freigaben">
+      <span>WIDGETS · VOLL</span>
+      <span>LIVE · VOLL</span>
+      <span>CUT STUDIO · VOLL</span>
+      <span>OBS · VOLL</span>
+      <span>TWITCH · ROADMAP</span>
+    </div>
+    <div class="admin-root-links">
+      <a href="/pages/widget-studio.html">Widget Studio</a>
+      <a href="/pages/cut-studio.html">Cut Studio</a>
+      <a href="/pages/system-check.html">Systemcheck</a>
+      <a href="/pages/dashboard.html">Creator Dashboard</a>
+    </div>
+  </section>
+
+  <section class="admin-security-stepup" aria-label="Admin Sicherheitsfreigabe">
+    <div class="admin-security-stepup-copy">
+      <span class="admin-step">PRIVILEGIERTE SCHREIBAKTIONEN</span>
+      <strong>Admin-Schutz <b id="adminElevationStatus">GESPERRT</b></strong>
+      <small id="adminElevationMeta">Änderungen an Creator-, Moderations-, Beta- und Release-Daten benötigen eine frische Passwortbestätigung.</small>
+    </div>
+    <div class="admin-security-stepup-form">
+      <input id="adminElevationPassword" type="password" autocomplete="current-password" maxlength="128" placeholder="Aktuelles Admin-Passwort">
+      <button class="btn primary" id="adminElevationUnlock" type="button">10 MIN. ENTSPERREN</button>
+      <button class="btn" id="adminElevationLock" type="button">SOFORT SPERREN</button>
+    </div>
+    <details class="admin-audit-details">
+      <summary>ADMIN-AUDIT ANZEIGEN</summary>
+      <div class="admin-audit-head"><div><small id="adminAuditMeta">Privilegierte Schreibaktionen werden ohne Request-Body, IP oder User-Agent protokolliert.</small><b id="adminAuditIntegrity" class="admin-audit-integrity">INTEGRITÄT WIRD GEPRÜFT</b></div><div class="admin-audit-actions"><button class="btn" id="refreshAdminAudit" type="button">AKTUALISIEREN</button><button class="btn" id="exportAdminAudit" type="button">FORENSIK-EXPORT</button></div></div>
+      <div id="adminAuditList" class="admin-audit-list"><div class="admin-empty">Audit wird geladen…</div></div>
+    </details>
+  </section>
+
+  <section class="admin-start" aria-label="Admin Schnellzugriff">
+    <div class="admin-start-head">
+      <div>
+        <span class="admin-step">SCHNELLZUGRIFF</span>
+        <h2>Was möchtest du machen?</h2>
+      </div>
+      <p>Öffne nur den Bereich, den du gerade brauchst. Technische Details bleiben sonst eingeklappt.</p>
+    </div>
+    <div class="admin-start-grid">
+      <button class="admin-start-card active" type="button" data-admin-open="adminCreatorsPanel">
+        <span class="admin-start-icon">01</span>
+        <strong>Creator verwalten</strong>
+        <small>Accounts, TikTok, Launcher, Widgets, Scenes & Beta</small>
+      </button>
+      <button class="admin-start-card" type="button" data-admin-open="adminReviewsPanel">
+        <span class="admin-start-icon">02</span>
+        <strong>Rezensionen moderieren</strong>
+        <small>Pending prüfen, Texte freigeben oder ablehnen</small>
+      </button>
+      <button class="admin-start-card" type="button" data-admin-open="adminSupportPanel">
+        <span class="admin-start-icon">03</span>
+        <strong>Support & Sicherheit</strong>
+        <small>Private Meldungen prüfen und bearbeiten</small>
+      </button>
+      <button class="admin-start-card" type="button" data-admin-open="adminBetaPanel">
+        <span class="admin-start-icon">04</span>
+        <strong>Beta prüfen</strong>
+        <small>Feedback, Test-Sessions & RC-Readiness</small>
+      </button>
+      <button class="admin-start-card" type="button" data-admin-open="adminProductionPanel">
+        <span class="admin-start-icon">05</span>
+        <strong>Production prüfen</strong>
+        <small>Config Doctor, Billing & Release Evidence</small>
+      </button>
+      <button class="admin-start-card" type="button" data-admin-open="adminReleasePanel">
+        <span class="admin-start-icon">06</span>
+        <strong>Release entscheiden</strong>
+        <small>Acceptance, Cohorts & GO / NO-GO</small>
+      </button>
+      <button class="admin-start-card" type="button" data-admin-open="adminIncidentPanel">
+        <span class="admin-start-icon">07</span>
+        <strong>Incident steuern</strong>
+        <small>Status, Wartung & Security Lockdown</small>
+      </button>
+    </div>
+  </section>
+
+  <section class="admin-overview">
+    <div class="admin-section-heading compact">
+      <div>
+        <span class="admin-step">STATUSÜBERSICHT</span>
+        <h2>Creator Suite auf einen Blick</h2>
+      </div>
+      <p>Diese Werte zeigen dir sofort, ob irgendwo Aufmerksamkeit nötig ist.</p>
+    </div>
+    <div class="admin-kpis">
+      <article><span>CREATOR</span><strong id="kCreators">–</strong></article>
+      <article><span>TIKTOK VERBUNDEN</span><strong id="kTikTok">–</strong></article>
+      <article><span>SYNC FRISCH</span><strong id="kSync">–</strong></article>
+      <article><span>LAUNCHER ONLINE</span><strong id="kLauncher">–</strong></article>
+      <article><span>BETA AKTIV</span><strong id="kBeta">–</strong></article>
+      <article><span>LIVE JETZT</span><strong id="kLive">–</strong></article>
+    </div>
+  </section>
+
+  <section class="admin-focus" aria-label="Heute wichtig">
+    <div class="admin-section-heading compact">
+      <div><span class="admin-step">HEUTE WICHTIG</span><h2>Was braucht deine Aufmerksamkeit?</h2></div>
+      <p>Nur Auffälligkeiten und offene Aufgaben – keine technischen Detailwände.</p>
+    </div>
+    <div class="admin-focus-grid">
+      <button type="button" data-admin-open="adminCreatorsPanel"><strong id="focusAttention">–</strong><span>Creator prüfen</span><small>Readiness unter 75 %</small></button>
+      <button type="button" data-admin-open="adminCreatorsPanel"><strong id="focusTikTok">–</strong><span>TikTok prüfen</span><small>nicht verbunden / Sync alt</small></button>
+      <button type="button" data-admin-open="adminCreatorsPanel"><strong id="focusLauncher">–</strong><span>Launcher prüfen</span><small>nicht online</small></button>
+      <button type="button" data-admin-open="adminBetaPanel"><strong id="focusFeedback">–</strong><span>Beta Feedback</span><small>offene Meldungen</small></button>
+      <button type="button" data-admin-open="adminReviewsPanel"><strong id="focusReviews">–</strong><span>Rezensionen</span><small>wartet auf Moderation</small></button>
+      <button type="button" data-admin-open="adminSupportPanel"><strong id="focusSupportReports">–</strong><span>Support / Security</span><small>neu oder kritisch</small></button>
+    </div>
+  </section>
+
+  <details class="admin-workspace admin-creators-workspace" id="adminCreatorsPanel" open>
+    <summary class="admin-workspace-summary">
+      <span class="admin-workspace-number">01</span>
+      <span class="admin-workspace-copy"><strong>Creator verwalten</strong><small>Der wichtigste Bereich für den täglichen Admin-Alltag.</small></span>
+      <span class="admin-workspace-toggle">ÖFFNEN</span>
+    </summary>
+    <div class="admin-workspace-body">
+      <div class="admin-section-heading">
+        <div><span class="admin-step">CREATOR</span><h2>Accounts & Status</h2></div>
+        <p>Suche zuerst einen Creator. Details und Aktionen erscheinen rechts neben der Liste.</p>
+      </div>
+      <section class="admin-toolbar" aria-label="Creator filtern">
+        <input id="adminSearch" placeholder="Creator, E-Mail oder TikTok suchen…">
+        <select id="adminPlan"><option value="all">ALLE PLÄNE</option><option value="free">FREE</option><option value="creator">CREATOR</option><option value="pro">PRO</option></select>
+        <select id="adminBeta"><option value="all">ALLE BETA</option><option value="active">BETA AKTIV</option><option value="paused">BETA PAUSIERT</option><option value="none">KEIN BETA</option></select>
+        <select id="adminHealth"><option value="all">ALLE STATUS</option><option value="ready">READY ≥75%</option><option value="attention">BRAUCHT PRÜFUNG</option></select>
+      </section>
+      <section class="admin-layout">
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead><tr><th>CREATOR</th><th>VERBINDUNGEN</th><th>INHALTE</th><th>READY</th><th>BETA</th></tr></thead>
+            <tbody id="adminRows"></tbody>
+          </table>
+        </div>
+        <aside class="admin-detail" id="adminDetail"><div class="admin-empty">Creator auswählen.</div></aside>
+      </section>
+    </div>
+  </details>
+
+  <details class="admin-workspace admin-reviews" id="adminReviewsPanel">
+    <summary class="admin-workspace-summary">
+      <span class="admin-workspace-number">02</span>
+      <span class="admin-workspace-copy"><strong>Rezensionen moderieren</strong><small>Öffentliche Merch-Rückmeldungen prüfen, freigeben oder ablehnen.</small></span>
+      <span class="admin-workspace-toggle">ÖFFNEN</span>
+    </summary>
+    <div class="admin-workspace-body">
+      <div class="admin-section-heading">
+        <div><span class="admin-step">COMMUNITY FEEDBACK</span><h2>Rezensions-Moderation</h2></div>
+        <p>Strukturierte Bewertungen zählen automatisch. Freitext bleibt Pending, bis du ihn ausdrücklich freigibst.</p>
+      </div>
+      <section class="admin-kpis review-kpis" aria-label="Rezensionsstatus">
+        <article><span>GESAMT</span><strong id="kReviewsTotal">–</strong></article>
+        <article><span>PENDING</span><strong id="kReviewsPending">–</strong></article>
+        <article><span>APPROVED</span><strong id="kReviewsApproved">–</strong></article>
+        <article><span>REJECTED</span><strong id="kReviewsRejected">–</strong></article>
+        <article><span>MIT KOMMENTAR</span><strong id="kReviewsComments">–</strong></article>
+      </section>
+      <section class="review-toolbar" aria-label="Rezensionen filtern">
+        <select id="reviewStatus"><option value="pending">PENDING</option><option value="approved">APPROVED</option><option value="rejected">REJECTED</option><option value="all">ALLE</option></select>
+        <input id="reviewSearch" maxlength="80" placeholder="Nickname, Kommentar oder Admin-Notiz suchen…">
+        <button class="btn" id="refreshReviews">REZENSIONEN LADEN</button>
+      </section>
+      <div class="review-admin-note">Keine erfundenen Bewertungen: Hier erscheinen ausschließlich Datensätze aus <code>public_reviews</code>. Abgelehnte Freitexte werden nicht öffentlich angezeigt.</div>
+      <section id="reviewAdminList" class="review-admin-list" aria-live="polite"><div class="admin-empty">Rezensionen werden geladen…</div></section>
+    </div>
+  </details>
+
+  <details class="admin-workspace admin-support-reports" id="adminSupportPanel">
+    <summary class="admin-workspace-summary">
+      <span class="admin-workspace-number">03</span>
+      <span class="admin-workspace-copy"><strong>Support & Sicherheit</strong><small>Private Website-Meldungen prüfen, priorisieren und abschließen.</small></span>
+      <span class="admin-workspace-toggle">ÖFFNEN</span>
+    </summary>
+    <div class="admin-workspace-body">
+      <div class="admin-section-heading">
+        <div><span class="admin-step">PRIVATE MELDUNGEN</span><h2>Support- & Security-Inbox</h2></div>
+        <p>Diese Meldungen sind nie öffentlich. Kritische Security-Meldungen werden zuerst sortiert.</p>
+      </div>
+      <section class="admin-kpis support-kpis" aria-label="Supportstatus">
+        <article><span>GESAMT</span><strong id="kSupportTotal">–</strong></article>
+        <article><span>NEU</span><strong id="kSupportNew">–</strong></article>
+        <article><span>IN PRÜFUNG</span><strong id="kSupportReviewing">–</strong></article>
+        <article><span>ERLEDIGT</span><strong id="kSupportResolved">–</strong></article>
+        <article><span>SECURITY NEU</span><strong id="kSupportSecurity">–</strong></article>
+        <article><span>KRITISCH OFFEN</span><strong id="kSupportCritical">–</strong></article>
+      </section>
+      <section class="support-admin-toolbar" aria-label="Support-Meldungen filtern">
+        <select id="supportReportStatus"><option value="new">NEU</option><option value="reviewing">IN PRÜFUNG</option><option value="resolved">ERLEDIGT</option><option value="rejected">ABGEWIESEN</option><option value="all">ALLE</option></select>
+        <select id="supportReportCategory"><option value="all">ALLE BEREICHE</option><option value="security">SICHERHEIT</option><option value="account">ACCOUNT</option><option value="privacy">DATENSCHUTZ</option><option value="technical">TECHNIK</option><option value="other">SONSTIGES</option></select>
+        <input id="supportReportSearch" maxlength="100" placeholder="Thema, Beschreibung, E-Mail oder Admin-Notiz…">
+        <button class="btn" id="refreshSupportReports">MELDUNGEN LADEN</button>
+      </section>
+      <div class="review-admin-note">Keine Secrets zurückkopieren: Passwörter, Tokens oder Recovery-Codes gehören weder in Admin-Notizen noch in Antworten. Kontakt-E-Mails sind nur für die Bearbeitung der jeweiligen Meldung gedacht.</div>
+      <section id="supportAdminList" class="support-admin-list" aria-live="polite"><div class="admin-empty">Support-Meldungen werden geladen…</div></section>
+      <section class="csp-telemetry" aria-label="CSP Security Telemetrie">
+        <div class="admin-section-heading compact">
+          <div><span class="admin-step">BROWSER SECURITY TELEMETRIE</span><h2>CSP-Verstöße</h2></div>
+          <button class="btn" id="refreshCspReports" type="button">TELEMETRIE LADEN</button>
+        </div>
+        <div class="review-admin-note">Datensparsam aggregiert: keine rohe IP, kein User-Agent, keine Query-Strings und tokenartige Pfadsegmente werden normalisiert. Die Telemetrie dient dazu, echte CSP-Probleme zu finden – nicht zum Besuchertracking.</div>
+        <section class="admin-kpis csp-kpis">
+          <article><span>MELDUNGEN</span><strong id="kCspOccurrences">–</strong></article>
+          <article><span>MUSTER</span><strong id="kCspPatterns">–</strong></article>
+          <article><span>AKTIV 24H</span><strong id="kCspActive">–</strong></article>
+          <article><span>EXTERN BLOCKIERT</span><strong id="kCspExternal">–</strong></article>
+        </section>
+        <section id="cspAdminList" class="csp-admin-list" aria-live="polite"><div class="admin-empty">CSP-Telemetrie wird geladen…</div></section>
+      </section>
+    </div>
+  </details>
+
+  <details class="admin-workspace admin-beta-center" id="adminBetaPanel">
+    <summary class="admin-workspace-summary">
+      <span class="admin-workspace-number">04</span>
+      <span class="admin-workspace-copy"><strong>Beta prüfen</strong><small>Feedback und Test-Sessions nur öffnen, wenn du sie bearbeiten möchtest.</small></span>
+      <span class="admin-workspace-toggle">ÖFFNEN</span>
+    </summary>
+    <div class="admin-workspace-body">
+      <div class="admin-beta-head admin-section-heading">
+        <div><div class="eyebrow">V27 · BETA FEEDBACK & RC</div><h2>Beta Inbox</h2><p>Test-Sessions, reproduzierbare Bugs und Release-Candidate-Readiness.</p></div>
+        <button class="btn" id="refreshBetaInbox">BETA DATEN LADEN</button>
+      </div>
+      <section class="admin-kpis beta-kpis">
+        <article><span>OFFENES FEEDBACK</span><strong id="kFeedbackOpen">–</strong></article>
+        <article><span>CRITICAL</span><strong id="kFeedbackCritical">–</strong></article>
+        <article><span>HIGH</span><strong id="kFeedbackHigh">–</strong></article>
+        <article><span>TESTSESSIONS</span><strong id="kBetaSessions">–</strong></article>
+        <article><span>GETESTETE CREATOR</span><strong id="kTestedCreators">–</strong></article>
+        <article><span>RC SCORE</span><strong id="kRcScore">–</strong></article>
+      </section>
+      <div class="rc-card" id="rcCard"><strong>RELEASE CANDIDATE</strong><span id="rcStatus">Wird geladen…</span><div id="rcChecks"></div></div>
+      <div class="beta-admin-columns">
+        <section class="admin-beta-box">
+          <div class="admin-beta-box-head"><strong>FEEDBACK INBOX</strong><select id="feedbackFilter"><option value="open">OFFEN</option><option value="all">ALLE</option><option value="critical">CRITICAL</option><option value="high">HIGH</option><option value="fixed">FIXED</option></select></div>
+          <div id="feedbackInbox" class="feedback-inbox"></div>
+        </section>
+        <section class="admin-beta-box">
+          <div class="admin-beta-box-head"><strong>LETZTE TESTSESSIONS</strong></div>
+          <div id="betaSessionList" class="beta-session-list"></div>
+        </section>
+      </div>
+    </div>
+  </details>
+
+  <details class="admin-workspace admin-production" id="adminProductionPanel">
+    <summary class="admin-workspace-summary">
+      <span class="admin-workspace-number">05</span>
+      <span class="admin-workspace-copy"><strong>Production prüfen</strong><small>Config, Billing und Evidence für technische Abnahmen.</small></span>
+      <span class="admin-workspace-toggle">ÖFFNEN</span>
+    </summary>
+    <div class="admin-workspace-body">
+      <div class="prod-head admin-section-heading">
+        <div><div class="eyebrow">V41 · PRODUCTION EVIDENCE & CONFIG</div><h2>Readiness, Billing & Release Proof</h2><p>Externe Gates werden mit nachvollziehbarer Evidence pro Release geführt.</p></div>
+        <button class="btn" id="refreshProduction">PRODUCTION DATEN LADEN</button>
+      </div>
+      <div class="prod-grid">
+        <article class="prod-card"><span>PRODUCTION SCORE</span><div class="prod-score" id="prodScore">–</div><div id="prodChecks"></div></article>
+        <article class="prod-card"><span>RUNTIME CONFIG DOCTOR</span><div class="config-doctor-score" id="configDoctorScore">–</div><div id="configDoctorChecks" class="config-doctor-checks"></div></article>
+        <article class="prod-card"><span>BILLING SUBSCRIPTIONS</span><div class="stripe-testmode-card"><small>STRIPE TESTMODE E2E</small><strong id="stripeTestmodeStatus">–</strong><span id="stripeTestmodeChecks"></span></div><div id="billingAdminList" class="billing-admin-list"></div></article>
+        <article class="prod-card prod-evidence-card"><span>RELEASE EVIDENCE</span><div class="evidence-form"><select id="prodEvidenceKind"></select><select id="prodEvidenceStatus"><option value="verified">VERIFIED</option><option value="failed">FAILED</option><option value="revoked">REVOKED</option></select><input id="prodEvidenceSource" maxlength="80" value="manual" placeholder="Quelle, z. B. github / windows-test"><input id="prodEvidenceReference" maxlength="500" placeholder="Run-URL / Ticket / Referenz"><input id="prodEvidenceSha" maxlength="64" placeholder="Artifact SHA256 optional"><textarea id="prodEvidenceNotes" maxlength="4000" placeholder="Was wurde real geprüft? Gerät, Ablauf, Ergebnis…"></textarea><button class="btn primary" id="saveProductionEvidence">EVIDENCE SPEICHERN</button></div><div id="prodEvidenceList" class="prod-evidence-list"></div></article>
+      </div>
+    </div>
+  </details>
+
+  <details class="admin-workspace admin-release-ops" id="adminReleasePanel">
+    <summary class="admin-workspace-summary">
+      <span class="admin-workspace-number">06</span>
+      <span class="admin-workspace-copy"><strong>Release entscheiden</strong><small>Acceptance, Beta-Cohorts und finale GO / NO-GO-Entscheidung.</small></span>
+      <span class="admin-workspace-toggle">ÖFFNEN</span>
+    </summary>
+    <div class="admin-workspace-body">
+      <div class="release-ops-head admin-section-heading">
+        <div><div class="eyebrow">V39 · RELEASE OPERATIONS</div><h2>GO / NO-GO Control</h2><p>Windows-, Updater-, Stripe-, OBS- und TikTok-Abnahmen gebündelt in einem Release-Gate.</p></div>
+        <button class="btn" id="refreshReleaseOps">RELEASE OPS LADEN</button>
+      </div>
+      <div class="release-ops-grid">
+        <article class="release-ops-card"><span>AUTOMATISCHE EMPFEHLUNG</span><div class="release-go-status" id="releaseGoStatus">–</div><div class="release-go-score" id="releaseGoScore">–</div><div id="releaseGoChecks"></div></article>
+        <article class="release-ops-card"><span>ACCEPTANCE PROTOKOLL</span><select id="acceptanceProtocol"></select><div id="acceptanceSteps" class="acceptance-steps"></div><input id="acceptanceTarget" placeholder="Testgerät / Ziel"><input id="acceptanceReference" placeholder="Run / Ticket / Referenz"><textarea id="acceptanceNotes" placeholder="Abnahme-Notizen"></textarea><button class="btn primary" id="saveAcceptance">ACCEPTANCE SPEICHERN</button></article>
+        <article class="release-ops-card release-cohort-card"><span>BETA COHORTS</span><div class="cohort-create"><select id="cohortStage"><option value="pilot">PILOT · 5</option><option value="expanded">EXPANDED · 20</option></select><input id="cohortName" placeholder="Cohort Name"><input id="cohortTarget" type="number" min="1" max="100" value="5"><button class="btn" id="createCohort">COHORT ERSTELLEN</button></div><div id="releaseCohortList" class="release-cohort-list"></div></article>
+        <article class="release-ops-card"><span>FINALE ENTSCHEIDUNG</span><select id="releaseDecision"><option value="hold">HOLD</option><option value="no_go">NO-GO</option><option value="go">GO</option></select><textarea id="releaseDecisionRationale" placeholder="Warum ist dieser Release GO / HOLD / NO-GO?"></textarea><button class="btn primary" id="saveReleaseDecision">ENTSCHEIDUNG SPEICHERN</button><div id="releaseDecisionHistory" class="release-decision-history"></div></article>
+      </div>
+    </div>
+  </details>
+
+  <details class="admin-workspace admin-incident" id="adminIncidentPanel">
+    <summary class="admin-workspace-summary">
+      <span class="admin-workspace-number">07</span>
+      <span class="admin-workspace-copy"><strong>Incident & Notfallmodus</strong><small>Öffentlichen Status setzen und riskante Schreibwege kontrolliert einfrieren.</small></span>
+      <span class="admin-workspace-toggle">ÖFFNEN</span>
+    </summary>
+    <div class="admin-workspace-body">
+      <div class="admin-section-heading">
+        <div><div class="eyebrow">PASS 20 · INCIDENT RESPONSE</div><h2>Website Write-Freeze</h2><p>Die Website und der private Support bleiben erreichbar. Wartung oder Security Lockdown pausieren gezielt Creator-/Account-/Review-/Billing-Schreibwege.</p></div>
+        <button class="btn" id="refreshIncidentState" type="button">STATUS LADEN</button>
+      </div>
+      <div class="incident-admin-grid">
+        <article class="incident-admin-card">
+          <span>AKTUELLER STATUS</span>
+          <strong id="incidentCurrentMode">WIRD GELADEN</strong>
+          <small id="incidentCurrentMeta">Notfallstatus wird geprüft.</small>
+        </article>
+        <article class="incident-admin-card incident-admin-controls">
+          <label><span>MODUS</span><select id="incidentMode"><option value="normal">NORMAL</option><option value="degraded">DEGRADED</option><option value="maintenance">WARTUNG</option><option value="security_lockdown">SECURITY LOCKDOWN</option></select></label>
+          <label><span>ÖFFENTLICHE MELDUNG</span><textarea id="incidentPublicMessage" maxlength="240" placeholder="Kurz, sachlich und ohne interne Details."></textarea></label>
+          <label class="incident-revoke"><input id="incidentRevokeSessions" type="checkbox"> <span>Bei SECURITY LOCKDOWN alle anderen Login-Sitzungen widerrufen</span></label>
+          <button class="btn primary" id="saveIncidentState" type="button">INCIDENT-STATUS SPEICHERN</button>
+          <small>Änderungen benötigen den 10-Minuten-Admin-Step-up und werden im manipulations-erkennbaren Admin-Audit protokolliert.</small>
+        </article>
+      </div>
+    </div>
+  </details>
+</main>
+<div class="admin-toast" id="adminToast" hidden></div>
+<script src="/assets/js/app.js"></script>
+<script src="/assets/js/admin-creators.js"></script>
+</body>
+</html>
