@@ -7,18 +7,40 @@
 <link rel="stylesheet" href="/assets/css/styles.css">
   <meta name="robots" content="noindex,nofollow,noarchive">
 </head>
-<body>
-<header class="site-header"><div class="container header-inner">
-<a class="brand" href="/">cfs_<span>zockt</span></a>
-<nav class="nav open" style="display:flex">
-<a href="/pages/dashboard.html">DASHBOARD</a>
-<a href="/pages/games.html">SPIELE</a>
-<a href="/pages/audio-studio.html" class="active">AUDIO</a>
-<a href="/pages/integrations.html">INTEGRATIONEN</a>
-<a href="/pages/nexus.html">NEXUS</a>
-<a href="/pages/account.html">ACCOUNT</a>
-<button data-logout>LOGOUT</button>
-</nav></div></header>
+<body class="creator-workspace">
+<header class="site-header creator-site-header">
+  <div class="container header-inner creator-header-inner">
+    <a class="creator-brand" href="/pages/dashboard.html" aria-label="cfs_zockt Creator Suite Dashboard">
+      <img class="creator-brand-logo" src="/assets/img/logo-header.png" alt="cfs_zockt">
+      <span>CREATOR SUITE</span>
+    </a>
+    <button class="mobile-toggle creator-mobile-toggle" data-mobile-toggle id="mobileNavToggle" type="button">MENÜ</button>
+    <nav class="nav creator-nav" data-nav data-creator-nav id="mainNav" aria-label="Creator Suite Navigation">
+      <a data-creator-link href="/pages/dashboard.html">DASHBOARD</a>
+<a data-creator-link href="/pages/widget-studio.html">WIDGETS</a>
+<a data-creator-link href="/pages/tiktok.html">TIKTOK</a>
+<a data-creator-link href="/pages/integrations.html">INTEGRATIONEN</a>
+<a data-creator-link href="/pages/launcher.html">LAUNCHER</a>
+<a data-creator-link href="/pages/account.html">ACCOUNT</a>
+      <details class="creator-nav-more" data-creator-more>
+        <summary>MEHR</summary>
+        <div class="creator-nav-more-menu">
+          <a data-creator-link href="/pages/scene-studio.html">SCENE STUDIO</a>
+<a data-creator-link href="/pages/editor.html">CREATOR EDITOR</a>
+<a data-creator-link href="/pages/games.html">GAMES</a>
+<a data-creator-link href="/pages/cut-studio.html">CUT STUDIO</a>
+<a data-creator-link href="/pages/nexus.html">NEXUS</a>
+<a data-creator-link href="/pages/audio-studio.html">AUDIO STUDIO</a>
+<a data-creator-link href="/pages/setup.html">SETUP</a>
+<a data-creator-link href="/pages/settings.html">EINSTELLUNGEN</a>
+<a data-creator-link href="/pages/launcher-connect.html">GERÄT VERBINDEN</a>
+<a data-creator-link href="/">ÖFFENTLICHE WEBSITE</a>
+        </div>
+      </details>
+      <button class="creator-logout" data-logout type="button">LOGOUT</button>
+    </nav>
+  </div>
+</header>
 
 <main class="container">
 <section class="page-hero">

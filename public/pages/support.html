@@ -30,99 +30,130 @@
   <meta name="twitter:image" content="https://cfs-zockt.de/assets/img/social-preview.jpg">
   <!-- /SEO · WEBSITE PASS -->
 </head>
-<body>
-<header class="site-header"><div class="container header-inner">
-  <a class="brand" href="/">cfs_<span>zockt</span></a>
-  <button class="mobile-toggle" data-mobile-toggle>MENÜ</button>
-  <nav class="nav" data-nav>
-    <a href="/">HOME</a>
-    <a href="/pages/security.html">SICHERHEIT</a>
-    <a class="active" href="/pages/support.html">SUPPORT</a>
-    <a class="cta" href="/pages/login.html#regForm">KOSTENLOS STARTEN</a>
-  </nav>
-</div></header>
-
-<main class="container support-shell">
-  <section class="page-hero support-hero">
-    <div class="eyebrow">SUPPORT · PRIVAT MELDEN</div>
-    <h1>PROBLEM GEFUNDEN?<br><span>SAG ES UNS KLAR.</span></h1>
-    <p>Für Account-, Datenschutz-, technische und Sicherheitsprobleme gibt es einen privaten Meldeweg. Deine Meldung erscheint nicht öffentlich.</p>
+<body class="public-marketing public-content-page">
+<header class="site-header brand-header public-site-header">
+<div class="container header-inner brand-header-inner">
+<a aria-label="cfs_zockt Startseite" class="brand brand-logo-link" href="/">
+<img alt="cfs_zockt" data-logo-fallback="" src="/assets/img/brand/cfs-zockt-logo.png"/>
+<span class="brand-logo-fallback" hidden="">cfs_zockt</span>
+</a>
+<button aria-label="Navigation öffnen" class="mobile-toggle" data-mobile-toggle="" type="button">MENÜ</button>
+<nav aria-label="Hauptnavigation" class="nav brand-nav public-nav" data-nav="">
+<a href="/">START</a>
+<a href="/pages/creator-suite.html">CREATOR SUITE</a>
+<a href="/pages/creator-suite.html#widget-studio">WIDGETS</a>
+<a href="/pages/creator-suite.html#games">GAMES</a>
+<a href="/pages/creator-suite.html#launcher">LAUNCHER</a>
+<a href="/pages/plans.html">PLÄNE</a>
+<a href="/pages/roadmap.html">ROADMAP</a>
+<a href="/pages/security.html">SICHERHEIT</a>
+<a aria-current="page" class="active" href="/pages/support.html">SUPPORT</a>
+<a data-login-link="" href="/pages/login.html">ANMELDEN</a>
+<a class="cta" data-auth-cta="" href="/pages/login.html#regForm">KOSTENLOS STARTEN</a>
+</nav>
+</div>
+</header>
+<main class="container support-shell info-hub-shell">
+  <section class="page-hero support-hero info-hub-hero">
+    <div class="eyebrow">SUPPORT · HILFE · PRIVATE MELDUNG</div>
+    <h1>HILFE, DIE DICH<br><span>DIREKT WEITERBRINGT.</span></h1>
+    <p>Starte mit dem passenden Weg: Systemstatus prüfen, Account selbst verwalten, Recovery nutzen oder ein technisches bzw. Sicherheitsproblem privat melden.</p>
     <div class="support-hero-actions">
-      <a class="btn primary" href="#support-report">MELDUNG SENDEN</a>
-      <a class="btn" href="/pages/security.html">SCHUTZMASSNAHMEN ANSEHEN</a>
+      <a class="btn primary" href="#support-report">PROBLEM PRIVAT MELDEN</a>
+      <a class="btn" href="/api/public/status">SYSTEMSTATUS PRÜFEN</a>
     </div>
+  </section>
+
+  <section class="info-shortcut-grid" aria-label="Schnelle Hilfe">
+    <a href="/api/public/status"><span>01 · STATUS</span><strong>Ist cfs_zockt online?</strong><p>Öffentlichen Dienststatus prüfen, bevor du einen Fehler meldest.</p><b>STATUS ÖFFNEN →</b></a>
+    <a href="/pages/account.html"><span>02 · ACCOUNT</span><strong>Sessions &amp; Konto verwalten</strong><p>Aktive Sitzungen, TikTok-Verbindung, Sicherheitsoptionen und Account-Kontrolle.</p><b>ACCOUNT ÖFFNEN →</b></a>
+    <a href="/pages/forgot-password.html"><span>03 · RECOVERY</span><strong>Passwort vergessen?</strong><p>Nutze den vorgesehenen Recovery-Weg. Support fragt niemals nach deinem Passwort.</p><b>RECOVERY ÖFFNEN →</b></a>
+    <a href="/pages/security.html"><span>04 · SECURITY</span><strong>Sicherheitsmodell ansehen</strong><p>Aktive Schutzschichten, private Meldung und standardisierter Disclosure-Einstieg.</p><b>SICHERHEIT →</b></a>
   </section>
 
   <section class="support-principles" aria-label="Support Grundsätze">
     <article><span>PRIVAT</span><strong>Nicht öffentlich sichtbar</strong><p>Support- und Sicherheitsmeldungen werden getrennt von öffentlichen Rezensionen gespeichert.</p></article>
     <article><span>DATENSPARSAM</span><strong>Keine rohe IP im Datensatz</strong><p>Für Missbrauchsschutz wird ein serverseitiger HMAC-Hash verwendet; die rohe IP wird nicht als Support-Datensatz gespeichert.</p></article>
-    <article><span>KEINE SECRETS</span><strong>Passwörter und Tokens nie mitsenden</strong><p>Passwörter, Tokens, Recovery-Codes, private Schlüssel und typische Secret-Muster werden bereits vor dem Speichern erkannt und abgewiesen.</p></article>
-    <article><span>TRANSPARENT</span><strong>Keine Sofort-Antwort versprochen</strong><p>Das Formular bestätigt die Speicherung. Eine Reaktionszeit wird nicht erfunden oder garantiert.</p></article>
+    <article><span>KEINE SECRETS</span><strong>Passwörter und Tokens nie mitsenden</strong><p>Passwörter, Tokens, Recovery-Codes, private Schlüssel und typische Secret-Muster werden vor dem Speichern erkannt und abgewiesen.</p></article>
+    <article><span>TRANSPARENT</span><strong>Keine erfundene Reaktionszeit</strong><p>Das Formular bestätigt die Speicherung. Eine konkrete Antwortzeit wird nicht versprochen, wenn sie nicht garantiert werden kann.</p></article>
   </section>
 
   <section class="support-grid">
     <div class="support-help-column">
       <div class="section-head">
-        <div class="eyebrow">SCHNELL EINORDNEN</div>
-        <h2>WORUM GEHT ES?</h2>
-        <p>Je klarer die Meldung, desto besser lässt sie sich prüfen.</p>
+        <div class="eyebrow">VOR DEM ABSENDEN</div>
+        <h2>SO WIRD DEINE MELDUNG HILFREICH.</h2>
+        <p>Ein paar klare Angaben reichen. Geheimnisse gehören nie in eine Support-Nachricht.</p>
       </div>
       <div class="support-topic-list">
-        <article><strong>Sicherheitsproblem</strong><p>Verdächtiges Verhalten, mögliche Schwachstelle, unerwarteter Zugriff oder Schutzmechanismus, der nicht wie erwartet arbeitet.</p></article>
-        <article><strong>Account & Login</strong><p>Registrierung, Login, Session, Geräte oder Zugriff auf dein Creator-Konto.</p></article>
-        <article><strong>Datenschutz</strong><p>Fragen oder Probleme rund um personenbezogene Daten und Datenschutzfunktionen.</p></article>
-        <article><strong>Technik</strong><p>Website, Launcher, Widget Studio, Stream Board, Browser Source oder sonstige technische Fehler.</p></article>
+        <article><strong>1. Betroffenen Bereich nennen</strong><p>Zum Beispiel Login, Dashboard, Widget Studio, Launcher, TikTok, Games oder eine konkrete öffentliche Seite.</p></article>
+        <article><strong>2. Erwartung und Ergebnis trennen</strong><p>Schreibe kurz, was du erwartet hast und was tatsächlich passiert ist.</p></article>
+        <article><strong>3. Reproduktion beschreiben</strong><p>Nenne die Schritte bis zum Problem. Browser oder Betriebssystem nur dann, wenn es für den Fehler relevant ist.</p></article>
+        <article><strong>4. Keine Zugangsdaten senden</strong><p>Keine Passwörter, Tokens, Recovery-Codes, API-Keys oder private Schlüssel einfügen.</p></article>
       </div>
       <div class="support-emergency-note">
         <strong>Wenn ein Geheimnis offengelegt wurde:</strong>
         <p>Ändere bzw. widerrufe das betroffene Passwort oder Token zuerst. Sende das Geheimnis selbst nicht über dieses Formular.</p>
       </div>
+      <div class="info-mini-links">
+        <a href="/.well-known/security.txt"><strong>Security Research</strong><span>security.txt öffnen →</span></a>
+        <a href="/pages/datenschutz.html"><strong>Datenschutz</strong><span>Verarbeitung nachlesen →</span></a>
+        <a href="/pages/roadmap.html"><strong>Roadmap</strong><span>Beta/Preview prüfen →</span></a>
+      </div>
     </div>
 
-    <section class="support-report-card" id="support-report" aria-labelledby="supportReportTitle">
-      <div class="support-report-head">
-        <span>PRIVATE MELDUNG</span>
-        <h2 id="supportReportTitle">PROBLEM BESCHREIBEN</h2>
-        <p>Pflichtfelder sind Bereich, Dringlichkeit, Thema und Beschreibung. Eine Kontakt-E-Mail ist optional.</p>
-      </div>
-      <form data-support-report novalidate>
-        <div class="support-form-grid">
-          <label><span>Bereich</span><select name="category" required>
-            <option value="security">Sicherheit</option>
-            <option value="account">Account / Login</option>
-            <option value="privacy">Datenschutz</option>
-            <option value="technical" selected>Technisches Problem</option>
-            <option value="other">Sonstiges</option>
-          </select></label>
-          <label><span>Dringlichkeit</span><select name="priority" required>
-            <option value="normal" selected>Normal</option>
-            <option value="high">Hoch</option>
-            <option value="critical">Kritisch</option>
-          </select></label>
-        </div>
-        <label><span>Kontakt-E-Mail <small>optional</small></span><input name="contact_email" type="email" maxlength="254" autocomplete="email" placeholder="du@beispiel.at"></label>
-        <label><span>Thema</span><input name="subject" maxlength="140" required placeholder="Kurz und konkret – was ist passiert?"></label>
-        <label><span>Beschreibung</span><textarea name="message" minlength="20" maxlength="4000" rows="9" required placeholder="Was ist passiert? Welche Seite/Funktion war betroffen? Was hast du erwartet? Wie lässt es sich reproduzieren? Bitte keine Passwörter oder Tokens einfügen."></textarea></label>
-        <label class="support-honeypot" aria-hidden="true"><span>Website</span><input name="website" tabindex="-1" autocomplete="off"></label>
-        <div class="support-form-notice">Mit dem Absenden wird die Meldung zur Bearbeitung gespeichert. Wenn du eine E-Mail angibst, wird sie ausschließlich als Kontaktangabe innerhalb dieser Meldung gespeichert. Nach erfolgreicher Speicherung erhältst du eine kurze Referenz für Rückfragen. Siehe <a href="/pages/datenschutz.html">Datenschutz</a>.</div>
-        <div class="support-form-actions">
-          <button class="btn primary" type="submit" data-support-submit>MELDUNG PRIVAT SENDEN</button>
-          <p data-support-status role="status" aria-live="polite">Noch nichts gesendet.</p>
-        </div>
-      </form>
-    </section>
+    <section aria-labelledby="supportReportTitle" class="support-report-card" id="support-report">
+<div class="support-report-head">
+<span>PRIVATE MELDUNG</span>
+<h2 id="supportReportTitle">PROBLEM BESCHREIBEN</h2>
+<p>Pflichtfelder sind Bereich, Dringlichkeit, Thema und Beschreibung. Eine Kontakt-E-Mail ist optional.</p>
+</div>
+<form data-support-report="" novalidate="">
+<div class="support-form-grid">
+<label><span>Bereich</span><select name="category" required="">
+<option value="security">Sicherheit</option>
+<option value="account">Account / Login</option>
+<option value="privacy">Datenschutz</option>
+<option selected="" value="technical">Technisches Problem</option>
+<option value="other">Sonstiges</option>
+</select></label>
+<label><span>Dringlichkeit</span><select name="priority" required="">
+<option selected="" value="normal">Normal</option>
+<option value="high">Hoch</option>
+<option value="critical">Kritisch</option>
+</select></label>
+</div>
+<label><span>Kontakt-E-Mail <small>optional</small></span><input autocomplete="email" maxlength="254" name="contact_email" placeholder="du@beispiel.at" type="email"/></label>
+<label><span>Thema</span><input maxlength="140" name="subject" placeholder="Kurz und konkret – was ist passiert?" required=""/></label>
+<label><span>Beschreibung</span><textarea maxlength="4000" minlength="20" name="message" placeholder="Was ist passiert? Welche Seite/Funktion war betroffen? Was hast du erwartet? Wie lässt es sich reproduzieren? Bitte keine Passwörter oder Tokens einfügen." required="" rows="9"></textarea></label>
+<label aria-hidden="true" class="support-honeypot"><span>Website</span><input autocomplete="off" name="website" tabindex="-1"/></label>
+<div class="support-form-notice">Mit dem Absenden wird die Meldung zur Bearbeitung gespeichert. Wenn du eine E-Mail angibst, wird sie ausschließlich als Kontaktangabe innerhalb dieser Meldung gespeichert. Nach erfolgreicher Speicherung erhältst du eine kurze Referenz für Rückfragen. Siehe <a href="/pages/datenschutz.html">Datenschutz</a>.</div>
+<div class="support-form-actions">
+<button class="btn primary" data-support-submit="" type="submit">MELDUNG PRIVAT SENDEN</button>
+<p aria-live="polite" data-support-status="" role="status">Noch nichts gesendet.</p>
+</div>
+</form>
+</section>
   </section>
 
-    <section class="section">
-    <div class="notice"><strong>Passwort vergessen?</strong><br>Der sichere Recovery-Unterbau ist vorhanden. Ob ein Link versendet werden kann, zeigt die <a href="/pages/forgot-password.html">Recovery-Seite</a> anhand des produktiven Mail-Relay-Status. Der Support fragt niemals nach deinem Passwort, Recovery-Code oder Token und setzt Zugangsdaten nicht allein auf Basis einer Support-Nachricht zurück. Wenn du noch angemeldet bist, kannst du dein Passwort sicher im <a href="/pages/account.html">Account</a> ändern.</div>
-  </section>
-
-<section class="section support-trust-link">
-    <div class="notice"><strong>Du willst erst sehen, wie cfs_zockt technisch schützt?</strong><br>Die öffentliche Sicherheitsseite dokumentiert aktive Schutzschichten und nennt bewusst auch offene Punkte. <a href="/pages/security.html">Sicherheitsdetails öffnen →</a><br><br><strong>Security Research:</strong> Der standardisierte Meldeweg ist zusätzlich unter <a href="/.well-known/security.txt">/.well-known/security.txt</a> veröffentlicht.</div>
+  <section class="section info-callout-row">
+    <article class="info-callout"><span>ACCOUNT</span><h2>Noch angemeldet?</h2><p>Viele Kontofunktionen kannst du direkt selbst verwalten: Passwort ändern, Sessions widerrufen, TikTok trennen, Daten exportieren oder dein Konto löschen.</p><a class="btn" href="/pages/account.html">ACCOUNT ÖFFNEN</a></article>
+    <article class="info-callout"><span>TRANSPARENZ</span><h2>Erst prüfen, dann melden.</h2><p>Roadmap und Sicherheitsseite zeigen bewusst, welche Funktionen produktiv, Beta, Preview oder noch nicht vollständig aktiviert sind.</p><a class="btn" href="/pages/roadmap.html">ROADMAP ANSEHEN</a></article>
   </section>
 </main>
-
-<footer class="footer"><div class="container footer-row"><div>© cfs_zockt Creator Suite</div><div><a href="/pages/security.html">Sicherheit</a> · <a href="/pages/impressum.html">Impressum</a> · <a href="/pages/datenschutz.html">Datenschutz</a> · <a href="/pages/nutzungsbedingungen.html">Nutzungsbedingungen</a></div></div></footer>
+<footer class="footer brand-footer public-footer">
+<div class="container public-footer-grid">
+<div class="public-footer-brand">
+<img alt="cfs_zockt" src="/assets/img/brand/cfs-zockt-logo.png"/>
+<p>Creator-Plattform für Stream, Community und Content.</p>
+<div class="public-footer-socials"><a href="https://www.tiktok.com/@cfs_zockt" rel="noopener noreferrer" target="_blank">TikTok</a><a href="https://discord.gg/3bfAkcJTp" rel="noopener noreferrer" target="_blank">Discord</a></div>
+</div>
+<div><strong>PRODUKT</strong><a href="/pages/creator-suite.html">Creator Suite</a><a href="/pages/creator-suite.html#widget-studio">Widget Studio</a><a href="/pages/creator-suite.html#games">Games</a><a href="/pages/creator-suite.html#launcher">Launcher</a></div>
+<div><strong>PROJEKT &amp; HILFE</strong><a href="/pages/creator-suite.html#status">Was funktioniert</a><a href="/pages/roadmap.html">Roadmap</a><a href="/pages/security.html">Sicherheit</a><a href="/api/public/status">Systemstatus</a><a href="/pages/support.html">Support</a></div>
+<div><strong>RECHTLICHES</strong><a href="/pages/impressum.html">Impressum</a><a href="/pages/datenschutz.html">Datenschutz</a><a href="/pages/nutzungsbedingungen.html">Nutzungsbedingungen</a></div>
+</div>
+<div class="container brand-footer-bottom"><span>© 2026 cfs_zockt</span><span>Gaming · Community · Creator Suite</span></div>
+</footer>
 <script src="/assets/js/app.js"></script>
 <script src="/assets/js/support.js"></script>
 </body>

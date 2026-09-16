@@ -7,19 +7,41 @@
 <link rel="stylesheet" href="/assets/css/styles.css">
   <meta name="robots" content="noindex,nofollow,noarchive">
 </head>
-<body>
-<header class="site-header"><div class="container header-inner">
-<a class="brand" href="/">cfs_<span>zockt</span></a>
-<button class="mobile-toggle" data-mobile-toggle type="button">MENÜ</button>
-<nav class="nav" data-nav>
-<a class="active" href="/pages/dashboard.html">DASHBOARD</a>
-<a href="/pages/widget-studio.html">WIDGETS</a>
-<a href="/pages/cut-studio.html">CUT STUDIO</a>
-<a href="/pages/launcher.html">LAUNCHER</a>
-<a href="/pages/account.html">ACCOUNT</a>
-<a id="adminCreatorNav" href="/pages/admin-creators.html" hidden>ADMIN</a>
-<button data-logout>LOGOUT</button>
-</nav></div></header>
+<body class="creator-workspace">
+<header class="site-header creator-site-header">
+  <div class="container header-inner creator-header-inner">
+    <a class="creator-brand" href="/pages/dashboard.html" aria-label="cfs_zockt Creator Suite Dashboard">
+      <img class="creator-brand-logo" src="/assets/img/logo-header.png" alt="cfs_zockt">
+      <span>CREATOR SUITE</span>
+    </a>
+    <button class="mobile-toggle creator-mobile-toggle" data-mobile-toggle id="mobileNavToggle" type="button">MENÜ</button>
+    <nav class="nav creator-nav" data-nav data-creator-nav id="mainNav" aria-label="Creator Suite Navigation">
+      <a data-creator-link href="/pages/dashboard.html">DASHBOARD</a>
+<a data-creator-link href="/pages/widget-studio.html">WIDGETS</a>
+<a data-creator-link href="/pages/tiktok.html">TIKTOK</a>
+<a data-creator-link href="/pages/integrations.html">INTEGRATIONEN</a>
+<a data-creator-link href="/pages/launcher.html">LAUNCHER</a>
+<a data-creator-link href="/pages/account.html">ACCOUNT</a>
+      <details class="creator-nav-more" data-creator-more>
+        <summary>MEHR</summary>
+        <div class="creator-nav-more-menu">
+          <a data-creator-link href="/pages/scene-studio.html">SCENE STUDIO</a>
+<a data-creator-link href="/pages/editor.html">CREATOR EDITOR</a>
+<a data-creator-link href="/pages/games.html">GAMES</a>
+<a data-creator-link href="/pages/cut-studio.html">CUT STUDIO</a>
+<a data-creator-link href="/pages/nexus.html">NEXUS</a>
+<a data-creator-link href="/pages/audio-studio.html">AUDIO STUDIO</a>
+<a data-creator-link href="/pages/setup.html">SETUP</a>
+<a data-creator-link href="/pages/settings.html">EINSTELLUNGEN</a>
+<a data-creator-link href="/pages/launcher-connect.html">GERÄT VERBINDEN</a>
+<a data-creator-link href="/">ÖFFENTLICHE WEBSITE</a>
+<a id="adminCreatorNav" data-creator-link href="/pages/admin-creators.html" hidden>ADMIN CONTROL</a>
+        </div>
+      </details>
+      <button class="creator-logout" data-logout type="button">LOGOUT</button>
+    </nav>
+  </div>
+</header>
 
 <main class="container">
 <section class="beginner-hero">
@@ -70,6 +92,19 @@
     <p>Prüfen, ob dein PC verbunden ist und Widgets, LIVE-Daten und lokale Tools synchron laufen.</p>
     <a class="btn primary" href="/pages/launcher.html">LAUNCHER ÖFFNEN</a>
   </article>
+</section>
+
+<section class="creator-workspace-map" aria-label="Creator Suite Bereiche">
+  <div class="creator-workspace-map-head">
+    <div><span>DEIN WORKSPACE</span><strong>Vier Wege. Ein Creator Cockpit.</strong></div>
+    <p>Die Navigation oben bleibt überall gleich. Hier findest du die wichtigsten Bereiche nach Aufgabe sortiert.</p>
+  </div>
+  <div class="creator-workspace-map-grid">
+    <article><span>01 · BAUEN</span><h3>Widgets & Szenen</h3><p>Widgets erstellen, Szenen kombinieren und den Creator Editor für feinere Arbeit öffnen.</p><div><a href="/pages/widget-studio.html">WIDGETS</a><a href="/pages/scene-studio.html">SCENES</a><a href="/pages/editor.html">EDITOR</a></div></article>
+    <article><span>02 · VERBINDEN</span><h3>TikTok & Launcher</h3><p>Profil, LIVE-Daten und Desktop-Bridge getrennt verbinden und ihren Status nachvollziehen.</p><div><a href="/pages/tiktok.html">TIKTOK</a><a href="/pages/launcher.html">LAUNCHER</a><a href="/pages/integrations.html">INTEGRATIONEN</a></div></article>
+    <article><span>03 · ERWEITERN</span><h3>Games & Studios</h3><p>Creator-Games, Cut Studio, NEXUS und vorbereitete Module aus einem Bereich erreichen.</p><div><a href="/pages/games.html">GAMES</a><a href="/pages/cut-studio.html">CUT STUDIO</a><a href="/pages/nexus.html">NEXUS</a></div></article>
+    <article><span>04 · VERWALTEN</span><h3>Account & Setup</h3><p>Account-Sicherheit, Sessions, Creator-Grundsetup und Einstellungen an einem festen Ort.</p><div><a href="/pages/account.html">ACCOUNT</a><a href="/pages/setup.html">SETUP</a><a href="/pages/settings.html">SETTINGS</a></div></article>
+  </div>
 </section>
 
 <section class="section" style="padding-top:10px">

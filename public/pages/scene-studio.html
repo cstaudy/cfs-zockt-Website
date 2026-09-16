@@ -2,8 +2,40 @@
 <html lang="de">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#020711"><title>Scene Studio | cfs_zockt</title><link rel="stylesheet" href="/assets/css/styles.css"><link rel="stylesheet" href="/assets/css/scene-studio.css">  <meta name="robots" content="noindex,nofollow,noarchive">
 </head>
-<body>
-<header class="site-header"><div class="container header-inner"><a class="brand" href="/">cfs_<span>zockt</span></a><button class="mobile-toggle" id="mobileNavToggle">MENÜ</button><nav class="nav" id="mainNav"><a href="/pages/dashboard.html">DASHBOARD</a><a href="/pages/widget-studio.html">WIDGET STUDIO</a><a href="/pages/scene-studio.html" class="active">SCENE STUDIO</a><a href="/pages/launcher.html">LAUNCHER</a><a href="/pages/account.html">ACCOUNT</a><button data-logout>LOGOUT</button></nav></div></header>
+<body class="creator-workspace">
+<header class="site-header creator-site-header">
+  <div class="container header-inner creator-header-inner">
+    <a class="creator-brand" href="/pages/dashboard.html" aria-label="cfs_zockt Creator Suite Dashboard">
+      <img class="creator-brand-logo" src="/assets/img/logo-header.png" alt="cfs_zockt">
+      <span>CREATOR SUITE</span>
+    </a>
+    <button class="mobile-toggle creator-mobile-toggle" data-mobile-toggle id="mobileNavToggle" type="button">MENÜ</button>
+    <nav class="nav creator-nav" data-nav data-creator-nav id="mainNav" aria-label="Creator Suite Navigation">
+      <a data-creator-link href="/pages/dashboard.html">DASHBOARD</a>
+<a data-creator-link href="/pages/widget-studio.html">WIDGETS</a>
+<a data-creator-link href="/pages/tiktok.html">TIKTOK</a>
+<a data-creator-link href="/pages/integrations.html">INTEGRATIONEN</a>
+<a data-creator-link href="/pages/launcher.html">LAUNCHER</a>
+<a data-creator-link href="/pages/account.html">ACCOUNT</a>
+      <details class="creator-nav-more" data-creator-more>
+        <summary>MEHR</summary>
+        <div class="creator-nav-more-menu">
+          <a data-creator-link href="/pages/scene-studio.html">SCENE STUDIO</a>
+<a data-creator-link href="/pages/editor.html">CREATOR EDITOR</a>
+<a data-creator-link href="/pages/games.html">GAMES</a>
+<a data-creator-link href="/pages/cut-studio.html">CUT STUDIO</a>
+<a data-creator-link href="/pages/nexus.html">NEXUS</a>
+<a data-creator-link href="/pages/audio-studio.html">AUDIO STUDIO</a>
+<a data-creator-link href="/pages/setup.html">SETUP</a>
+<a data-creator-link href="/pages/settings.html">EINSTELLUNGEN</a>
+<a data-creator-link href="/pages/launcher-connect.html">GERÄT VERBINDEN</a>
+<a data-creator-link href="/">ÖFFENTLICHE WEBSITE</a>
+        </div>
+      </details>
+      <button class="creator-logout" data-logout type="button">LOGOUT</button>
+    </nav>
+  </div>
+</header>
 <main class="container scene-shell">
 <section class="scene-hero"><div><div class="scene-kicker">UNIVERSAL OUTPUT · V20</div><h1>BAU DEINEN<br><span>STREAM.</span></h1><p>Kombiniere veröffentlichte Widgets zu einer kompletten TikTok- oder 16:9-Szene. Ein Pack, eine stabile Output-URL, dieselben Creator-Daten.</p></div><div class="scene-hero-actions"><button class="btn primary" id="newVerticalScene">+ TIKTOK SCENE</button><button class="btn" id="newLandscapeScene">+ 16:9 SCENE</button></div></section>
 <section class="scene-workspace">

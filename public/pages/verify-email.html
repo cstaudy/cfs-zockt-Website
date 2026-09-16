@@ -6,24 +6,69 @@
   <meta name="theme-color" content="#030711">
   <title>E-Mail bestätigen | cfs_zockt</title>
   <link rel="stylesheet" href="/assets/css/styles.css">
-  <style>.verify-wrap{max-width:760px;margin:0 auto}.verify-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}</style>
   <meta name="robots" content="noindex,nofollow,noarchive">
 </head>
-<body>
-<header class="site-header"><div class="container header-inner"><a class="brand" href="/">cfs_<span>zockt</span></a><nav class="nav"><a href="/">HOME</a><a class="cta" href="/pages/login.html">LOGIN</a></nav></div></header>
-<main class="container verify-wrap">
-  <section class="page-hero"><div class="eyebrow">E-MAIL-VERIFIZIERUNG</div><h1>ADRESSE BESTÄTIGEN.</h1><p>Der Bestätigungstoken wird nach dem Öffnen aus der sichtbaren URL entfernt und serverseitig nur gehasht gespeichert.</p></section>
-  <section class="panel">
-    <div id="verifyEmailMsg" class="notice" role="status" aria-live="polite">Bestätigungsstatus wird geprüft …</div>
-    <form id="verifyResendForm" class="form-grid" novalidate>
-      <div class="field full"><label for="verifyEmailAddress">NEUEN BESTÄTIGUNGSLINK ANFORDERN</label><input id="verifyEmailAddress" type="email" maxlength="254" autocomplete="email" inputmode="email" required></div>
-      <div class="field full"><button id="verifyResendBtn" class="btn" type="submit">BESTÄTIGUNGSLINK ANFORDERN</button></div>
-    </form>
-    <div id="verifyResendMsg" class="notice hidden" role="status" aria-live="polite"></div>
-    <div class="verify-actions"><a class="btn ghost" href="/pages/login.html">ZUM LOGIN</a><a class="btn ghost" href="/pages/support.html">SUPPORT</a></div>
+<body class="public-marketing public-auth-page">
+<header class="site-header brand-header public-site-header">
+<div class="container header-inner brand-header-inner">
+<a aria-label="cfs_zockt Startseite" class="brand brand-logo-link" href="/">
+<img alt="cfs_zockt" data-logo-fallback="" src="/assets/img/brand/cfs-zockt-logo.png"/>
+<span class="brand-logo-fallback" hidden="">cfs_zockt</span>
+</a>
+<button aria-label="Navigation öffnen" class="mobile-toggle" data-mobile-toggle="" type="button">MENÜ</button>
+<nav aria-label="Hauptnavigation" class="nav brand-nav public-nav" data-nav="">
+<a href="/">START</a>
+<a href="/pages/creator-suite.html">CREATOR SUITE</a>
+<a href="/pages/creator-suite.html#widget-studio">WIDGETS</a>
+<a href="/pages/creator-suite.html#games">GAMES</a>
+<a href="/pages/creator-suite.html#launcher">LAUNCHER</a>
+<a href="/pages/plans.html">PLÄNE</a>
+<a href="/pages/roadmap.html">ROADMAP</a>
+<a href="/pages/security.html">SICHERHEIT</a>
+<a aria-current="page" class="active" href="/pages/support.html">SUPPORT</a>
+<a data-login-link="" href="/pages/login.html">ANMELDEN</a>
+<a class="cta" data-auth-cta="" href="/pages/login.html#regForm">KOSTENLOS STARTEN</a>
+</nav>
+</div>
+</header>
+<main class="container auth-recovery-shell">
+  <section class="auth-recovery-hero">
+    <div class="eyebrow">E-MAIL-VERIFIZIERUNG</div>
+    <h1>ADRESSE BESTÄTIGEN.</h1>
+    <p>Öffnest du einen vollständigen Bestätigungslink, wird der Token aus der sichtbaren URL entfernt und serverseitig geprüft.</p>
+  </section>
+  <section class="auth-recovery-layout auth-recovery-layout-compact">
+    <article class="auth-recovery-panel">
+      <span class="auth-step-label">BESTÄTIGUNGSSTATUS</span>
+      <div id="verifyEmailMsg" class="notice" role="status" aria-live="polite">Bestätigungsstatus wird geprüft …</div>
+      <form id="verifyResendForm" class="form-grid" novalidate>
+        <div class="field full"><label for="verifyEmailAddress">NEUEN BESTÄTIGUNGSLINK ANFORDERN</label><input id="verifyEmailAddress" type="email" maxlength="254" autocomplete="email" inputmode="email" required></div>
+        <div class="field full"><button id="verifyResendBtn" class="btn" type="submit">BESTÄTIGUNGSLINK ANFORDERN</button></div>
+      </form>
+      <div id="verifyResendMsg" class="notice hidden" role="status" aria-live="polite"></div>
+    </article>
+    <aside class="auth-recovery-guide">
+      <span>NÄCHSTER SCHRITT</span>
+      <h2>Danach anmelden.</h2>
+      <p>Ist die Verifizierung für deinen Account erforderlich, kannst du dich nach erfolgreicher Bestätigung normal anmelden und ins Dashboard wechseln.</p>
+      <div class="auth-entry-links"><a href="/pages/login.html">ZUM LOGIN</a><a href="/pages/support.html">SUPPORT</a><a href="/pages/security.html">SICHERHEIT</a></div>
+    </aside>
   </section>
 </main>
-<script src="/assets/js/app.js?v=v42-r9"></script>
+<footer class="footer brand-footer public-footer">
+<div class="container public-footer-grid">
+<div class="public-footer-brand">
+<img alt="cfs_zockt" src="/assets/img/brand/cfs-zockt-logo.png"/>
+<p>Creator-Plattform für Stream, Community und Content.</p>
+<div class="public-footer-socials"><a href="https://www.tiktok.com/@cfs_zockt" rel="noopener noreferrer" target="_blank">TikTok</a><a href="https://discord.gg/3bfAkcJTp" rel="noopener noreferrer" target="_blank">Discord</a></div>
+</div>
+<div><strong>PRODUKT</strong><a href="/pages/creator-suite.html">Creator Suite</a><a href="/pages/creator-suite.html#widget-studio">Widget Studio</a><a href="/pages/creator-suite.html#games">Games</a><a href="/pages/creator-suite.html#launcher">Launcher</a></div>
+<div><strong>PROJEKT &amp; HILFE</strong><a href="/pages/creator-suite.html#status">Was funktioniert</a><a href="/pages/roadmap.html">Roadmap</a><a href="/pages/security.html">Sicherheit</a><a href="/api/public/status">Systemstatus</a><a href="/pages/support.html">Support</a></div>
+<div><strong>RECHTLICHES</strong><a href="/pages/impressum.html">Impressum</a><a href="/pages/datenschutz.html">Datenschutz</a><a href="/pages/nutzungsbedingungen.html">Nutzungsbedingungen</a></div>
+</div>
+<div class="container brand-footer-bottom"><span>© 2026 cfs_zockt</span><span>Gaming · Community · Creator Suite</span></div>
+</footer>
+<script src="/assets/js/app.js"></script>
 <script src="/assets/js/page-verify-email.js"></script>
 </body>
 </html>
