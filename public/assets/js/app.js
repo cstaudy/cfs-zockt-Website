@@ -210,6 +210,29 @@ async function initPartnerRecommendations() {
   }
 }
 
+async function initPublicAuthNavigation() {
+  const authCtas = [...document.querySelectorAll("[data-auth-cta]")];
+  const loginLinks = [...document.querySelectorAll("[data-login-link]")];
+  if (authCtas.length === 0 && loginLinks.length === 0) return;
+
+  let me;
+  try {
+    me = await CFS.me();
+  } catch {
+    return;
+  }
+  if (!me?.authenticated || !me?.account) return;
+
+  authCtas.forEach(link => {
+    link.href = "/pages/dashboard.html";
+    link.textContent = "ZUM DASHBOARD";
+  });
+  loginLinks.forEach(link => {
+    link.href = "/pages/account.html";
+    link.textContent = "ACCOUNT";
+  });
+}
+
 async function initPublicHomeExperience() {
   if (!document.body.classList.contains("public-home")) return;
 
@@ -303,6 +326,42 @@ async function initPublicHomeExperience() {
   }
 }
 
+function initCreatorNavigation() {
+  const nav = document.querySelector("[data-creator-nav]");
+  if (!nav) return;
+
+  const currentPath = location.pathname === "/index.html" ? "/" : (location.pathname || "/");
+  let activeLink = null;
+
+  nav.querySelectorAll("a[data-creator-link][href]").forEach(link => {
+    let target;
+    try { target = new URL(link.getAttribute("href"), location.origin); } catch { return; }
+    const matches = target.origin === location.origin && target.pathname === currentPath;
+    link.classList.toggle("active", matches);
+    if (matches) {
+      link.setAttribute("aria-current", "page");
+      activeLink = link;
+    } else {
+      link.removeAttribute("aria-current");
+    }
+  });
+
+  const more = nav.querySelector("[data-creator-more]");
+  if (more) {
+    more.classList.toggle("has-active", Boolean(more.querySelector("a.active")));
+    more.addEventListener("click", event => {
+      if (event.target.closest("a")) more.removeAttribute("open");
+    });
+    document.addEventListener("click", event => {
+      if (more.hasAttribute("open") && !more.contains(event.target)) more.removeAttribute("open");
+    });
+  }
+
+  // A page-specific label is optional; when present it mirrors the active creator route.
+  const current = document.querySelector("[data-creator-current]");
+  if (current && activeLink) current.textContent = activeLink.textContent.trim();
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   // CSP-kompatibler Logo-Fallback statt Inline-onerror-Handlern.
   document.querySelectorAll("img[data-logo-fallback]").forEach(image => {
@@ -313,6 +372,23 @@ document.addEventListener("DOMContentLoaded", () => {
 
     image.addEventListener("error", showFallback, { once: true });
     if (image.complete && image.naturalWidth === 0) showFallback();
+  });
+
+
+  // Öffentliche Navigation: aktuelle Seite kenntlich machen, ohne Hash-Ziele
+  // künstlich als eigene Seite zu behandeln.
+  document.querySelectorAll(".public-nav").forEach(nav => {
+    const currentPath = location.pathname || "/";
+    nav.querySelectorAll("a[href]").forEach(link => {
+      let target;
+      try { target = new URL(link.getAttribute("href"), location.origin); } catch { return; }
+      if (target.origin !== location.origin || target.hash) return;
+      const matches = target.pathname === currentPath || (currentPath === "/index.html" && target.pathname === "/");
+      if (matches && !link.hasAttribute("data-login-link") && !link.hasAttribute("data-auth-cta")) {
+        link.classList.add("active");
+        link.setAttribute("aria-current", "page");
+      }
+    });
   });
 
   // Gemeinsame Website-Navigation. Manche ältere Seiten verwenden
@@ -343,6 +419,7 @@ document.addEventListener("DOMContentLoaded", () => {
       button.setAttribute("aria-expanded", String(open));
       button.setAttribute("aria-label", open ? "Navigation schließen" : "Navigation öffnen");
       button.textContent = open ? "SCHLIESSEN" : "MENÜ";
+      if (!open) nav.querySelectorAll("details[open]").forEach(detail => detail.removeAttribute("open"));
     };
 
     button.addEventListener(
@@ -388,7 +465,9 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
+  initCreatorNavigation();
   initTrafficSourceExperience();
   initPartnerRecommendations();
+  initPublicAuthNavigation();
   initPublicHomeExperience();
 });

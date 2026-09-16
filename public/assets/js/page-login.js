@@ -15,6 +15,19 @@
     return Object.values(states).every(Boolean);
   };
   document.addEventListener("DOMContentLoaded", async () => {
+    const params = new URLSearchParams(location.search);
+    const registrationAnchor = location.hash === "#regForm" || location.hash === "#registerPanel";
+    if (registrationAnchor) {
+      window.setTimeout(() => {
+        const target = $("regForm");
+        target?.scrollIntoView({behavior:"smooth",block:"center"});
+        $("displayName")?.focus({preventScroll:true});
+      }, 80);
+    }
+    if (params.get("password") === "reset") {
+      message($("loginMsg"), "Passwort wurde geändert. Du kannst dich jetzt mit dem neuen Passwort anmelden.");
+      history.replaceState(null, "", location.pathname + location.hash);
+    }
     const source = String(new URLSearchParams(location.search).get("source") || "").trim().toLowerCase();
     if (source === "tiktok") {
       const context = document.querySelector("[data-login-source-context]");
