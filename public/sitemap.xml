@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>https://cfs-zockt.de/</loc></url>
+  <url><loc>https://cfs-zockt.de/pages/creator-suite.html</loc></url>
+  <url><loc>https://cfs-zockt.de/pages/plans.html</loc></url>
+  <url><loc>https://cfs-zockt.de/pages/roadmap.html</loc></url>
   <url><loc>https://cfs-zockt.de/pages/support.html</loc></url>
   <url><loc>https://cfs-zockt.de/pages/security.html</loc></url>
   <url><loc>https://cfs-zockt.de/pages/impressum.html</loc></url>
