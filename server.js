@@ -3530,6 +3530,16 @@ async function initDatabase() {
         WHERE status = 'active'
     `);
 
+    await pool.query(`
+        ALTER TABLE creator_live_bridges
+        ADD COLUMN IF NOT EXISTS stream_health JSONB NOT NULL DEFAULT '{}'::jsonb
+    `);
+
+    await pool.query(`
+        ALTER TABLE creator_live_bridges
+        ADD COLUMN IF NOT EXISTS stream_health_at TIMESTAMPTZ
+    `);
+
     // --------------------------------------------------------
     // CREATOR SUITE V23 - LAUNCHER DEVICE LINK
     //
@@ -6263,8 +6273,10 @@ async function getPublicSceneRow(token) {
 }
 async function hydratePublicScene(sceneRow) {
     const config=sanitizeSceneConfig(sceneRow.published_config||{});
-    const ids=[...new Set(config.items.map(item=>String(item.widget_id)).filter(Boolean))];
-    if(!ids.length)return{scene:publicSceneRow(sceneRow,APP_BASE_URL),creator:{display_name:sceneRow.creator_display_name||"Creator"},items:[]};
+    const layouts=config.layouts&&typeof config.layouts==="object"?config.layouts:{[config.profile]:{canvas:config.canvas,items:config.items}};
+    const ids=[...new Set(Object.values(layouts).flatMap(layout=>(layout?.items||[]).map(item=>String(item.widget_id))).filter(Boolean))];
+    const basePayload={scene:publicSceneRow(sceneRow,APP_BASE_URL),creator:{display_name:sceneRow.creator_display_name||"Creator"}};
+    if(!ids.length)return{...basePayload,items:[],layouts:Object.fromEntries(Object.entries(layouts).map(([key,layout])=>[key,{canvas:layout.canvas,items:[]}]))};
 
     const normalIds=ids.filter(id=>id!=="game_runtime");
     const widgetMap=new Map();
@@ -6283,14 +6295,271 @@ async function hydratePublicScene(sceneRow) {
         const game=await getCreatorGameSceneSource(sceneRow.creator_id,{ensure:false});
         if(game)widgetMap.set("game_runtime",game);
     }
-    return{
-        scene:publicSceneRow(sceneRow,APP_BASE_URL),
-        creator:{display_name:sceneRow.creator_display_name||"Creator"},
-        items:config.items.map(item=>{
-            const widget=widgetMap.get(String(item.widget_id));if(!widget)return null;
-            const published=widget.published_config||{};
-            return{...item,widget:{id:widget.id,name:widget.name,widget_type:widget.widget_type,public_token:widget.public_token,source_url:widget.source_url,canvas:published.canvas||{width:600,height:120}}};
-        }).filter(Boolean)
+    const hydrateItems=items=>(items||[]).map(item=>{
+        const widget=widgetMap.get(String(item.widget_id));if(!widget)return null;
+        const published=widget.published_config||{};
+        return{...item,widget:{id:widget.id,name:widget.name,widget_type:widget.widget_type,public_token:widget.public_token,source_url:widget.source_url,canvas:published.canvas||{width:600,height:120}}};
+    }).filter(Boolean);
+    const hydratedLayouts=Object.fromEntries(Object.entries(layouts).map(([key,layout])=>[key,{canvas:layout.canvas,items:hydrateItems(layout.items)}]));
+    return{...basePayload,items:hydrateItems(config.items),layouts:hydratedLayouts};
+}
+
+// ============================================================
+// CFS STREAM STUDIO - CONTROL PLANE
+// Website speichert nur Konfiguration. Rohes Capture/Audio bleibt lokal.
+// ============================================================
+
+const STREAM_STUDIO_TRANSITIONS = new Set(["cut","fade","dissolve","slide_left","slide_right","slide_up","zoom"]);
+const STREAM_STUDIO_OUTPUT_PROFILES = new Set(["1080p60","1080p30","720p60","vertical1080p60"]);
+const STREAM_STUDIO_DESTINATIONS = new Set(["recording_only","tiktok","twitch","youtube","kick","facebook","custom_rtmp"]);
+const STREAM_STUDIO_MULTISTREAM_PROVIDERS = new Set(["youtube","twitch","tiktok","kick","facebook","custom_rtmp"]);
+const STREAM_STUDIO_ENCODERS = new Set(["auto","nvenc","amd","qsv","software"]);
+const STREAM_STUDIO_AUDIO_BITRATES = new Set([128,160,192,256,320]);
+const STREAM_STUDIO_TARGET_ID_RX = /^[a-z0-9][a-z0-9_-]{0,63}$/;
+
+function streamStudioMultistreamLimit(access){
+    if(access?.admin)return 8;
+    const plan=normalizePlan(access?.effective_plan||access?.plan||"free");
+    return plan==="pro"?4:(plan==="creator"?2:1);
+}
+
+function streamStudioDefaultTargets(){
+    return [
+        {id:"youtube",label:"YouTube",provider:"youtube",enabled:false,profile:"1080p60",bitrate_kbps:6000,audio_bitrate_kbps:160},
+        {id:"twitch",label:"Twitch",provider:"twitch",enabled:false,profile:"1080p60",bitrate_kbps:6000,audio_bitrate_kbps:160},
+        {id:"tiktok",label:"TikTok",provider:"tiktok",enabled:false,profile:"vertical1080p60",bitrate_kbps:4500,audio_bitrate_kbps:160},
+        {id:"kick",label:"Kick",provider:"kick",enabled:false,profile:"1080p60",bitrate_kbps:6000,audio_bitrate_kbps:160}
+    ];
+}
+
+const STREAM_STUDIO_DOCK_ZONES=["left","center","right","bottom","wide"];
+const STREAM_STUDIO_DOCK_ITEMS=["scenes","monitors","scene_composer","transition","overlay_rack","sources","capture","audio","output","preflight","session","health","activity","multistream"];
+
+function streamStudioWorkspaceDefaults(){
+    return {
+        version:2,
+        zones:{
+            left:["scenes"],
+            center:["monitors","scene_composer","transition","overlay_rack"],
+            right:["sources"],
+            bottom:["capture","audio","output"],
+            wide:["preflight","session","health","activity","multistream"]
+        },
+        sizes:{},
+        columns:{left_px:250,right_px:310}
+    };
+}
+
+function sanitizeStreamStudioWorkspace(input={}){
+    const defaults=streamStudioWorkspaceDefaults();
+    const source=input&&typeof input==="object"&&!Array.isArray(input)?input:{};
+    const zones=source.zones&&typeof source.zones==="object"&&!Array.isArray(source.zones)?source.zones:{};
+    const allowed=new Set(STREAM_STUDIO_DOCK_ITEMS);
+    const seen=new Set();
+    const clean={version:2,zones:{},sizes:{},columns:{left_px:250,right_px:310}};
+    for(const zone of STREAM_STUDIO_DOCK_ZONES){
+        clean.zones[zone]=[];
+        const requested=Array.isArray(zones[zone])?zones[zone]:[];
+        for(const raw of requested){
+            const id=String(raw||"").trim();
+            if(!allowed.has(id)||seen.has(id))continue;
+            seen.add(id);
+            clean.zones[zone].push(id);
+        }
+    }
+    for(const zone of STREAM_STUDIO_DOCK_ZONES){
+        for(const id of defaults.zones[zone]){
+            if(seen.has(id))continue;
+            seen.add(id);
+            clean.zones[zone].push(id);
+        }
+    }
+    const sizes=source.sizes&&typeof source.sizes==="object"&&!Array.isArray(source.sizes)?source.sizes:{};
+    for(const id of STREAM_STUDIO_DOCK_ITEMS){
+        const value=sizes[id];
+        if(!value||typeof value!=="object"||Array.isArray(value))continue;
+        const size={};
+        if(Number.isFinite(Number(value.width_px)))size.width_px=Math.round(clampNumber(value.width_px,220,1600,220));
+        if(Number.isFinite(Number(value.height_px)))size.height_px=Math.round(clampNumber(value.height_px,80,1400,80));
+        if(Object.keys(size).length)clean.sizes[id]=size;
+    }
+    const columns=source.columns&&typeof source.columns==="object"&&!Array.isArray(source.columns)?source.columns:{};
+    clean.columns.left_px=Math.round(clampNumber(columns.left_px,190,520,250));
+    clean.columns.right_px=Math.round(clampNumber(columns.right_px,220,620,310));
+    return clean;
+}
+
+function sanitizeStreamStudioWorkspacePresets(input=[]){
+    const source=Array.isArray(input)?input:[],seen=new Set(),out=[];
+    for(let index=0;index<source.length&&out.length<6;index++){
+        const raw=source[index]&&typeof source[index]==="object"&&!Array.isArray(source[index])?source[index]:{};
+        let id=studioText(raw.id,64,`workspace_${index+1}`).toLowerCase().replace(/[^a-z0-9_-]/g,"_");
+        if(!id)id=`workspace_${index+1}`;
+        if(seen.has(id))continue;
+        seen.add(id);
+        out.push({id,name:studioText(raw.name,40,`Workspace ${out.length+1}`),layout:sanitizeStreamStudioWorkspace(raw.layout)});
+    }
+    return out;
+}
+
+function streamStudioDefaults(){
+    return {
+        version:3,
+        program_scene_id:"",
+        preview_scene_id:"",
+        scene_order:[],
+        overlay_widget_ids:[],
+        overlay_layout:{},
+        transition:{type:"fade",duration_ms:350},
+        workspace_layout:streamStudioWorkspaceDefaults(),
+        workspace_presets:[],
+        capture_sources:{display:false,window:false,game:false,camera:false},
+        audio:{
+            microphone:{level:85,muted:false},
+            desktop:{level:80,muted:false},
+            music:{level:65,muted:false},
+            alerts:{level:90,muted:false}
+        },
+        output:{
+            profile:"1080p60",
+            destination:"recording_only",
+            encoder:"auto",
+            bitrate_kbps:6000,
+            audio_bitrate_kbps:160,
+            recording_format:"mkv",
+            recording_tracks:{mix:true,audio1:true,audio2:true}
+        },
+        multistream:{
+            mode:"launcher_local",
+            destinations:streamStudioDefaultTargets(),
+            failure_policy:"isolate_destination",
+            cloud_relay:false,
+            credentials:"launcher_local_only"
+        }
+    };
+}
+
+function sanitizeStreamStudioTarget(input,index=0){
+    const source=input&&typeof input==="object"&&!Array.isArray(input)?input:{};
+    const provider=STREAM_STUDIO_MULTISTREAM_PROVIDERS.has(String(source.provider||""))?String(source.provider):"custom_rtmp";
+    let id=studioText(source.id,64,"").toLowerCase().replace(/[^a-z0-9_-]/g,"_");
+    if(!STREAM_STUDIO_TARGET_ID_RX.test(id))id=`target_${index+1}`;
+    const label=studioText(source.label,48,provider==="custom_rtmp"?"Eigenes RTMP-Ziel":provider);
+    const profile=STREAM_STUDIO_OUTPUT_PROFILES.has(String(source.profile||""))?String(source.profile):(provider==="tiktok"?"vertical1080p60":"1080p60");
+    const audioBitrate=Number(source.audio_bitrate_kbps);
+    return {
+        id,label,provider,enabled:source.enabled===true,profile,
+        bitrate_kbps:Math.round(clampNumber(source.bitrate_kbps,1000,30000,provider==="tiktok"?4500:6000)),
+        audio_bitrate_kbps:STREAM_STUDIO_AUDIO_BITRATES.has(audioBitrate)?audioBitrate:160,
+        credential_mode:"launcher_local"
+    };
+}
+
+function sanitizeStreamStudioConfig(input={},allowedSceneIds=null,allowedWidgetIds=null,multistreamLimit=8,ownedSceneIds=null){
+    const source=input&&typeof input==="object"&&!Array.isArray(input)?input:{};
+    const clean=streamStudioDefaults();
+    const safeScene=value=>{
+        const id=studioText(value,100,"");
+        return id&&(!allowedSceneIds||allowedSceneIds.has(id))?id:"";
+    };
+    clean.program_scene_id=safeScene(source.program_scene_id);
+    clean.preview_scene_id=safeScene(source.preview_scene_id);
+    const requestedSceneOrder=[...new Set(Array.isArray(source.scene_order)?source.scene_order.map(value=>studioText(value,100,"")).filter(Boolean):[])];
+    clean.scene_order=ownedSceneIds?requestedSceneOrder.filter(id=>ownedSceneIds.has(id)):requestedSceneOrder.slice(0,100);
+    if(ownedSceneIds){for(const id of ownedSceneIds){if(!clean.scene_order.includes(id))clean.scene_order.push(id)}}
+    clean.scene_order=clean.scene_order.slice(0,100);
+    const widgetIds=[...new Set(Array.isArray(source.overlay_widget_ids)?source.overlay_widget_ids.map(value=>studioText(value,100,"")).filter(Boolean):[])].slice(0,24);
+    clean.overlay_widget_ids=allowedWidgetIds?widgetIds.filter(id=>allowedWidgetIds.has(id)):widgetIds;
+    const layout=source.overlay_layout&&typeof source.overlay_layout==="object"&&!Array.isArray(source.overlay_layout)?source.overlay_layout:{};
+    for(const id of clean.overlay_widget_ids){
+        const value=layout[id]&&typeof layout[id]==="object"?layout[id]:{};
+        clean.overlay_layout[id]={
+            x:clampNumber(value.x,3,97,20),
+            y:clampNumber(value.y,3,97,20),
+            scale:clampNumber(value.scale,.4,2,1)
+        };
+    }
+    const transition=source.transition&&typeof source.transition==="object"?source.transition:{};
+    clean.transition.type=STREAM_STUDIO_TRANSITIONS.has(String(transition.type||""))?String(transition.type):"fade";
+    clean.transition.duration_ms=clean.transition.type==="cut"?0:Math.round(clampNumber(transition.duration_ms,120,2500,350));
+    clean.workspace_layout=sanitizeStreamStudioWorkspace(source.workspace_layout);
+    clean.workspace_presets=sanitizeStreamStudioWorkspacePresets(source.workspace_presets);
+    for(const key of Object.keys(clean.capture_sources))clean.capture_sources[key]=source.capture_sources?.[key]===true;
+    for(const key of Object.keys(clean.audio)){
+        clean.audio[key].level=Math.round(clampNumber(source.audio?.[key]?.level,0,100,clean.audio[key].level));
+        clean.audio[key].muted=source.audio?.[key]?.muted===true;
+    }
+    const output=source.output&&typeof source.output==="object"?source.output:{};
+    clean.output.profile=STREAM_STUDIO_OUTPUT_PROFILES.has(String(output.profile||""))?String(output.profile):"1080p60";
+    clean.output.destination=STREAM_STUDIO_DESTINATIONS.has(String(output.destination||""))?String(output.destination):"recording_only";
+    clean.output.encoder=STREAM_STUDIO_ENCODERS.has(String(output.encoder||""))?String(output.encoder):"auto";
+    clean.output.bitrate_kbps=Math.round(clampNumber(output.bitrate_kbps,1000,30000,6000));
+    const audioBitrate=Number(output.audio_bitrate_kbps);
+    clean.output.audio_bitrate_kbps=STREAM_STUDIO_AUDIO_BITRATES.has(audioBitrate)?audioBitrate:160;
+    clean.output.recording_format=["mkv","mp4"].includes(String(output.recording_format||""))?String(output.recording_format):"mkv";
+    const tracks=output.recording_tracks&&typeof output.recording_tracks==="object"&&!Array.isArray(output.recording_tracks)?output.recording_tracks:{};
+    clean.output.recording_tracks={mix:tracks.mix!==false,audio1:tracks.audio1!==false,audio2:tracks.audio2!==false};
+    if(!Object.values(clean.output.recording_tracks).some(Boolean))clean.output.recording_tracks.mix=true;
+
+    const multi=source.multistream&&typeof source.multistream==="object"&&!Array.isArray(source.multistream)?source.multistream:{};
+    const requested=Array.isArray(multi.destinations)?multi.destinations:[];
+    const rawTargets=requested.length?requested:streamStudioDefaultTargets();
+    const seen=new Set();
+    clean.multistream.destinations=[];
+    for(let index=0;index<rawTargets.length&&clean.multistream.destinations.length<8;index++){
+        const target=sanitizeStreamStudioTarget(rawTargets[index],index);
+        if(seen.has(target.id))continue;
+        seen.add(target.id);
+        clean.multistream.destinations.push(target);
+    }
+    for(const preset of streamStudioDefaultTargets()){
+        if(!seen.has(preset.id)){seen.add(preset.id);clean.multistream.destinations.push(sanitizeStreamStudioTarget(preset,clean.multistream.destinations.length));}
+    }
+    clean.multistream.destinations=clean.multistream.destinations.slice(0,8);
+    const limit=Math.max(1,Math.min(8,Math.round(Number(multistreamLimit)||1)));
+    let enabled=0;
+    for(const target of clean.multistream.destinations){
+        if(target.enabled){
+            enabled+=1;
+            if(enabled>limit)target.enabled=false;
+        }
+    }
+    // Migration aus dem bisherigen Einzelziel, ohne Zugangsdaten in die Cloud zu übernehmen.
+    if(!requested.length&&clean.output.destination!=="recording_only"){
+        const legacy=clean.multistream.destinations.find(target=>target.provider===clean.output.destination);
+        if(legacy)legacy.enabled=true;
+    }
+    clean.multistream.mode="launcher_local";
+    clean.multistream.failure_policy="isolate_destination";
+    clean.multistream.cloud_relay=false;
+    clean.multistream.credentials="launcher_local_only";
+    return clean;
+}
+
+function requestedStreamStudioDestinationCount(input={}){
+    const destinations=Array.isArray(input?.multistream?.destinations)?input.multistream.destinations:[];
+    return destinations.reduce((count,target)=>count+(target&&typeof target==="object"&&target.enabled===true?1:0),0);
+}
+
+async function streamStudioSourceContext(creatorId,accountOrId=creatorId){
+    const access=await creatorAccessProfile(accountOrId);
+    const sceneRows=(await pool.query(`SELECT * FROM creator_widget_scenes WHERE creator_id=$1 ORDER BY updated_at DESC`,[creatorId])).rows;
+    const liveSceneIds=new Set(sceneRows.filter(row=>row.status==="live"&&row.published_config).map(row=>String(row.id)));
+    const ownedSceneIds=new Set(sceneRows.map(row=>String(row.id)));
+    const sceneSources=await getCreatorSceneSources(creatorId,{includeGame:Boolean(access.entitlements.games)});
+    const liveSourceIds=new Set(sceneSources.filter(source=>source.status==="live").map(source=>String(source.id)));
+    return {access,sceneRows,sceneSources,liveSceneIds,ownedSceneIds,liveSourceIds};
+}
+
+function publicStreamStudioSource(source){
+    return {
+        id:String(source.id),
+        name:source.name||"Widget",
+        widget_type:source.widget_type||"widget",
+        status:source.status||"draft",
+        source_url:source.source_url||"",
+        source_urls:source.source_urls||{},
+        canvas:source.published_config?.canvas||source.canvas||{width:600,height:120}
     };
 }
 
@@ -10141,10 +10410,38 @@ async function requireStudioBridge(req, res, next) {
     }
 }
 
+const STREAM_HEALTH_STATUSES=new Set(["idle","starting","running","reconnecting","stopping","error","unavailable"]);
+const STREAM_TARGET_STATUSES=new Set(["idle","starting","live","reconnecting","stopping","stopped","error"]);
+const STREAM_HEALTH_PROVIDERS=new Set(["youtube","twitch","tiktok","kick","facebook","custom_rtmp","recording",""]);
+function streamHealthNumber(value,min,max,fallback=0){const n=Number(value);return Number.isFinite(n)?Math.max(min,Math.min(max,n)):fallback;}
+function streamHealthTime(value){const text=studioText(value,64,"");if(!text)return null;const time=new Date(text);return Number.isNaN(time.getTime())?null:time.toISOString();}
+function sanitizeLauncherStreamHealth(input={}){
+    const source=input&&typeof input==="object"&&!Array.isArray(input)?input:{};
+    if(!Object.keys(source).length)return {};
+    const clean={schema:1,status:STREAM_HEALTH_STATUSES.has(String(source.status||""))?String(source.status):"idle",available:source.available===true,desired_running:source.desiredRunning===true||source.desired_running===true,checked_at:streamHealthTime(source.checkedAt||source.checked_at),started_at:streamHealthTime(source.startedAt||source.started_at),stopped_at:streamHealthTime(source.stoppedAt||source.stopped_at),metrics:{},destinations:[],recording:null};
+    const metrics=source.metrics&&typeof source.metrics==="object"?source.metrics:{};
+    clean.metrics={active:Math.round(streamHealthNumber(metrics.active,0,16)),errors:Math.round(streamHealthNumber(metrics.errors,0,100000)),reconnects:Math.round(streamHealthNumber(metrics.reconnects,0,100000)),watchdog_restarts:Math.round(streamHealthNumber(metrics.watchdogRestarts??metrics.watchdog_restarts,0,100000)),dropped_frames:Math.round(streamHealthNumber(metrics.droppedFrames??metrics.dropped_frames,0,100000000)),upload_kbps:Math.round(streamHealthNumber(metrics.uploadKbps??metrics.upload_kbps,0,500000)),live_targets:Math.round(streamHealthNumber(metrics.liveTargets??metrics.live_targets,0,8)),encoder_speed:streamHealthNumber(metrics.encoderSpeed??metrics.encoder_speed,0,10),average_fps:streamHealthNumber(metrics.averageFps??metrics.average_fps,0,240)};
+    const rows=source.destinations&&typeof source.destinations==="object"&&!Array.isArray(source.destinations)?Object.values(source.destinations):(Array.isArray(source.destinations)?source.destinations:[]);
+    clean.destinations=rows.slice(0,8).map((row,index)=>{const item=row&&typeof row==="object"?row:{};const provider=STREAM_HEALTH_PROVIDERS.has(String(item.provider||""))?String(item.provider):"";const status=STREAM_TARGET_STATUSES.has(String(item.status||""))?String(item.status):"idle";const m=item.metrics&&typeof item.metrics==="object"?item.metrics:{};return{id:studioText(item.id,64,`target_${index+1}`).replace(/[^a-zA-Z0-9_-]/g,"_"),label:studioText(item.label,80,provider||`Ziel ${index+1}`),provider,status,started_at:streamHealthTime(item.startedAt||item.started_at),stopped_at:streamHealthTime(item.stoppedAt||item.stopped_at),reconnect_attempt:Math.round(streamHealthNumber(item.reconnectAttempt??item.reconnect_attempt,0,99)),reconnect_at:streamHealthTime(item.reconnectAt||item.reconnect_at),profile:studioText(item.profile,40,""),encoder:studioText(item.encoder,40,""),configured_bitrate_kbps:Math.round(streamHealthNumber(item.configuredBitrateKbps??item.configured_bitrate_kbps,0,30000)),metrics:{fps:streamHealthNumber(m.fps,0,240),bitrate_kbps:streamHealthNumber(m.bitrateKbps??m.bitrate_kbps,0,50000),speed:streamHealthNumber(m.speed,0,10),dropped_frames:Math.round(streamHealthNumber(m.droppedFrames??m.dropped_frames,0,100000000)),duplicated_frames:Math.round(streamHealthNumber(m.duplicatedFrames??m.duplicated_frames,0,100000000))}};});
+    const rec=source.recording&&typeof source.recording==="object"?source.recording:null;
+    if(rec){const m=rec.metrics&&typeof rec.metrics==="object"?rec.metrics:{};clean.recording={status:STREAM_TARGET_STATUSES.has(String(rec.status||""))?String(rec.status):"idle",started_at:streamHealthTime(rec.startedAt||rec.started_at),stopped_at:streamHealthTime(rec.stoppedAt||rec.stopped_at),profile:studioText(rec.profile,40,""),encoder:studioText(rec.encoder,40,""),metrics:{fps:streamHealthNumber(m.fps,0,240),bitrate_kbps:streamHealthNumber(m.bitrateKbps??m.bitrate_kbps,0,50000),speed:streamHealthNumber(m.speed,0,10),dropped_frames:Math.round(streamHealthNumber(m.droppedFrames??m.dropped_frames,0,100000000)),duplicated_frames:Math.round(streamHealthNumber(m.duplicatedFrames??m.duplicated_frames,0,100000000))}};}
+    return clean;
+}
+async function getCreatorStreamStudioRuntime(creatorId){
+    const result=await pool.query(`SELECT id,machine_name,client_version,last_seen_at,stream_health_at,stream_health FROM creator_live_bridges WHERE creator_id=$1 AND status='active' ORDER BY COALESCE(stream_health_at,last_seen_at,updated_at) DESC LIMIT 1`,[creatorId]);
+    const row=result.rows[0];
+    if(!row)return{connected:false,fresh:false,launcher:null,health:{},server_time:new Date().toISOString()};
+    const now=Date.now(),lastSeen=row.last_seen_at?new Date(row.last_seen_at).getTime():0,healthAt=row.stream_health_at?new Date(row.stream_health_at).getTime():0;
+    const connected=lastSeen>0&&now-lastSeen<=30000,fresh=healthAt>0&&now-healthAt<=25000;
+    return{connected,fresh,launcher:{id:String(row.id),machine_name:row.machine_name||"Creator PC",client_version:row.client_version||"",last_seen_at:row.last_seen_at||null},health:fresh&&row.stream_health&&typeof row.stream_health==="object"?sanitizeLauncherStreamHealth(row.stream_health):{},health_at:row.stream_health_at||null,server_time:new Date().toISOString()};
+}
+
 async function touchStudioBridge(bridgeId, creatorId, input = {}) {
     const machineName = studioText(input.machine_name, 120, "");
     const clientVersion = studioText(input.client_version, 80, "");
     const capabilities = input.capabilities && typeof input.capabilities === "object" && !Array.isArray(input.capabilities) ? input.capabilities : {};
+    const hasStreamHealth = input.stream_health && typeof input.stream_health === "object" && !Array.isArray(input.stream_health);
+    const streamHealth = hasStreamHealth ? sanitizeLauncherStreamHealth(input.stream_health) : {};
     const hasLiveFlag = typeof input.live_session_active === "boolean";
     const liveActive = input.live_session_active === true;
     await pool.query(
@@ -10152,11 +10449,13 @@ async function touchStudioBridge(bridgeId, creatorId, input = {}) {
             machine_name = CASE WHEN $3 <> '' THEN $3 ELSE machine_name END,
             client_version = CASE WHEN $4 <> '' THEN $4 ELSE client_version END,
             capabilities = CASE WHEN $5::jsonb <> '{}'::jsonb THEN $5::jsonb ELSE capabilities END,
+            stream_health = CASE WHEN $6 THEN $7::jsonb ELSE stream_health END,
+            stream_health_at = CASE WHEN $6 THEN NOW() ELSE stream_health_at END,
             last_seen_at=NOW(),
             last_connected_at=COALESCE(last_connected_at,NOW()),
             updated_at=NOW()
          WHERE id=$1 AND creator_id=$2 AND status='active'`,
-        [bridgeId, creatorId, machineName, clientVersion, JSON.stringify(capabilities)]
+        [bridgeId, creatorId, machineName, clientVersion, JSON.stringify(capabilities), hasStreamHealth, JSON.stringify(streamHealth)]
     );
     await pool.query(
         `INSERT INTO creator_live_state (creator_id, provider, connected, bridge_heartbeat_at, updated_at)
@@ -10254,6 +10553,9 @@ function publicStudioLiveEventRow(row) {
             gift_name: studioText(payload.gift_name || payload.giftName, 120, ""),
             gift_id: studioText(payload.gift_id || payload.giftId, 120, ""),
             message: studioText(payload.message, 280, ""),
+            source_provider: STREAM_STUDIO_EVENT_SOURCE_PROVIDERS.has(String(payload.source_provider || payload.sourceProvider || "").toLowerCase()) ? String(payload.source_provider || payload.sourceProvider).toLowerCase() : "launcher_bridge",
+            source_channel: studioText(payload.source_channel || payload.sourceChannel, 120, ""),
+            source_event_id: studioText(payload.source_event_id || payload.sourceEventId, 160, ""),
             is_bot: payload.is_bot === true,
             bot_command: studioText(payload.bot_command, 24, ""),
             repeat_count: Math.max(0, Math.round(Number(payload.repeat_count || payload.repeatCount || 0) || 0))
@@ -10493,6 +10795,37 @@ function publicStudioAction(row) {
     };
 }
 
+
+const STREAM_STUDIO_EVENT_SOURCE_PROVIDERS = new Set(["tiktok","twitch","youtube","kick","facebook","custom_rtmp","simulator","launcher_bridge"]);
+
+function sanitizeStudioBridgeEventPayload(source = {}) {
+    const input = source && typeof source === "object" && !Array.isArray(source) ? source : {};
+    const providerRaw = String(input.source_provider || input.sourceProvider || "launcher_bridge").toLowerCase();
+    const sourceProvider = STREAM_STUDIO_EVENT_SOURCE_PROVIDERS.has(providerRaw) ? providerRaw : "launcher_bridge";
+    const out = { source_provider: sourceProvider };
+    const sourceChannel = studioText(input.source_channel || input.sourceChannel || input.channel,120,"");
+    const sourceEventId = studioText(input.source_event_id || input.sourceEventId || input.message_id || input.messageId,160,"");
+    const message = studioText(input.message,280,"");
+    const giftName = studioText(input.gift_name || input.giftName,120,"");
+    const giftId = studioText(input.gift_id || input.giftId,120,"");
+    const botCommand = studioText(input.bot_command || input.botCommand,24,"");
+    if(sourceChannel) out.source_channel=sourceChannel;
+    if(sourceEventId) out.source_event_id=sourceEventId;
+    if(message) out.message=message;
+    if(giftName) out.gift_name=giftName;
+    if(giftId) out.gift_id=giftId;
+    if(botCommand) out.bot_command=botCommand;
+    if(input.is_bot===true) out.is_bot=true;
+    if(input.repeat_end===true) out.repeat_end=true;
+    const repeatCount=Math.max(0,Math.min(1000000,Math.round(Number(input.repeat_count || input.repeatCount || 0)||0)));
+    const totalLikes=Math.max(0,Math.min(1000000000,Math.round(Number(input.total_likes || input.totalLikes || 0)||0)));
+    if(repeatCount>0) out.repeat_count=repeatCount;
+    if(totalLikes>0) out.total_likes=totalLikes;
+    const valueUnit=studioText(input.provider_value_unit,24,"").toLowerCase();
+    if(["diamonds","bits","stars","currency","points"].includes(valueUnit)) out.provider_value_unit=valueUnit;
+    return out;
+}
+
 const WIDGET_STUDIO_LIVE_EVENT_TYPES = new Set([
     "live_start", "live_end", "follow", "like", "gift", "share", "viewer_update", "chat", "reset"
 ]);
@@ -10505,7 +10838,7 @@ async function applyStudioLiveEvent(creatorId, input = {}, provider = "simulator
     const actorName = studioText(input.actor_name, 100, "");
     const actorAvatar = studioImageSource(input.actor_avatar) || studioText(input.actor_avatar, 2000, "");
     const eventKey = studioText(input.event_key, 160, "") || null;
-    const payload = input.payload && typeof input.payload === "object" && !Array.isArray(input.payload) ? input.payload : {};
+    const payload = sanitizeStudioBridgeEventPayload(input.payload);
     const client = await pool.connect();
     let insertedEvent = null;
     let sessionId = null;
@@ -15119,6 +15452,67 @@ app.delete("/api/creator/cut-studio/projects/:projectId/clips/:clipId",requireCr
 });
 
 
+// ============================================================
+// CFS STREAM STUDIO - CREATOR CONTROL API
+// ============================================================
+
+app.get("/api/creator/stream-studio",requireCreatorAccount,async(req,res)=>{
+    res.set("Cache-Control","no-store");
+    try{
+        const creatorId=req.creatorAccount.id;
+        const context=await streamStudioSourceContext(creatorId,req.creatorAccount);
+        const settingsData=await getCreatorSettings(creatorId);
+        const multistreamLimit=streamStudioMultistreamLimit(context.access);
+        const config=sanitizeStreamStudioConfig(settingsData.settings?.stream_studio||{},context.liveSceneIds,context.liveSourceIds,multistreamLimit,context.ownedSceneIds);
+        const allWidgets=(await listStudioWidgets(creatorId)).map(publicStudioWidgetRow);
+        const byId=new Map(allWidgets.map(widget=>[String(widget.id),publicStreamStudioSource(widget)]));
+        for(const source of context.sceneSources){if(!byId.has(String(source.id)))byId.set(String(source.id),publicStreamStudioSource(source));}
+        return res.json({
+            ok:true,
+            config,
+            settings:settingsData.settings||{},
+            access:context.access,
+            scenes:context.sceneRows.map(row=>publicSceneRow(row,APP_BASE_URL)),
+            widgets:[...byId.values()],
+            registry:studioWidgetRegistryPublic(req.creatorAccount.plan,context.access.entitlements),
+            launcher_devices:await listCreatorLauncherDevices(creatorId),
+            runtime:await getCreatorStreamStudioRuntime(creatorId),
+            multistream:{max_destinations:multistreamLimit,mode:"launcher_local",cloud_relay:false,credentials:"launcher_local_only"},
+            engine:{capture:"launcher_local",cloud_media:false,stream_keys:"launcher_only",multistream:"launcher_local",protocol:2}
+        });
+    }catch(error){console.error("Stream Studio Laden Fehler:",error);return res.status(500).json({ok:false,error:"Stream Studio konnte nicht geladen werden."});}
+});
+
+app.get("/api/creator/stream-studio/runtime",requireCreatorAccount,async(req,res)=>{
+    res.set("Cache-Control","no-store");
+    try{return res.json({ok:true,runtime:await getCreatorStreamStudioRuntime(req.creatorAccount.id)});}
+    catch(error){console.error("Stream Studio Runtime Fehler:",error);return res.status(500).json({ok:false,error:"Stream Runtime konnte nicht geladen werden."});}
+});
+
+app.put("/api/creator/stream-studio",requireCreatorAccount,async(req,res)=>{
+    res.set("Cache-Control","no-store");
+    try{
+        const creatorId=req.creatorAccount.id;
+        const context=await streamStudioSourceContext(creatorId,req.creatorAccount);
+        const multistreamLimit=streamStudioMultistreamLimit(context.access);
+        const requestedDestinations=requestedStreamStudioDestinationCount(req.body?.config||{});
+        if(requestedDestinations>multistreamLimit){
+            const requiredPlan=requestedDestinations>2?"pro":"creator";
+            return res.status(403).json({
+                ...accessDeniedPayload(context.access,"multistream",requiredPlan),
+                max_destinations:multistreamLimit,
+                requested_destinations:requestedDestinations,
+                error:`Dein aktueller Zugriff erlaubt maximal ${multistreamLimit} gleichzeitige Streaming-Ziele.`
+            });
+        }
+        const config=sanitizeStreamStudioConfig(req.body?.config||{},context.liveSceneIds,context.liveSourceIds,multistreamLimit,context.ownedSceneIds);
+        const current=await getCreatorSettings(creatorId);
+        const nextSettings={...(current.settings||{}),stream_studio:config};
+        const saved=await saveCreatorSettings(creatorId,nextSettings);
+        return res.json({ok:true,config,settings:saved.settings,multistream:{max_destinations:multistreamLimit,mode:"launcher_local",credentials:"launcher_local_only"},updated_at:saved.updated_at});
+    }catch(error){console.error("Stream Studio Speichern Fehler:",error);return res.status(500).json({ok:false,error:"Stream Studio Einstellungen konnten nicht gespeichert werden."});}
+});
+
 app.get(
     "/api/creator/widget-studio/scenes",
     requireCreatorAccount,
@@ -15194,7 +15588,7 @@ app.post(
             if(!existing)return res.status(404).json({ok:false,error:"Scene nicht gefunden."});
             const access=await creatorAccessProfile(req.creatorAccount);
             const config=sanitizeSceneConfig(existing.draft_config||{});
-            if(!config.items.length)return res.status(400).json({ok:false,error:"Eine Scene benötigt mindestens ein Widget oder Game-Overlay."});
+            if(!Object.values(config.layouts||{default:{items:config.items}}).some(layout=>(layout?.items||[]).length))return res.status(400).json({ok:false,error:"Eine Scene benötigt mindestens ein Widget oder Game-Overlay."});
             const ownership=validateSceneOwnership(config,await getCreatorSceneSources(req.creatorAccount.id,{includeGame:Boolean(access.entitlements.games)}));
             if(!ownership.ok)return res.status(400).json({ok:false,error:"Vor Publish müssen alle Scene-Widgets veröffentlicht sein.",scene_errors:ownership.errors});
             const result=await pool.query(
@@ -15781,6 +16175,33 @@ app.get(
     }
 );
 
+
+app.get(
+    "/api/bridge/stream-studio/config",
+    widgetBridgeHeartbeatLimiter,
+    requireStudioBridge,
+    async(req,res)=>{
+        res.set("Cache-Control","no-store");
+        try{
+            const creatorId=req.studioBridge.creator_id;
+            const context=await streamStudioSourceContext(creatorId,creatorId);
+            const settingsData=await getCreatorSettings(creatorId);
+            const multistreamLimit=streamStudioMultistreamLimit(context.access);
+            const config=sanitizeStreamStudioConfig(settingsData.settings?.stream_studio||{},context.liveSceneIds,context.liveSourceIds,multistreamLimit,context.ownedSceneIds);
+            const sceneRow=context.sceneRows.find(row=>String(row.id)===config.program_scene_id&&row.status==="live")||null;
+            const sourceMap=new Map(context.sceneSources.filter(source=>source.status==="live").map(source=>[String(source.id),source]));
+            return res.json({
+                ok:true,
+                config,
+                program_scene:sceneRow?publicSceneRow(sceneRow,APP_BASE_URL):null,
+                overlays:config.overlay_widget_ids.map(id=>sourceMap.get(id)).filter(Boolean).map(publicStreamStudioSource),
+                multistream:{max_destinations:multistreamLimit,mode:"launcher_local",failure_policy:"isolate_destination",credentials:"launcher_local_only",cloud_relay:false},
+                engine:{capture:"launcher_local",stream_keys:"launcher_only",multistream:"launcher_local",protocol:2},
+                server_time:new Date().toISOString()
+            });
+        }catch(error){console.error("Bridge Stream Studio Fehler:",error);return res.status(500).json({ok:false,error:"Stream Studio Konfiguration konnte nicht geladen werden."});}
+    }
+);
 
 app.get(
     "/api/bridge/widget-studio/status",
