@@ -362,6 +362,72 @@ function initCreatorNavigation() {
   if (current && activeLink) current.textContent = activeLink.textContent.trim();
 }
 
+
+
+function initAccessibilityBaseline() {
+  const main = document.querySelector("main");
+  if (main) {
+    if (!main.id) main.id = "main-content";
+    if (!document.querySelector(".skip-link")) {
+      const skip = document.createElement("a");
+      skip.className = "skip-link";
+      skip.href = `#${main.id}`;
+      skip.textContent = "Zum Hauptinhalt springen";
+      document.body.prepend(skip);
+    }
+  }
+
+  document.querySelectorAll(".notice").forEach(notice => {
+    const dangerous = notice.classList.contains("danger");
+    if (!notice.hasAttribute("role")) notice.setAttribute("role", dangerous ? "alert" : "status");
+    if (!dangerous && !notice.hasAttribute("aria-live")) notice.setAttribute("aria-live", "polite");
+    notice.setAttribute("aria-atomic", "true");
+  });
+
+  document.querySelectorAll("[aria-disabled='true']").forEach(element => {
+    if (element.matches("a[href]")) element.setAttribute("tabindex", "-1");
+  });
+
+  document.addEventListener("click", event => {
+    const disabledLink = event.target.closest("a[aria-disabled='true']");
+    if (disabledLink) event.preventDefault();
+  });
+
+  const liveTargets = document.querySelectorAll("#sceneToast, #message, #loginMsg, #regMsg, #systemHeadline, #nextStepTitle");
+  liveTargets.forEach(target => {
+    if (!target.hasAttribute("aria-live")) target.setAttribute("aria-live", "polite");
+    target.setAttribute("aria-atomic", "true");
+  });
+
+  const labelFallbacks = {
+    gameOutputUrl: "Game Overlay URL",
+    sceneName: "Scene Name",
+    sceneOutputUrl: "Scene Output URL",
+    sourceUrl: "Widget Browser Source URL",
+    wsOutputUrl: "Widget Output URL",
+    wsObsUrl: "OBS Browser Source URL",
+    wsBoardOutputUrl: "Stream Board Output URL",
+    wsBridgeToken: "Launcher Bridge Schlüssel"
+  };
+  Object.entries(labelFallbacks).forEach(([id, label]) => {
+    const field = document.getElementById(id);
+    if (field && !field.hasAttribute("aria-label") && !field.hasAttribute("aria-labelledby")) field.setAttribute("aria-label", label);
+  });
+
+  const observer = new MutationObserver(records => {
+    for (const record of records) {
+      const target = record.target?.nodeType === 1 ? record.target : record.target?.parentElement;
+      const notice = target?.closest?.(".notice");
+      if (!notice) continue;
+      const dangerous = notice.classList.contains("danger");
+      notice.setAttribute("role", dangerous ? "alert" : "status");
+      if (!dangerous) notice.setAttribute("aria-live", "polite");
+      notice.setAttribute("aria-atomic", "true");
+    }
+  });
+  observer.observe(document.body, {subtree:true, childList:true, characterData:true, attributes:true, attributeFilter:["class"]});
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   // CSP-kompatibler Logo-Fallback statt Inline-onerror-Handlern.
   document.querySelectorAll("img[data-logo-fallback]").forEach(image => {
@@ -465,6 +531,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
+  initAccessibilityBaseline();
   initCreatorNavigation();
   initTrafficSourceExperience();
   initPartnerRecommendations();
