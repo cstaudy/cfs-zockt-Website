@@ -13,6 +13,7 @@
     <nav class="nav creator-nav" data-nav data-creator-nav id="mainNav" aria-label="Creator Suite Navigation">
       <a data-creator-link href="/pages/dashboard.html">DASHBOARD</a>
 <a data-creator-link href="/pages/widget-studio.html">WIDGETS</a>
+<a data-creator-link href="/pages/stream-studio.html">STREAM</a>
 <a data-creator-link href="/pages/tiktok.html">TIKTOK</a>
 <a data-creator-link href="/pages/integrations.html">INTEGRATIONEN</a>
 <a data-creator-link href="/pages/launcher.html">LAUNCHER</a>
@@ -38,6 +39,11 @@
 </header>
 <main class="container scene-shell">
 
+<section class="creator-tool-entry" aria-label="Scene Composer Umzug">
+  <div class="creator-tool-entry-head"><div><span class="creator-tool-kicker">NEUER HAUPTARBEITSPLATZ</span><strong>Scene Composer ist jetzt direkt im CFS Stream Studio integriert.</strong><p>Diese Seite bleibt vorerst als kompatibler Editor erhalten. Neue Streams baust du am schnellsten im Stream Studio mit Scenes, Quellen, Übergängen, Preview und Program an einem Ort.</p></div><span class="creator-tool-status workspace">MIGRATION</span></div>
+  <div class="creator-tool-entry-actions"><a class="btn primary" href="/pages/stream-studio.html#scene-composer">SCENE COMPOSER IM STREAM STUDIO</a></div>
+</section>
+
 <section class="creator-tool-entry" data-tool-entry="scene-studio" aria-label="Scene Studio Einstieg">
   <div class="creator-tool-entry-head">
     <div><span class="creator-tool-kicker">DEIN EINSTIEG</span><strong>Mehrere veröffentlichte Widgets werden zu einer Stream-Szene.</strong><p>Baue zuerst deine Widgets, kombiniere sie hier für TikTok Vertical oder 16:9 und veröffentliche anschließend eine stabile Output-URL.</p></div>
@@ -45,17 +51,26 @@
   </div>
   <div class="creator-tool-path">
     <article><b>01</b><span><strong>Widgets vorbereiten</strong><small>Nur veröffentlichte Widgets stehen in der Scene-Library bereit.</small></span></article>
-    <article><b>02</b><span><strong>Scene bauen</strong><small>Format, Position, Ebenen, Skalierung und Sichtbarkeit festlegen.</small></span></article>
+    <article><b>02</b><span><strong>Scene bauen</strong><small>Format, Position, Ebenen, Übergang, Skalierung und Sichtbarkeit festlegen.</small></span></article>
     <article><b>03</b><span><strong>Output veröffentlichen</strong><small>Eine stabile Scene-URL für deinen Stream erzeugen.</small></span></article>
   </div>
   <div class="creator-tool-entry-actions"><a class="btn primary" href="/pages/widget-studio.html">WIDGETS ÖFFNEN</a><a class="btn" href="/pages/launcher.html">LAUNCHER</a></div>
 </section>
-<section class="scene-hero"><div><div class="scene-kicker">UNIVERSAL OUTPUT · V20</div><h1>BAU DEINEN<br><span>STREAM.</span></h1><p>Kombiniere veröffentlichte Widgets zu einer kompletten TikTok- oder 16:9-Szene. Ein Pack, eine stabile Output-URL, dieselben Creator-Daten.</p></div><div class="scene-hero-actions"><button class="btn primary" id="newVerticalScene">+ TIKTOK SCENE</button><button class="btn" id="newLandscapeScene">+ 16:9 SCENE</button></div></section>
+<section class="scene-hero"><div><div class="scene-kicker">UNIVERSAL OUTPUT · V20</div><h1>BAU DEINEN<br><span>STREAM.</span></h1><p>Kombiniere veröffentlichte Widgets zu einer kompletten TikTok- oder 16:9-Szene. Wähle Schnitt, Fade, Dissolve, Slide oder Zoom und veröffentliche anschließend eine stabile Output-URL.</p></div><div class="scene-hero-actions"><button class="btn primary" id="newVerticalScene">+ TIKTOK SCENE</button><button class="btn" id="newLandscapeScene">+ 16:9 SCENE</button></div></section>
 <section class="scene-workspace">
 <aside class="scene-sidebar panel"><div class="scene-side-head"><div><span>MEINE SCENES</span><strong id="sceneCount">0</strong></div><button id="refreshScenes">↻</button></div><div id="sceneList" class="scene-list"></div></aside>
 <section class="scene-editor panel"><div class="scene-empty" id="sceneEmpty"><strong>NOCH KEINE SCENE AUSGEWÄHLT.</strong><p>Erstelle eine TikTok-Vertical- oder Landscape-Scene und füge veröffentlichte Widgets hinzu.</p></div><div id="sceneEditor" hidden>
 <div class="scene-editor-head"><div class="scene-title-edit"><span>SCENE</span><input id="sceneName" aria-label="Scene Name" maxlength="120"></div><div class="scene-head-actions"><span class="scene-status" id="sceneStatus">DRAFT</span><button class="btn" id="saveScene">SPEICHERN</button><button class="btn primary" id="publishScene">VERÖFFENTLICHEN</button></div></div>
-<div class="scene-profile-bar"><label><span>FORMAT</span><select id="sceneProfile"><option value="tiktok_vertical">TikTok Vertical · 1080 × 1920</option><option value="landscape">Landscape · 1920 × 1080</option></select></label><label><span>HINTERGRUND</span><input id="sceneBackground" value="transparent"></label><label class="scene-check"><input id="sceneSafeArea" type="checkbox" checked><span>SAFE AREA</span></label><div class="scene-zoom"><button data-zoom="-">−</button><strong id="sceneZoom">38%</strong><button data-zoom="+">+</button></div></div>
+<div class="scene-profile-bar">
+<label><span>FORMAT</span><select id="sceneProfile"><option value="tiktok_vertical">TikTok Vertical · 1080 × 1920</option><option value="landscape">Landscape · 1920 × 1080</option></select></label>
+<label><span>HINTERGRUND</span><input id="sceneBackground" value="transparent"></label>
+<label class="scene-check"><input id="sceneSafeArea" type="checkbox" checked><span>SAFE AREA</span></label>
+<label class="scene-transition-control"><span>ÜBERGANG</span><select id="sceneTransition"><option value="cut">Schnitt</option><option value="fade">Fade</option><option value="dissolve">Dissolve</option><option value="slide_left">Slide von rechts</option><option value="slide_right">Slide von links</option><option value="slide_up">Slide von unten</option><option value="zoom">Zoom</option></select></label>
+<label class="scene-transition-duration"><span>DAUER <strong id="sceneTransitionDurationValue">0 ms</strong></span><input id="sceneTransitionDuration" type="range" min="120" max="2500" step="10" value="450"></label>
+<label class="scene-transition-control"><span>EASING</span><select id="sceneTransitionEase"><option value="smooth">Smooth</option><option value="ease">Standard</option><option value="ease_in_out">Ease In/Out</option><option value="linear">Linear</option></select></label>
+<button class="btn scene-transition-preview" id="previewSceneTransition" type="button">ÜBERGANG TESTEN</button>
+<div class="scene-zoom"><button data-zoom="-">−</button><strong id="sceneZoom">38%</strong><button data-zoom="+">+</button></div>
+</div>
 <div class="scene-stage-wrap"><div id="sceneViewport"><div id="sceneCanvas"><div id="sceneSafeGuide"></div><div id="sceneItems"></div></div></div></div>
 <div class="scene-output-bar"><div><span>LIVE OUTPUT URL</span><input id="sceneOutputUrl" aria-label="Scene Output URL" readonly placeholder="Nach Publish verfügbar"></div><button class="btn" id="copySceneUrl">URL KOPIEREN</button><a class="btn" id="openSceneUrl" target="_blank" rel="noopener">ÖFFNEN</a></div>
 </div></section>

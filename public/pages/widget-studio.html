@@ -20,6 +20,7 @@
     <nav class="nav creator-nav" data-nav data-creator-nav id="mainNav" aria-label="Creator Suite Navigation">
       <a data-creator-link href="/pages/dashboard.html">DASHBOARD</a>
 <a data-creator-link href="/pages/widget-studio.html">WIDGETS</a>
+<a data-creator-link href="/pages/stream-studio.html">STREAM</a>
 <a data-creator-link href="/pages/tiktok.html">TIKTOK</a>
 <a data-creator-link href="/pages/integrations.html">INTEGRATIONEN</a>
 <a data-creator-link href="/pages/launcher.html">LAUNCHER</a>
@@ -1026,6 +1027,13 @@
         <label><span>GESPEICHERTE LAYOUTS</span><select id="wsBoardSceneSelect"><option value="">Neues Layout</option></select></label>
         <button class="btn" type="button" data-action="load-board-scene">LADEN</button>
         <button class="btn" type="button" data-action="new-board-scene">NEUES LAYOUT</button>
+      </div>
+      <div class="ws-board-transition-panel" aria-label="Scene Übergang">
+        <div class="ws-board-transition-copy"><span>SCENE-ÜBERGANG</span><strong>So erscheint das Layout im Stream.</strong><small>Der Übergang wird mit der Scene gespeichert und beim veröffentlichten Output verwendet.</small></div>
+        <label><span>ÜBERGANG</span><select id="wsBoardTransition"><option value="cut">Schnitt</option><option value="fade">Fade</option><option value="dissolve">Dissolve</option><option value="slide_left">Slide von rechts</option><option value="slide_right">Slide von links</option><option value="slide_up">Slide von unten</option><option value="zoom">Zoom</option></select></label>
+        <label class="ws-board-transition-duration"><span>DAUER <strong id="wsBoardTransitionDurationValue">0 ms</strong></span><input id="wsBoardTransitionDuration" type="range" min="120" max="2500" step="10" value="450"></label>
+        <label><span>EASING</span><select id="wsBoardTransitionEase"><option value="smooth">Smooth</option><option value="ease">Standard</option><option value="ease_in_out">Ease In/Out</option><option value="linear">Linear</option></select></label>
+        <button class="btn" type="button" data-action="preview-board-transition">ÜBERGANG TESTEN</button>
       </div>
       <div class="ws-board-next-step" id="wsBoardNextStep">
         <div class="ws-board-next-copy">

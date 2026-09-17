@@ -1,0 +1,456 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#020711">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <title>CFS Stream Studio | cfs_zockt</title>
+  <link rel="stylesheet" href="/assets/css/styles.css">
+  <link rel="stylesheet" href="/assets/css/stream-studio.css">
+</head>
+<body class="creator-workspace stream-studio-page">
+<header class="site-header creator-site-header">
+  <div class="container header-inner creator-header-inner">
+    <a class="creator-brand" href="/pages/dashboard.html" aria-label="cfs_zockt Creator Suite Dashboard">
+      <img class="creator-brand-logo" src="/assets/img/logo-header.png" alt="cfs_zockt">
+      <span>CREATOR SUITE</span>
+    </a>
+    <button class="mobile-toggle creator-mobile-toggle" data-mobile-toggle id="mobileNavToggle" type="button">MENÜ</button>
+    <nav class="nav creator-nav" data-nav data-creator-nav id="mainNav" aria-label="Creator Suite Navigation">
+      <a data-creator-link href="/pages/dashboard.html">DASHBOARD</a>
+      <a data-creator-link href="/pages/widget-studio.html">WIDGETS</a>
+      <a data-creator-link href="/pages/stream-studio.html">STREAM</a>
+      <a data-creator-link href="/pages/tiktok.html">TIKTOK</a>
+      <a data-creator-link href="/pages/integrations.html">INTEGRATIONEN</a>
+      <a data-creator-link href="/pages/launcher.html">LAUNCHER</a>
+      <a data-creator-link href="/pages/account.html">ACCOUNT</a>
+      <details class="creator-nav-more" data-creator-more>
+        <summary>MEHR</summary>
+        <div class="creator-nav-more-menu">
+          <a data-creator-link href="/pages/stream-studio.html#scene-composer">SCENE COMPOSER</a>
+          <a data-creator-link href="/pages/editor.html">CREATOR EDITOR</a>
+          <a data-creator-link href="/pages/games.html">GAMES</a>
+          <a data-creator-link href="/pages/cut-studio.html">CUT STUDIO</a>
+          <a data-creator-link href="/pages/nexus.html">NEXUS</a>
+          <a data-creator-link href="/pages/audio-studio.html">AUDIO STUDIO</a>
+          <a data-creator-link href="/pages/setup.html">SETUP</a>
+          <a data-creator-link href="/pages/settings.html">EINSTELLUNGEN</a>
+          <a data-creator-link href="/pages/launcher-connect.html">GERÄT VERBINDEN</a>
+          <a data-creator-link href="/">ÖFFENTLICHE WEBSITE</a>
+        </div>
+      </details>
+      <button class="creator-logout" data-logout type="button">LOGOUT</button>
+    </nav>
+  </div>
+</header>
+
+<main class="stream-studio-shell">
+  <section class="stream-studio-hero">
+    <div>
+      <span class="stream-studio-kicker">CFS STREAM STUDIO · LOCAL MULTISTREAM</span>
+      <h1>DEIN STREAM.<br><span>DEINE REGELN.</span></h1>
+      <p>Scene Composer, alle veröffentlichten Widgets und Overlays, Audio-Zielwerte, Output-Presets und mehrere Streaming-Ziele in einer Oberfläche. Capture, Encoding und Stream-Zugangsdaten bleiben lokal im Launcher.</p>
+    </div>
+    <div class="stream-studio-hero-actions">
+      <a class="btn" href="#scene-composer">SCENE COMPOSER</a>
+      <a class="btn" href="#stream-preflight">STREAM-CHECK</a>
+      <a class="btn" href="/pages/widget-studio.html">WIDGETS & OVERLAYS</a>
+      <button class="btn primary" id="saveStreamStudio" type="button">STUDIO SPEICHERN</button>
+    </div>
+  </section>
+
+
+  <section class="cfs-studio-hub" aria-label="CFS Studio Bereiche">
+    <div class="cfs-studio-hub-copy">
+      <span>CFS STUDIO HUB</span>
+      <strong>Eine Oberfläche · getrennte Engines.</strong>
+      <small>LIVE, Audio, Cut, Widgets und Launcher arbeiten zusammen, bleiben technisch aber modular. So kann ein Cut-Export oder ein Launcher-Problem deinen laufenden Stream nicht unnötig mitreißen.</small>
+    </div>
+    <nav class="cfs-studio-hub-nav" aria-label="Studio Arbeitsbereiche">
+      <a class="active" href="#live-workspace"><b>LIVE</b><span>Scenes · Quellen · Multistream</span></a>
+      <a href="#studio-audio"><b>AUDIO</b><span>Mixer im Live-Workspace</span></a>
+      <a href="/pages/cut-studio.html"><b>CUT</b><span>Postproduktion · Export</span></a>
+      <a href="/pages/launcher.html"><b>LAUNCHER</b><span>Lokale Media Engine</span></a>
+      <a href="/pages/widget-studio.html"><b>WIDGETS</b><span>Widgets & Overlays bauen</span></a>
+    </nav>
+  </section>
+
+  <section class="stream-status-strip" aria-label="Stream Studio Status">
+    <div><span>LAUNCHER</span><strong id="streamLauncherStatus">WIRD GEPRÜFT</strong><small id="streamLauncherDetail">Lokale Engine für Capture & Encoding</small></div>
+    <div><span>SCENES</span><strong id="streamSceneCount">0</strong><small>veröffentlicht / Entwürfe</small></div>
+    <div><span>QUELLEN</span><strong id="streamSourceCount">0</strong><small>Widgets & Overlays</small></div>
+    <div><span>OUTPUT</span><strong id="streamOutputSummary">1080P60</strong><small>Studio-Preset</small></div>
+  </section>
+
+  <section class="stream-workspace-toolbar" id="live-workspace" aria-label="Studio Layout">
+    <div>
+      <span>STUDIO WORKSPACE</span>
+      <strong>Panels so anordnen, wie du streamst.</strong>
+      <small>Scene Composer, Preview/Program, Szenen, Übergänge, Quellen, Audio, Output, Stream-Check und Multistream kannst du verschieben. Im Layout-Modus kannst du Panels außerdem am Eckgriff in der Größe ändern und die Seitenleisten breiter oder schmaler ziehen.</small>
+    </div>
+    <div class="stream-workspace-actions">
+      <label class="stream-workspace-preset"><span class="sr-only">Gespeicherten Workspace auswählen</span><select id="studioWorkspacePreset"><option value="">Workspace wählen</option></select></label>
+      <button class="btn" id="loadStudioWorkspacePreset" type="button">WORKSPACE LADEN</button>
+      <button class="btn" id="saveStudioWorkspacePreset" type="button">ALS WORKSPACE SPEICHERN</button>
+      <button class="btn" id="deleteStudioWorkspacePreset" type="button" disabled>WORKSPACE LÖSCHEN</button>
+      <button class="btn" id="toggleStudioLayout" type="button" aria-pressed="false">LAYOUT ANPASSEN</button>
+      <button class="btn" id="resetStudioLayout" type="button">STANDARDLAYOUT</button>
+    </div>
+  </section>
+
+  <section class="stream-studio-grid" id="streamDockWorkspace">
+    <div class="stream-dock-zone stream-dock-side" data-dock-zone="left" aria-label="Linker Studio-Bereich">
+    <aside class="stream-panel stream-scenes-panel" data-dock-id="scenes" data-dock-title="Szenen">
+      <div class="stream-panel-head"><div><span>SZENEN</span><strong>Bauen · sortieren · Preview</strong></div><span class="stream-panel-badge">INTEGRIERT</span></div>
+      <div class="stream-scene-create">
+        <button type="button" id="newLandscapeStreamScene">+ 16:9</button>
+        <button type="button" id="newVerticalStreamScene">+ 9:16</button>
+      </div>
+      <details class="stream-scene-presets">
+        <summary>SCHNELLSTART-SZENEN</summary>
+        <div class="stream-scene-preset-grid">
+          <button type="button" data-scene-preset="gameplay">GAMEPLAY</button>
+          <button type="button" data-scene-preset="chatting">JUST CHATTING</button>
+          <button type="button" data-scene-preset="starting">STARTING SOON</button>
+          <button type="button" data-scene-preset="brb">BRB / PAUSE</button>
+          <button type="button" data-scene-preset="ending">STREAM ENDE</button>
+          <button type="button" data-scene-preset="vertical">VERTICAL LIVE</button>
+        </div>
+      </details>
+      <div id="streamSceneList" class="stream-scene-list" aria-label="Szenenliste"></div>
+      <div class="stream-panel-note">Scene anklicken = im Composer bearbeiten. LIVE-Scenes können zusätzlich in Preview geladen werden. Die Reihenfolge lässt sich per Griff verschieben.</div>
+    </aside>
+    </div>
+
+    <section class="stream-center">
+      <div class="stream-monitors" data-dock-id="monitors" data-dock-title="Preview & Program">
+        <article class="stream-monitor preview">
+          <div class="stream-monitor-head"><span>PREVIEW</span><strong id="previewSceneName">Keine Scene</strong></div>
+          <div class="stream-monitor-frame" id="previewMonitor"><div class="stream-monitor-empty">Wähle links eine veröffentlichte Scene.</div></div>
+        </article>
+        <article class="stream-monitor program">
+          <div class="stream-monitor-head"><span>PROGRAM</span><strong id="programSceneName">Keine Scene</strong></div>
+          <div class="stream-monitor-frame" id="programMonitor"><div class="stream-monitor-empty">Noch keine Program-Scene.</div><div id="programOverlayLayer" class="stream-overlay-layer"></div></div>
+        </article>
+      </div>
+
+      <div class="stream-dock-zone stream-dock-center" data-dock-zone="center" aria-label="Mittlerer Studio-Bereich">
+
+      <section class="stream-rack stream-scene-composer" id="scene-composer" data-dock-id="scene_composer" data-dock-title="Scene Composer">
+        <div class="stream-section-head scene-composer-head">
+          <div><span>SCENE COMPOSER</span><strong>Scene direkt im Stream Studio bauen</strong></div>
+          <div class="scene-composer-actions">
+            <span class="scene-composer-status" id="composerSceneStatus">KEINE SCENE</span>
+            <button class="btn" id="composerSaveScene" type="button" disabled>SPEICHERN</button>
+            <button class="btn primary" id="composerPublishScene" type="button" disabled>VERÖFFENTLICHEN</button>
+          </div>
+        </div>
+        <div class="scene-composer-empty" id="sceneComposerEmpty">
+          <strong>WÄHLE LINKS EINE SCENE ODER ERSTELLE EINE NEUE.</strong>
+          <p>Widgets und Overlays kannst du rechts direkt zur ausgewählten Scene hinzufügen.</p>
+        </div>
+        <div class="scene-composer-editor" id="sceneComposerEditor" hidden>
+          <div class="scene-composer-toolbar">
+            <label class="scene-composer-name"><span>SCENE</span><input id="composerSceneName" type="text" maxlength="120" autocomplete="off"></label>
+            <label><span>FORMAT</span><select id="composerSceneProfile"><option value="landscape">16:9 · 1920 × 1080</option><option value="tiktok_vertical">9:16 · 1080 × 1920</option></select></label>
+            <label><span>HINTERGRUND</span><input id="composerSceneBackground" type="text" maxlength="40" value="transparent"></label>
+            <label class="scene-composer-check"><input id="composerSceneSafeArea" type="checkbox" checked><span>SAFE AREA</span></label>
+          </div>
+          <div class="scene-composer-layoutbar" aria-label="Dual Canvas Layout">
+            <div class="scene-composer-layouttabs" role="tablist" aria-label="Scene Format bearbeiten">
+              <button type="button" data-composer-layout="landscape" class="active" role="tab">16:9 · HORIZONTAL</button>
+              <button type="button" data-composer-layout="tiktok_vertical" role="tab">9:16 · VERTIKAL</button>
+            </div>
+            <div class="scene-composer-layoutmeta">
+              <span id="composerLayoutStatus">16:9 AKTIV</span>
+              <small>Gleiche Quellen · eigene Positionen je Format</small>
+            </div>
+            <button class="btn" id="composerCopyLayout" type="button">POSITIONEN INS ANDERE FORMAT KOPIEREN</button>
+          </div>
+          <div class="scene-composer-transition" aria-label="Scene Standardübergang">
+            <label><span>SCENE-ÜBERGANG</span><select id="composerSceneTransition"><option value="cut">Schnitt</option><option value="fade">Fade</option><option value="dissolve">Dissolve</option><option value="slide_left">Slide rechts</option><option value="slide_right">Slide links</option><option value="slide_up">Slide hoch</option><option value="zoom">Zoom</option></select></label>
+            <label><span>DAUER <b id="composerSceneTransitionDurationValue">0 ms</b></span><input id="composerSceneTransitionDuration" type="range" min="120" max="2500" step="10" value="450"></label>
+            <label><span>EASING</span><select id="composerSceneTransitionEasing"><option value="smooth">Smooth</option><option value="ease">Standard</option><option value="ease_in_out">Ease In/Out</option><option value="linear">Linear</option></select></label>
+            <button type="button" id="composerPreviewTransition">ÜBERGANG TESTEN</button>
+          </div>
+          <div class="scene-composer-workarea">
+            <div class="scene-composer-stage-column">
+              <div class="scene-composer-stage-toolbar">
+                <span>CANVAS</span>
+                <div><button type="button" data-composer-zoom="-">−</button><strong id="composerZoomValue">100%</strong><button type="button" data-composer-zoom="+">+</button></div>
+              </div>
+              <div class="scene-composer-viewport" id="composerViewport">
+                <div class="scene-composer-canvas" id="composerCanvas">
+                  <div class="scene-composer-safe-guide" id="composerSafeGuide"></div>
+                  <div id="composerItems"></div>
+                </div>
+              </div>
+              <p class="stream-panel-note">Quelle anklicken und ziehen. 16:9 und 9:16 verwenden dieselben Quellen, speichern aber eigene Positionen. Gesperrte Quellen bleiben an ihrer Position. Änderungen werden erst mit „Speichern“ übernommen.</p>
+            </div>
+            <aside class="scene-composer-properties" id="composerProperties" hidden>
+              <div class="scene-composer-properties-head"><span>AUSGEWÄHLTE QUELLE</span><strong id="composerSelectedSourceName">Quelle</strong></div>
+              <div class="scene-composer-prop-grid">
+                <label><span>X</span><input id="composerItemX" type="number" step="1"></label>
+                <label><span>Y</span><input id="composerItemY" type="number" step="1"></label>
+                <label><span>SKALIERUNG</span><input id="composerItemScale" type="number" min="0.1" max="5" step="0.05"></label>
+                <label><span>DREHUNG</span><input id="composerItemRotation" type="number" min="-360" max="360" step="1"></label>
+                <label><span>DECKKRAFT</span><input id="composerItemOpacity" type="number" min="0" max="1" step="0.05"></label>
+                <label><span>EBENE</span><input id="composerItemZ" type="number" min="-1000" max="1000" step="1"></label>
+              </div>
+              <div class="scene-source-routing">
+                <span>OUTPUT-ROUTING</span>
+                <div class="scene-source-routing-grid">
+                  <label><input id="composerRouteLive" type="checkbox" checked><span>LIVE</span></label>
+                  <label><input id="composerRouteRecording" type="checkbox" checked><span>RECORDING</span></label>
+                  <label><input id="composerRouteLandscape" type="checkbox" checked><span>16:9</span></label>
+                  <label><input id="composerRouteVertical" type="checkbox" checked><span>9:16</span></label>
+                </div>
+                <small>Die Quelle bleibt einmal angelegt. Du entscheidest getrennt, ob sie live, in der Aufnahme und in welchem Format erscheint.</small>
+              </div>
+              <div class="scene-source-filters">
+                <div class="scene-source-filters-head"><span>QUELLENFILTER</span><button type="button" id="composerFilterReset">RESET</button></div>
+                <label><span>HELLIGKEIT <b id="composerFilterBrightnessValue">100%</b></span><input id="composerFilterBrightness" type="range" min="0.25" max="2" step="0.05" value="1"></label>
+                <label><span>KONTRAST <b id="composerFilterContrastValue">100%</b></span><input id="composerFilterContrast" type="range" min="0.25" max="2" step="0.05" value="1"></label>
+                <label><span>SÄTTIGUNG <b id="composerFilterSaturationValue">100%</b></span><input id="composerFilterSaturation" type="range" min="0" max="3" step="0.05" value="1"></label>
+                <label><span>WEICHZEICHNER <b id="composerFilterBlurValue">0.0 px</b></span><input id="composerFilterBlur" type="range" min="0" max="20" step="0.5" value="0"></label>
+              </div>
+              <div class="scene-composer-prop-actions">
+                <button type="button" id="composerLayerUp">EBENE +</button>
+                <button type="button" id="composerLayerDown">EBENE −</button>
+                <button type="button" id="composerToggleVisible">AUSBLENDEN</button>
+                <button type="button" id="composerToggleLock">SPERREN</button>
+                <button type="button" class="danger" id="composerRemoveItem">ENTFERNEN</button>
+              </div>
+            </aside>
+          </div>
+          <div class="scene-composer-footer">
+            <label><span>LIVE SCENE OUTPUT</span><input id="composerSceneOutputUrl" type="text" readonly placeholder="Nach Veröffentlichung verfügbar"></label>
+            <label><span>RECORDING ROUTE</span><input id="composerSceneRecordingUrl" type="text" readonly placeholder="Nach Veröffentlichung verfügbar"></label>
+            <div>
+              <button class="btn" id="composerCopySceneUrl" type="button" disabled>LIVE URL KOPIEREN</button>
+              <button class="btn" id="composerCopyRecordingUrl" type="button" disabled>RECORDING URL KOPIEREN</button>
+              <a class="btn" id="composerOpenSceneUrl" href="#" target="_blank" rel="noopener">OUTPUT ÖFFNEN</a>
+              <button class="btn" id="composerDuplicateScene" type="button">DUPLIZIEREN</button>
+              <button class="btn danger" id="composerDeleteScene" type="button">SCENE LÖSCHEN</button>
+            </div>
+          </div>
+        </div>
+      </section>
+      <div class="stream-take-bar" data-dock-id="transition" data-dock-title="Szenenübergang">
+        <label><span>ÜBERGANG</span><select id="streamTransition"><option value="cut">Schnitt</option><option value="fade">Fade</option><option value="dissolve">Dissolve</option><option value="slide_left">Slide rechts</option><option value="slide_right">Slide links</option><option value="slide_up">Slide hoch</option><option value="zoom">Zoom</option></select></label>
+        <label class="stream-duration"><span>DAUER <b id="streamDurationValue">350 ms</b></span><input id="streamDuration" type="range" min="120" max="2500" step="10" value="350"></label>
+        <button class="stream-take-button" id="takeScene" type="button">TAKE → PROGRAM</button>
+      </div>
+
+      <section class="stream-rack stream-overlay-rack" data-dock-id="overlay_rack" data-dock-title="Quick Overlay Rack">
+        <div class="stream-section-head"><div><span>QUICK OVERLAY RACK</span><strong>Widgets direkt über der Program-Scene</strong></div><small>Positionen kannst du direkt im Program-Fenster ziehen.</small></div>
+        <div id="activeOverlayRack" class="active-overlay-rack"></div>
+      </section>
+      </div>
+    </section>
+
+    <div class="stream-dock-zone stream-dock-side" data-dock-zone="right" aria-label="Rechter Studio-Bereich">
+    <aside class="stream-panel stream-sources-panel" data-dock-id="sources" data-dock-title="Quellen">
+      <div class="stream-panel-head"><div><span>QUELLEN</span><strong>Alles an einem Ort</strong></div><a href="/pages/widget-studio.html">NEU BAUEN</a></div>
+      <div class="stream-source-tabs" role="tablist" aria-label="Quellenfilter">
+        <button class="active" data-source-filter="all" type="button">ALLE</button>
+        <button data-source-filter="widget" type="button">WIDGETS</button>
+        <button data-source-filter="overlay" type="button">OVERLAYS</button>
+      </div>
+      <label class="stream-source-search"><span class="sr-only">Quellen suchen</span><input id="streamSourceSearch" type="search" placeholder="Widget oder Overlay suchen"></label>
+      <div id="streamSourceLibrary" class="stream-source-library"></div>
+    </aside>
+    </div>
+  </section>
+
+  <section class="stream-bottom-grid stream-dock-zone" data-dock-zone="bottom" aria-label="Unterer Studio-Bereich">
+    <article class="stream-rack" data-dock-id="capture" data-dock-title="Lokale Quellen">
+      <div class="stream-section-head"><div><span>LOKALE QUELLEN</span><strong>Capture über den Launcher</strong></div><small>Die Website speichert nur deine Auswahl. Bild und Ton bleiben lokal auf deinem PC.</small></div>
+      <div class="stream-capture-grid">
+        <label><input type="checkbox" data-capture-source="display"><span><strong>BILDSCHIRM</strong><small>Monitor Capture</small></span></label>
+        <label><input type="checkbox" data-capture-source="window"><span><strong>FENSTER</strong><small>App / Browser</small></span></label>
+        <label><input type="checkbox" data-capture-source="game"><span><strong>GAME</strong><small>Game Capture</small></span></label>
+        <label><input type="checkbox" data-capture-source="camera"><span><strong>KAMERA</strong><small>Webcam / Capture Card</small></span></label>
+      </div>
+    </article>
+
+    <article class="stream-rack" id="studio-audio" data-dock-id="audio" data-dock-title="Audio Mixer">
+      <div class="stream-section-head"><div><span>AUDIO MIXER</span><strong>Launcher-Zielwerte</strong></div><div class="stream-section-tools"><small>Keine Audiodaten werden an die Website übertragen.</small><a href="/pages/audio-studio.html">AUDIO STUDIO</a></div></div>
+      <div class="stream-mixer" id="streamMixer">
+        <label data-mixer="microphone"><span><strong>MIKROFON</strong><small id="mixMicrophoneValue">85%</small></span><input type="range" min="0" max="100" value="85"><button type="button" data-mute="microphone">MUTE</button></label>
+        <label data-mixer="desktop"><span><strong>DESKTOP</strong><small id="mixDesktopValue">80%</small></span><input type="range" min="0" max="100" value="80"><button type="button" data-mute="desktop">MUTE</button></label>
+        <label data-mixer="music"><span><strong>MUSIK</strong><small id="mixMusicValue">65%</small></span><input type="range" min="0" max="100" value="65"><button type="button" data-mute="music">MUTE</button></label>
+        <label data-mixer="alerts"><span><strong>ALERTS</strong><small id="mixAlertsValue">90%</small></span><input type="range" min="0" max="100" value="90"><button type="button" data-mute="alerts">MUTE</button></label>
+      </div>
+    </article>
+
+    <article class="stream-rack stream-output-rack" data-dock-id="output" data-dock-title="Output">
+      <div class="stream-section-head"><div><span>OUTPUT</span><strong>Eigene Stream-Einstellungen</strong></div><small>Stream-Keys werden nicht in der Cloud gespeichert.</small></div>
+      <div class="stream-output-presets" aria-label="Schnelle Output Profile">
+        <button type="button" data-output-preset="quality">QUALITÄT · 1080P60</button>
+        <button type="button" data-output-preset="balanced">BALANCED · 1080P30</button>
+        <button type="button" data-output-preset="light">LEICHT · 720P60</button>
+        <button type="button" data-output-preset="vertical">VERTICAL · 1080×1920</button>
+      </div>
+      <div class="stream-output-grid">
+        <label><span>PROFIL</span><select id="streamOutputProfile"><option value="1080p60">1080p · 60 FPS</option><option value="1080p30">1080p · 30 FPS</option><option value="720p60">720p · 60 FPS</option><option value="vertical1080p60">Vertical 1080p · 60 FPS</option></select></label>
+        <label><span>ZIEL</span><select id="streamDestination"><option value="recording_only">Nur Aufnahme</option><option value="tiktok">TikTok</option><option value="twitch">Twitch</option><option value="youtube">YouTube</option><option value="custom_rtmp">Eigenes RTMP/RTMPS</option></select></label>
+        <label><span>ENCODER</span><select id="streamEncoder"><option value="auto">Automatisch</option><option value="nvenc">NVIDIA NVENC</option><option value="amd">AMD Hardware</option><option value="qsv">Intel Quick Sync</option><option value="software">Software</option></select></label>
+        <label><span>BITRATE</span><input id="streamBitrate" type="number" min="1000" max="30000" step="250" value="6000"><small>kbps</small></label>
+        <label><span>AUDIO</span><select id="streamAudioBitrate"><option value="128">128 kbps</option><option value="160">160 kbps</option><option value="192">192 kbps</option><option value="256">256 kbps</option><option value="320">320 kbps</option></select></label>
+        <label><span>AUFNAHME</span><select id="streamRecordingFormat"><option value="mkv">MKV</option><option value="mp4">MP4</option></select></label>
+      </div>
+      <div class="stream-recording-tracks">
+        <div><span>RECORDING AUDIO-TRACKS</span><strong>Mix + lokale Busse getrennt aufnehmen</strong><small>MKV empfohlen. Audio 1/2 entsprechen den im Launcher gewählten lokalen Geräten.</small></div>
+        <div class="stream-recording-track-grid">
+          <label><input id="streamRecordingTrackMix" type="checkbox" checked><span>MIX</span></label>
+          <label><input id="streamRecordingTrackAudio1" type="checkbox" checked><span>AUDIO 1 · MIC/MIX</span></label>
+          <label><input id="streamRecordingTrackAudio2" type="checkbox" checked><span>AUDIO 2 · DESKTOP/LOOPBACK</span></label>
+        </div>
+      </div>
+      <div class="stream-output-actions">
+        <button class="btn primary" id="saveStreamStudioBottom" type="button">EINSTELLUNGEN SPEICHERN</button>
+        <a class="btn" href="/pages/launcher.html">LAUNCHER ÖFFNEN</a>
+      </div>
+      <p class="stream-engine-note"><strong>ENGINE-STATUS:</strong> Die lokale Launcher-Engine kann jetzt getrennte Recording-Audiospuren erzeugen. Source-Routing und Source-Filter werden im CFS Scene Runtime technisch ausgewertet; die direkte Einblendung dieser Scene-Layer in die native Capture-Pipeline bleibt ein eigener Compositor-Schritt.</p>
+    </article>
+  </section>
+
+  <section class="stream-dock-zone stream-wide-dock" data-dock-zone="wide" aria-label="Breiter Studio-Bereich">
+  <section class="stream-rack stream-preflight-rack" id="stream-preflight" data-dock-id="preflight" data-dock-title="Stream Check" aria-labelledby="streamPreflightTitle">
+    <div class="stream-section-head">
+      <div><span>STREAM CHECK</span><strong id="streamPreflightTitle">Vor dem Livegang kurz alles prüfen</strong></div>
+      <small>Der Check startet keinen Stream und verändert keine Zugangsdaten.</small>
+    </div>
+    <div class="stream-preflight-summary">
+      <div><span>BEREITSCHAFT</span><strong id="streamPreflightScore">0 / 0</strong><small id="streamPreflightLabel">Noch nicht geprüft</small></div>
+      <div><span>MODUS</span><strong>LOCAL ENGINE</strong><small>Rohbild & Rohaudio bleiben lokal</small></div>
+    </div>
+    <div id="streamPreflightList" class="stream-preflight-list"></div>
+    <div class="stream-preflight-actions">
+      <button class="btn primary" id="runStreamPreflight" type="button">STREAM-CHECK AUSFÜHREN</button>
+      <a class="btn" href="/pages/launcher.html">LAUNCHER ÖFFNEN</a>
+    </div>
+  </section>
+
+
+
+  <section class="stream-rack stream-session-rack" id="stream-session" data-dock-id="session" data-dock-title="Stream Session" aria-labelledby="streamSessionTitle">
+    <div class="stream-section-head stream-session-head">
+      <div><span>STREAM SESSION</span><strong id="streamSessionTitle">Live-Lauf in einer Ansicht</strong></div>
+      <div class="stream-session-head-actions"><span class="stream-session-badge" id="streamSessionBadge">OFFLINE</span><a class="btn" href="/pages/launcher.html">LAUNCHER STEUERN</a></div>
+    </div>
+    <div class="stream-session-summary" aria-label="Stream Session Zusammenfassung">
+      <div><span>STATUS</span><strong id="streamSessionStatus">OFFLINE</strong><small>lokale Engine</small></div>
+      <div><span>LAUFZEIT</span><strong id="streamSessionElapsed">00:00:00</strong><small>seit Engine-Start</small></div>
+      <div><span>START</span><strong id="streamSessionStarted">—</strong><small>lokale Zeit</small></div>
+      <div><span>LIVE-ZIELE</span><strong id="streamSessionTargets">0</strong><small>parallel aktiv</small></div>
+      <div><span>UPLOAD</span><strong id="streamSessionUpload">0 Mbit/s</strong><small>aktuell gemessen</small></div>
+      <div><span>DATEN</span><strong id="streamSessionData">0 MB</strong><small>seit diesem Studio-Aufruf geschätzt</small></div>
+      <div><span>RECONNECTS</span><strong id="streamSessionReconnects">0</strong><small>seit Engine-Start</small></div>
+    </div>
+    <div id="streamSessionTargetsList" class="stream-session-targets" aria-live="polite"><div class="stream-session-empty">Noch keine aktive Stream-Session.</div></div>
+    <div class="stream-session-actions">
+      <a class="btn" href="#stream-preflight">STREAM-CHECK</a>
+      <a class="btn" href="#studio-audio">AUDIO MIXER</a>
+      <a class="btn" href="/pages/cut-studio.html">NACH DEM STREAM: CUT</a>
+    </div>
+    <div class="stream-session-note"><strong>MODULAR:</strong> Das Dashboard steuert nicht direkt Capture oder Stream-Keys. LIVE-Produktion, Cut-Export und lokale Launcher-Engine bleiben getrennte Laufzeitbereiche. Dadurch bleibt die Fehlerwirkung kleiner und ein Postproduktionsjob kann nicht einfach den Live-Encoder ersetzen.</div>
+  </section>
+
+
+  <section class="stream-rack stream-health-rack" data-dock-id="health" data-dock-title="Live Health" aria-labelledby="streamHealthTitle">
+    <div class="stream-section-head stream-health-head">
+      <div><span>LIVE HEALTH</span><strong id="streamHealthTitle">Launcher-, Encoder- und Zielstatus</strong></div>
+      <div class="stream-health-head-actions"><span class="stream-health-badge" id="streamHealthBadge">WIRD GEPRÜFT</span><button class="btn" id="refreshStreamHealth" type="button">AKTUALISIEREN</button></div>
+    </div>
+    <div class="stream-health-summary" aria-label="Live Health Zusammenfassung">
+      <div><span>ENGINE</span><strong id="streamHealthEngine">OFFLINE</strong><small id="streamHealthUpdated">—</small></div>
+      <div><span>LIVE-ZIELE</span><strong id="streamHealthTargets">0</strong><small>isoliert pro Plattform</small></div>
+      <div><span>UPLOAD</span><strong id="streamHealthUpload">0 Mbit/s</strong><small>gemessene/aktive Bitrate</small></div>
+      <div><span>DROPPED</span><strong id="streamHealthDropped">0</strong><small>Frames gesamt</small></div>
+      <div><span>ENCODER SPEED</span><strong id="streamHealthSpeed">—</strong><small>FFmpeg Echtzeitfaktor</small></div>
+      <div><span>RECONNECTS</span><strong id="streamHealthReconnects">0</strong><small>seit Engine-Start</small></div>
+      <div><span>WATCHDOG</span><strong id="streamHealthWatchdog">0</strong><small>automatische Restarts</small></div>
+    </div>
+    <div class="stream-live-guard" id="streamLiveGuard" data-severity="idle" aria-live="polite">
+      <div class="stream-live-guard-head">
+        <div><span>LIVE GUARD</span><strong id="streamLiveGuardTitle">WARTE AUF TELEMETRIE</strong></div>
+        <b id="streamLiveGuardBadge">OFFLINE</b>
+      </div>
+      <p id="streamLiveGuardText">Live Guard bewertet Encoder-Speed, FPS, Bitrate, Dropped Frames, Reconnects und Watchdog-Eingriffe.</p>
+      <ul id="streamLiveGuardList"><li>Es werden keine Output-Einstellungen automatisch verändert.</li></ul>
+      <small>DIAGNOSE STATT AUTOPILOT: CFS warnt und erklärt die wahrscheinlichste Maßnahme. Bitrate, Encoder oder Streaming-Ziele werden niemals ohne deine Aktion geändert.</small>
+    </div>
+    <div id="streamHealthTargetsList" class="stream-health-targets" aria-live="polite"><div class="stream-health-empty">Warte auf Launcher-Telemetrie.</div></div>
+    <div class="stream-health-note"><strong>PRIVAT:</strong> Der Launcher sendet nur technische Telemetrie wie FPS, Bitrate, Dropped Frames, Reconnects und Zielstatus. Stream-Keys, RTMP-Adressen, lokale Dateipfade sowie Roh-Audio/-Video werden nicht an die Website übertragen.</div>
+  </section>
+
+  <section class="stream-rack stream-activity-rack" data-dock-id="activity" data-dock-title="Multi-Chat & Activity" aria-labelledby="streamActivityTitle">
+    <div class="stream-section-head">
+      <div><span>MULTI-CHAT & ACTIVITY</span><strong id="streamActivityTitle">LIVE-Nachrichten und Events in einem Feed</strong></div>
+      <small>Aktuell liest der Feed vorhandene CFS LIVE-Events. Weitere Plattform-Adapter werden später im Launcher angebunden.</small>
+    </div>
+    <div class="stream-activity-toolbar">
+      <div class="stream-activity-filters" role="group" aria-label="Activity Filter">
+        <button class="active" type="button" data-activity-filter="all">ALLE</button>
+        <button type="button" data-activity-filter="chat">CHAT</button>
+        <button type="button" data-activity-filter="follow">FOLLOWS</button>
+        <button type="button" data-activity-filter="gift">GIFTS</button>
+        <button type="button" data-activity-filter="share">SHARES</button>
+        <button type="button" data-activity-filter="like">LIKES</button>
+      </div>
+      <label class="stream-activity-provider-filter"><span>PLATTFORM</span><select id="activityProviderFilter"><option value="all">Alle</option><option value="tiktok">TikTok</option><option value="twitch">Twitch</option><option value="youtube">YouTube</option><option value="kick">Kick</option><option value="facebook">Facebook</option><option value="launcher_bridge">LIVE Bridge</option><option value="simulator">Simulator</option></select></label>
+      <div class="stream-activity-actions"><button class="btn" id="toggleActivityPause" type="button" aria-pressed="false">FEED PAUSIEREN</button><button class="btn" id="refreshActivityFeed" type="button">AKTUALISIEREN</button></div>
+    </div>
+    <div class="stream-activity-summary" aria-label="Activity Zusammenfassung">
+      <div><span>SICHTBAR</span><strong id="activityEventCount">0</strong><small>Events im Filter</small></div>
+      <div><span>CHAT</span><strong id="activityChatCount">0</strong><small>Nachrichten in der Session</small></div>
+      <div><span>UPDATE</span><strong id="activityLastUpdate">NOCH NICHT</strong><small>4-Sekunden Polling im Vordergrund</small></div>
+    </div>
+    <div id="streamActivityFeed" class="stream-activity-feed" aria-live="polite"><div class="stream-activity-empty">Noch keine LIVE-Events in der aktuellen Session.</div></div>
+    <div class="stream-activity-note"><strong>DATENSCHUTZ:</strong> Diese Ansicht legt keine zusätzliche Chat-Historie an. Sie liest nur die bereits creator-isolierten Events der aktuellen LIVE-Session. Antworten, Löschen, Bans und plattformspezifische Moderation werden erst aktiviert, wenn der jeweilige offizielle Provider-Adapter das sicher unterstützt.</div>
+  </section>
+
+  <section class="stream-rack stream-multistream-rack" data-dock-id="multistream" data-dock-title="Local Multistream" aria-labelledby="multistreamTitle">
+    <div class="stream-section-head multistream-head">
+      <div><span>LOCAL MULTISTREAM</span><strong id="multistreamTitle">Mehrere Ziele · lokal über den Launcher</strong></div>
+      <small>Kein Stream-Key und keine RTMP-Zieladresse wird in der CFS Cloud gespeichert.</small>
+    </div>
+
+    <div class="multistream-summary" aria-label="Multistream Zusammenfassung">
+      <div><span>PLAN-LIMIT</span><strong id="multistreamLimit">1 Ziel</strong><small id="multistreamPlan">FREE</small></div>
+      <div><span>AKTIV</span><strong id="multistreamActiveCount">0</strong><small>gleichzeitige Ziele</small></div>
+      <div><span>UPLOAD</span><strong id="multistreamUpload">0 Mbit/s</strong><small>geschätzt</small></div>
+      <div><span>EMPFOHLEN</span><strong id="multistreamRecommended">0 Mbit/s</strong><small>inkl. Reserve</small></div>
+    </div>
+
+    <div class="multistream-security-note">
+      <strong>LOKALE ZUGANGSDATEN:</strong> Die Website speichert nur Zieltyp, Profil und Bitrate. Stream-Keys, Tokens, Passwörter und benutzerdefinierte RTMP/RTMPS-Adressen werden ausschließlich im lokalen Launcher hinterlegt. Fällt ein Ziel aus, sollen die anderen Ziele unabhängig weiterlaufen.
+    </div>
+
+    <div class="multistream-provider-support" aria-label="Unterstützte Multistream-Verbindungen">
+      <article><span>YOUTUBE</span><strong>DIREKT</strong><small>RTMPS + Stream-Key aus Live Control Room</small></article>
+      <article><span>TWITCH</span><strong>DIREKT</strong><small>RTMP-Ingest + Stream-Key aus Creator Dashboard</small></article>
+      <article><span>TIKTOK</span><strong>ZUGANG ABHÄNGIG</strong><small>Nur mit LIVE-/Encoder-Zugang und bereitgestelltem Stream-Key</small></article>
+    </div>
+
+    <div id="multistreamTargets" class="multistream-targets"></div>
+
+    <div class="multistream-actions">
+      <button class="btn" id="addCustomStreamTarget" type="button">+ EIGENES RTMP-ZIEL</button>
+      <button class="btn" id="checkMultistreamConfig" type="button">KONFIGURATION PRÜFEN</button>
+      <a class="btn" href="/pages/launcher.html">ZUGANGSDATEN IM LAUNCHER</a>
+      <button class="btn primary" id="saveMultistream" type="button">MULTISTREAM SPEICHERN</button>
+    </div>
+    <p class="stream-engine-note"><strong>STABILITÄT:</strong> CFS verwendet zunächst Local Multistream. Jeder Ausgang wird als separates Ziel behandelt. Ein einzelner Verbindungsfehler darf später nicht automatisch alle anderen Ausgänge stoppen. Cloud Relay bleibt deaktiviert, bis Kosten-, Kapazitäts- und Sicherheitsgrenzen separat abgenommen wurden.</p>
+  </section>
+  </section>
+</main>
+
+<div class="stream-toast" id="streamToast" hidden role="status" aria-live="polite"></div>
+<script src="/assets/js/app.js"></script>
+<script src="/assets/js/stream-studio.js"></script>
+</body>
+</html>
