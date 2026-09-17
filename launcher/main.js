@@ -27,6 +27,9 @@ const { assertFeature, assertStreamDeckButton } = require("./src/entitlement-gua
 const { BetaSessionStore } = require("./src/beta-session-store");
 const { MediaSourceStore } = require("./src/media-source-store");
 const { CutMediaEngine } = require("./src/cut-media-engine");
+const { StreamEngine } = require("./src/stream-engine");
+const { StreamCredentialStore } = require("./src/stream-credential-store");
+const { providerInfo: streamProviderInfo, providerCatalogPublic } = require("./src/stream-provider-catalog");
 const { checkCloudHealth, creatorReady } = require("./src/cloud-health");
 const { planSettingsTransition, assertLiveSafeSecretChange } = require("./src/runtime-stability");
 const pkg = require("./package.json");
@@ -62,6 +65,9 @@ let streamDeckStore = null;
 let betaSessionStore = null;
 let mediaSourceStore = null;
 let cutMediaEngine = null;
+let streamEngine = null;
+let streamCredentialStore = null;
+let streamStudioCloud = {config:null,program_scene:null,overlays:[],multistream:{max_destinations:1},engine:{},loadedAt:null,error:""};
 let betaCloud = {beta:{status:"none",active:false},active_session:null,recent_feedback:[],loadedAt:null,error:""};
 
 
@@ -122,6 +128,9 @@ function appState(extra = {}) {
     betaCenter:{cloud:betaCloud,localSession:betaSessionStore?.snapshot?.() || {active:false,sessionId:null,lastError:""}},
     mediaEngine:cutMediaEngine?.snapshot?.() || {status:"idle",available:false,ffmpegPath:"",ffmpegSource:"",version:"",capabilities:{drawtext:false,concat:true,xfade:false,acrossfade:false,loudnorm:false,zoompan:false,rotate:false,blend:false,amix:false,sidechaincompress:false,encoders:{software:true,nvenc:false,qsv:false,amf:false}},jobId:null,progress:0,phase:"idle",mode:"clips",encoder:"software",transition:"cut",error:""},
     mediaSources:mediaSourceStore?.snapshot?.() || {schema:4,sources:{},music:{},voice:{},musicTracks:{},voiceTracks:{},sfx:{}},
+    streamEngine:streamEngine?.snapshot?.() || {status:"idle",available:false,desiredRunning:false,capabilities:{gdigrab:false,dshow:false,encoders:{software:true,nvenc:false,amd:false,qsv:false}},destinations:{},recording:null,error:""},
+    streamStudio:{...streamStudioCloud,credentials:streamCredentialStore?.snapshot?.((streamStudioCloud?.config?.multistream?.destinations||[]).map(item=>item.id)) || {encryptionAvailable:safeStorage.isEncryptionAvailable(),targets:{}}},
+    streamProviders:providerCatalogPublic(),
     encryptionAvailable: safeStorage.isEncryptionAvailable(),
     ...extra
   };
@@ -305,6 +314,200 @@ async function probeCutMediaEngine(){
   assertFeature(creatorFeatures(),"cut_studio","Cut Studio");
   await configureCutMediaEngine().probe();
   return appState();
+}
+
+function configureStreamEngine(){
+  if(streamEngine)return streamEngine;
+  streamEngine=new StreamEngine({
+    logger,
+    env:process.env,
+    platform:process.platform,
+    resourcesPath:process.resourcesPath,
+    videosPath:app.getPath("videos")
+  });
+  streamEngine.on("state",engineState=>send("launcher:state",appState({streamEngine:engineState})));
+  return streamEngine;
+}
+
+async function syncStreamStudioConfig({notify=true}={}){
+  if(!bridge?.snapshot?.().connected)throw new Error("Creator Bridge ist nicht verbunden.");
+  try{
+    const data=await bridge.fetchStreamStudioConfig();
+    streamStudioCloud={
+      config:data?.config||null,
+      program_scene:data?.program_scene||null,
+      overlays:Array.isArray(data?.overlays)?data.overlays:[],
+      multistream:data?.multistream||{max_destinations:1},
+      engine:data?.engine||{},
+      loadedAt:new Date().toISOString(),
+      error:""
+    };
+  }catch(error){
+    streamStudioCloud={...streamStudioCloud,error:String(error?.message||error)};
+    throw error;
+  }finally{if(notify)send("launcher:state",appState())}
+  return streamStudioCloud;
+}
+
+function streamDisplayRegion(displayId="") {
+  const id=String(displayId||"").trim();
+  if(!id)return null;
+  const display=(screen?.getAllDisplays?.()||[]).find(item=>String(item.id)===id);
+  if(!display)throw new Error("Der ausgewählte Monitor ist nicht mehr verfügbar. Bitte Geräte neu laden.");
+  const bounds=display.bounds||{};
+  const scale=Number(display.scaleFactor||1)||1;
+  const fallbackPoint=point=>({x:Math.round(Number(point.x||0)*scale),y:Math.round(Number(point.y||0)*scale)});
+  const toScreen=point=>{try{return typeof screen?.dipToScreenPoint==="function"?screen.dipToScreenPoint(point):fallbackPoint(point)}catch{return fallbackPoint(point)}};
+  const start=toScreen({x:Number(bounds.x||0),y:Number(bounds.y||0)});
+  const end=toScreen({x:Number(bounds.x||0)+Number(bounds.width||0),y:Number(bounds.y||0)+Number(bounds.height||0)});
+  return {x:start.x,y:start.y,width:Math.max(64,Math.abs(end.x-start.x)),height:Math.max(64,Math.abs(end.y-start.y)),displayId:id};
+}
+
+function saveStreamLocalSettings(input={}){
+  const settings=configStore.save({
+    streamCaptureType:["screen","window","camera"].includes(input.captureType)?input.captureType:undefined,
+    streamWindowTitle:String(input.windowTitle??configStore.publicSettings().streamWindowTitle??""),
+    streamDisplayId:String(input.displayId??configStore.publicSettings().streamDisplayId??""),
+    streamCropEnabled:typeof input.cropEnabled==="boolean"?input.cropEnabled:configStore.publicSettings().streamCropEnabled,
+    streamCropX:Number(input.cropX??configStore.publicSettings().streamCropX??0),
+    streamCropY:Number(input.cropY??configStore.publicSettings().streamCropY??0),
+    streamCropWidth:Number(input.cropWidth??configStore.publicSettings().streamCropWidth??1920),
+    streamCropHeight:Number(input.cropHeight??configStore.publicSettings().streamCropHeight??1080),
+    streamVideoDevice:String(input.videoDevice??configStore.publicSettings().streamVideoDevice??""),
+    streamAudioDevice:String(input.audioDevice??configStore.publicSettings().streamAudioDevice??""),
+    streamAudioDevice2:String(input.audioDevice2??configStore.publicSettings().streamAudioDevice2??""),
+    streamAudioVolume:Number(input.audioVolume??configStore.publicSettings().streamAudioVolume??1),
+    streamAudioVolume2:Number(input.audioVolume2??configStore.publicSettings().streamAudioVolume2??1),
+    streamAudioMute:typeof input.audioMute==="boolean"?input.audioMute:configStore.publicSettings().streamAudioMute,
+    streamAudioMute2:typeof input.audioMute2==="boolean"?input.audioMute2:configStore.publicSettings().streamAudioMute2,
+    streamAudioDelayMs:Number(input.audioDelayMs??configStore.publicSettings().streamAudioDelayMs??0),
+    streamAudioDelayMs2:Number(input.audioDelayMs2??configStore.publicSettings().streamAudioDelayMs2??0),
+    streamWatchdogEnabled:typeof input.watchdogEnabled==="boolean"?input.watchdogEnabled:configStore.publicSettings().streamWatchdogEnabled,
+    streamWatchdogTimeoutSec:Number(input.watchdogTimeoutSec??configStore.publicSettings().streamWatchdogTimeoutSec??18),
+    streamDrawMouse:typeof input.drawMouse==="boolean"?input.drawMouse:configStore.publicSettings().streamDrawMouse,
+    streamRecordingEnabled:typeof input.recordingEnabled==="boolean"?input.recordingEnabled:configStore.publicSettings().streamRecordingEnabled
+  });
+  return appState({settings});
+}
+
+function saveStreamCredential(input={}){
+  if(!streamCredentialStore)throw new Error("Lokaler Stream-Key-Speicher ist nicht bereit.");
+  const result=streamCredentialStore.set(input.targetId,{serverUrl:input.serverUrl,streamKey:input.streamKey});
+  logger?.info?.("Local streaming credentials updated",String(input.targetId||""));
+  return appState({streamCredentialAction:{ok:true,target:result}});
+}
+
+function removeStreamCredential(targetId){
+  if(!streamCredentialStore)throw new Error("Lokaler Stream-Key-Speicher ist nicht bereit.");
+  const removed=streamCredentialStore.remove(targetId);
+  logger?.info?.("Local streaming credentials removed",String(targetId||""));
+  return appState({streamCredentialAction:{ok:true,removed,targetId:String(targetId||"")}});
+}
+
+async function streamCaptureDevices(){
+  const engine=configureStreamEngine();
+  const probe=await engine.probe();
+  const devices=probe.available?await engine.listWindowsAudioDevices():[];
+  return appState({streamCaptureDevices:{devices,displays:(screen?.getAllDisplays?.()||[]).map(display=>({id:String(display.id),label:display.label||`Display ${display.id}`,bounds:display.bounds,scaleFactor:display.scaleFactor}))}});
+}
+
+async function openStreamProviderDocs(provider){
+  const info=streamProviderInfo(provider);
+  const url=String(info?.docs||"");
+  if(!/^https:\/\//i.test(url))throw new Error("Für diesen Anbieter ist noch keine offizielle Anleitung hinterlegt.");
+  await shell.openExternal(url);
+  return {ok:true,provider:info.key};
+}
+
+async function streamEnginePreflight(){
+  const cloud=await syncStreamStudioConfig({notify:false});
+  const engine=configureStreamEngine();
+  let engineState=engine.snapshot();
+  if(!engineState.checkedAt)engineState=await engine.probe();
+  const config=cloud.config||{};
+  const active=(config?.multistream?.destinations||[]).filter(target=>target?.enabled===true);
+  const limit=Math.max(1,Number(cloud?.multistream?.max_destinations||1));
+  const checks=[];
+  const push=(key,ok,label,detail)=>checks.push({key,ok:Boolean(ok),label,detail:String(detail||"")});
+  push("bridge",Boolean(bridge?.snapshot?.().connected),"Launcher Bridge",bridge?.snapshot?.().connected?"Mit CFS Cloud verbunden.":"Launcher zuerst mit deinem Creator-Account verbinden.");
+  push("engine",Boolean(engineState.available),"Streaming Engine",engineState.available?(engineState.version||"FFmpeg bereit"):(engineState.error||"FFmpeg nicht bereit."));
+  push("encryption",Boolean(streamCredentialStore?.encryptionAvailable?.()),"Lokaler Secret-Speicher",streamCredentialStore?.encryptionAvailable?.()?"Windows SafeStorage verfügbar.":"SafeStorage-Verschlüsselung ist erforderlich.");
+  push("target_count",active.length>0||configStore.publicSettings().streamRecordingEnabled===true,"Streaming-Ziel / Aufnahme",active.length?`${active.length} Streaming-Ziel${active.length===1?"":"e"} aktiviert.`:(configStore.publicSettings().streamRecordingEnabled===true?"Nur lokale Aufnahme aktiviert.":"Kein Ziel aktiviert."));
+  push("plan_limit",active.length<=limit,"Plan-Limit",`${active.length}/${limit} aktive Ziele.`);
+  for(const target of active){
+    const meta=streamCredentialStore?.publicEntry?.(target.id)||{configured:false};
+    const provider=streamProviderInfo(target.provider);
+    push(`credential_${target.id}`,Boolean(meta.configured),`${provider.label}: Zugangsdaten`,meta.configured?`Lokal verschlüsselt gespeichert · ${meta.server||provider.transport}`:`Fehlt · ${provider.keyHint}`);
+  }
+  const passed=checks.filter(item=>item.ok).length;
+  const result={ok:passed===checks.length,passed,total:checks.length,checkedAt:new Date().toISOString(),checks,targets:active.map(target=>({id:target.id,label:target.label||streamProviderInfo(target.provider).label,provider:target.provider,support:streamProviderInfo(target.provider).support}))};
+  return appState({streamPreflight:result});
+}
+
+async function startStreamDestination(targetId){
+  const id=String(targetId||"").trim();
+  if(!id)throw new Error("Streaming-Ziel fehlt.");
+  const engine=configureStreamEngine();
+  if(!engine.snapshot().desiredRunning)throw new Error("Starte zuerst die lokale Streaming Engine.");
+  return appState({streamEngine:await engine.startTarget(id)});
+}
+
+async function stopStreamDestination(targetId){
+  const id=String(targetId||"").trim();
+  if(!id)throw new Error("Streaming-Ziel fehlt.");
+  return appState({streamEngine:await configureStreamEngine().stopTarget(id)});
+}
+
+async function startStreamingEngine(){
+  if(streamEngine?.snapshot?.().desiredRunning)throw new Error("Streaming Engine läuft bereits.");
+  const cloud=await syncStreamStudioConfig({notify:false});
+  const config=cloud.config||{};
+  const settings=configStore.publicSettings();
+  const active=(config?.multistream?.destinations||[]).filter(target=>target?.enabled===true);
+  const limit=Math.max(1,Number(cloud?.multistream?.max_destinations||1));
+  if(active.length>limit)throw new Error(`Dein Plan erlaubt maximal ${limit} gleichzeitige Streaming-Ziele.`);
+  const credentials={};
+  for(const target of active){
+    const credential=streamCredentialStore?.get?.(target.id);
+    if(!credential)throw new Error(`Lokale RTMP/RTMPS Zugangsdaten fehlen für ${target.label||target.provider||target.id}.`);
+    credentials[target.id]=credential;
+  }
+  const output=config.output||{};
+  const capture={
+    type:settings.streamCaptureType||"screen",
+    windowTitle:settings.streamWindowTitle||"",
+    displayId:settings.streamDisplayId||"",
+    region:(settings.streamCaptureType||"screen")==="screen"?streamDisplayRegion(settings.streamDisplayId||""):null,
+    crop:settings.streamCropEnabled===true?{x:settings.streamCropX||0,y:settings.streamCropY||0,width:settings.streamCropWidth||1920,height:settings.streamCropHeight||1080}:null,
+    videoDevice:settings.streamVideoDevice||"",
+    audioDevice:settings.streamAudioDevice||"",
+    audioDevice2:settings.streamAudioDevice2||"",
+    audioVolume:settings.streamAudioVolume??1,
+    audioVolume2:settings.streamAudioVolume2??1,
+    audioMuted:settings.streamAudioMute===true,
+    audioMuted2:settings.streamAudioMute2===true,
+    audioDelayMs:settings.streamAudioDelayMs||0,
+    audioDelayMs2:settings.streamAudioDelayMs2||0,
+    drawMouse:settings.streamDrawMouse!==false,
+    encoder:output.encoder||"auto"
+  };
+  const engine=configureStreamEngine();
+  const result=await engine.start({
+    capture,
+    targets:active,
+    credentials,
+    recording:settings.streamRecordingEnabled===true,
+    output,
+    watchdog:{enabled:settings.streamWatchdogEnabled!==false,timeoutSec:settings.streamWatchdogTimeoutSec||18}
+  });
+  logger?.info?.("Local streaming engine started",`${active.length} destination(s), recording=${settings.streamRecordingEnabled===true}`);
+  return appState({streamEngine:result});
+}
+
+async function stopStreamingEngine(){
+  const result=await configureStreamEngine().stop();
+  logger?.info?.("Local streaming engine stopped");
+  return appState({streamEngine:result});
 }
 
 function findCutJob(jobId){
@@ -775,6 +978,7 @@ async function logoutLauncherDevice() {
   }
 
   try { await outputManager?.stop?.(); } catch {}
+  try { await streamEngine?.stop?.(); } catch {}
   let remoteRevoked = false;
   try {
     if (bridge?.token) {
@@ -797,7 +1001,7 @@ function rebuildBridge() {
   bridge?.stop?.();
   const settings = configStore.publicSettings();
   const token = configStore.getToken();
-  bridge = new BridgeClient({ settings, token, logger, version: pkg.version, spool: eventSpool });
+  bridge = new BridgeClient({ settings, token, logger, version: pkg.version, spool: eventSpool, streamHealthProvider:()=>streamEngine?.telemetry?.() || null });
 
   bridge.on("state", state => {
     send("launcher:state", appState({ bridge: state }));
@@ -967,6 +1171,7 @@ async function gracefulShutdown(reason = "app_quit") {
   if (shutdownInProgress) return;
   shutdownInProgress = true;
   try { await outputManager?.stop?.(); } catch {}
+  try { await streamEngine?.stop?.(); } catch {}
 
   logger?.info("Graceful shutdown started", reason);
   try {
@@ -1152,6 +1357,18 @@ function registerIpc() {
   });
 
   ipcMain.handle("launcher:media-engine-probe", async () => probeCutMediaEngine());
+  ipcMain.handle("launcher:stream-engine-probe", async () => {await configureStreamEngine().probe();return appState();});
+  ipcMain.handle("launcher:stream-studio-sync", async () => {await syncStreamStudioConfig({notify:false});return appState();});
+  ipcMain.handle("launcher:stream-capture-devices", async () => streamCaptureDevices());
+  ipcMain.handle("launcher:stream-local-settings", async (_event,input) => saveStreamLocalSettings(input||{}));
+  ipcMain.handle("launcher:stream-credential-save", async (_event,input) => saveStreamCredential(input||{}));
+  ipcMain.handle("launcher:stream-credential-remove", async (_event,targetId) => removeStreamCredential(targetId));
+  ipcMain.handle("launcher:stream-provider-docs", async (_event,provider) => openStreamProviderDocs(provider));
+  ipcMain.handle("launcher:stream-engine-preflight", async () => streamEnginePreflight());
+  ipcMain.handle("launcher:stream-engine-start", async () => startStreamingEngine());
+  ipcMain.handle("launcher:stream-engine-stop", async () => stopStreamingEngine());
+  ipcMain.handle("launcher:stream-target-start", async (_event,targetId) => startStreamDestination(targetId));
+  ipcMain.handle("launcher:stream-target-stop", async (_event,targetId) => stopStreamDestination(targetId));
 
   ipcMain.handle("launcher:cut-source-select", async (_event,input) => {
     return chooseCutSource(input?.projectId,input?.sourceName||"");
@@ -1512,7 +1729,9 @@ app.whenReady().then(async () => {
   streamDeckStore=new StreamDeckStore(path.join(userData,"stream-deck","layout.json"));
   betaSessionStore=new BetaSessionStore(path.join(userData,"beta","active-session.json"));
   mediaSourceStore=new MediaSourceStore(path.join(userData,"cut-studio","media-sources.json"));
+  streamCredentialStore=new StreamCredentialStore(path.join(userData,"stream-studio","credentials.json"),safeStorage,logger);
   configureCutMediaEngine();
+  configureStreamEngine();
   configureOutputManager();
 
   const settings = configStore.read();

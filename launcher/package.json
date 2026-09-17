@@ -102,7 +102,9 @@
     "test:final-qa-v42": "node ../tools/final-verification-v42-qa.mjs ..",
     "test:final-files-v42": "node ../tools/final-test-files-v42-test.mjs ..",
     "test:post-v42-bridge": "node tools/post-v42-bridge-controls-test.mjs",
-    "test:acceptance-part2": "node tools/tiktool-provider-acceptance-part2-test.mjs && node tools/live-acceptance-part2-test.mjs && node ../tools/widget-runtime-audio-part2-test.mjs .. && node tools/output-window-manager-test.mjs && node tools/obs-multi-widget-load-test.mjs && node ../tools/post-v42-security-test.mjs .."
+    "test:acceptance-part2": "node tools/tiktool-provider-acceptance-part2-test.mjs && node tools/live-acceptance-part2-test.mjs && node ../tools/widget-runtime-audio-part2-test.mjs .. && node tools/output-window-manager-test.mjs && node tools/obs-multi-widget-load-test.mjs && node ../tools/post-v42-security-test.mjs ..",
+    "test:stream-engine21": "node ../tools/stream-engine-pass21-10-test.mjs .. && node ../tools/stream-engine-audio-stability-pass21-10-2-test.mjs ..",
+    "test:stream-engine-audio21": "node ../tools/stream-engine-audio-stability-pass21-10-2-test.mjs .."
   },
   "devDependencies": {
     "electron": "38.0.0",
