@@ -14,7 +14,13 @@ const SAFE_FIELDS = [
   "ttsVoiceName",
   "autoUpdate",
   "updateChannel",
-  "autoRecoverLive"
+  "autoRecoverLive",
+  "streamCaptureType",
+  "streamWindowTitle",
+  "streamVideoDevice",
+  "streamAudioDevice",
+  "streamDrawMouse",
+  "streamRecordingEnabled"
 ];
 
 function canonical(value) {
@@ -49,6 +55,12 @@ function sanitizeConfig(input = {}) {
   out.autoUpdate = out.autoUpdate !== false;
   out.updateChannel = out.updateChannel === "beta" ? "beta" : "stable";
   out.autoRecoverLive = out.autoRecoverLive !== false;
+  out.streamCaptureType = ["screen","window","camera"].includes(out.streamCaptureType) ? out.streamCaptureType : "screen";
+  out.streamWindowTitle = String(out.streamWindowTitle || "").trim().slice(0,220);
+  out.streamVideoDevice = String(out.streamVideoDevice || "").trim().slice(0,220);
+  out.streamAudioDevice = String(out.streamAudioDevice || "").trim().slice(0,220);
+  out.streamDrawMouse = out.streamDrawMouse !== false;
+  out.streamRecordingEnabled = out.streamRecordingEnabled === true;
 
   let url;
   try { url = new URL(out.backendUrl); }

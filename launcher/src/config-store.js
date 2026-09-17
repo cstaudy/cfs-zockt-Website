@@ -46,7 +46,28 @@ const DEFAULTS = {
   updateChannel: "stable",
   autoRecoverLive: true,
   setupVersion: 0,
-  setupCompletedAt: ""
+  setupCompletedAt: "",
+  streamCaptureType: "screen",
+  streamWindowTitle: "",
+  streamDisplayId: "",
+  streamCropEnabled: false,
+  streamCropX: 0,
+  streamCropY: 0,
+  streamCropWidth: 1920,
+  streamCropHeight: 1080,
+  streamVideoDevice: "",
+  streamAudioDevice: "",
+  streamAudioDevice2: "",
+  streamAudioVolume: 1,
+  streamAudioVolume2: 1,
+  streamAudioMute: false,
+  streamAudioMute2: false,
+  streamAudioDelayMs: 0,
+  streamAudioDelayMs2: 0,
+  streamWatchdogEnabled: true,
+  streamWatchdogTimeoutSec: 18,
+  streamDrawMouse: true,
+  streamRecordingEnabled: false
 };
 
 class ConfigStore {
@@ -147,7 +168,28 @@ class ConfigStore {
       updateChannel: input.updateChannel === "beta" ? "beta" : "stable",
       autoRecoverLive: typeof input.autoRecoverLive === "boolean" ? input.autoRecoverLive : current.autoRecoverLive !== false,
       setupVersion: Math.max(0, Math.min(99, Number(input.setupVersion ?? current.setupVersion ?? 0) || 0)),
-      setupCompletedAt: String(input.setupCompletedAt ?? current.setupCompletedAt ?? "").slice(0, 60)
+      setupCompletedAt: String(input.setupCompletedAt ?? current.setupCompletedAt ?? "").slice(0, 60),
+      streamCaptureType: ["screen","window","camera"].includes(input.streamCaptureType) ? input.streamCaptureType : (["screen","window","camera"].includes(current.streamCaptureType) ? current.streamCaptureType : "screen"),
+      streamWindowTitle: String(input.streamWindowTitle ?? current.streamWindowTitle ?? "").trim().slice(0, 220),
+      streamDisplayId: String(input.streamDisplayId ?? current.streamDisplayId ?? "").trim().slice(0, 80),
+      streamCropEnabled: typeof input.streamCropEnabled === "boolean" ? input.streamCropEnabled : current.streamCropEnabled === true,
+      streamCropX: Math.max(0, Math.min(10000, Math.round(Number(input.streamCropX ?? current.streamCropX ?? 0) || 0))),
+      streamCropY: Math.max(0, Math.min(10000, Math.round(Number(input.streamCropY ?? current.streamCropY ?? 0) || 0))),
+      streamCropWidth: Math.max(64, Math.min(7680, Math.round(Number(input.streamCropWidth ?? current.streamCropWidth ?? 1920) || 1920))),
+      streamCropHeight: Math.max(64, Math.min(4320, Math.round(Number(input.streamCropHeight ?? current.streamCropHeight ?? 1080) || 1080))),
+      streamVideoDevice: String(input.streamVideoDevice ?? current.streamVideoDevice ?? "").trim().slice(0, 220),
+      streamAudioDevice: String(input.streamAudioDevice ?? current.streamAudioDevice ?? "").trim().slice(0, 220),
+      streamAudioDevice2: String(input.streamAudioDevice2 ?? current.streamAudioDevice2 ?? "").trim().slice(0, 220),
+      streamAudioVolume: Math.max(0, Math.min(2, Number(input.streamAudioVolume ?? current.streamAudioVolume ?? 1))),
+      streamAudioVolume2: Math.max(0, Math.min(2, Number(input.streamAudioVolume2 ?? current.streamAudioVolume2 ?? 1))),
+      streamAudioMute: typeof input.streamAudioMute === "boolean" ? input.streamAudioMute : current.streamAudioMute === true,
+      streamAudioMute2: typeof input.streamAudioMute2 === "boolean" ? input.streamAudioMute2 : current.streamAudioMute2 === true,
+      streamAudioDelayMs: Math.max(0, Math.min(2000, Math.round(Number(input.streamAudioDelayMs ?? current.streamAudioDelayMs ?? 0) || 0))),
+      streamAudioDelayMs2: Math.max(0, Math.min(2000, Math.round(Number(input.streamAudioDelayMs2 ?? current.streamAudioDelayMs2 ?? 0) || 0))),
+      streamWatchdogEnabled: typeof input.streamWatchdogEnabled === "boolean" ? input.streamWatchdogEnabled : current.streamWatchdogEnabled !== false,
+      streamWatchdogTimeoutSec: Math.max(10, Math.min(60, Math.round(Number(input.streamWatchdogTimeoutSec ?? current.streamWatchdogTimeoutSec ?? 18) || 18))),
+      streamDrawMouse: typeof input.streamDrawMouse === "boolean" ? input.streamDrawMouse : current.streamDrawMouse !== false,
+      streamRecordingEnabled: typeof input.streamRecordingEnabled === "boolean" ? input.streamRecordingEnabled : current.streamRecordingEnabled === true
     };
 
     const bridgeToken = String(input.bridgeToken || "").trim();

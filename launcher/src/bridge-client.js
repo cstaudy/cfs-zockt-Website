@@ -1,13 +1,15 @@
 const { EventEmitter } = require("node:events");
+const { sanitizePayload } = require("./provider-event-normalizer");
 
 class BridgeClient extends EventEmitter {
-  constructor({ settings, token, logger, version, spool = null }) {
+  constructor({ settings, token, logger, version, spool = null, streamHealthProvider = null }) {
     super();
     this.settings = settings;
     this.token = token;
     this.logger = logger;
     this.version = version;
     this.spool = spool;
+    this.streamHealthProvider = typeof streamHealthProvider === "function" ? streamHealthProvider : null;
     this.liveActive = false;
     this.running = false;
     this.eventQueue = this.spool?.all?.() || [];
@@ -81,6 +83,13 @@ class BridgeClient extends EventEmitter {
     return this.request("/api/bridge/widget-studio/library", {
       method:"GET",
       timeoutMs:8000
+    });
+  }
+
+  async fetchStreamStudioConfig() {
+    return this.request("/api/bridge/stream-studio/config", {
+      method:"GET",
+      timeoutMs:10000
     });
   }
 
@@ -173,12 +182,15 @@ class BridgeClient extends EventEmitter {
   }
 
   heartbeatPayload() {
+    let streamHealth = null;
+    try { streamHealth = this.streamHealthProvider?.() || null; } catch {}
     return {
       client_version: this.version,
       machine_name: this.settings?.machineName || "",
       live_session_active: this.liveActive,
       update_channel: this.settings?.updateChannel === "beta" ? "beta" : "stable",
-      capabilities: this.capabilities
+      capabilities: this.capabilities,
+      stream_health: streamHealth
     };
   }
 
@@ -318,7 +330,7 @@ class BridgeClient extends EventEmitter {
       actor_avatar: String(event.actor_avatar || "").slice(0, 2000),
       amount: Number(event.amount || 0),
       value: Number(event.value || 0),
-      payload: event.payload && typeof event.payload === "object" ? event.payload : {}
+      payload: sanitizePayload(event.payload, event.payload?.source_provider || "launcher_bridge")
     };
     if (!["follow", "like", "gift", "share", "viewer_update", "chat"].includes(normalized.event_type)) {
       throw new Error(`Unbekannter Event-Typ: ${normalized.event_type}`);
