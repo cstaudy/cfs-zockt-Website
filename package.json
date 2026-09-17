@@ -97,7 +97,7 @@
   },
   "dependencies": {
     "express": "5.1.0",
-    "pg": "8.16.0",
+    "pg": "8.23.0",
     "stripe": "22.6.1",
     "@simplewebauthn/server": "14.0.2"
   }
