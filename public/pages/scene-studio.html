@@ -37,14 +37,27 @@
   </div>
 </header>
 <main class="container scene-shell">
+
+<section class="creator-tool-entry" data-tool-entry="scene-studio" aria-label="Scene Studio Einstieg">
+  <div class="creator-tool-entry-head">
+    <div><span class="creator-tool-kicker">DEIN EINSTIEG</span><strong>Mehrere veröffentlichte Widgets werden zu einer Stream-Szene.</strong><p>Baue zuerst deine Widgets, kombiniere sie hier für TikTok Vertical oder 16:9 und veröffentliche anschließend eine stabile Output-URL.</p></div>
+    <span class="creator-tool-status workspace">CREATOR TOOL</span>
+  </div>
+  <div class="creator-tool-path">
+    <article><b>01</b><span><strong>Widgets vorbereiten</strong><small>Nur veröffentlichte Widgets stehen in der Scene-Library bereit.</small></span></article>
+    <article><b>02</b><span><strong>Scene bauen</strong><small>Format, Position, Ebenen, Skalierung und Sichtbarkeit festlegen.</small></span></article>
+    <article><b>03</b><span><strong>Output veröffentlichen</strong><small>Eine stabile Scene-URL für deinen Stream erzeugen.</small></span></article>
+  </div>
+  <div class="creator-tool-entry-actions"><a class="btn primary" href="/pages/widget-studio.html">WIDGETS ÖFFNEN</a><a class="btn" href="/pages/launcher.html">LAUNCHER</a></div>
+</section>
 <section class="scene-hero"><div><div class="scene-kicker">UNIVERSAL OUTPUT · V20</div><h1>BAU DEINEN<br><span>STREAM.</span></h1><p>Kombiniere veröffentlichte Widgets zu einer kompletten TikTok- oder 16:9-Szene. Ein Pack, eine stabile Output-URL, dieselben Creator-Daten.</p></div><div class="scene-hero-actions"><button class="btn primary" id="newVerticalScene">+ TIKTOK SCENE</button><button class="btn" id="newLandscapeScene">+ 16:9 SCENE</button></div></section>
 <section class="scene-workspace">
 <aside class="scene-sidebar panel"><div class="scene-side-head"><div><span>MEINE SCENES</span><strong id="sceneCount">0</strong></div><button id="refreshScenes">↻</button></div><div id="sceneList" class="scene-list"></div></aside>
 <section class="scene-editor panel"><div class="scene-empty" id="sceneEmpty"><strong>NOCH KEINE SCENE AUSGEWÄHLT.</strong><p>Erstelle eine TikTok-Vertical- oder Landscape-Scene und füge veröffentlichte Widgets hinzu.</p></div><div id="sceneEditor" hidden>
-<div class="scene-editor-head"><div class="scene-title-edit"><span>SCENE</span><input id="sceneName" maxlength="120"></div><div class="scene-head-actions"><span class="scene-status" id="sceneStatus">DRAFT</span><button class="btn" id="saveScene">SPEICHERN</button><button class="btn primary" id="publishScene">VERÖFFENTLICHEN</button></div></div>
+<div class="scene-editor-head"><div class="scene-title-edit"><span>SCENE</span><input id="sceneName" aria-label="Scene Name" maxlength="120"></div><div class="scene-head-actions"><span class="scene-status" id="sceneStatus">DRAFT</span><button class="btn" id="saveScene">SPEICHERN</button><button class="btn primary" id="publishScene">VERÖFFENTLICHEN</button></div></div>
 <div class="scene-profile-bar"><label><span>FORMAT</span><select id="sceneProfile"><option value="tiktok_vertical">TikTok Vertical · 1080 × 1920</option><option value="landscape">Landscape · 1920 × 1080</option></select></label><label><span>HINTERGRUND</span><input id="sceneBackground" value="transparent"></label><label class="scene-check"><input id="sceneSafeArea" type="checkbox" checked><span>SAFE AREA</span></label><div class="scene-zoom"><button data-zoom="-">−</button><strong id="sceneZoom">38%</strong><button data-zoom="+">+</button></div></div>
 <div class="scene-stage-wrap"><div id="sceneViewport"><div id="sceneCanvas"><div id="sceneSafeGuide"></div><div id="sceneItems"></div></div></div></div>
-<div class="scene-output-bar"><div><span>LIVE OUTPUT URL</span><input id="sceneOutputUrl" readonly placeholder="Nach Publish verfügbar"></div><button class="btn" id="copySceneUrl">URL KOPIEREN</button><a class="btn" id="openSceneUrl" target="_blank" rel="noopener">ÖFFNEN</a></div>
+<div class="scene-output-bar"><div><span>LIVE OUTPUT URL</span><input id="sceneOutputUrl" aria-label="Scene Output URL" readonly placeholder="Nach Publish verfügbar"></div><button class="btn" id="copySceneUrl">URL KOPIEREN</button><a class="btn" id="openSceneUrl" target="_blank" rel="noopener">ÖFFNEN</a></div>
 </div></section>
 <aside class="scene-library panel"><div class="scene-side-head"><div><span>WIDGET LIBRARY</span><strong id="widgetCount">0</strong></div></div><p class="scene-hint">Nur veröffentlichte Widgets können in einer Live-Scene verwendet werden.</p><div id="widgetLibrary" class="widget-library"></div><div class="scene-properties" id="sceneProperties" hidden><div class="scene-side-head"><div><span>AUSWAHL</span><strong id="selectedItemName">Widget</strong></div></div><div class="property-grid"><label><span>X</span><input id="itemX" type="number"></label><label><span>Y</span><input id="itemY" type="number"></label><label><span>SCALE</span><input id="itemScale" type="number" min=".1" max="5" step=".05"></label><label><span>ROTATION</span><input id="itemRotation" type="number"></label><label><span>OPACITY</span><input id="itemOpacity" type="number" min="0" max="1" step=".05"></label><label><span>EBENE</span><input id="itemZ" type="number"></label></div><div class="property-actions"><button class="btn" id="toggleItemVisible">AUSBLENDEN</button><button class="btn danger" id="removeItem">ENTFERNEN</button></div></div></aside>
 </section></main><div class="scene-toast" id="sceneToast" hidden></div><script src="/assets/js/app.js"></script><script src="/assets/js/cfs-widget-renderer.js"></script><script src="/assets/js/scene-studio.js"></script></body></html>

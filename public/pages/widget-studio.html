@@ -65,6 +65,19 @@
   </div>
 </section>
 
+<section class="creator-tool-entry" data-tool-entry="widget-studio" aria-label="Widget Studio Einstieg">
+  <div class="creator-tool-entry-head">
+    <div><span class="creator-tool-kicker">DEIN EINSTIEG</span><strong>Vom ersten Widget bis zum fertigen Stream-Element.</strong><p>Manuelle Widgets funktionieren auch ohne TikTok. Für LIVE-Daten kannst du TikTok und den Launcher später getrennt verbinden.</p></div>
+    <span class="creator-tool-status available">VERFÜGBAR</span>
+  </div>
+  <div class="creator-tool-path">
+    <article><b>01</b><span><strong>Widget wählen</strong><small>Goal, Counter, Timer, Chat, Kamera oder weitere Typen starten.</small></span></article>
+    <article><b>02</b><span><strong>Gestalten & testen</strong><small>Einfach-Modus für den schnellen Start, Profi-Modus für volle Kontrolle.</small></span></article>
+    <article><b>03</b><span><strong>Veröffentlichen</strong><small>Als einzelnes Widget nutzen oder anschließend im Scene Studio kombinieren.</small></span></article>
+  </div>
+  <div class="creator-tool-entry-actions"><button class="btn primary" type="button" data-action="open-create">NEUES WIDGET</button><a class="btn" href="/pages/scene-studio.html">SCENE STUDIO</a><a class="btn" href="/pages/launcher.html">LAUNCHER STATUS</a></div>
+</section>
+
 <section class="container ws-shell" id="wsApp">
   <div class="notice" id="wsMessage" role="status" aria-live="polite" aria-atomic="true" tabindex="-1" hidden></div>
 
@@ -878,7 +891,7 @@
               <span id="wsOutputDimensions">Widgetgröße</span>
               <strong id="wsOutputStatus">ENTWURF</strong>
             </div>
-            <input id="wsOutputUrl" class="ws-obs-url" readonly placeholder="Nach Publish verfügbar">
+            <input id="wsOutputUrl" aria-label="Widget Output URL" class="ws-obs-url" readonly placeholder="Nach Publish verfügbar">
             <div class="ws-inline-actions">
               <button class="btn" type="button" data-action="copy-output">URL KOPIEREN</button>
               <a class="btn" id="wsOpenOutput" target="_blank" rel="noopener">ÖFFNEN</a>
@@ -893,7 +906,7 @@
               <small>Veröffentlichte Version</small>
             </div>
             <div class="ws-obs-live-row"><span class="ws-live-dot"></span><strong>Widget ist live</strong></div>
-            <input id="wsObsUrl" class="ws-obs-url" readonly>
+            <input id="wsObsUrl" aria-label="OBS Browser Source URL" class="ws-obs-url" readonly>
             <div class="ws-inline-actions">
               <button class="btn" type="button" data-action="copy-obs">URL KOPIEREN</button>
               <a class="btn" id="wsOpenObs" target="_blank" rel="noopener">ÖFFNEN</a>
@@ -1035,7 +1048,7 @@
       </div>
       <div class="ws-board-output" id="wsBoardOutput" hidden>
         <div><span id="wsBoardOutputLabel">OBS BROWSER SOURCE</span><strong id="wsBoardOutputSize">1920 × 1080</strong><small id="wsBoardOutputHelp">Veröffentliche das Layout, um die stabile Output-URL zu erhalten.</small></div>
-        <input id="wsBoardOutputUrl" class="ws-obs-url" readonly>
+        <input id="wsBoardOutputUrl" aria-label="Stream Board Output URL" class="ws-obs-url" readonly>
         <button class="btn" type="button" data-action="copy-board-output">URL KOPIEREN</button>
         <a class="btn" id="wsBoardOpenOutput" target="_blank" rel="noopener">ÖFFNEN</a>
       </div>
@@ -1321,7 +1334,7 @@
         <p>Der Schlüssel authentifiziert später ausschließlich deinen Creator Suite Launcher. Ein neuer Schlüssel widerruft den bisherigen automatisch.</p>
         <div class="ws-bridge-secret" id="wsBridgeSecret" hidden>
           <div><span>NUR JETZT SICHTBAR</span><strong>Kopiere den Schlüssel in deinen Launcher.</strong></div>
-          <div class="ws-bridge-secret-row"><input id="wsBridgeToken" readonly><button type="button" data-action="copy-bridge-token">KOPIEREN</button></div>
+          <div class="ws-bridge-secret-row"><input id="wsBridgeToken" aria-label="Launcher Bridge Schlüssel" readonly><button type="button" data-action="copy-bridge-token">KOPIEREN</button></div>
         </div>
         <div id="wsBridgeKeys" class="ws-bridge-keys"></div>
       </section>

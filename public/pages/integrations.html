@@ -43,38 +43,82 @@
 </header>
 
 <main class="container">
-<section class="page-hero">
-<div class="eyebrow">INTEGRATIONS HUB</div>
-<h1>TIKTOK HEUTE. TWITCH & OBS SPÄTER.</h1>
-<p>Hier trennen wir klar zwischen bereits aktiver Integration und vorbereiteten Roadmap-Slots.</p>
-</section>
+  <section class="page-hero">
+    <div class="eyebrow">INTEGRATIONS HUB</div>
+    <h1>VERBINDUNGEN, DIE DU KONTROLLIERST.</h1>
+    <p>TikTok ist der aktive Plattform-Weg. Launcher und Geräteanbindung ergänzen den lokalen Workflow. Twitch und OBS bleiben sichtbar als Roadmap – ohne vorgetäuschte Freigabe.</p>
+  </section>
 
-<div class="grid">
-<article class="card">
-<div class="meta">TIKTOK</div><div class="kpi" id="ttStatus">PRÜFE…</div>
-<p id="ttText">Status wird geladen.</p>
-<div class="card-actions"><a class="btn primary" href="/pages/tiktok.html">TIKTOK HUB</a></div>
-</article>
+  <section class="management-hub" aria-label="Creator Verwaltung">
+    <div class="management-hub-top">
+      <div>
+        <div class="meta">CREATOR VERWALTUNG</div>
+        <strong>Account, Setup und Verbindungen zentral steuern.</strong>
+      </div>
+      <a class="management-back" href="/pages/dashboard.html">← ZUM DASHBOARD</a>
+    </div>
+    <nav class="management-hub-nav" aria-label="Verwaltungsbereiche">
+      <a class="" href="/pages/account.html">ACCOUNT & SICHERHEIT</a>
+      <a class="" href="/pages/settings.html">EINSTELLUNGEN</a>
+      <a class="" href="/pages/setup.html">SETUP</a>
+      <a class="active" href="/pages/integrations.html">INTEGRATIONEN</a>
+    </nav>
+  </section>
 
-<article class="card">
-<span class="badge lock">ROADMAP</span><h3>Twitch</h3>
-<p>OAuth, Chat, Events und Stream-Informationen werden später als eigene Integration angebunden.</p>
-<div class="card-actions"><button class="btn ghost" disabled>NOCH NICHT AKTIV</button></div>
-</article>
+  <section class="management-overview" aria-label="Integrationsstatus">
+    <article class="management-overview-card">
+      <span class="management-status-dot ready"></span><div><strong>TIKTOK · VERFÜGBAR</strong><p>OAuth, Creator-Profil und freigegebene LIVE-Funktionen.</p></div>
+    </article>
+    <article class="management-overview-card">
+      <span class="management-status-dot ready"></span><div><strong>LAUNCHER · VERFÜGBAR</strong><p>Lokaler Desktop-Weg für Creator Suite und Gerätefluss.</p></div>
+    </article>
+    <article class="management-overview-card">
+      <span class="management-status-dot roadmap"></span><div><strong>TWITCH / OBS · ROADMAP</strong><p>Werden erst als aktiv dargestellt, wenn die Integration real freigegeben ist.</p></div>
+    </article>
+  </section>
 
-<article class="card">
-<span class="badge lock">ROADMAP</span><h3>OBS</h3>
-<p>Geplant ist OBS WebSocket für Szenen, Quellen und sichere lokale Steuerung über Launcher/NEXUS.</p>
-<div class="card-actions"><button class="btn ghost" disabled>NOCH NICHT AKTIV</button></div>
-</article>
-</div>
+  <section class="management-summary-grid integrations-management-grid">
+    <article class="management-summary-card integration-live-card">
+      <div class="management-card-kicker">TIKTOK</div>
+      <div class="kpi" id="ttStatus">PRÜFE…</div>
+      <p id="ttText">Status wird geladen.</p>
+      <div class="card-actions"><a class="btn primary" href="/pages/tiktok.html">TIKTOK HUB ÖFFNEN</a></div>
+    </article>
 
-<section class="section">
-<div class="panel">
-<h2>NEXUS-Verbindung</h2>
-<div id="nexusInfo" class="notice">NEXUS Status wird geladen…</div>
-</div>
-</section>
+    <article class="management-summary-card">
+      <div class="management-card-kicker">DESKTOP</div>
+      <h2>Launcher & Gerät</h2>
+      <p>Launcher öffnen oder ein Gerät über den vorhandenen Verbindungsweg mit der Creator Suite koppeln.</p>
+      <div class="card-actions">
+        <a class="btn" href="/pages/launcher.html">LAUNCHER</a>
+        <a class="btn ghost" href="/pages/launcher-connect.html">GERÄT VERBINDEN</a>
+      </div>
+    </article>
+
+    <article class="management-summary-card is-roadmap">
+      <span class="badge lock">ROADMAP</span>
+      <h2>Twitch</h2>
+      <p>OAuth, Chat, Events und Stream-Informationen werden später als eigene Integration angebunden.</p>
+      <div class="card-actions"><button class="btn ghost" type="button" disabled>NOCH NICHT AKTIV</button></div>
+    </article>
+
+    <article class="management-summary-card is-roadmap">
+      <span class="badge lock">ROADMAP</span>
+      <h2>OBS</h2>
+      <p>Geplant ist OBS WebSocket für Szenen, Quellen und sichere lokale Steuerung über Launcher/NEXUS.</p>
+      <div class="card-actions"><button class="btn ghost" type="button" disabled>NOCH NICHT AKTIV</button></div>
+    </article>
+  </section>
+
+  <section class="section">
+    <div class="panel management-nexus-panel">
+      <div class="meta">NEXUS VERBINDUNG</div>
+      <h2>Erweiterter Creator-Workflow</h2>
+      <p class="muted">NEXUS bleibt als eigener Produktbereich sichtbar. Der aktuelle Zugriff wird von deinem bestehenden Account- und Plan-System bestimmt.</p>
+      <div id="nexusInfo" class="notice">NEXUS Status wird geladen…</div>
+      <div class="card-actions"><a class="btn ghost" href="/pages/nexus.html">NEXUS ÖFFNEN</a></div>
+    </div>
+  </section>
 </main>
 
 <script src="/assets/js/app.js"></script>

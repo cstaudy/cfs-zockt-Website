@@ -36,6 +36,19 @@
   </div>
 </header>
 <main class="container game-page">
+
+<section class="creator-tool-entry" data-tool-entry="games" aria-label="Games Einstieg">
+  <div class="creator-tool-entry-head">
+    <div><span class="creator-tool-kicker">DEIN EINSTIEG</span><strong>Community-Games lassen sich manuell steuern und optional mit LIVE-Events erweitern.</strong><p>Starte das Game zunächst mit manuellen Punkten. Für automatische Follow-, Like-, Gift- und Share-Regeln muss die LIVE-Bridge bereits echte Events liefern.</p></div>
+    <span class="creator-tool-status available">VERFÜGBAR</span>
+  </div>
+  <div class="creator-tool-path">
+    <article><b>01</b><span><strong>Game konfigurieren</strong><small>Titel, Teams, Zielpunkte und Rundenzeit festlegen.</small></span></article>
+    <article><b>02</b><span><strong>Runtime testen</strong><small>Punkte zuerst manuell steuern und das Spielverhalten prüfen.</small></span></article>
+    <article><b>03</b><span><strong>LIVE-Regeln ergänzen</strong><small>Akzeptierte LIVE-Events auf Team-Punkte abbilden und Overlay veröffentlichen.</small></span></article>
+  </div>
+  <div class="creator-tool-entry-actions"><a class="btn" href="/pages/launcher.html">LIVE-BRIDGE PRÜFEN</a><a class="btn primary" href="/pages/scene-studio.html">SCENE STUDIO</a></div>
+</section>
 <section class="game-hero"><div><div class="eyebrow">CREATOR GAMES · V29</div><h1>COMMUNITY<br><span>GAME CONTROL.</span></h1><p>Das Game besitzt eine Creator-spezifische Runtime und kann jetzt zusätzlich echte LIVE-Events über konfigurierbare Regeln in Punkte umwandeln.</p></div><div class="game-hero-state"><span>RUNTIME</span><strong id="runtimeHeroState">LÄDT…</strong></div></section>
 <div id="gameGate" class="notice warn hidden"></div>
 <div id="gameApp">
@@ -77,5 +90,5 @@
 <div class="notice compact">Gift-Regeln können optional exakt auf Gift-Name oder Provider-Gift-ID eingeschränkt werden. Der Provider-Wert bleibt Diamonds/Provider-Wert und wird hier nicht als Geld interpretiert.</div>
 </section>
 
-<section class="panel game-output"><div class="panel-head"><div><span>STREAM OUTPUT</span><h2>Game Overlay</h2><p>Der Link bleibt stabil. Im Scene Studio erscheint zusätzlich <b>Game · …</b> in deiner Widget-Library.</p></div></div><div class="game-output-row"><input id="gameOutputUrl" readonly><button class="btn" id="copyGameUrl">URL KOPIEREN</button><a class="btn" id="openGameUrl" target="_blank" rel="noopener">VORSCHAU</a><a class="btn primary" href="/pages/scene-studio.html">IN SCENE EINBAUEN</a></div><div class="notice compact">Manuelle Steuerung bleibt möglich. Zusätzlich können V29-Regeln echte Follow-, Like-, Gift- und Share-Events aus der bestehenden LIVE-Pipeline auf Team-Punkte abbilden.</div></section>
+<section class="panel game-output"><div class="panel-head"><div><span>STREAM OUTPUT</span><h2>Game Overlay</h2><p>Der Link bleibt stabil. Im Scene Studio erscheint zusätzlich <b>Game · …</b> in deiner Widget-Library.</p></div></div><div class="game-output-row"><input id="gameOutputUrl" aria-label="Game Overlay URL" readonly><button class="btn" id="copyGameUrl">URL KOPIEREN</button><a class="btn" id="openGameUrl" target="_blank" rel="noopener">VORSCHAU</a><a class="btn primary" href="/pages/scene-studio.html">IN SCENE EINBAUEN</a></div><div class="notice compact">Manuelle Steuerung bleibt möglich. Zusätzlich können V29-Regeln echte Follow-, Like-, Gift- und Share-Events aus der bestehenden LIVE-Pipeline auf Team-Punkte abbilden.</div></section>
 </div></main><div class="game-toast" id="gameToast" hidden></div><script src="/assets/js/app.js"></script><script src="/assets/js/games.js"></script></body></html>

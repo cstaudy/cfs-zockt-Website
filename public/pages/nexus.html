@@ -42,19 +42,41 @@
   </div>
 </header>
 
-<main class="container">
-<section class="page-hero"><div class="eyebrow">NEXUS V1</div><h1>ECHTER BACKEND-STATUS.</h1><p>NEXUS zeigt jetzt live, welche Komponenten bereits online, vorbereitet oder noch Roadmap sind.</p></section>
+<main class="container internal-module-page">
+<section class="creator-tool-entry" data-tool-entry="nexus" aria-label="NEXUS Einstieg">
+  <div class="creator-tool-entry-head">
+    <div><span class="creator-tool-kicker">SYSTEM-ORCHESTRIERUNG</span><strong>NEXUS bündelt den technischen Status deiner Creator-Suite-Komponenten.</strong><p>Diese Seite zeigt den aktuellen Backend- und Integrationsstatus. Sie verändert keine Verbindungen automatisch und schaltet keine Roadmap-Module frei.</p></div>
+    <span class="creator-tool-status preview">PREVIEW</span>
+  </div>
+  <div class="creator-tool-path">
+    <article><b>01</b><span><strong>Status lesen</strong><small>Service, Version und Planfreigabe kommen direkt aus dem NEXUS-Backend.</small></span></article>
+    <article><b>02</b><span><strong>Integrationen prüfen</strong><small>Online, vorbereitet und Roadmap bleiben klar voneinander getrennt.</small></span></article>
+    <article><b>03</b><span><strong>Zum Werkzeug wechseln</strong><small>Änderungen führst du weiterhin im jeweiligen Creator-Tool oder in den Einstellungen aus.</small></span></article>
+  </div>
+  <div class="creator-tool-entry-actions"><a class="btn primary" href="#nexusStatus">STATUS ANSEHEN</a><a class="btn" href="/pages/integrations.html">INTEGRATIONEN</a><a class="btn" href="/pages/settings.html">EINSTELLUNGEN</a></div>
+</section>
 
-<div class="grid">
-<article class="card"><div class="meta">SERVICE</div><div class="kpi" id="service">Lädt…</div><p id="serviceStatus">–</p></article>
-<article class="card"><div class="meta">PLAN</div><div class="kpi" id="plan">–</div><p id="allowed">–</p></article>
-<article class="card"><div class="meta">VERSION</div><div class="kpi" id="version">–</div><p>NEXUS Backend Basis</p></article>
-</div>
+<section class="page-hero internal-module-hero"><div class="eyebrow">NEXUS V1 · PREVIEW</div><h1>SYSTEMSTATUS.<br><span>OHNE RATEARBEIT.</span></h1><p>NEXUS zeigt, welche Komponenten online, vorbereitet oder noch Roadmap sind. Die Anzeige basiert auf dem aktuellen Backend-Status deines Accounts.</p></section>
+
+<section id="nexusStatus" class="internal-status-shell" aria-label="NEXUS Status">
+  <div class="internal-status-head"><div><span class="meta">LIVE STATUS</span><h2>Deine NEXUS-Basis</h2><p>Die folgenden Werte werden beim Öffnen der Seite geladen.</p></div><div class="internal-status-legend"><span class="available">ONLINE</span><span class="prepared">PREPARED</span><span class="roadmap">ROADMAP</span></div></div>
+  <div class="grid">
+    <article class="card"><div class="meta">SERVICE</div><div class="kpi" id="service">Lädt…</div><p id="serviceStatus">–</p></article>
+    <article class="card"><div class="meta">PLAN</div><div class="kpi" id="plan">–</div><p id="allowed">–</p></article>
+    <article class="card"><div class="meta">VERSION</div><div class="kpi" id="version">–</div><p>NEXUS Backend Basis</p></article>
+  </div>
+</section>
 
 <section class="section">
-<div class="section-head"><div><div class="eyebrow">INTEGRATIONEN</div><h2>SYSTEM STATUS.</h2></div></div>
+<div class="section-head"><div><div class="eyebrow">INTEGRATIONEN</div><h2>TECHNISCHER STATUS.</h2><p>Der Status kommt direkt aus <code class="code-pill">/api/nexus/status</code>. „Prepared“ bedeutet vorbereitet, nicht bereits als fertiges Produkt veröffentlicht.</p></div></div>
 <div id="integrations" class="grid"></div>
 <div id="notice" class="notice hidden" style="margin-top:18px"></div>
+</section>
+
+<section class="internal-module-next" aria-label="NEXUS nächste Schritte">
+  <article><span>VERBINDEN</span><strong>Integrationen verwalten</strong><p>TikTok, Launcher und spätere Provider bleiben in der Integrationsübersicht gebündelt.</p><a href="/pages/integrations.html">INTEGRATIONEN ÖFFNEN →</a></article>
+  <article><span>STEUERN</span><strong>Creator-Tools nutzen</strong><p>Widgets, Scenes und Games werden weiterhin in ihren eigenen Werkzeugen gebaut und gesteuert.</p><a href="/pages/widget-studio.html">WIDGET STUDIO →</a></article>
+  <article><span>ACCOUNT</span><strong>Zugriff nachvollziehen</strong><p>Plan, Sicherheit und Sessions bleiben im Account-Bereich unter deiner Kontrolle.</p><a href="/pages/account.html">ACCOUNT ÖFFNEN →</a></article>
 </section>
 </main>
 

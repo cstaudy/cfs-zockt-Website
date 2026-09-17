@@ -43,19 +43,41 @@
     </nav>
   </div>
 </header>
-<main class="container connect-shell">
+<main class="container connect-shell launcher-connect-page">
   <section class="connect-card">
-    <span class="eyebrow">CREATOR SUITE · DEVICE LINK</span>
-    <h1>LAUNCHER<br><span>VERBINDEN.</span></h1>
-    <p>Bestätige nur einen PC, dessen Geräte-Code du gerade selbst im CFS Launcher gestartet hast.</p>
-    <div class="connect-code" id="deviceCode">–</div>
-    <div class="connect-device" id="deviceInfo"><strong>Gerät wird geprüft…</strong></div>
-    <div class="connect-account" id="accountInfo"></div>
+    <div class="internal-flow-head">
+      <div>
+        <span class="eyebrow">CREATOR SUITE · DEVICE LINK</span>
+        <h1>LAUNCHER<br><span>VERBINDEN.</span></h1>
+        <p>Bestätige nur den PC, auf dem du den Geräte-Code gerade selbst im CFS Launcher gestartet hast. Der Link ordnet genau dieses Gerät deinem Creator-Account zu.</p>
+      </div>
+      <span class="creator-tool-status available">VERFÜGBAR</span>
+    </div>
+
+    <div class="device-link-steps" aria-label="Launcher Gerätefluss">
+      <article><b>01</b><span><strong>Code vergleichen</strong><small>Der Code auf dieser Seite muss mit dem Code im Launcher übereinstimmen.</small></span></article>
+      <article><b>02</b><span><strong>Gerät prüfen</strong><small>Kontrolliere Gerätename und Launcher-Version, bevor du bestätigst.</small></span></article>
+      <article><b>03</b><span><strong>Einmal bestätigen</strong><small>Nach der Freigabe kehrst du zum Launcher zurück; weitere Geräte brauchen einen eigenen Code.</small></span></article>
+    </div>
+
+    <div class="connect-review" aria-live="polite">
+      <div class="connect-review-label">GERÄTE-CODE</div>
+      <div class="connect-code" id="deviceCode">–</div>
+      <div class="connect-device" id="deviceInfo"><strong>Gerät wird geprüft…</strong></div>
+      <div class="connect-account" id="accountInfo"></div>
+    </div>
+
+    <div class="device-link-safety">
+      <strong>Nur dein eigener Launcher.</strong>
+      <span>Bestätige keinen Code aus Chat, E-Mail oder einer fremden Bildschirmfreigabe. Wenn dir Gerät oder Code unbekannt vorkommen, brich ab und starte im Launcher einen neuen Geräte-Link.</span>
+    </div>
+
     <div class="connect-actions">
       <button class="btn primary" id="confirmDevice" disabled>DIESEN PC VERBINDEN</button>
       <a class="btn" href="/pages/launcher.html">ABBRECHEN</a>
     </div>
     <div class="connect-result" id="connectResult" hidden></div>
+    <div class="internal-flow-footer"><a href="/pages/launcher.html">← ZUR LAUNCHER-ÜBERSICHT</a><a href="/pages/account.html">ACCOUNT &amp; SICHERHEIT →</a></div>
   </section>
 </main>
 <script src="/assets/js/app.js"></script>

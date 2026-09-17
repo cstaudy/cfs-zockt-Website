@@ -42,30 +42,54 @@
   </div>
 </header>
 
-<main class="container">
-<section class="page-hero">
-<div class="eyebrow">AUDIO STUDIO</div>
-<h1>SOUNDS. VOICE. STREAM AUDIO.</h1>
-<p>Die Modulbasis ist vorbereitet. Sobald dein Plan das Modul freischaltet, können Presets serverseitig gespeichert werden. Echte Audioverarbeitung kommt später lokal über den Launcher.</p>
+<main class="container internal-module-page">
+<section class="creator-tool-entry" data-tool-entry="audio-studio" aria-label="Audio Studio Einstieg">
+  <div class="creator-tool-entry-head">
+    <div><span class="creator-tool-kicker">AUDIO WORKFLOW</span><strong>Audio Studio ist vorbereitet, aber noch kein fertiger Audio-Prozessor.</strong><p>Die Creator Suite kann bereits Preset-Zustände verwalten, sofern dein Plan das Modul freischaltet. Echte Audioverarbeitung soll später lokal über den Launcher laufen.</p></div>
+    <span class="creator-tool-status roadmap">ROADMAP</span>
+  </div>
+  <div class="creator-tool-path">
+    <article><b>01</b><span><strong>Preset vorbereiten</strong><small>Master, Voice, Game und Soundboard als Konfiguration speichern.</small></span></article>
+    <article><b>02</b><span><strong>Lokal verarbeiten</strong><small>Die spätere Audio-Engine gehört auf den Creator-PC und nicht in einen Browser-Upload.</small></span></article>
+    <article><b>03</b><span><strong>NEXUS verbinden</strong><small>Audio- und Stream-Ereignisse sollen später über die gemeinsame Event-Basis verteilt werden.</small></span></article>
+  </div>
+  <div class="creator-tool-entry-actions"><a class="btn primary" href="#audioWorkspace">MODULSTATUS ANSEHEN</a><a class="btn" href="/pages/launcher.html">LAUNCHER</a><a class="btn" href="/pages/nexus.html">NEXUS</a></div>
+</section>
+
+<section class="page-hero internal-module-hero">
+<div class="eyebrow">AUDIO STUDIO · ROADMAP</div>
+<h1>SOUNDS. VOICE.<br><span>STREAM AUDIO.</span></h1>
+<p>Die Modulbasis ist vorbereitet. Freigeschaltete Accounts können Preset-Zustände serverseitig speichern; die eigentliche Audioverarbeitung ist noch nicht Bestandteil dieser Web-Version.</p>
+</section>
+
+<section id="audioWorkspace" class="internal-status-shell audio-status-shell">
+  <div class="internal-status-head"><div><span class="meta">MODULSTATUS</span><h2>Vorbereitet für den lokalen Workflow</h2><p>Die Website verwaltet Konfiguration. Audiodateien und Audioverarbeitung werden in dieser Version nicht in der Cloud verarbeitet.</p></div><span class="internal-state-pill roadmap">ROADMAP</span></div>
+  <div class="management-overview management-overview-compact audio-architecture-grid">
+    <div class="management-overview-card"><span>WEB</span><div><strong>Preset-Zustand</strong><p>Einstellungen und Preset-Werte werden in der Creator Suite verwaltet.</p></div></div>
+    <div class="management-overview-card"><span>PC</span><div><strong>Lokale Engine</strong><p>Geplante Audio-Berechtigungen und Verarbeitung gehören in den Launcher.</p></div></div>
+    <div class="management-overview-card"><span>NX</span><div><strong>Event-Verteilung</strong><p>NEXUS ist als gemeinsame Basis für spätere Sound- und Stream-Events vorgesehen.</p></div></div>
+  </div>
 </section>
 
 <div id="locked" class="notice warn hidden"></div>
 
 <div id="audioApp" class="grid two hidden">
 <section class="panel">
+<div class="panel-label">PRESET STATE</div>
 <h2>Audio Preset</h2>
 <form id="audioForm" class="form-grid">
-<div class="field full"><label>PRESET NAME</label><input name="preset_name" maxlength="80" value="Mein Stream"></div>
-<div class="field"><label>MASTER</label><input name="master" type="range" min="0" max="100" value="80"></div>
-<div class="field"><label>VOICE</label><input name="voice" type="range" min="0" max="100" value="85"></div>
-<div class="field"><label>GAME</label><input name="game" type="range" min="0" max="100" value="65"></div>
-<div class="field"><label>SOUNDBOARD</label><input name="soundboard" type="range" min="0" max="100" value="70"></div>
+<div class="field full"><label>PRESET NAME</label><input name="preset_name" aria-label="Preset Name" maxlength="80" value="Mein Stream"></div>
+<div class="field"><label>MASTER</label><input name="master" aria-label="Master Lautstärke" type="range" min="0" max="100" value="80"></div>
+<div class="field"><label>VOICE</label><input name="voice" aria-label="Voice Lautstärke" type="range" min="0" max="100" value="85"></div>
+<div class="field"><label>GAME</label><input name="game" aria-label="Game Lautstärke" type="range" min="0" max="100" value="65"></div>
+<div class="field"><label>SOUNDBOARD</label><input name="soundboard" aria-label="Soundboard Lautstärke" type="range" min="0" max="100" value="70"></div>
 <div class="field full"><button class="btn primary">PRESET SPEICHERN</button></div>
 </form>
 <div id="message" class="notice hidden"></div>
 </section>
 <section class="panel">
-<h2>Architektur</h2>
+<div class="panel-label">ARCHITEKTUR</div>
+<h2>Was diese Version bereits tut</h2>
 <div class="feature-list">
 <div>Website speichert Presets und Einstellungen</div>
 <div>Launcher erhält später lokale Audio-Berechtigungen</div>
@@ -76,6 +100,7 @@
 </div>
 
 <section class="section">
+<div class="section-head"><div><div class="eyebrow">ROADMAP</div><h2>DIE NÄCHSTEN AUDIO-BAUSTEINE.</h2><p>Diese Funktionen sind geplant und werden nicht als bereits verfügbar dargestellt.</p></div></div>
 <div class="grid">
 <article class="card"><span class="badge lock">ROADMAP</span><h3>Soundboard</h3><p>Eigene Sounds und Hotkeys.</p></article>
 <article class="card"><span class="badge lock">ROADMAP</span><h3>Voice Chain</h3><p>Gate, Compressor, EQ und weitere Effekte.</p></article>

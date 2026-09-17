@@ -44,9 +44,10 @@
 </header>
 
 <main class="container">
-<section class="beginner-hero">
+<section class="beginner-hero creator-dashboard-hero">
   <div class="eyebrow">CREATOR SUITE · START</div>
   <h1>DEIN CREATOR<br><span>COCKPIT.</span></h1>
+  <p id="dashboardGreeting" class="creator-dashboard-greeting">Willkommen zurück. Dein Workspace wird geladen.</p>
   <p>Ein Blick reicht: Was ist verbunden, was ist bereit und was solltest du als Nächstes machen?</p>
   <div class="access-badges" id="accessBadges"></div>
 </section>
@@ -67,6 +68,28 @@
     <p id="systemNext">Wir schauen nach Account, TikTok, Launcher und veröffentlichten Widgets.</p>
   </div>
   <button class="btn" id="refreshStatus" type="button">STATUS NEU LADEN</button>
+</section>
+
+<section class="creator-next-step" id="nextStepCard" aria-live="polite">
+  <div class="creator-next-step-copy">
+    <span>ALS NÄCHSTES</span>
+    <strong id="nextStepTitle">Dein Workspace wird geprüft …</strong>
+    <p id="nextStepText">Wir laden Setup, Widgets und Verbindungen. Danach bekommst du genau einen sinnvollen nächsten Schritt.</p>
+  </div>
+  <a class="btn primary" id="nextStepAction" href="/pages/dashboard.html">BITTE WARTEN</a>
+</section>
+
+<section class="creator-journey" aria-label="Creator Setup Fortschritt">
+  <div class="creator-journey-head">
+    <div><span>DEIN STARTPFAD</span><strong>Vier Schritte bis zum einsatzbereiten Grundsetup.</strong></div>
+    <p>Manuelle Widgets funktionieren unabhängig von TikTok. Verbindungen kannst du deshalb in deinem Tempo ergänzen.</p>
+  </div>
+  <div class="creator-journey-grid">
+    <article class="creator-journey-step wait" id="progressSetup"><span>01</span><div><strong>Grundsetup</strong><small>Wird geprüft</small></div></article>
+    <article class="creator-journey-step wait" id="progressWidget"><span>02</span><div><strong>Erstes Widget</strong><small>Wird geprüft</small></div></article>
+    <article class="creator-journey-step wait" id="progressTikTok"><span>03</span><div><strong>TikTok</strong><small>Wird geprüft</small></div></article>
+    <article class="creator-journey-step wait" id="progressLauncher"><span>04</span><div><strong>Launcher</strong><small>Wird geprüft</small></div></article>
+  </div>
 </section>
 
 <div id="setupWarning" class="notice warn hidden" style="margin-bottom:18px">
@@ -112,7 +135,12 @@
     <div><div class="eyebrow">DEINE TOOLS</div><h2>EINFACH ÖFFNEN.</h2></div>
     <p>Nur die wichtigsten Creator-Tools stehen direkt hier. Gesperrte oder technische Bereiche findest du unter „Erweitert“.</p>
   </div>
-  <div id="simpleToolGrid" class="beginner-tools"></div>
+  <div class="creator-tool-summary" aria-label="Tool Übersicht">
+    <div><span>FREIGESCHALTET</span><strong id="toolReadyCount">–</strong><small>verwendbare Module</small></div>
+    <div><span>DEIN PLAN</span><strong id="toolAccessPlan">–</strong><small>aktueller Account</small></div>
+    <div><span>MODULE</span><strong id="toolTotalCount">–</strong><small>verfügbar / Beta / Preview</small></div>
+  </div>
+  <div id="simpleToolGrid" class="beginner-tools creator-tool-entry-grid"></div>
 
   <details class="beginner-advanced">
     <summary>ERWEITERTE TOOLS & BERECHTIGUNGEN</summary>

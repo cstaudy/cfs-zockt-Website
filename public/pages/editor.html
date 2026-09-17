@@ -4619,6 +4619,21 @@
 <main class="container">
 
 
+  <section class="creator-tool-entry" data-tool-entry="creator-editor" aria-label="Creator Editor Einstieg">
+    <div class="creator-tool-entry-head">
+      <div><span class="creator-tool-kicker">DEEP EDITOR</span><strong>Der Creator Editor bleibt dein detaillierter Arbeitsbereich für TikTok-orientierte Widget- und Profil-Setups.</strong><p>Für einen schnellen Einstieg nutzt du das Widget Studio. Hier arbeitest du weiter an den tieferen Creator-, Theme- und Widget-Einstellungen, ohne den bestehenden Editor-Workflow zu verlieren.</p></div>
+      <span class="creator-tool-status available">VERFÜGBAR</span>
+    </div>
+    <div class="creator-tool-path">
+      <article><b>01</b><span><strong>Creator prüfen</strong><small>Account, Plan und TikTok-Profil bilden die Basis des Editors.</small></span></article>
+      <article><b>02</b><span><strong>Look verfeinern</strong><small>Theme, Profil- und Widget-Einstellungen detailliert bearbeiten.</small></span></article>
+      <article><b>03</b><span><strong>In Scenes nutzen</strong><small>Für neue Widget- und Scene-Workflows kannst du jederzeit in die Studios wechseln.</small></span></article>
+    </div>
+    <div class="creator-tool-entry-actions"><a class="btn primary" href="#editorWorkspace">EDITOR ÖFFNEN</a><a class="btn" href="/pages/widget-studio.html">WIDGET STUDIO</a><a class="btn" href="/pages/scene-studio.html">SCENE STUDIO</a></div>
+  </section>
+
+  <div id="editorWorkspace"></div>
+
   <section class="page-hero">
 
     <div class="eyebrow">
@@ -6109,12 +6124,14 @@
 
                       <input
                         id="widgetAccent"
+                        aria-label="Akzentfarbe 1"
                         type="color"
                         value="#0a8cff"
                       >
 
                       <input
                         id="widgetAccentHex"
+                        aria-label="Akzentfarbe 1 als Hex-Wert"
                         type="text"
                         maxlength="7"
                         value="#0A8CFF"
@@ -6135,12 +6152,14 @@
 
                       <input
                         id="widgetAccent2"
+                        aria-label="Akzentfarbe 2"
                         type="color"
                         value="#19c2ff"
                       >
 
                       <input
                         id="widgetAccent2Hex"
+                        aria-label="Akzentfarbe 2 als Hex-Wert"
                         type="text"
                         maxlength="7"
                         value="#19C2FF"
@@ -6161,12 +6180,14 @@
 
                       <input
                         id="widgetBackground"
+                        aria-label="Widget Hintergrundfarbe"
                         type="color"
                         value="#071321"
                       >
 
                       <input
                         id="widgetBackgroundHex"
+                        aria-label="Widget Hintergrundfarbe als Hex-Wert"
                         type="text"
                         maxlength="7"
                         value="#071321"
@@ -6187,12 +6208,14 @@
 
                       <input
                         id="widgetTextColor"
+                        aria-label="Widget Textfarbe"
                         type="color"
                         value="#f4f8ff"
                       >
 
                       <input
                         id="widgetTextColorHex"
+                        aria-label="Widget Textfarbe als Hex-Wert"
                         type="text"
                         maxlength="7"
                         value="#F4F8FF"
@@ -7005,6 +7028,7 @@
 
                   <input
                     id="sourceUrl"
+                    aria-label="Widget Browser Source URL"
                     type="text"
                     readonly
                     value="Widget-URL wird geladen…"
