@@ -13,7 +13,7 @@ const checks = [];
 const check = (name, ok) => checks.push({ name, ok: Boolean(ok) });
 
 check('Homepage exposes a dedicated trust section', home.includes('id="vertrauen"') && home.includes('SICHERHEIT & TRANSPARENZ'));
-check('Main navigation prioritizes security', home.includes('<a href="#vertrauen">SICHERHEIT</a>'));
+check('Main navigation prioritizes security', home.includes('<a href="/pages/security.html">SICHERHEIT</a>'));
 check('Homepage links to detailed security page', home.includes('href="/pages/security.html"'));
 check('Homepage does not promise absolute security', home.includes('KEIN 100-%-VERSPRECHEN') && home.includes('Sicherheit ist ein laufender Prozess.'));
 check('Homepage trust claims mention no fake metrics/prices', home.includes('KEINE FAKE-ZAHLEN') && home.includes('keine erfundenen Bewertungen, Nutzerzahlen, Preise oder Merch-Bestellungen'));

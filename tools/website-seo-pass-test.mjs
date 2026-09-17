@@ -8,6 +8,9 @@ const BASE = "https://cfs-zockt.de";
 
 const INDEXABLE = new Map([
   ["index.html", `${BASE}/`],
+  ["pages/creator-suite.html", `${BASE}/pages/creator-suite.html`],
+  ["pages/plans.html", `${BASE}/pages/plans.html`],
+  ["pages/roadmap.html", `${BASE}/pages/roadmap.html`],
   ["pages/support.html", `${BASE}/pages/support.html`],
   ["pages/security.html", `${BASE}/pages/security.html`],
   ["pages/impressum.html", `${BASE}/pages/impressum.html`],
@@ -138,7 +141,7 @@ const social = path.join(publicDir,"assets/img/social-preview.jpg");
 if (!fs.existsSync(social) || fs.statSync(social).size < 10000) errors.push("Social Preview fehlt oder ist unerwartet klein.");
 
 const server = fs.readFileSync(path.join(root,"server.js"),"utf8");
-for (const route of ["/index.html","/pages/support","/pages/security","/pages/impressum","/pages/datenschutz","/pages/nutzungsbedingungen"]) {
+for (const route of ["/index.html","/pages/creator-suite","/pages/plans","/pages/roadmap","/pages/support","/pages/security","/pages/impressum","/pages/datenschutz","/pages/nutzungsbedingungen"]) {
   if (!server.includes(`[\"${route}\"`)) errors.push(`server.js: Canonical-Redirect für ${route} fehlt.`);
 }
 if (!server.includes('"X-Robots-Tag"')) errors.push("server.js: X-Robots-Tag für Runtime/API fehlt.");

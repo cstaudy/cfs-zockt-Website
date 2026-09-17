@@ -15,7 +15,7 @@ const acceptance=read('.github/ISSUE_TEMPLATE/release_acceptance.yml');
 const pkg=JSON.parse(read('package.json'));
 
 const checks=[]; const check=(name,ok)=>checks.push({name,ok:Boolean(ok)});
-check('Homepage hero states concrete creator value',home.includes('Widgets gestalten, Stream-Flächen planen, eigene Medien nutzen')&&home.includes('Erst ansehen, dann entscheiden.'));
+check('Homepage hero states concrete creator value',home.includes('Widgets, interaktive Games, Creator Tools und Desktop-Steuerung')&&home.includes('Verständlich für den Einstieg'));
 check('Homepage has dedicated product proof section',home.includes('id="produktbeweis"')&&home.includes('HEUTE IM PRODUKT'));
 check('Product proof covers Widget Studio core flows',home.includes('Fünf Kernflows direkt startklar')&&home.includes('Goal, Counter, Timer, Chat und Kamera/Overlay'));
 check('Product proof covers media and non-destructive editing',home.includes('Eigene Bilder, Video und Audio')&&home.includes('nicht-destruktiv'));
@@ -27,7 +27,7 @@ check('Homepage explicitly limits merch claims',home.includes('noch kein Shop un
 check('Homepage keeps current release status transparent',home.includes('Automatisierte interne Release-Prüfungen sind grün')&&home.includes('DNS/TLS, Lockfiles')&&home.includes('LIVE-Prüfungen bleiben separate Go-Live-Gates'));
 check('Product proof has security CTA',home.includes('href="/pages/security.html">SICHERHEIT PRÜFEN'));
 check('Hero trust links to product proof',home.includes('href="#produktbeweis"><strong>KEINE FAKE-ZAHLEN</strong>'));
-check('Footer prioritizes current product status',home.includes('href="#produktbeweis">Was funktioniert</a>'));
+check('Footer prioritizes current product status',home.includes('href="/pages/creator-suite.html#status">Was funktioniert</a>'));
 check('Proof section has dedicated responsive styling',css.includes('Website conviction / product proof pass')&&css.includes('.brand-proof-layout')&&css.includes('@media(max-width:620px)'));
 check('README is current',readme.includes('Backend: **3.12.0**')&&readme.includes('Launcher: **0.42.0**')&&readme.includes('PROJECT_CURRENT_STATE.md'));
 check('Current state document exists and prioritizes trust',state.includes('Website-Sicherheit, Transparenz und Überzeugungskraft')&&state.includes('Backend: 3.12.0')&&state.includes('Launcher: 0.42.0'));
