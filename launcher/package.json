@@ -107,7 +107,7 @@
     "test:stream-engine-audio21": "node ../tools/stream-engine-audio-stability-pass21-10-2-test.mjs .."
   },
   "devDependencies": {
-    "electron": "38.0.0",
+    "electron": "44.3.0",
     "electron-builder": "26.0.12"
   },
   "build": {
