@@ -22,6 +22,7 @@
       <button class="nav" data-view="audio" data-experience="pro"><span>♫</span> AUTOTHANKS</button>
       <button class="nav" data-view="events" data-experience="pro"><span>⌁</span> LIVE EVENTS</button>
       <button class="nav" data-view="bot" data-experience="pro"><span>⌘</span> STREAM BOT</button>
+      <button class="nav" data-view="streamengine" data-experience="pro"><span>◉</span> STREAM ENGINE</button>
       <button class="nav" data-view="output" data-experience="pro"><span>◈</span> LIVE OUTPUT</button>
       <button class="nav" data-view="obs" data-experience="pro"><span>▣</span> OBS DOCTOR</button>
       <button class="nav" data-view="system" data-experience="pro"><span>◆</span> SYSTEM</button>
@@ -655,6 +656,96 @@
         <div class="recovery-list" id="recoveryList">
           <div class="recovery-empty">Noch keine Restore Points.</div>
         </div>
+      </section>
+    </section>
+
+    <section class="view" data-page="streamengine">
+      <div class="page-head">
+        <span class="eyebrow">CFS STREAM STUDIO · LOCAL MEDIA ENGINE</span>
+        <h1>STREAM ENGINE.</h1>
+        <p>Die Website liefert Szenen, Widgets, Output- und Multistream-Konfiguration. Capture, Stream-Keys, Encoding und RTMP/RTMPS laufen ausschließlich lokal auf diesem PC.</p>
+      </div>
+
+      <div class="output-columns">
+        <section class="panel">
+          <div class="panel-head">
+            <div><span>ENGINE STATUS</span><h2>FFmpeg & Encoder</h2><p>Hardware-Encoding wird automatisch erkannt. Der echte Windows-Capture-Test bleibt Teil der Real-World-Abnahme.</p></div>
+            <span class="pill" id="streamEnginePill">NICHT GEPRÜFT</span>
+          </div>
+          <div class="output-local-status">
+            <div><span>ENGINE</span><strong id="streamEngineStatus">–</strong></div>
+            <div><span>ENCODER</span><strong id="streamEngineEncoder">–</strong></div>
+            <div><span>ZIELE LIVE</span><strong id="streamEngineActive">0</strong></div>
+            <div><span>RECONNECTS</span><strong id="streamEngineReconnects">0</strong></div>
+            <div><span>DROPPED</span><strong id="streamEngineDropped">0</strong></div>
+            <div><span>WATCHDOG</span><strong id="streamEngineWatchdog">0</strong></div>
+          </div>
+          <div class="inline">
+            <button class="btn" id="probeStreamEngine">ENGINE PRÜFEN</button>
+            <button class="btn" id="syncStreamStudio">STUDIO SYNC</button>
+            <button class="btn" id="refreshStreamDevices">GERÄTE LADEN</button>
+          </div>
+          <div class="notice compact" id="streamEngineNotice">Noch nicht geprüft.</div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <div><span>LOCAL CAPTURE</span><h2>Bild & Ton</h2><p>Bildschirm, Fenster oder Kamera. Native Game-Capture-Hooks folgen separat; Borderless-Games können zunächst über Fenster-Capture getestet werden.</p></div>
+          </div>
+          <div class="form-grid">
+            <label><span>CAPTURE</span><select id="streamCaptureType"><option value="screen">Bildschirm</option><option value="window">Fenster / Borderless Game</option><option value="camera">Kamera</option></select></label>
+            <label><span>MONITOR</span><select id="streamDisplayId"><option value="">Gesamter Desktop</option></select></label>
+            <label><span>FENSTERTITEL</span><input id="streamWindowTitle" maxlength="220" placeholder="z. B. Minecraft"></label>
+            <label><span>KAMERA</span><select id="streamVideoDevice"><option value="">Keine / Geräte laden</option></select></label>
+            <label><span>AUDIO 1 · MIC / MIX</span><select id="streamAudioDevice"><option value="">Ohne Audio / Geräte laden</option></select></label>
+            <label><span>AUDIO 2 · DESKTOP / LOOPBACK</span><select id="streamAudioDevice2"><option value="">Optional · zweiter Bus</option></select></label>
+            <label class="toggle-row"><input id="streamDrawMouse" type="checkbox"><span>Mauszeiger aufnehmen</span></label>
+            <label class="toggle-row"><input id="streamRecordingEnabled" type="checkbox"><span>Parallel lokal aufnehmen</span></label>
+          </div>
+          <div class="stream-audio-mixer">
+            <div class="stream-audio-bus"><div><strong>AUDIO 1</strong><small>Mikrofon oder Mix</small></div><input id="streamAudioVolume" type="range" min="0" max="200" step="1" value="100"><output id="streamAudioVolumeValue">100%</output><label><span>DELAY</span><input id="streamAudioDelay" type="number" min="0" max="2000" step="10" value="0"><small>ms</small></label><label class="toggle-row"><input id="streamAudioMute" type="checkbox"><span>MUTE</span></label></div>
+            <div class="stream-audio-bus"><div><strong>AUDIO 2</strong><small>Desktop / Loopback</small></div><input id="streamAudioVolume2" type="range" min="0" max="200" step="1" value="100"><output id="streamAudioVolumeValue2">100%</output><label><span>DELAY</span><input id="streamAudioDelay2" type="number" min="0" max="2000" step="10" value="0"><small>ms</small></label><label class="toggle-row"><input id="streamAudioMute2" type="checkbox"><span>MUTE</span></label></div>
+          </div>
+          <div class="stream-crop-box">
+            <label class="toggle-row"><input id="streamCropEnabled" type="checkbox"><span>Capture zuschneiden</span></label>
+            <div class="form-grid compact-grid" id="streamCropFields">
+              <label><span>X</span><input id="streamCropX" type="number" min="0" max="10000" step="1" value="0"></label>
+              <label><span>Y</span><input id="streamCropY" type="number" min="0" max="10000" step="1" value="0"></label>
+              <label><span>BREITE</span><input id="streamCropWidth" type="number" min="64" max="7680" step="1" value="1920"></label>
+              <label><span>HÖHE</span><input id="streamCropHeight" type="number" min="64" max="4320" step="1" value="1080"></label>
+            </div>
+          </div>
+          <div class="form-grid compact-grid">
+            <label class="toggle-row"><input id="streamWatchdogEnabled" type="checkbox" checked><span>Watchdog / Auto-Recover</span></label>
+            <label><span>STALL TIMEOUT</span><select id="streamWatchdogTimeout"><option value="12">12 Sekunden</option><option value="18" selected>18 Sekunden</option><option value="30">30 Sekunden</option><option value="45">45 Sekunden</option></select></label>
+          </div>
+          <p class="muted">Desktop-Audio benötigt aktuell ein unter Windows verfügbares Loopback-Gerät, z. B. Stereo Mix oder ein bereits installiertes virtuelles Audiogerät. Native WASAPI-/Game-Audio-Capture bleibt bis zum echten Windows-Test offen.</p>
+          <div class="inline"><button class="btn primary" id="saveStreamLocalSettings">CAPTURE & AUDIO SPEICHERN</button></div>
+        </section>
+      </div>
+
+      <section class="panel">
+        <div class="panel-head">
+          <div><span>LOCAL ONLY</span><h2>Streaming-Ziele & Schlüssel</h2><p>Server-URL und Stream-Key werden mit Windows SafeStorage verschlüsselt und niemals an die CFS Cloud zurückgesendet.</p></div>
+          <span class="pill" id="streamTargetLimit">0 ZIELE</span>
+        </div>
+        <div class="notice compact"><strong>Twitch:</strong> RTMP + Stream-Key. <strong>YouTube:</strong> bevorzugt RTMPS + Stream-Key. <strong>TikTok:</strong> nur wenn dein Konto LIVE-/Encoder-Zugang und eine nutzbare Server-URL plus Stream-Key hat. CFS umgeht keine Plattformfreigaben.</div>
+        <div class="stream-engine-targets" id="streamEngineTargets"><div class="launcher-scene-empty">Studio-Konfiguration noch nicht synchronisiert.</div></div>
+      </section>
+
+      <section class="panel stream-engine-control">
+        <div class="panel-head">
+          <div><span>LOCAL BROADCAST</span><h2>Stream starten</h2><p>Jedes Ziel läuft in einem eigenen FFmpeg-Prozess. Fällt ein Ziel aus, bleiben die anderen aktiv und das betroffene Ziel versucht mit Backoff neu zu verbinden.</p></div>
+          <span class="pill" id="streamRunPill">OFF</span>
+        </div>
+        <div class="stream-local-preflight" id="streamEnginePreflightResult"><div class="launcher-scene-empty">Noch nicht geprüft.</div></div>
+        <div class="inline">
+          <button class="btn" id="preflightStreamEngine">PREFLIGHT PRÜFEN</button>
+          <button class="btn primary" id="startStreamEngine">MULTISTREAM STARTEN</button>
+          <button class="btn danger" id="stopStreamEngine" disabled>STREAM STOPPEN</button>
+        </div>
+        <div class="stream-destination-runtime" id="streamRuntimeTargets"><div class="launcher-scene-empty">Noch kein lokaler Stream gestartet.</div></div>
+        <div class="notice compact">Wichtig: Zwei lokale Audio-Busse, Mix-Lautstärken, Mute, Audio-Delay, Monitor-Auswahl, Crop, Dropped-Frame-Metrik und Watchdog sind jetzt vorbereitet. Native Game-Capture-Hooks, native WASAPI-Desktop-Audio-Erfassung und der echte Windows-Hardware-Dauertest bleiben offen und werden erst nach realer Prüfung als PASS markiert.</div>
       </section>
     </section>
 

@@ -20,7 +20,7 @@ let streamBotConfig={enabled:false,prefix:"!",commands:[]};
 let streamBotLoaded=false;
 let experienceMode="simple";
 const EXPERIENCE_STORAGE_KEY="cfsLauncherExperienceMode";
-const PRO_ONLY_PAGES=new Set(["sync","audio","events","bot","output","obs","system","beta"]);
+const PRO_ONLY_PAGES=new Set(["sync","audio","events","bot","streamengine","output","obs","system","beta"]);
 const EXPERIENCE_HELP=Object.freeze({
   live:{title:"Dein Stream auf einen Blick.",text:"Arbeite die vier Karten von links nach rechts ab. Der Launcher nennt dir immer den nächsten sinnvollen Schritt."},
   deck:{title:"Deine wichtigsten Aktionen als Tasten.",text:"Wähle zuerst eine Deck-Seite. Ein normaler Klick führt die Aktion aus; über Bearbeiten passt du einzelne Tasten an."},
@@ -31,6 +31,7 @@ const EXPERIENCE_HELP=Object.freeze({
   audio:{title:"AutoThanks spricht Stream-Ereignisse aus.",text:"Aktiviere es nur, wenn du automatische Sprachausgabe nutzen möchtest."},
   events:{title:"LIVE Events sind die eingehenden TikTok-Signale.",text:"Diese Ansicht hilft beim Testen. Im normalen Streambetrieb musst du sie nicht dauerhaft offen haben."},
   bot:{title:"Der Stream Bot reagiert auf Chat-Kommandos.",text:"Nutze Vorlagen oder eigene Commands. Der Bot schreibt derzeit nicht automatisch in fremde Chats zurück."},
+  streamengine:{title:"Hier läuft dein Stream wirklich lokal.",text:"Stream-Keys, Capture und Encoding bleiben auf deinem PC. Die Website liefert nur deine geprüfte Studio-Konfiguration."},
   output:{title:"Output ist deine lokale Stream-Ausgabe.",text:"Hier startest oder prüfst du veröffentlichte Scenes. Für Anfänger reicht meistens die empfohlene Standardausgabe."},
   obs:{title:"OBS Doctor hilft bei Browser-Source-Problemen.",text:"Öffne ihn nur, wenn eine Widget-URL in OBS nicht so aussieht oder lädt wie erwartet."},
   system:{title:"System ist die technische Diagnose.",text:"Diese Werte sind vor allem für Support und Fehlersuche gedacht."},
@@ -1165,6 +1166,100 @@ function renderLauncherScenes(scenes=[]){
 }
 async function loadLauncherScenes(){try{const r=await window.CFSLauncher.listScenes();renderLauncherScenes(r?.scenes||[]);if(r?.error)toast(r.error,true)}catch(e){toast(e.message,true);renderLauncherScenes([])}}
 
+
+function streamProviderLabel(provider){
+  return ({youtube:"YouTube",twitch:"Twitch",tiktok:"TikTok",kick:"Kick",facebook:"Facebook",custom_rtmp:"Custom RTMP/RTMPS"})[String(provider||"")]||String(provider||"Streaming-Ziel");
+}
+
+function streamProviderMeta(nextState,provider){
+  const key=String(provider||"");
+  return (Array.isArray(nextState?.streamProviders)?nextState.streamProviders:[]).find(item=>item.key===key)||{key,label:streamProviderLabel(key),support:"manual",transport:"RTMP/RTMPS",serverHint:"RTMP/RTMPS Server-URL",keyHint:"Stream-Key",setupHint:"Zugangsdaten lokal im Launcher eintragen."};
+}
+function streamSupportLabel(value){return value==="supported"?"DIREKT UNTERSTÜTZT":value==="conditional"?"ZUGANG ABHÄNGIG":"MANUELL";}
+
+function renderStreamDeviceOptions(nextState){
+  const data=nextState?.streamCaptureDevices;
+  if(!data||!Array.isArray(data.devices))return;
+  const settings=nextState.settings||{};
+  const videos=data.devices.filter(item=>item.type==="video");
+  const audios=data.devices.filter(item=>item.type==="audio");
+  const videoSelect=$("#streamVideoDevice"),audioSelect=$("#streamAudioDevice"),audioSelect2=$("#streamAudioDevice2"),displaySelect=$("#streamDisplayId");
+  if(displaySelect){const displays=Array.isArray(data.displays)?data.displays:[];displaySelect.innerHTML='<option value="">Gesamter Desktop</option>'+displays.map(item=>`<option value="${escapeHtml(item.id)}">${escapeHtml(item.label||`Monitor ${item.id}`)} · ${Number(item.bounds?.width||0)}×${Number(item.bounds?.height||0)} @ ${Number(item.scaleFactor||1).toFixed(2)}x</option>`).join("");displaySelect.value=settings.streamDisplayId||"";}
+  if(videoSelect){videoSelect.innerHTML='<option value="">Keine / nicht gewählt</option>'+videos.map(item=>`<option value="${escapeHtml(item.name)}">${escapeHtml(item.name)}</option>`).join("");videoSelect.value=settings.streamVideoDevice||"";}
+  if(audioSelect){audioSelect.innerHTML='<option value="">Ohne Audio</option>'+audios.map(item=>`<option value="${escapeHtml(item.name)}">${escapeHtml(item.name)}</option>`).join("");audioSelect.value=settings.streamAudioDevice||"";}
+  if(audioSelect2){audioSelect2.innerHTML='<option value="">Kein zweiter Bus</option>'+audios.map(item=>`<option value="${escapeHtml(item.name)}">${escapeHtml(item.name)}</option>`).join("");audioSelect2.value=settings.streamAudioDevice2||"";}
+}
+
+function renderStreamEngine(nextState){
+  const engine=nextState?.streamEngine||{},studio=nextState?.streamStudio||{},settings=nextState?.settings||{};
+  const config=studio.config||{},multi=config.multistream||{},targets=Array.isArray(multi.destinations)?multi.destinations:[];
+  const active=targets.filter(target=>target?.enabled===true),credentialMeta=studio.credentials?.targets||{};
+  const caps=engine.capabilities?.encoders||{};
+  const encoderList=[caps.nvenc&&"NVENC",caps.amd&&"AMD",caps.qsv&&"QSV",caps.software!==false&&"x264"].filter(Boolean).join(" / ")||"–";
+  const running=engine.desiredRunning===true;
+  if($("#streamEnginePill")){ $("#streamEnginePill").textContent=engine.available?(running?"RUNNING":"BEREIT"):(engine.checkedAt?"NICHT BEREIT":"NICHT GEPRÜFT"); $("#streamEnginePill").className="pill"+(engine.available?" online":""); }
+  if($("#streamEngineStatus"))$("#streamEngineStatus").textContent=engine.available?"FFmpeg bereit":engine.error||"Nicht geprüft";
+  if($("#streamEngineEncoder"))$("#streamEngineEncoder").textContent=encoderList;
+  if($("#streamEngineActive"))$("#streamEngineActive").textContent=String(Number(engine.metrics?.active||0));
+  if($("#streamEngineReconnects"))$("#streamEngineReconnects").textContent=String(Number(engine.metrics?.reconnects||0));
+  if($("#streamEngineDropped"))$("#streamEngineDropped").textContent=String(Number(engine.metrics?.droppedFrames||0));
+  if($("#streamEngineWatchdog"))$("#streamEngineWatchdog").textContent=String(Number(engine.metrics?.watchdogRestarts||0));
+  if($("#streamEngineNotice"))$("#streamEngineNotice").textContent=engine.available?`${engine.version||"FFmpeg"} · gdigrab ${engine.capabilities?.gdigrab?"ja":"nein"} · dshow ${engine.capabilities?.dshow?"ja":"nein"}`:(engine.error||"Noch nicht geprüft.");
+  if($("#streamTargetLimit"))$("#streamTargetLimit").textContent=`${active.length}/${Math.max(1,Number(studio.multistream?.max_destinations||1))} AKTIV`;
+  if($("#streamRunPill")){ $("#streamRunPill").textContent=running?"ON":"OFF"; $("#streamRunPill").className="pill"+(running?" live":""); }
+  if($("#startStreamEngine"))$("#startStreamEngine").disabled=running||!nextState?.bridge?.connected;
+  if($("#stopStreamEngine"))$("#stopStreamEngine").disabled=!running;
+
+  if($("#streamCaptureType"))$("#streamCaptureType").value=settings.streamCaptureType||"screen";
+  if($("#streamWindowTitle")){ $("#streamWindowTitle").value=settings.streamWindowTitle||""; $("#streamWindowTitle").disabled=(settings.streamCaptureType||"screen")!=="window"; }
+  if($("#streamDisplayId")){$("#streamDisplayId").value=settings.streamDisplayId||"";$("#streamDisplayId").disabled=(settings.streamCaptureType||"screen")!=="screen";}
+  if($("#streamVideoDevice")){ $("#streamVideoDevice").disabled=(settings.streamCaptureType||"screen")!=="camera"; if(!$("#streamVideoDevice").options.length||$("#streamVideoDevice").options.length===1)$("#streamVideoDevice").value=settings.streamVideoDevice||""; }
+  if($("#streamAudioDevice")&&$("#streamAudioDevice").options.length>1)$("#streamAudioDevice").value=settings.streamAudioDevice||"";
+  if($("#streamAudioDevice2")&&$("#streamAudioDevice2").options.length>1)$("#streamAudioDevice2").value=settings.streamAudioDevice2||"";
+  if($("#streamAudioVolume")){const v=Math.round(Number(settings.streamAudioVolume??1)*100);$("#streamAudioVolume").value=String(v);if($("#streamAudioVolumeValue"))$("#streamAudioVolumeValue").textContent=`${v}%`;}
+  if($("#streamAudioVolume2")){const v=Math.round(Number(settings.streamAudioVolume2??1)*100);$("#streamAudioVolume2").value=String(v);if($("#streamAudioVolumeValue2"))$("#streamAudioVolumeValue2").textContent=`${v}%`;}
+  if($("#streamAudioMute"))$("#streamAudioMute").checked=settings.streamAudioMute===true;
+  if($("#streamAudioMute2"))$("#streamAudioMute2").checked=settings.streamAudioMute2===true;
+  if($("#streamAudioDelay"))$("#streamAudioDelay").value=String(settings.streamAudioDelayMs||0);
+  if($("#streamAudioDelay2"))$("#streamAudioDelay2").value=String(settings.streamAudioDelayMs2||0);
+  if($("#streamCropEnabled"))$("#streamCropEnabled").checked=settings.streamCropEnabled===true;
+  if($("#streamCropX"))$("#streamCropX").value=String(settings.streamCropX||0);
+  if($("#streamCropY"))$("#streamCropY").value=String(settings.streamCropY||0);
+  if($("#streamCropWidth"))$("#streamCropWidth").value=String(settings.streamCropWidth||1920);
+  if($("#streamCropHeight"))$("#streamCropHeight").value=String(settings.streamCropHeight||1080);
+  if($("#streamWatchdogEnabled"))$("#streamWatchdogEnabled").checked=settings.streamWatchdogEnabled!==false;
+  if($("#streamWatchdogTimeout"))$("#streamWatchdogTimeout").value=String(settings.streamWatchdogTimeoutSec||18);
+  if($("#streamDrawMouse")){ $("#streamDrawMouse").checked=settings.streamDrawMouse!==false; $("#streamDrawMouse").disabled=(settings.streamCaptureType||"screen")==="camera"; }
+  if($("#streamRecordingEnabled"))$("#streamRecordingEnabled").checked=settings.streamRecordingEnabled===true;
+  renderStreamDeviceOptions(nextState);
+
+  const host=$("#streamEngineTargets");
+  if(host){
+    host.innerHTML=targets.length?targets.map(target=>{
+      const meta=credentialMeta[target.id]||{},provider=streamProviderMeta(nextState,target.provider);
+      const support=streamSupportLabel(provider.support);
+      return `<article class="stream-engine-target ${target.enabled?"enabled":""}">
+        <div class="stream-engine-target-head"><div><span>${escapeHtml(provider.label||streamProviderLabel(target.provider))} · ${escapeHtml(support)}</span><strong>${escapeHtml(target.label||provider.label||streamProviderLabel(target.provider))}</strong><small>${target.enabled?"Im Studio aktiviert":"Im Studio vorbereitet"} · ${escapeHtml(target.profile||"1080p60")} · ${Number(target.bitrate_kbps||0)} kbit/s · ${escapeHtml(provider.transport||"RTMP/RTMPS")}</small></div><b>${meta.configured?"KEY OK":"KEY FEHLT"}</b></div>
+        <p class="stream-provider-hint">${escapeHtml(provider.setupHint||"")}</p>
+        <div class="form-grid"><label><span>RTMP/RTMPS SERVER</span><input data-stream-server="${escapeHtml(target.id)}" maxlength="800" placeholder="${meta.configured?escapeHtml(meta.server||"Sicher gespeichert"):escapeHtml(provider.serverHint||"rtmps://...")}"></label><label><span>STREAM-KEY</span><input data-stream-key="${escapeHtml(target.id)}" type="password" maxlength="600" autocomplete="new-password" placeholder="${meta.configured?"Sicher gespeichert · leer lassen":escapeHtml(provider.keyHint||"Stream-Key")}"></label></div>
+        <div class="inline"><button class="btn primary" data-save-stream-credential="${escapeHtml(target.id)}">LOKAL SPEICHERN</button>${meta.configured?`<button class="btn danger" data-remove-stream-credential="${escapeHtml(target.id)}">KEY ENTFERNEN</button>`:""}${provider.docs?`<button class="btn" data-open-provider-docs="${escapeHtml(provider.key||target.provider)}">ANLEITUNG</button>`:""}</div>
+      </article>`;
+    }).join(""):'<div class="launcher-scene-empty">Keine Streaming-Ziele in der Website konfiguriert.</div>';
+  }
+  const runtime=$("#streamRuntimeTargets");
+  if(runtime){
+    const items=Object.values(engine.destinations||{});
+    const recording=engine.recording;
+    const rows=items.concat(recording?[recording]:[]);
+    runtime.innerHTML=rows.length?rows.map(item=>{const status=String(item.status||"idle"),controllable=item.kind!=="recording"&&item.id;const activeState=["starting","live","reconnecting"].includes(status);return `<div class="stream-runtime-row"><div><strong>${escapeHtml(item.label||item.id||"Output")}</strong><small>${escapeHtml(item.provider||item.kind||"")}</small></div><b>${escapeHtml(status.toUpperCase())}</b><span>${Number(item.metrics?.fps||0).toFixed(0)} FPS</span><span>${Number(item.metrics?.bitrateKbps||0).toFixed(0)} kbit/s</span><span>DROP ${Number(item.metrics?.droppedFrames||0)}</span>${item.lastError?`<small class="stream-runtime-error">${escapeHtml(item.lastError)}</small>`:""}${controllable?`<button class="btn ${activeState?"danger":"primary"}" data-${activeState?"stop":"start"}-stream-target="${escapeHtml(item.id)}">${activeState?"ZIEL STOPPEN":"ZIEL STARTEN"}</button>`:""}</div>`}).join(""):'<div class="launcher-scene-empty">Noch kein lokaler Stream gestartet.</div>';
+  }
+  const preflight=nextState?.streamPreflight;
+  if($("#streamEnginePreflightResult")){
+    if(!preflight)$("#streamEnginePreflightResult").innerHTML='<div class="launcher-scene-empty">Noch nicht geprüft.</div>';
+    else $("#streamEnginePreflightResult").innerHTML=`<div class="stream-preflight-local-head"><strong>${preflight.ok?"BEREIT":"NOCH NICHT BEREIT"}</strong><span>${Number(preflight.passed||0)}/${Number(preflight.total||0)} Checks</span></div>`+(Array.isArray(preflight.checks)?preflight.checks.map(check=>`<div class="stream-preflight-local-row ${check.ok?"ok":"warn"}"><b>${check.ok?"✓":"!"}</b><div><strong>${escapeHtml(check.label||check.key)}</strong><small>${escapeHtml(check.detail||"")}</small></div></div>`).join(""):"");
+  }
+}
+
 function render(next) {
   state = next || state;
   if (!state) return;
@@ -1205,6 +1300,7 @@ function render(next) {
   renderBetaCenter(state);
   renderCreatorTools(state);
   renderLocalOutput(state);
+  renderStreamEngine(state);
   renderOutputGate(state.outputGate);
   renderSystem(state);
   recordSyncState(state);
@@ -1283,7 +1379,7 @@ function audioAnalysisHtml(item){
 function showPage(name) {
   $$("[data-page]").forEach(v => v.classList.toggle("active", v.dataset.page === name));
   $$(".nav").forEach(v => v.classList.toggle("active", v.dataset.view === name));
-  $("#pageTitle").textContent = ({ live:"LIVE CONTROL", deck:"STREAM DECK", tools:"CREATOR TOOLS", bridge:"BRIDGE", sync:"SYNC STATUS", audio:"AUTOTHANKS", events:"LIVE EVENTS", bot:"STREAM BOT", output:"LIVE OUTPUT", obs:"OBS DOCTOR", system:"SYSTEM", beta:"BETA TEST", settings:"EINSTELLUNGEN" })[name] || "CREATOR SUITE";
+  $("#pageTitle").textContent = ({ live:"LIVE CONTROL", deck:"STREAM DECK", tools:"CREATOR TOOLS", bridge:"BRIDGE", sync:"SYNC STATUS", audio:"AUTOTHANKS", events:"LIVE EVENTS", bot:"STREAM BOT", streamengine:"STREAM ENGINE", output:"LIVE OUTPUT", obs:"OBS DOCTOR", system:"SYSTEM", beta:"BETA TEST", settings:"EINSTELLUNGEN" })[name] || "CREATOR SUITE";
   renderExperienceHelp(name);
   if(window.matchMedia("(max-width: 900px)").matches)applyMenuState(false,{remember:false});
 }
@@ -1385,6 +1481,7 @@ async function init() {
     }
     if(button.dataset.view==="beta"&&state?.bridge?.connected){try{state=await window.CFSLauncher.refreshBetaCenter();render(state)}catch{}}
     if(button.dataset.view==="bot"&&state?.bridge?.connected){await loadStreamBot({silent:true});}
+    if(button.dataset.view==="streamengine"&&state?.bridge?.connected){try{state=await window.CFSLauncher.syncStreamStudio();if(!state?.streamEngine?.checkedAt)state=await window.CFSLauncher.probeStreamEngine();render(state)}catch(error){toast(error.message,true)}}
     if(button.dataset.view==="tools"&&state?.bridge?.connected){try{state=await window.CFSLauncher.refreshCreatorTools();render(state);if(currentCreatorFeatures().cut_studio===true&&!state?.mediaEngine?.checkedAt){state=await window.CFSLauncher.probeMediaEngine();render(state)}}catch{}}
 
   });
@@ -1803,6 +1900,18 @@ async function init() {
       toast("Stream-Deck Button gespeichert.");
     }catch(error){toast(error.message,true)}
   };
+
+  $("#probeStreamEngine").onclick=async()=>{try{state=await window.CFSLauncher.probeStreamEngine();render(state);toast(state?.streamEngine?.available?"Streaming Engine ist bereit.":state?.streamEngine?.error||"Streaming Engine ist nicht bereit.",!state?.streamEngine?.available)}catch(error){toast(error.message,true)}};
+  $("#syncStreamStudio").onclick=async()=>{try{state=await window.CFSLauncher.syncStreamStudio();render(state);toast("Stream Studio Konfiguration synchronisiert.")}catch(error){toast(error.message,true)}};
+  $("#refreshStreamDevices").onclick=async()=>{try{state=await window.CFSLauncher.listStreamCaptureDevices();render(state);toast("Lokale Capture-Geräte geladen.")}catch(error){toast(error.message,true)}};
+  $("#streamCaptureType").onchange=()=>{const type=$("#streamCaptureType").value;$("#streamWindowTitle").disabled=type!=="window";$("#streamVideoDevice").disabled=type!=="camera";$("#streamDisplayId").disabled=type!=="screen";$("#streamDrawMouse").disabled=type==="camera";};
+  $("#saveStreamLocalSettings").onclick=async()=>{try{state=await window.CFSLauncher.saveStreamLocalSettings({captureType:$("#streamCaptureType").value,displayId:$("#streamDisplayId")?.value||"",windowTitle:$("#streamWindowTitle").value,videoDevice:$("#streamVideoDevice").value,audioDevice:$("#streamAudioDevice").value,audioDevice2:$("#streamAudioDevice2")?.value||"",audioVolume:Number($("#streamAudioVolume")?.value||100)/100,audioVolume2:Number($("#streamAudioVolume2")?.value||100)/100,audioMute:$("#streamAudioMute")?.checked===true,audioMute2:$("#streamAudioMute2")?.checked===true,audioDelayMs:Number($("#streamAudioDelay")?.value||0),audioDelayMs2:Number($("#streamAudioDelay2")?.value||0),cropEnabled:$("#streamCropEnabled")?.checked===true,cropX:Number($("#streamCropX")?.value||0),cropY:Number($("#streamCropY")?.value||0),cropWidth:Number($("#streamCropWidth")?.value||1920),cropHeight:Number($("#streamCropHeight")?.value||1080),watchdogEnabled:$("#streamWatchdogEnabled")?.checked!==false,watchdogTimeoutSec:Number($("#streamWatchdogTimeout")?.value||18),drawMouse:$("#streamDrawMouse").checked,recordingEnabled:$("#streamRecordingEnabled").checked});render(state);toast("Lokale Capture-, Crop- und Audio-Einstellungen gespeichert.")}catch(error){toast(error.message,true)}};
+  for(const [sliderId,outId] of [["streamAudioVolume","streamAudioVolumeValue"],["streamAudioVolume2","streamAudioVolumeValue2"]]){const slider=$("#"+sliderId),out=$("#"+outId);if(slider&&out)slider.oninput=()=>{out.textContent=`${slider.value}%`;};}
+  $("#streamEngineTargets").onclick=async event=>{const save=event.target.closest("[data-save-stream-credential]"),remove=event.target.closest("[data-remove-stream-credential]"),docs=event.target.closest("[data-open-provider-docs]");if(docs){try{await window.CFSLauncher.openStreamProviderDocs(docs.dataset.openProviderDocs)}catch(error){toast(error.message,true)}return}if(save){const id=save.dataset.saveStreamCredential,server=$("[data-stream-server=\""+CSS.escape(id)+"\"]")?.value||"",key=$("[data-stream-key=\""+CSS.escape(id)+"\"]")?.value||"";if(!server||!key){toast("Bitte Server-URL und Stream-Key vollständig eingeben.",true);return}try{state=await window.CFSLauncher.saveStreamCredential({targetId:id,serverUrl:server,streamKey:key});render(state);toast("Stream-Zugangsdaten lokal verschlüsselt gespeichert.")}catch(error){toast(error.message,true)}return}if(remove){const id=remove.dataset.removeStreamCredential;if(!confirm("Lokalen Stream-Key für dieses Ziel entfernen?"))return;try{state=await window.CFSLauncher.removeStreamCredential(id);render(state);toast("Lokaler Stream-Key entfernt.")}catch(error){toast(error.message,true)}}};
+  $("#preflightStreamEngine").onclick=async()=>{try{state=await window.CFSLauncher.preflightStreamEngine();render(state);toast(state?.streamPreflight?.ok?"Multistream Preflight: bereit.":"Multistream Preflight: bitte offene Punkte prüfen.",!state?.streamPreflight?.ok)}catch(error){toast(error.message,true)}};
+  $("#startStreamEngine").onclick=async()=>{try{state=await window.CFSLauncher.startStreamEngine();render(state);toast("Lokale Streaming Engine gestartet.")}catch(error){toast(error.message,true)}};
+  $("#stopStreamEngine").onclick=async()=>{try{state=await window.CFSLauncher.stopStreamEngine();render(state);toast("Lokale Streaming Engine gestoppt.")}catch(error){toast(error.message,true)}};
+  $("#streamRuntimeTargets").onclick=async event=>{const stop=event.target.closest("[data-stop-stream-target]"),start=event.target.closest("[data-start-stream-target]");try{if(stop){state=await window.CFSLauncher.stopStreamTarget(stop.dataset.stopStreamTarget);render(state);toast("Streaming-Ziel gestoppt. Andere Ziele laufen weiter.");return}if(start){state=await window.CFSLauncher.startStreamTarget(start.dataset.startStreamTarget);render(state);toast("Streaming-Ziel wieder gestartet.")}}catch(error){toast(error.message,true)}};
 
   $("#refreshScenes").onclick=()=>loadLauncherScenes();
   $("#launcherSceneGrid").onclick=event=>{
