@@ -3095,6 +3095,37 @@ async function initDatabase() {
     await pool.query(`CREATE INDEX IF NOT EXISTS idx_creator_cut_export_jobs_creator ON creator_cut_export_jobs (creator_id, requested_at DESC)`);
     await pool.query(`CREATE INDEX IF NOT EXISTS idx_creator_cut_export_jobs_status ON creator_cut_export_jobs (creator_id, status, requested_at ASC)`);
 
+
+    // --------------------------------------------------------
+    // PASS 21.10.31 CUT AUDITION RUNTIME CLOCK
+    // Only sanitized transport timing/state is persisted. No
+    // recording path, cache path or audio payload is stored.
+    // --------------------------------------------------------
+    await pool.query(`
+        CREATE TABLE IF NOT EXISTS creator_cut_audition_runtime (
+            creator_id TEXT NOT NULL REFERENCES creator_accounts(id) ON DELETE CASCADE,
+            project_id UUID NOT NULL REFERENCES creator_cut_projects(id) ON DELETE CASCADE,
+            bridge_id TEXT,
+            session_id VARCHAR(96) NOT NULL DEFAULT '',
+            state VARCHAR(16) NOT NULL DEFAULT 'idle',
+            transport VARCHAR(24) NOT NULL DEFAULT 'webaudio',
+            position_ms INTEGER NOT NULL DEFAULT 0,
+            start_ms INTEGER NOT NULL DEFAULT 0,
+            end_ms INTEGER NOT NULL DEFAULT 0,
+            loop_enabled BOOLEAN NOT NULL DEFAULT FALSE,
+            loop_start_ms INTEGER NOT NULL DEFAULT 0,
+            loop_end_ms INTEGER NOT NULL DEFAULT 0,
+            revision BIGINT NOT NULL DEFAULT 0,
+            sampled_at_ms BIGINT NOT NULL DEFAULT 0,
+            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            PRIMARY KEY (creator_id, project_id)
+        )
+    `);
+    await pool.query(`ALTER TABLE creator_cut_audition_runtime ADD COLUMN IF NOT EXISTS loop_enabled BOOLEAN NOT NULL DEFAULT FALSE`);
+    await pool.query(`ALTER TABLE creator_cut_audition_runtime ADD COLUMN IF NOT EXISTS loop_start_ms INTEGER NOT NULL DEFAULT 0`);
+    await pool.query(`ALTER TABLE creator_cut_audition_runtime ADD COLUMN IF NOT EXISTS loop_end_ms INTEGER NOT NULL DEFAULT 0`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_creator_cut_audition_runtime_updated ON creator_cut_audition_runtime (creator_id, updated_at DESC)`);
+
     await pool.query(`
         CREATE TABLE IF NOT EXISTS creator_widget_scenes (
             id TEXT PRIMARY KEY,
@@ -6140,10 +6171,46 @@ async function processCreatorGameLiveEvent(creatorId,event) {
     }
 }
 
-async function listCutExportJobs(creatorId,limit=50) {
+function sanitizeCutAuditionRuntime(input={}) {
+    const states=new Set(["playing","paused","stopped","ended","idle"]);
+    const state=states.has(String(input?.state||""))?String(input.state):"idle";
+    const sessionId=studioText(input?.session_id||input?.sessionId,96,"").replace(/[^a-zA-Z0-9_-]/g,"");
+    const startMs=Math.max(0,Math.min(24*60*60*1000,Math.round(Number(input?.start_ms??input?.startMs??0)||0)));
+    const endMs=Math.max(startMs,Math.min(24*60*60*1000,Math.round(Number(input?.end_ms??input?.endMs??startMs)||startMs)));
+    const positionMs=Math.max(startMs,Math.min(endMs||startMs,Math.round(Number(input?.position_ms??input?.positionMs??startMs)||startMs)));
+    const loopEnabled=input?.loop_enabled===true||input?.loopEnabled===true,loopStartMs=Math.max(startMs,Math.min(endMs,Math.round(Number(input?.loop_start_ms??input?.loopStartMs??startMs)||startMs))),loopEndMs=Math.max(loopStartMs,Math.min(endMs,Math.round(Number(input?.loop_end_ms??input?.loopEndMs??endMs)||endMs)));
+    const validLoop=loopEnabled&&loopEndMs-loopStartMs>=500,revision=Math.max(0,Math.min(Number.MAX_SAFE_INTEGER,Math.round(Number(input?.revision||0)||0)));
+    const now=Date.now(),sampledRaw=Math.round(Number(input?.sampled_at_ms??input?.sampledAtMs??now)||now),sampledAtMs=Math.max(now-300000,Math.min(now+300000,sampledRaw));
+    return{session_id:sessionId,state,transport:String(input?.transport||"")==="webaudio"?"webaudio":"local",position_ms:positionMs,start_ms:startMs,end_ms:endMs,loop_enabled:validLoop,loop_start_ms:validLoop?loopStartMs:0,loop_end_ms:validLoop?loopEndMs:0,revision,sampled_at_ms:sampledAtMs};
+}
+function publicCutAuditionRuntime(row){
+    if(!row)return{active:false,state:"idle",session_id:"",position_ms:0,start_ms:0,end_ms:0,loop_enabled:false,loop_start_ms:0,loop_end_ms:0,transport:"",revision:0,sampled_at_ms:0,updated_at:null,fresh:false};
+    const updated=row.updated_at?new Date(row.updated_at).getTime():0,fresh=Date.now()-updated<12000,state=String(row.state||"idle");
+    return{active:fresh&&["playing","paused"].includes(state),state:fresh?state:(["playing","paused"].includes(state)?"stale":state),session_id:String(row.session_id||""),position_ms:Number(row.position_ms||0),start_ms:Number(row.start_ms||0),end_ms:Number(row.end_ms||0),loop_enabled:row.loop_enabled===true,loop_start_ms:Number(row.loop_start_ms||0),loop_end_ms:Number(row.loop_end_ms||0),transport:String(row.transport||""),revision:Number(row.revision||0),sampled_at_ms:Number(row.sampled_at_ms||0),updated_at:row.updated_at||null,fresh};
+}
+async function getCutAuditionRuntime(creatorId,projectId){
+    const result=await pool.query(`SELECT * FROM creator_cut_audition_runtime WHERE creator_id=$1 AND project_id=$2 LIMIT 1`,[creatorId,projectId]);return publicCutAuditionRuntime(result.rows[0]);
+}
+async function updateCutAuditionRuntime(creatorId,bridgeId,input={}){
+    const projectId=studioText(input?.project_id||input?.projectId,120,"");if(!projectId)throw Object.assign(new Error("Cut-Projekt fehlt für Audition Clock."),{code:"cut_project_missing"});
+    const owned=(await pool.query(`SELECT id FROM creator_cut_projects WHERE creator_id=$1 AND id=$2 LIMIT 1`,[creatorId,projectId])).rows[0];if(!owned)throw Object.assign(new Error("Cut-Projekt nicht gefunden."),{code:"cut_project_missing"});
+    const clean=sanitizeCutAuditionRuntime(input);
+    const result=await pool.query(`
+        INSERT INTO creator_cut_audition_runtime(creator_id,project_id,bridge_id,session_id,state,transport,position_ms,start_ms,end_ms,loop_enabled,loop_start_ms,loop_end_ms,revision,sampled_at_ms,updated_at)
+        VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,NOW())
+        ON CONFLICT(creator_id,project_id) DO UPDATE SET
+            bridge_id=EXCLUDED.bridge_id,session_id=EXCLUDED.session_id,state=EXCLUDED.state,transport=EXCLUDED.transport,
+            position_ms=EXCLUDED.position_ms,start_ms=EXCLUDED.start_ms,end_ms=EXCLUDED.end_ms,loop_enabled=EXCLUDED.loop_enabled,loop_start_ms=EXCLUDED.loop_start_ms,loop_end_ms=EXCLUDED.loop_end_ms,revision=EXCLUDED.revision,
+            sampled_at_ms=EXCLUDED.sampled_at_ms,updated_at=NOW()
+        WHERE EXCLUDED.sampled_at_ms >= creator_cut_audition_runtime.sampled_at_ms
+        RETURNING *`,[creatorId,projectId,bridgeId||null,clean.session_id,clean.state,clean.transport,clean.position_ms,clean.start_ms,clean.end_ms,clean.loop_enabled,clean.loop_start_ms,clean.loop_end_ms,clean.revision,clean.sampled_at_ms]);
+    if(result.rows[0])return publicCutAuditionRuntime(result.rows[0]);return getCutAuditionRuntime(creatorId,projectId);
+}
+
+async function listCutExportJobs(creatorId,limit=50,{includeAudition=false}={}) {
     const safe=Math.max(1,Math.min(100,Number(limit)||50));
     const result=await pool.query(
-        `SELECT * FROM creator_cut_export_jobs WHERE creator_id=$1 ORDER BY requested_at DESC LIMIT ${safe}`,
+        `SELECT * FROM creator_cut_export_jobs WHERE creator_id=$1 ${includeAudition?"":"AND COALESCE(manifest->>'kind','cut_export')<>'cut_audition'"} ORDER BY requested_at DESC LIMIT ${safe}`,
         [creatorId]
     );
     return result.rows.map(publicCutJob);
@@ -6156,7 +6223,7 @@ async function createCutExportJob(creatorId,projectId,access) {
     if(!manifest.clips.length)throw Object.assign(new Error("Für einen Export-Job muss mindestens ein gültiger Clip ausgewählt sein."),{code:"cut_job_empty"});
 
     const active=await pool.query(
-        `SELECT COUNT(*)::int AS count FROM creator_cut_export_jobs WHERE creator_id=$1 AND status IN ('queued','claimed','processing')`,
+        `SELECT COUNT(*)::int AS count FROM creator_cut_export_jobs WHERE creator_id=$1 AND status IN ('queued','claimed','processing') AND COALESCE(manifest->>'kind','cut_export')<>'cut_audition'`,
         [creatorId]
     );
     const max=Math.max(0,Number(access?.entitlements?.max_pending_cut_jobs||0));
@@ -6170,6 +6237,59 @@ async function createCutExportJob(creatorId,projectId,access) {
         `INSERT INTO creator_cut_export_jobs(creator_id,project_id,status,manifest,result,requested_at,updated_at)
          VALUES($1,$2,'queued',$3::jsonb,'{}'::jsonb,NOW(),NOW())
          RETURNING *`,
+        [creatorId,projectId,JSON.stringify(manifest)]
+    );
+    return publicCutJob(result.rows[0]);
+}
+
+async function createCutAuditionJob(creatorId,projectId,input={}) {
+    const projectData=await getCutProject(creatorId,projectId);
+    if(!projectData)throw Object.assign(new Error("Cut-Projekt nicht gefunden."),{code:"cut_project_missing"});
+    const base=buildCutJobManifest(projectData.project,projectData.clips);
+    const mode=String(input?.mode||"mix")==="track"?"track":"mix";
+    const action=["preview","pause","resume","stop","session_start","session_seek","loop_start","loop_seek","inspect_zero_cross"].includes(String(input?.action||""))?String(input.action):"preview";
+    const startMs=Math.max(0,Math.min(24*60*60*1000,Math.round(Number(input?.start_ms||0))));
+    const durationMs=Math.max(1000,Math.min(30000,Math.round(Number(input?.duration_ms||4000))));
+    const loopStartMs=Math.max(0,Math.min(24*60*60*1000,Math.round(Number(input?.loop_start_ms||0)))),loopEndMs=Math.max(loopStartMs,Math.min(24*60*60*1000,Math.round(Number(input?.loop_end_ms||0)))),loopCrossfadeMs=Math.max(0,Math.min(50,Math.round(Number(input?.loop_crossfade_ms??12)||0))),zeroCrossRadiusMs=Math.max(5,Math.min(50,Math.round(Number(input?.search_radius_ms??20)||20)));
+    const trackKey=studioText(input?.track_key,64,"").replace(/[^a-zA-Z0-9_-]/g,"");
+    if(action==="preview"&&mode==="track"&&!trackKey)throw Object.assign(new Error("Für die Spur-Vorschau fehlt der Track."),{code:"cut_audition_track"});
+    if(["loop_start","loop_seek"].includes(action)&&loopEndMs-loopStartMs<500)throw Object.assign(new Error("A/B Loop benötigt mindestens 0,5 Sekunden Auswahl."),{code:"cut_audition_loop"});
+    if(!String(base.export_preset?.source_handoff_id||""))throw Object.assign(new Error("Timeline-Audition ist nur für einen lokalen Recording-Handoff verfügbar."),{code:"cut_audition_handoff"});
+    if(action==="preview"&&mode==="track"&&!base.export_preset?.source_tracks?.some(track=>String(track.key)===trackKey))throw Object.assign(new Error("Recording-Spur ist in diesem Projekt nicht vorhanden."),{code:"cut_audition_track"});
+
+    await pool.query(
+        `UPDATE creator_cut_export_jobs SET status='canceled',updated_at=NOW(),completed_at=NOW(),error_message='superseded_by_new_audition' WHERE creator_id=$1 AND project_id=$2 AND status='queued' AND manifest->>'kind'='cut_audition'`,
+        [creatorId,projectId]
+    );
+    await pool.query(
+        `DELETE FROM creator_cut_export_jobs WHERE creator_id=$1 AND manifest->>'kind'='cut_audition' AND status IN ('completed','failed','canceled') AND requested_at < NOW()-INTERVAL '1 hour'`,
+        [creatorId]
+    );
+    const active=await pool.query(
+        `SELECT COUNT(*)::int AS count FROM creator_cut_export_jobs WHERE creator_id=$1 AND status IN ('claimed','processing') AND manifest->>'kind'='cut_audition'`,
+        [creatorId]
+    );
+    if(Number(active.rows[0]?.count||0)>=2)throw Object.assign(new Error("Es laufen bereits zwei lokale Timeline-Vorschauen."),{code:"cut_audition_busy"});
+
+    const manifest={
+        ...base,
+        schema:13,
+        kind:"cut_audition",
+        audition:{
+            action,
+            mode,
+            start_ms:startMs,
+            duration_ms:durationMs,
+            track_key:trackKey,
+            loop_start_ms:["loop_start","loop_seek"].includes(action)?loopStartMs:0,
+            loop_end_ms:["loop_start","loop_seek"].includes(action)?loopEndMs:0,
+            loop_crossfade_ms:["loop_start","loop_seek"].includes(action)?Math.min(loopCrossfadeMs,Math.floor((loopEndMs-loopStartMs)/4)):0,
+            search_radius_ms:action==="inspect_zero_cross"?zeroCrossRadiusMs:0,
+            requested_at:new Date().toISOString()
+        }
+    };
+    const result=await pool.query(
+        `INSERT INTO creator_cut_export_jobs(creator_id,project_id,status,manifest,result,requested_at,updated_at) VALUES($1,$2,'queued',$3::jsonb,'{}'::jsonb,NOW(),NOW()) RETURNING *`,
         [creatorId,projectId,JSON.stringify(manifest)]
     );
     return publicCutJob(result.rows[0]);
@@ -6404,7 +6524,7 @@ function sanitizeStreamStudioWorkspacePresets(input=[]){
 
 function streamStudioDefaults(){
     return {
-        version:3,
+        version:4,
         program_scene_id:"",
         preview_scene_id:"",
         scene_order:[],
@@ -6416,7 +6536,8 @@ function streamStudioDefaults(){
         capture_sources:{display:false,window:false,game:false,camera:false},
         audio:{
             microphone:{level:85,muted:false},
-            desktop:{level:80,muted:false},
+            game:{level:80,muted:false},
+            discord:{level:80,muted:false},
             music:{level:65,muted:false},
             alerts:{level:90,muted:false}
         },
@@ -6427,7 +6548,7 @@ function streamStudioDefaults(){
             bitrate_kbps:6000,
             audio_bitrate_kbps:160,
             recording_format:"mkv",
-            recording_tracks:{mix:true,audio1:true,audio2:true}
+            recording_tracks:{mix:true,mic:true,game:true,discord:true,music:true,alerts:true}
         },
         multistream:{
             mode:"launcher_local",
@@ -6486,8 +6607,10 @@ function sanitizeStreamStudioConfig(input={},allowedSceneIds=null,allowedWidgetI
     clean.workspace_presets=sanitizeStreamStudioWorkspacePresets(source.workspace_presets);
     for(const key of Object.keys(clean.capture_sources))clean.capture_sources[key]=source.capture_sources?.[key]===true;
     for(const key of Object.keys(clean.audio)){
-        clean.audio[key].level=Math.round(clampNumber(source.audio?.[key]?.level,0,100,clean.audio[key].level));
-        clean.audio[key].muted=source.audio?.[key]?.muted===true;
+        const legacy=key==="game"&&source.audio?.desktop&&typeof source.audio.desktop==="object"?source.audio.desktop:null;
+        const row=source.audio?.[key]&&typeof source.audio[key]==="object"?source.audio[key]:legacy;
+        clean.audio[key].level=Math.round(clampNumber(row?.level,0,100,clean.audio[key].level));
+        clean.audio[key].muted=row?.muted===true;
     }
     const output=source.output&&typeof source.output==="object"?source.output:{};
     clean.output.profile=STREAM_STUDIO_OUTPUT_PROFILES.has(String(output.profile||""))?String(output.profile):"1080p60";
@@ -6498,7 +6621,14 @@ function sanitizeStreamStudioConfig(input={},allowedSceneIds=null,allowedWidgetI
     clean.output.audio_bitrate_kbps=STREAM_STUDIO_AUDIO_BITRATES.has(audioBitrate)?audioBitrate:160;
     clean.output.recording_format=["mkv","mp4"].includes(String(output.recording_format||""))?String(output.recording_format):"mkv";
     const tracks=output.recording_tracks&&typeof output.recording_tracks==="object"&&!Array.isArray(output.recording_tracks)?output.recording_tracks:{};
-    clean.output.recording_tracks={mix:tracks.mix!==false,audio1:tracks.audio1!==false,audio2:tracks.audio2!==false};
+    clean.output.recording_tracks={
+        mix:tracks.mix!==false,
+        mic:tracks.mic!==false&&tracks.audio1!==false,
+        game:tracks.game!==false&&tracks.audio2!==false,
+        discord:tracks.discord!==false,
+        music:tracks.music!==false,
+        alerts:tracks.alerts!==false
+    };
     if(!Object.values(clean.output.recording_tracks).some(Boolean))clean.output.recording_tracks.mix=true;
 
     const multi=source.multistream&&typeof source.multistream==="object"&&!Array.isArray(source.multistream)?source.multistream:{};
@@ -15382,6 +15512,11 @@ app.post("/api/creator/cut-studio/projects",requireCreatorAccount,async(req,res)
         return res.status(201).json({ok:true,project:publicCutProject(result.rows[0],0)});
     }catch(error){return res.status(error?.code==="creator_feature_locked"?403:500).json({ok:false,error:error.message||"Cut-Projekt konnte nicht erstellt werden."})}
 });
+app.get("/api/creator/cut-studio/projects/:id/audition-runtime",requireCreatorAccount,async(req,res)=>{
+    res.set("Cache-Control","no-store");
+    try{await requireCreatorFeatureAccess(req.creatorAccount,"cut_studio","creator");const owned=await getCutProject(req.creatorAccount.id,req.params.id);if(!owned)return res.status(404).json({ok:false,error:"Cut-Projekt nicht gefunden."});return res.json({ok:true,runtime:await getCutAuditionRuntime(req.creatorAccount.id,req.params.id),server_time:new Date().toISOString()})}
+    catch(error){return res.status(error?.code==="creator_feature_locked"?403:500).json({ok:false,error:error.message||"Audition Clock konnte nicht geladen werden."})}
+});
 app.get("/api/creator/cut-studio/projects/:id",requireCreatorAccount,async(req,res)=>{
     try{await requireCreatorFeatureAccess(req.creatorAccount,"cut_studio","creator");const data=await getCutProject(req.creatorAccount.id,req.params.id);if(!data)return res.status(404).json({ok:false,error:"Cut-Projekt nicht gefunden."});return res.json({ok:true,...data})}
     catch(error){return res.status(error?.code==="creator_feature_locked"?403:500).json({ok:false,error:error.message||"Cut-Projekt konnte nicht geladen werden."})}
@@ -15588,7 +15723,7 @@ app.post(
             if(!existing)return res.status(404).json({ok:false,error:"Scene nicht gefunden."});
             const access=await creatorAccessProfile(req.creatorAccount);
             const config=sanitizeSceneConfig(existing.draft_config||{});
-            if(!Object.values(config.layouts||{default:{items:config.items}}).some(layout=>(layout?.items||[]).length))return res.status(400).json({ok:false,error:"Eine Scene benötigt mindestens ein Widget oder Game-Overlay."});
+            if(!Object.values(config.layouts||{default:{items:config.items}}).some(layout=>(layout?.items||[]).length))return res.status(400).json({ok:false,error:"Eine Scene benötigt mindestens eine Widget- oder Launcher-Quelle."});
             const ownership=validateSceneOwnership(config,await getCreatorSceneSources(req.creatorAccount.id,{includeGame:Boolean(access.entitlements.games)}));
             if(!ownership.ok)return res.status(400).json({ok:false,error:"Vor Publish müssen alle Scene-Widgets veröffentlicht sein.",scene_errors:ownership.errors});
             const result=await pool.query(
@@ -15793,6 +15928,25 @@ app.post("/api/creator/cut-studio/projects/:id/export-jobs",requireCreatorAccoun
         return res.status(status).json({ok:false,error:error.message||"Cut-Export-Job konnte nicht erstellt werden."});
     }
 });
+app.post("/api/creator/cut-studio/projects/:id/audition-jobs",requireCreatorAccount,async(req,res)=>{
+    try{
+        await requireCreatorFeatureAccess(req.creatorAccount,"cut_studio","creator");
+        return res.status(201).json({ok:true,job:await createCutAuditionJob(req.creatorAccount.id,req.params.id,req.body||{})});
+    }catch(error){
+        const status=error?.code==="creator_feature_locked"?403:error?.code==="cut_project_missing"?404:["cut_audition_track","cut_audition_handoff","cut_audition_loop"].includes(error?.code)?400:error?.code==="cut_audition_busy"?409:500;
+        return res.status(status).json({ok:false,error:error.message||"Timeline-Vorschau konnte nicht angefordert werden."});
+    }
+});
+app.get("/api/creator/cut-studio/projects/:id/audition-inspector/:jobId",requireCreatorAccount,async(req,res)=>{
+    res.set("Cache-Control","no-store");
+    try{
+        await requireCreatorFeatureAccess(req.creatorAccount,"cut_studio","creator");
+        const result=await pool.query(`SELECT * FROM creator_cut_export_jobs WHERE creator_id=$1 AND project_id=$2 AND id=$3 AND manifest->>'kind'='cut_audition' AND manifest->'audition'->>'action'='inspect_zero_cross' LIMIT 1`,[req.creatorAccount.id,req.params.id,req.params.jobId]);
+        const row=result.rows[0];if(!row)return res.status(404).json({ok:false,error:"Zero-Cross-Analyse nicht gefunden."});
+        const clean=row.result&&typeof row.result==="object"?sanitizeCutJobResult(row.result):{};
+        return res.json({ok:true,inspector:{job_id:String(row.id),status:String(row.status||"queued"),inspection:clean.zero_cross||null,error:String(row.error_message||""),requested_at:row.requested_at||null,completed_at:row.completed_at||null}});
+    }catch(error){const status=error?.code==="creator_feature_locked"?403:500;return res.status(status).json({ok:false,error:error.message||"Zero-Cross-Analyse konnte nicht geladen werden."})}
+});
 app.post("/api/creator/cut-studio/jobs/:id/cancel",requireCreatorAccount,async(req,res)=>{
     try{
         await requireCreatorFeatureAccess(req.creatorAccount,"cut_studio","creator");
@@ -15856,11 +16010,15 @@ app.post("/api/bridge/games/runtime/start",widgetBridgeHeartbeatLimiter,requireS
 app.post("/api/bridge/games/runtime/stop",widgetBridgeHeartbeatLimiter,requireStudioBridge,async(req,res)=>{try{await requireCreatorFeatureAccess(req.studioBridge.creator_id,"games","creator");return res.json({ok:true,runtime:await stopCreatorGameRuntime(req.studioBridge.creator_id)})}catch(error){return res.status(error?.code==="creator_feature_locked"?403:400).json({ok:false,error:error.message||"Game konnte nicht gestoppt werden."})}});
 app.post("/api/bridge/games/runtime/reset",widgetBridgeHeartbeatLimiter,requireStudioBridge,async(req,res)=>{try{await requireCreatorFeatureAccess(req.studioBridge.creator_id,"games","creator");return res.json({ok:true,runtime:await resetCreatorGameRuntime(req.studioBridge.creator_id)})}catch(error){return res.status(error?.code==="creator_feature_locked"?403:400).json({ok:false,error:error.message||"Game konnte nicht zurückgesetzt werden."})}});
 app.post("/api/bridge/games/runtime/score",widgetBridgeHeartbeatLimiter,requireStudioBridge,async(req,res)=>{try{await requireCreatorFeatureAccess(req.studioBridge.creator_id,"games","creator");return res.json({ok:true,runtime:await scoreCreatorGameRuntime(req.studioBridge.creator_id,req.body||{})})}catch(error){return res.status(error?.code==="creator_feature_locked"?403:error?.code==="game_not_running"?409:400).json({ok:false,error:error.message||"Game Score konnte nicht geändert werden."})}});
+app.post("/api/bridge/cut-studio/audition-runtime",widgetBridgeEventLimiter,requireStudioBridge,async(req,res)=>{
+    try{await requireCreatorFeatureAccess(req.studioBridge.creator_id,"cut_studio","creator");const runtime=await updateCutAuditionRuntime(req.studioBridge.creator_id,req.studioBridge.id,req.body||{});return res.json({ok:true,runtime})}
+    catch(error){return res.status(error?.code==="creator_feature_locked"?403:error?.code==="cut_project_missing"?404:400).json({ok:false,error:error.message||"Audition Clock konnte nicht aktualisiert werden."})}
+});
 app.get("/api/bridge/cut-studio/jobs",widgetBridgeHeartbeatLimiter,requireStudioBridge,async(req,res)=>{
     res.set("Cache-Control","no-store");
     try{
         const access=await requireCreatorFeatureAccess(req.studioBridge.creator_id,"cut_studio","creator");
-        return res.json({ok:true,jobs:await listCutExportJobs(req.studioBridge.creator_id,50),limits:{max_pending_jobs:Number(access.entitlements.max_pending_cut_jobs||0)}});
+        return res.json({ok:true,jobs:await listCutExportJobs(req.studioBridge.creator_id,50,{includeAudition:true}),limits:{max_pending_jobs:Number(access.entitlements.max_pending_cut_jobs||0)}});
     }catch(error){return res.status(error?.code==="creator_feature_locked"?403:500).json({ok:false,error:error.message||"Cut-Export-Jobs konnten nicht geladen werden."})}
 });
 app.post("/api/bridge/cut-studio/jobs/:id/claim",widgetBridgeEventLimiter,requireStudioBridge,async(req,res)=>{
@@ -15896,6 +16054,39 @@ app.post("/api/bridge/cut-studio/jobs/:id/retry",widgetBridgeEventLimiter,requir
 
 app.get("/api/bridge/cut-studio/projects",widgetBridgeHeartbeatLimiter,requireStudioBridge,async(req,res)=>{try{const access=await requireCreatorFeatureAccess(req.studioBridge.creator_id,"cut_studio","creator");return res.json({ok:true,projects:await listCutProjects(req.studioBridge.creator_id),limits:{max_projects:Number(access.entitlements.max_cut_projects||0),max_clips_per_project:Number(access.entitlements.max_cut_clips_per_project||0)}})}catch(error){return res.status(error?.code==="creator_feature_locked"?403:500).json({ok:false,error:error.message||"Cut Studio Projekte konnten nicht geladen werden."})}});
 
+app.post("/api/bridge/cut-studio/projects",widgetBridgeEventLimiter,requireStudioBridge,async(req,res)=>{
+    try{
+        const creatorId=req.studioBridge.creator_id,access=await requireCreatorFeatureAccess(creatorId,"cut_studio","creator");
+        const count=await pool.query(`SELECT COUNT(*)::int AS count FROM creator_cut_projects WHERE creator_id=$1`,[creatorId]);
+        if(Number(count.rows[0]?.count||0)>=Number(access.entitlements.max_cut_projects||0))return res.status(403).json({ok:false,error:`Dein Zugriff erlaubt maximal ${Number(access.entitlements.max_cut_projects||0)} Cut-Studio Projekte.`});
+        const clean=sanitizeCutProject(req.body||{});
+        const result=await pool.query(`INSERT INTO creator_cut_projects(creator_id,title,status,format,notes,source_name,export_preset,created_at,updated_at) VALUES($1,$2,$3,$4,$5,$6,$7::jsonb,NOW(),NOW()) RETURNING *`,[creatorId,clean.title,clean.status,clean.format,clean.notes,clean.source_name,JSON.stringify(clean.export_preset)]);
+        return res.status(201).json({ok:true,project:publicCutProject(result.rows[0],0)});
+    }catch(error){return res.status(error?.code==="creator_feature_locked"?403:500).json({ok:false,error:error.message||"Cut-Projekt konnte über den Launcher nicht erstellt werden."})}
+});
+
+app.put("/api/bridge/cut-studio/projects/:id",widgetBridgeEventLimiter,requireStudioBridge,async(req,res)=>{
+    try{
+        const creatorId=req.studioBridge.creator_id;await requireCreatorFeatureAccess(creatorId,"cut_studio","creator");const clean=sanitizeCutProject(req.body||{});
+        const result=await pool.query(`UPDATE creator_cut_projects SET title=$3,status=$4,format=$5,notes=$6,source_name=$7,export_preset=$8::jsonb,updated_at=NOW() WHERE creator_id=$1 AND id=$2 RETURNING *`,[creatorId,req.params.id,clean.title,clean.status,clean.format,clean.notes,clean.source_name,JSON.stringify(clean.export_preset)]);
+        if(!result.rows[0])return res.status(404).json({ok:false,error:"Cut-Projekt nicht gefunden."});
+        const count=await pool.query(`SELECT COUNT(*)::int AS count FROM creator_cut_clips WHERE project_id=$1`,[req.params.id]);
+        return res.json({ok:true,project:publicCutProject(result.rows[0],count.rows[0]?.count||0)});
+    }catch(error){return res.status(error?.code==="creator_feature_locked"?403:500).json({ok:false,error:error.message||"Cut-Projekt konnte über den Launcher nicht gespeichert werden."})}
+});
+
+app.post("/api/bridge/cut-studio/projects/:id/clips",widgetBridgeEventLimiter,requireStudioBridge,async(req,res)=>{
+    try{
+        const creatorId=req.studioBridge.creator_id,access=await requireCreatorFeatureAccess(creatorId,"cut_studio","creator"),project=await getCutProject(creatorId,req.params.id);
+        if(!project)return res.status(404).json({ok:false,error:"Cut-Projekt nicht gefunden."});
+        if(project.clips.length>=Number(access.entitlements.max_cut_clips_per_project||0))return res.status(403).json({ok:false,error:`Dieses Projekt erlaubt maximal ${Number(access.entitlements.max_cut_clips_per_project||0)} Clips.`});
+        const requested=sanitizeCutClip(req.body||{}),nextOrder=await pool.query(`SELECT COALESCE(MAX(sort_order),-1)+1 AS next_order FROM creator_cut_clips WHERE creator_id=$1 AND project_id=$2`,[creatorId,req.params.id]),clean={...requested,sort_order:Number(nextOrder.rows[0]?.next_order||0)};
+        const result=await pool.query(`INSERT INTO creator_cut_clips(project_id,creator_id,label,in_ms,out_ms,caption,selected,sort_order,caption_enabled,caption_position,caption_size,caption_style,audio_gain_db,audio_fade_in_ms,audio_fade_out_ms,keyframe_enabled,keyframe_zoom_start,keyframe_zoom_end,keyframe_pan_x_start,keyframe_pan_x_end,keyframe_pan_y_start,keyframe_pan_y_end,keyframe_easing,visual_keyframes,created_at,updated_at) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24::jsonb,NOW(),NOW()) RETURNING *`,[req.params.id,creatorId,clean.label,clean.in_ms,clean.out_ms,clean.caption,clean.selected,clean.sort_order,clean.caption_enabled,clean.caption_position,clean.caption_size,clean.caption_style,clean.audio_gain_db,clean.audio_fade_in_ms,clean.audio_fade_out_ms,clean.keyframe_enabled,clean.keyframe_zoom_start,clean.keyframe_zoom_end,clean.keyframe_pan_x_start,clean.keyframe_pan_x_end,clean.keyframe_pan_y_start,clean.keyframe_pan_y_end,clean.keyframe_easing,JSON.stringify(clean.visual_keyframes||[])]);
+        await pool.query(`UPDATE creator_cut_projects SET updated_at=NOW() WHERE creator_id=$1 AND id=$2`,[creatorId,req.params.id]);
+        return res.status(201).json({ok:true,clip:publicCutClip(result.rows[0])});
+    }catch(error){return res.status(error?.code==="creator_feature_locked"?403:500).json({ok:false,error:error.message||"Clip konnte über den Launcher nicht erstellt werden."})}
+});
+
 app.get(
     "/api/bridge/widget-studio/library",
     widgetBridgeHeartbeatLimiter,
@@ -15916,7 +16107,7 @@ app.get(
                 access.entitlements.cut_studio?listCutProjects(creatorId):Promise.resolve([]),
                 access.entitlements.games?listCreatorGameRules(creatorId):Promise.resolve([]),
                 access.entitlements.games?recentCreatorGameRuleHits(creatorId,10):Promise.resolve([]),
-                access.entitlements.cut_studio?listCutExportJobs(creatorId,25):Promise.resolve([])
+                access.entitlements.cut_studio?listCutExportJobs(creatorId,25,{includeAudition:true}):Promise.resolve([])
             ]);
             return res.json({
                 ok:true,creator,access,entitlements:access.entitlements,
@@ -16190,13 +16381,18 @@ app.get(
             const config=sanitizeStreamStudioConfig(settingsData.settings?.stream_studio||{},context.liveSceneIds,context.liveSourceIds,multistreamLimit,context.ownedSceneIds);
             const sceneRow=context.sceneRows.find(row=>String(row.id)===config.program_scene_id&&row.status==="live")||null;
             const sourceMap=new Map(context.sceneSources.filter(source=>source.status==="live").map(source=>[String(source.id),source]));
+            let programScene=null;
+            if(sceneRow){
+                const runtime=await hydratePublicScene(sceneRow);
+                programScene={...publicSceneRow(sceneRow,APP_BASE_URL),runtime_layouts:runtime?.layouts||{}};
+            }
             return res.json({
                 ok:true,
                 config,
-                program_scene:sceneRow?publicSceneRow(sceneRow,APP_BASE_URL):null,
+                program_scene:programScene,
                 overlays:config.overlay_widget_ids.map(id=>sourceMap.get(id)).filter(Boolean).map(publicStreamStudioSource),
                 multistream:{max_destinations:multistreamLimit,mode:"launcher_local",failure_policy:"isolate_destination",credentials:"launcher_local_only",cloud_relay:false},
-                engine:{capture:"launcher_local",stream_keys:"launcher_only",multistream:"launcher_local",protocol:2},
+                engine:{capture:"launcher_local",stream_keys:"launcher_only",multistream:"launcher_local",scene_graph:"hybrid_offscreen",protocol:4},
                 server_time:new Date().toISOString()
             });
         }catch(error){console.error("Bridge Stream Studio Fehler:",error);return res.status(500).json({ok:false,error:"Stream Studio Konfiguration konnte nicht geladen werden."});}
