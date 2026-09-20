@@ -60,3 +60,43 @@ body[data-cut-mode="quick"] .cut-section-head p{max-width:620px}
 body[data-cut-mode="free"] .cut-mode-panel{border-color:#23506a}
 @media(max-width:900px){.cut-guide{grid-template-columns:auto 1fr}.cut-guide .btn{grid-column:1/-1;width:100%}}
 @media(max-width:620px){.cut-guide{grid-template-columns:1fr;text-align:left}.cut-guide-icon{width:36px;height:36px}.cut-guide .btn{grid-column:auto}}
+
+/* Pass 21.10.25 · Recording multitrack handoff */
+.cut-recording-tracks{margin:12px;padding:12px;border:1px solid #1b5d7f;border-radius:12px;background:linear-gradient(135deg,rgba(20,140,255,.09),rgba(3,13,23,.95))}.cut-recording-tracks-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:9px}.cut-recording-tracks-head>div{display:grid;gap:3px}.cut-recording-tracks-head span{font-size:6px;font-weight:1000;color:#65bce9;letter-spacing:.08em}.cut-recording-tracks-head strong{font-size:10px}.cut-recording-tracks-head small{font-size:7px;color:#648ba4}.cut-recording-tracks-head>b{min-width:28px;text-align:center;padding:5px 8px;border:1px solid #23729a;border-radius:999px;color:#8cdfff}.cut-recording-track-list{display:grid;gap:6px}.cut-recording-track{display:grid;grid-template-columns:minmax(150px,1.4fr) repeat(5,minmax(92px,.7fr));gap:6px;align-items:end;padding:9px;border:1px solid #16435e;border-radius:9px;background:#030d16}.cut-recording-track-name{align-self:center}.cut-recording-track-name b{display:block;font-size:8px}.cut-recording-track-name small{display:block;margin-top:3px;color:#5e8299;font-size:6px}.cut-recording-track label{display:grid;gap:4px}.cut-recording-track label>span{font-size:5.5px;font-weight:1000;color:#557d96}.cut-recording-track input,.cut-recording-track select{min-width:0}.cut-recording-track [data-source-track-pan-label]{text-align:center;color:#79abc8;font-size:6px}@media(max-width:1100px){.cut-recording-track{grid-template-columns:1fr 1fr 1fr}.cut-recording-track-name{grid-column:1/-1}}@media(max-width:620px){.cut-recording-track{grid-template-columns:1fr 1fr}}
+
+/* Pass 21.10.26 · Recording stem waveform preview */
+.cut-source-waveform{margin-top:7px;padding:6px;border:1px solid #16465f;border-radius:7px;background:#020a11}.cut-source-waveform>div{display:flex;align-items:center;gap:1px;height:34px}.cut-source-waveform i{display:block;flex:1;min-width:1px;max-height:100%;border-radius:2px;background:currentColor;color:#52bce9;opacity:.8}.cut-source-waveform small{display:block;margin-top:4px!important;color:#678ba0!important;font-size:5.4px!important}.cut-source-waveform.empty{display:grid;place-items:center;min-height:42px;color:#55798f;font-size:5.5px}.cut-recording-track-name{min-width:0}.cut-recording-track-name .cut-source-waveform{width:min(100%,390px)}
+
+/* Pass 21.10.27 · Timeline audition / playback head */
+.cut-audition-panel{margin:10px 0 12px;padding:10px;border:1px solid #1d5874;border-radius:10px;background:linear-gradient(180deg,#061521,#030b12)}
+.cut-audition-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}.cut-audition-head>div{display:grid;gap:3px}.cut-audition-head span{font-size:6px;letter-spacing:.16em;color:#58bfe7}.cut-audition-head strong{font-size:9px}.cut-audition-head small{max-width:720px;color:#7897aa;font-size:6px;line-height:1.5}.cut-audition-head>b{font-variant-numeric:tabular-nums;font-size:12px;color:#7ed6fa}
+.cut-audition-range{width:100%;margin:11px 0 7px;accent-color:#50b9e7}.cut-audition-markers{display:flex;flex-wrap:wrap;gap:8px}.cut-audition-markers span{padding:4px 7px;border:1px solid #123d52;border-radius:999px;background:#020a10;color:#6e93a8;font-size:5.8px}.cut-audition-markers b{color:#d8f4ff;font-variant-numeric:tabular-nums}
+.cut-audition-actions{display:flex;flex-wrap:wrap;gap:6px;margin:9px 0}.cut-recording-track .cut-track-audition{align-self:center;white-space:nowrap}.cut-recording-track.audition-active{outline:1px solid #48b7e5;box-shadow:0 0 0 2px #0b2938 inset}
+
+/* Pass 21.10.28 · Real-time Audition Cache & Transport */
+.cut-audition-actions{align-items:center}
+.cut-audition-actions #cutAuditionBack,.cut-audition-actions #cutAuditionForward{min-width:68px;font-variant-numeric:tabular-nums}
+.cut-audition-actions #cutAuditionPause,.cut-audition-actions #cutAuditionResume,.cut-audition-actions #cutAuditionStop{min-width:72px}
+
+/* Pass 21.10.29 · Continuous Audition Session / Prefetch */
+.cut-audition-panel .btn.primary#cutAuditionResume{font-weight:800}
+
+/* Pass 21.10.30 · Gapless Audition Transport / WebAudio Buffer Queue */
+.cut-audition-panel{--cfs-audition-transport:webaudio-gapless}
+
+/* Pass 21.10.31 · Audition Clock Sync / Live Playhead Follow */
+.cut-audition-clock{display:grid;justify-items:end;gap:4px}.cut-audition-clock>span{font-size:5.5px;letter-spacing:.12em;padding:3px 6px;border:1px solid #174b63;border-radius:999px;color:#77bad6;background:#041019}.cut-audition-clock>span[data-state="playing"]{color:#9bf2ba;border-color:#236c45}.cut-audition-clock>span[data-state="paused"]{color:#ffe49a;border-color:#7c6726}.cut-audition-clock>span[data-state="stale"]{color:#f4a7a7;border-color:#713441}.cut-audition-clock>b{font-variant-numeric:tabular-nums;font-size:12px;color:#7ed6fa}
+
+
+/* Pass 21.10.32 · A/B Loop Audition & Selection Range */
+.cut-audition-selection{position:relative;margin:11px 0 7px;height:24px;display:flex;align-items:center}.cut-audition-selection>i{position:absolute;left:var(--loop-left,0%);width:var(--loop-width,0%);height:8px;border-radius:999px;background:linear-gradient(90deg,rgba(68,180,232,.22),rgba(94,219,255,.5));border:1px solid rgba(91,205,247,.55);pointer-events:none;opacity:.35}.cut-audition-selection[data-valid="true"]>i{opacity:1;box-shadow:0 0 12px rgba(66,188,235,.18)}.cut-audition-selection .cut-audition-range{position:relative;z-index:2;margin:0;background:transparent}.cut-audition-markers #cutAuditionLoopRange{border-color:#1f6b8d;color:#91e2ff}.cut-audition-actions #cutAuditionLoop{font-weight:900}.cut-audition-clock>span[data-state="playing"]{transition:border-color .15s,color .15s}
+
+/* Pass 21.10.33 · Loop Boundary Crossfade / Click Guard */
+.cut-audition-crossfade{display:inline-flex;align-items:center;gap:6px;padding:3px 6px!important}.cut-audition-crossfade span{padding:0!important;border:0!important;background:transparent!important;font-size:5.4px!important}.cut-audition-crossfade select{min-width:68px;background:#020a10;color:#d8f4ff;border:1px solid #1f6b8d;border-radius:7px;padding:3px 5px;font-size:6px}.cut-audition-selection[data-crossfade="true"]>i{box-shadow:0 0 15px rgba(66,188,235,.28)}
+
+/* Pass 21.10.34 · Auto Zero-Cross Snap / Loop Boundary Inspector */
+.cut-zero-cross-inspector{margin-top:12px;padding:12px;border:1px solid rgba(79,155,215,.25);border-radius:12px;background:rgba(8,17,28,.55);display:grid;gap:10px}
+.cut-zero-cross-head{display:flex;justify-content:space-between;gap:14px;align-items:flex-start}.cut-zero-cross-head>div:first-child{display:grid;gap:3px}.cut-zero-cross-head span,.cut-zero-cross-grid article>span{font-size:10px;letter-spacing:.12em;color:var(--muted,#8ca0b3)}.cut-zero-cross-head strong{font-size:14px}.cut-zero-cross-head small{max-width:780px;color:var(--muted,#8ca0b3)}
+.cut-zero-cross-controls{display:flex;gap:8px;align-items:end;flex-wrap:wrap;justify-content:flex-end}.cut-zero-cross-controls label{display:grid;gap:4px}.cut-zero-cross-controls label span{font-size:9px;letter-spacing:.1em}.cut-zero-cross-controls select{min-width:100px}.cut-zero-cross-controls>b{font-size:10px;letter-spacing:.1em;padding:7px 9px;border-radius:999px;background:rgba(56,137,194,.12);white-space:nowrap}
+.cut-zero-cross-inspector[data-busy="true"] .cut-zero-cross-controls>b{animation:cutZeroPulse 1s ease-in-out infinite}.cut-zero-cross-grid{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:stretch}.cut-zero-cross-grid article{display:grid;grid-template-columns:auto 1fr auto;gap:5px 10px;align-items:center;padding:9px 10px;border:1px solid rgba(255,255,255,.08);border-radius:10px;background:rgba(255,255,255,.025)}.cut-zero-cross-grid article strong{font-variant-numeric:tabular-nums}.cut-zero-cross-grid article small{grid-column:1/3;color:var(--muted,#8ca0b3);font-size:10px}.cut-zero-cross-grid article .btn{grid-column:3;grid-row:1/3}.cut-zero-cross-both{align-self:stretch;min-width:110px}
+@keyframes cutZeroPulse{50%{opacity:.55}}@media(max-width:900px){.cut-zero-cross-head{display:grid}.cut-zero-cross-controls{justify-content:flex-start}.cut-zero-cross-grid{grid-template-columns:1fr}.cut-zero-cross-both{min-height:40px}.cut-zero-cross-grid article{grid-template-columns:auto 1fr auto}}

@@ -155,6 +155,29 @@
             <article class="cut-audio-quick-card"><div><b>Automatisches Ducking</b><small>Musik wird leiser, sobald Voiceover läuft</small></div><label><span>DUCKING</span><select id="cutDuckingEnabled"><option value="false">Aus</option><option value="true">Aktiv</option></select></label></article>
           </div>
 
+          <div id="cutRecordingTracksPanel" class="cut-recording-tracks" hidden>
+            <div class="cut-recording-tracks-head"><div><span>STREAM RECORDING · MEHRSPUR</span><strong>EMBEDDED AUDIO TRACKS</strong><small>Diese Spuren stammen direkt aus der lokalen Stream-Aufnahme. Kein Audio wird hochgeladen; Waveforms sind nur eine reduzierte Hüllkurve. Vorhören läuft lokal im Launcher.</small></div><b id="cutRecordingTrackCount">0</b></div>
+            <div id="cutAuditionPanel" class="cut-audition-panel" hidden>
+              <div class="cut-audition-head"><div><span>TIMELINE AUDITION</span><strong>PLAYBACK HEAD · A/B</strong><small>Ziehe den Playhead an die gewünschte Stelle. Kurze Scrubs bleiben möglich; PLAY startet eine fortlaufende lokale Audition-Session mit Prefetch.</small></div><div class="cut-audition-clock"><span id="cutAuditionClockStatus">LOCAL IDLE</span><b id="cutAuditionTime">00:00.0</b></div></div>
+              <div id="cutAuditionSelection" class="cut-audition-selection" data-valid="false"><i></i><input id="cutAuditionPlayhead" class="cut-audition-range" type="range" min="0" max="0" step="100" value="0" aria-label="Audition Playhead"></div>
+              <input id="cutAuditionA" type="hidden" value="0"><input id="cutAuditionB" type="hidden" value="0">
+              <div class="cut-audition-markers"><span>A <b id="cutAuditionALabel">00:00.0</b></span><span>B <b id="cutAuditionBLabel">00:00.0</b></span><span id="cutAuditionLoopRange">LOOP A→B NICHT GESETZT</span><span>ENDE <b id="cutAuditionEndLabel">00:00.0</b></span><label class="cut-audition-crossfade"><span>CLICK GUARD</span><select id="cutAuditionCrossfade" aria-label="A/B Loop Crossfade"><option value="0">AUS</option><option value="5">5 ms</option><option value="10">10 ms</option><option value="12">12 ms</option><option value="20">20 ms</option><option value="40">40 ms</option><option value="50">50 ms</option></select></label></div>
+              <div class="cut-audition-actions"><button class="btn primary" id="cutAuditionMix" type="button">MIX AB PLAYHEAD</button><button class="btn" id="cutAuditionBack" type="button">−5 S</button><button class="btn" id="cutAuditionForward" type="button">+5 S</button><button class="btn" id="cutAuditionPause" type="button">PAUSE</button><button class="btn" id="cutAuditionResume" type="button">CONTINUOUS PLAY</button><button class="btn primary" id="cutAuditionLoop" type="button">A↔B LOOP</button><button class="btn" id="cutAuditionStop" type="button">STOP</button><button class="btn" id="cutAuditionSetA" type="button">A SETZEN</button><button class="btn" id="cutAuditionPlayA" type="button">A HÖREN</button><button class="btn" id="cutAuditionSetB" type="button">B SETZEN</button><button class="btn" id="cutAuditionPlayB" type="button">B HÖREN</button></div>
+              <div id="cutZeroCrossInspector" class="cut-zero-cross-inspector" data-busy="false">
+                <div class="cut-zero-cross-head"><div><span>PASS 21.10.34 · LOOP BOUNDARY INSPECTOR</span><strong>AUTO ZERO-CROSS SNAP</strong><small>Analysiert nur ein winziges lokales PCM-Fenster um A und B im aktuell eingestellten Stem-Mix. Die Marker ändern sich erst nach deiner Auswahl.</small></div><div class="cut-zero-cross-controls"><label><span>SUCHRADIUS</span><select id="cutAuditionZeroRadius"><option value="10">±10 ms</option><option value="20">±20 ms</option><option value="30">±30 ms</option><option value="50">±50 ms</option></select></label><button class="btn primary" id="cutAuditionZeroInspect" type="button">GRENZEN PRÜFEN</button><b id="cutZeroStatus">BEREIT</b></div></div>
+                <div class="cut-zero-cross-grid">
+                  <article><span>A VORSCHLAG</span><strong id="cutZeroAValue">–</strong><small id="cutZeroAMeta">NOCH NICHT ANALYSIERT</small><button class="btn" id="cutAuditionSnapA" type="button" disabled>A SNAP</button></article>
+                  <article><span>B VORSCHLAG</span><strong id="cutZeroBValue">–</strong><small id="cutZeroBMeta">NOCH NICHT ANALYSIERT</small><button class="btn" id="cutAuditionSnapB" type="button" disabled>B SNAP</button></article>
+                  <button class="btn cut-zero-cross-both" id="cutAuditionSnapBoth" type="button" disabled>BEIDE SNAP</button>
+                </div>
+                <div class="notice compact">Es werden nur vorgeschlagene Millisekundenposition, Verschiebung, dBFS-Pegel und „Zero Cross / Lowest Level“ synchronisiert. PCM-Samples, Recording-Datei und lokale Pfade bleiben im Launcher.</div>
+              </div>
+              <div class="notice compact">Pass 21.10.30–34: Continuous Play und A↔B Loop nutzen im Launcher dieselbe WebAudio-Buffer-Queue mit lokalen 30-Sekunden-Segmenten. Vorgepufferte Segmente werden auf derselben AudioContext-Zeitachse samplegenau geplant; Segmentwechsel brauchen keinen neuen Bridge-Job und keinen neuen HTML-Audio-Start. Die blau markierte A→B-Auswahl wird an B exakt abgeschnitten; der optionale CLICK GUARD blendet die letzten Millisekunden vor B lokal aus und die neue Runde exakt ab A wieder ein, ohne die Loop-Periode zu verkürzen oder den Audio-Clock zu verschieben. Der Playback Head folgt der lokalen WebAudio-Clock auch über Loop-Wraps. Die Cloud erhält nur sanitisierten Transportzustand und Millisekundenpositionen – niemals Audio, Recording- oder Cache-Pfade.</div>
+            </div>
+            <div id="cutRecordingTrackList" class="cut-recording-track-list"></div>
+            <div class="notice compact">Tipp: Bei echten Stem-Aufnahmen ist „Stream Mix“ standardmäßig aus, damit Mic/Game/Discord/Music/Alerts nicht doppelt gemischt werden. „Originalton“ oben wirkt als Master auf das Ergebnis.</div>
+          </div>
+
           <details class="cut-advanced-block" data-cut-free-only>
             <summary><span>Audio Mixer & Mehrspur</span><small>Gain, Pan, Solo, Fade, zusätzliche Musik-/Voice-Spuren und SFX</small></summary>
             <div class="cut-advanced-content form-grid cut-form">
@@ -234,6 +257,7 @@
 
 <div class="cut-toast" id="cutToast" hidden></div>
 <script src="/assets/js/app.js"></script>
+<script src="/assets/js/cut-audition-clock.js"></script>
 <script src="/assets/js/cut-studio.js"></script>
 </body>
 </html>

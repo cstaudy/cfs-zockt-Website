@@ -148,7 +148,7 @@
         </div>
         <div class="scene-composer-empty" id="sceneComposerEmpty">
           <strong>WÄHLE LINKS EINE SCENE ODER ERSTELLE EINE NEUE.</strong>
-          <p>Widgets und Overlays kannst du rechts direkt zur ausgewählten Scene hinzufügen.</p>
+          <p>Widgets, Overlays und lokale Launcher-Quellen kannst du rechts direkt zur ausgewählten Scene hinzufügen.</p>
         </div>
         <div class="scene-composer-editor" id="sceneComposerEditor" hidden>
           <div class="scene-composer-toolbar">
@@ -215,6 +215,17 @@
                 <label><span>SÄTTIGUNG <b id="composerFilterSaturationValue">100%</b></span><input id="composerFilterSaturation" type="range" min="0" max="3" step="0.05" value="1"></label>
                 <label><span>WEICHZEICHNER <b id="composerFilterBlurValue">0.0 px</b></span><input id="composerFilterBlur" type="range" min="0" max="20" step="0.5" value="0"></label>
               </div>
+
+              <div class="scene-source-crop" id="composerNativeCrop" hidden>
+                <span>NATIVE CROP</span>
+                <div class="scene-source-crop-grid">
+                  <label><span>LINKS</span><input id="composerCropLeft" type="number" min="0" max="4096" step="1" value="0"></label>
+                  <label><span>OBEN</span><input id="composerCropTop" type="number" min="0" max="4096" step="1" value="0"></label>
+                  <label><span>RECHTS</span><input id="composerCropRight" type="number" min="0" max="4096" step="1" value="0"></label>
+                  <label><span>UNTEN</span><input id="composerCropBottom" type="number" min="0" max="4096" step="1" value="0"></label>
+                </div>
+                <small>Crop wird vom lokalen Launcher-Compositor ausgewertet. Rohbild bleibt auf diesem PC.</small>
+              </div>
               <div class="scene-composer-prop-actions">
                 <button type="button" id="composerLayerUp">EBENE +</button>
                 <button type="button" id="composerLayerDown">EBENE −</button>
@@ -257,8 +268,9 @@
         <button class="active" data-source-filter="all" type="button">ALLE</button>
         <button data-source-filter="widget" type="button">WIDGETS</button>
         <button data-source-filter="overlay" type="button">OVERLAYS</button>
+        <button data-source-filter="native" type="button">NATIVE</button>
       </div>
-      <label class="stream-source-search"><span class="sr-only">Quellen suchen</span><input id="streamSourceSearch" type="search" placeholder="Widget oder Overlay suchen"></label>
+      <label class="stream-source-search"><span class="sr-only">Quellen suchen</span><input id="streamSourceSearch" type="search" placeholder="Widget, Overlay oder lokale Quelle suchen"></label>
       <div id="streamSourceLibrary" class="stream-source-library"></div>
     </aside>
     </div>
@@ -279,7 +291,8 @@
       <div class="stream-section-head"><div><span>AUDIO MIXER</span><strong>Launcher-Zielwerte</strong></div><div class="stream-section-tools"><small>Keine Audiodaten werden an die Website übertragen.</small><a href="/pages/audio-studio.html">AUDIO STUDIO</a></div></div>
       <div class="stream-mixer" id="streamMixer">
         <label data-mixer="microphone"><span><strong>MIKROFON</strong><small id="mixMicrophoneValue">85%</small></span><input type="range" min="0" max="100" value="85"><button type="button" data-mute="microphone">MUTE</button></label>
-        <label data-mixer="desktop"><span><strong>DESKTOP</strong><small id="mixDesktopValue">80%</small></span><input type="range" min="0" max="100" value="80"><button type="button" data-mute="desktop">MUTE</button></label>
+        <label data-mixer="game"><span><strong>GAME</strong><small id="mixGameValue">80%</small></span><input type="range" min="0" max="100" value="80"><button type="button" data-mute="game">MUTE</button></label>
+        <label data-mixer="discord"><span><strong>DISCORD</strong><small id="mixDiscordValue">80%</small></span><input type="range" min="0" max="100" value="80"><button type="button" data-mute="discord">MUTE</button></label>
         <label data-mixer="music"><span><strong>MUSIK</strong><small id="mixMusicValue">65%</small></span><input type="range" min="0" max="100" value="65"><button type="button" data-mute="music">MUTE</button></label>
         <label data-mixer="alerts"><span><strong>ALERTS</strong><small id="mixAlertsValue">90%</small></span><input type="range" min="0" max="100" value="90"><button type="button" data-mute="alerts">MUTE</button></label>
       </div>
@@ -302,18 +315,23 @@
         <label><span>AUFNAHME</span><select id="streamRecordingFormat"><option value="mkv">MKV</option><option value="mp4">MP4</option></select></label>
       </div>
       <div class="stream-recording-tracks">
-        <div><span>RECORDING AUDIO-TRACKS</span><strong>Mix + lokale Busse getrennt aufnehmen</strong><small>MKV empfohlen. Audio 1/2 entsprechen den im Launcher gewählten lokalen Geräten.</small></div>
+        <div><span>RECORDING AUDIO-TRACKS</span><strong>Stream Mix + Quellen getrennt aufnehmen</strong><small>MKV empfohlen. Mic, Game, Discord, Music und Alerts werden lokal im Launcher gebunden; nicht konfigurierte Quellen erzeugen keine leeren Tracks.</small></div>
         <div class="stream-recording-track-grid">
           <label><input id="streamRecordingTrackMix" type="checkbox" checked><span>MIX</span></label>
-          <label><input id="streamRecordingTrackAudio1" type="checkbox" checked><span>AUDIO 1 · MIC/MIX</span></label>
-          <label><input id="streamRecordingTrackAudio2" type="checkbox" checked><span>AUDIO 2 · DESKTOP/LOOPBACK</span></label>
+          <label><input id="streamRecordingTrackMic" type="checkbox" checked><span>MIC</span></label>
+          <label><input id="streamRecordingTrackGame" type="checkbox" checked><span>GAME</span></label>
+          <label><input id="streamRecordingTrackDiscord" type="checkbox" checked><span>DISCORD</span></label>
+          <label><input id="streamRecordingTrackMusic" type="checkbox" checked><span>MUSIC</span></label>
+          <label><input id="streamRecordingTrackAlerts" type="checkbox" checked><span>ALERTS</span></label>
+          <input id="streamRecordingTrackAudio1" type="checkbox" hidden aria-hidden="true" tabindex="-1">
+          <input id="streamRecordingTrackAudio2" type="checkbox" hidden aria-hidden="true" tabindex="-1">
         </div>
       </div>
       <div class="stream-output-actions">
         <button class="btn primary" id="saveStreamStudioBottom" type="button">EINSTELLUNGEN SPEICHERN</button>
         <a class="btn" href="/pages/launcher.html">LAUNCHER ÖFFNEN</a>
       </div>
-      <p class="stream-engine-note"><strong>ENGINE-STATUS:</strong> Die lokale Launcher-Engine kann jetzt getrennte Recording-Audiospuren erzeugen. Source-Routing und Source-Filter werden im CFS Scene Runtime technisch ausgewertet; die direkte Einblendung dieser Scene-Layer in die native Capture-Pipeline bleibt ein eigener Compositor-Schritt.</p>
+      <p class="stream-engine-note"><strong>ENGINE-STATUS:</strong> Die lokale Launcher-Engine kann Stream Mix sowie Mic, Game, Discord, Music und Alerts als getrennte Recording-Spuren führen. Application-Audio bleibt lokal und wird per Windows Process Loopback gebunden; nicht konfigurierte Busse werden übersprungen.</p>
     </article>
   </section>
 
