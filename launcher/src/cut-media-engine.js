@@ -3,6 +3,7 @@
 const fs=require("node:fs");
 const path=require("node:path");
 const {spawn}=require("node:child_process");
+const crypto=require("node:crypto");
 const EventEmitter=require("node:events");
 
 function safeName(value,fallback="clip"){
@@ -49,8 +50,10 @@ class CutMediaEngine extends EventEmitter{
         encoders:{software:true,nvenc:false,qsv:false,amf:false}
       },
       jobId:null,clipIndex:0,clipCount:0,progress:0,phase:"idle",mode:"clips",
-      encoder:"software",transition:"cut",lastOutputDir:"",error:"",checkedAt:null
+      encoder:"software",transition:"cut",lastOutputDir:"",error:"",checkedAt:null,
+      auditionCache:{hits:0,misses:0,renders:0,evictions:0,files:0,bytes:0,prefetches:0,prefetchHits:0,prefetchRenders:0}
     };
+    this.auditionCacheInFlight=new Map();
   }
   snapshot(){
     return{
@@ -85,6 +88,18 @@ class CutMediaEngine extends EventEmitter{
       child.stderr?.on?.("data",chunk=>{const text=String(chunk);stderr+=text;if(stderr.length>60000)stderr=stderr.slice(-60000);onStderr?.(text)});
       child.once("error",error=>{if(settled)return;settled=true;if(timer)clearTimeout(timer);reject(error)});
       child.once("close",code=>{if(settled)return;settled=true;if(timer)clearTimeout(timer);if(code===0)resolve({code,stdout,stderr});else reject(Object.assign(new Error(`FFmpeg wurde mit Code ${code} beendet.`),{code,stderr,stdout}))});
+    });
+  }
+  runBinaryProcess(command,args,{timeoutMs=0,maxBytes=1024*1024}={}){
+    return new Promise((resolve,reject)=>{
+      let settled=false,stderr="",size=0;const chunks=[];
+      const child=this.spawnImpl(command,args,{windowsHide:true,stdio:["ignore","pipe","pipe"]});
+      let timer=null;
+      if(timeoutMs>0)timer=setTimeout(()=>{if(!settled){try{child.kill("SIGKILL")}catch{};settled=true;reject(new Error("Prozess-Timeout."))}},timeoutMs);
+      child.stdout?.on?.("data",chunk=>{if(settled)return;const buf=Buffer.from(chunk);size+=buf.length;if(size>maxBytes){try{child.kill("SIGKILL")}catch{};settled=true;if(timer)clearTimeout(timer);reject(new Error("FFmpeg Binärausgabe ist zu groß."));return}chunks.push(buf)});
+      child.stderr?.on?.("data",chunk=>{stderr+=String(chunk);if(stderr.length>60000)stderr=stderr.slice(-60000)});
+      child.once("error",error=>{if(settled)return;settled=true;if(timer)clearTimeout(timer);reject(error)});
+      child.once("close",code=>{if(settled)return;settled=true;if(timer)clearTimeout(timer);if(code===0)resolve({code,stdout:Buffer.concat(chunks),stderr});else reject(Object.assign(new Error(`FFmpeg wurde mit Code ${code} beendet.`),{code,stderr}))});
     });
   }
   async probe(){
@@ -143,6 +158,145 @@ class CutMediaEngine extends EventEmitter{
       ],{timeoutMs:15000});
       return true;
     }catch{return false}
+  }
+  async probeMediaInfo(sourcePath){
+    if(!sourcePath||!fs.existsSync(sourcePath))return{duration_ms:0,has_audio:false};
+    if(!this.ffmpegPath){const state=await this.probe();if(!state.available)return{duration_ms:0,has_audio:false}}
+    let log="";
+    try{const result=await this.runProcess(this.ffmpegPath,["-hide_banner","-i",sourcePath,"-t","0.02","-map","0:v:0","-f","null","-"],{timeoutMs:15000});log=String(result.stderr||"")}catch(error){log=String(error?.stderr||error?.message||"")}
+    const match=log.match(/Duration:\s*(\d+):(\d+):([\d.]+)/i),duration=match?Math.round((Number(match[1])*3600+Number(match[2])*60+Number(match[3]))*1000):0;
+    return{duration_ms:duration,has_audio:/Stream\s+#0:\d+(?:\([^)]*\))?:\s+Audio:/i.test(log)};
+  }
+  async embeddedWaveformBins(sourcePath,streamIndex=0,{bins=64,height=32}={}){
+    if(!sourcePath||!fs.existsSync(sourcePath))return[];
+    if(!this.ffmpegPath){const probe=await this.probe();if(!probe.available)return[]}
+    const width=Math.max(24,Math.min(128,Math.round(Number(bins)||64))),h=Math.max(16,Math.min(64,Math.round(Number(height)||32))),idx=Math.max(0,Math.min(15,Math.round(Number(streamIndex)||0)));
+    try{
+      const result=await this.runBinaryProcess(this.ffmpegPath,[
+        "-hide_banner","-loglevel","error","-i",sourcePath,
+        "-filter_complex",`[0:a:${idx}]aformat=channel_layouts=mono,showwavespic=s=${width}x${h}:colors=white:scale=sqrt[w]`,
+        "-map","[w]","-frames:v","1","-f","rawvideo","-pix_fmt","gray","pipe:1"
+      ],{timeoutMs:120000,maxBytes:width*h*4});
+      const raw=result.stdout;if(!Buffer.isBuffer(raw)||raw.length<width*h)return[];
+      const center=(h-1)/2,out=[];
+      for(let x=0;x<width;x++){let amp=0;for(let y=0;y<h;y++){if(raw[y*width+x]>24)amp=Math.max(amp,Math.abs(y-center)/Math.max(1,center))}out.push(Number(Math.max(0,Math.min(1,amp)).toFixed(3)))}
+      return out;
+    }catch{return[]}
+  }
+  nearestZeroCrossingFromPcm(buffer,{windowStartMs=0,targetMs=0,sampleRate=48000}={}){
+    const raw=Buffer.isBuffer(buffer)?buffer:Buffer.from(buffer||[]),rate=Math.max(8000,Math.min(192000,Math.round(Number(sampleRate)||48000))),samples=Math.floor(raw.length/2),target=Math.max(0,Number(targetMs)||0),windowStart=Math.max(0,Number(windowStartMs)||0);
+    if(samples<1)return{original_ms:Math.round(target),suggested_ms:Math.round(target),delta_ms:0,level_dbfs:-96,crossing:false,samples:0};
+    let best=null;
+    const consider=(samplePos,level,crossing)=>{const ms=windowStart+(samplePos/rate)*1000,delta=ms-target,absDelta=Math.abs(delta),amp=Math.max(0,Math.min(1,Math.abs(level)/32768)),db=amp<=0?-96:Math.max(-96,20*Math.log10(amp)),roundedDelta=Math.round(delta),candidate={original_ms:Math.round(target),suggested_ms:Math.max(0,Math.round(ms)),delta_ms:Object.is(roundedDelta,-0)?0:roundedDelta,level_dbfs:Number(db.toFixed(1)),crossing:crossing===true,samples};if(!best||absDelta<best.absDelta-.0001||(Math.abs(absDelta-best.absDelta)<.0001&&amp<best.amp))best={...candidate,absDelta,amp};};
+    for(let i=1;i<samples;i++){
+      const left=raw.readInt16LE((i-1)*2),right=raw.readInt16LE(i*2),crossing=left===0||right===0||(left<0&&right>0)||(left>0&&right<0);if(!crossing)continue;
+      const denom=Math.abs(left)+Math.abs(right),fraction=denom>0?Math.abs(left)/denom:0,samplePos=(i-1)+fraction,level=Math.min(Math.abs(left),Math.abs(right));consider(samplePos,level,true);
+    }
+    if(!best){for(let i=0;i<samples;i++){const value=raw.readInt16LE(i*2);consider(i,value,false)}}
+    const {absDelta,amp,...out}=best;return out;
+  }
+  async inspectMixZeroCrossings(sourcePath,tracks=[],{aMs=0,bMs=0,radiusMs=20,sampleRate=48000}={}){
+    if(!sourcePath||!fs.existsSync(sourcePath))throw new Error("Lokale Recording-Datei fehlt.");
+    if(!this.ffmpegPath){const probe=await this.probe();if(!probe.available)throw new Error(probe.error||"FFmpeg wurde nicht gefunden.")}
+    const rate=Math.max(8000,Math.min(96000,Math.round(Number(sampleRate)||48000))),radius=Math.max(5,Math.min(50,Math.round(Number(radiusMs)||20))),points={a:Math.max(0,Math.round(Number(aMs)||0)),b:Math.max(0,Math.round(Number(bMs)||0))},out={radius_ms:radius,sample_rate:rate,analyzed_at:new Date().toISOString(),a:null,b:null};
+    for(const key of ["a","b"]){
+      const target=points[key],windowStart=Math.max(0,target-radius),windowEnd=target+radius,duration=Math.max(10,windowEnd-windowStart),graph=this.sourceTrackAudioGraph({source_tracks:Array.isArray(tracks)?tracks:[]},{},duration);if(!graph)throw new Error("Für den Zero-Cross Inspector ist keine aktive Recording-Spur vorhanden.");
+      const mono="cfs_zero_cross_mono",filters=[...graph.filters,`[${graph.label}]pan=mono|c0=0.5*c0+0.5*c1,aresample=${rate},aformat=sample_fmts=s16:sample_rates=${rate}:channel_layouts=mono[${mono}]`];
+      const result=await this.runBinaryProcess(this.ffmpegPath,["-hide_banner","-loglevel","error","-ss",formatSeconds(windowStart),"-i",sourcePath,"-t",formatSeconds(duration),"-filter_complex",filters.join(";"),"-map",`[${mono}]`,"-f","s16le","-acodec","pcm_s16le","-ar",String(rate),"-ac","1","pipe:1"],{timeoutMs:30000,maxBytes:64*1024});
+      out[key]=this.nearestZeroCrossingFromPcm(result.stdout,{windowStartMs:windowStart,targetMs:target,sampleRate:rate});
+    }
+    return out;
+  }
+  async analyzeEmbeddedAudio(sourcePath,streamIndex=0,key="embedded"){
+    if(!sourcePath||!fs.existsSync(sourcePath))throw new Error("Lokale Recording-Datei fehlt.");
+    if(!this.ffmpegPath){const probe=await this.probe();if(!probe.available)return{available:false,peak_db:null,mean_db:null,duration_ms:null,waveform_path:"",waveform:[],analyzed_at:new Date().toISOString()}}
+    const idx=Math.max(0,Math.min(15,Math.round(Number(streamIndex)||0)));let peak=null,mean=null,durationMs=null;
+    try{
+      const result=await this.runProcess(this.ffmpegPath,["-hide_banner","-i",sourcePath,"-map",`0:a:${idx}`,"-af","volumedetect","-f","null","-"],{timeoutMs:120000});
+      const log=String(result.stderr||""),peakMatch=log.match(/max_volume:\s*(-?[\d.]+)\s*dB/i),meanMatch=log.match(/mean_volume:\s*(-?[\d.]+)\s*dB/i),durationMatch=log.match(/Duration:\s*(\d+):(\d+):([\d.]+)/i);
+      if(peakMatch)peak=Number(peakMatch[1]);if(meanMatch)mean=Number(meanMatch[1]);if(durationMatch)durationMs=Math.round((Number(durationMatch[1])*3600+Number(durationMatch[2])*60+Number(durationMatch[3]))*1000);
+    }catch{}
+    let waveformPath="";
+    try{
+      const dir=path.join(this.outputRoot,"_analysis");fs.mkdirSync(dir,{recursive:true});waveformPath=path.join(dir,`${safeName(key,"embedded")}-waveform.png`);
+      await this.runProcess(this.ffmpegPath,["-hide_banner","-loglevel","error","-y","-i",sourcePath,"-filter_complex",`[0:a:${idx}]aformat=channel_layouts=mono,showwavespic=s=640x80:colors=white:split_channels=0[w]`,"-map","[w]","-frames:v","1",waveformPath],{timeoutMs:120000});
+      if(!fs.existsSync(waveformPath))waveformPath="";
+    }catch{waveformPath=""}
+    const waveform=await this.embeddedWaveformBins(sourcePath,idx,{bins:64,height:32});
+    return{available:peak!==null||mean!==null||Boolean(waveformPath)||waveform.length>0,peak_db:peak,mean_db:mean,duration_ms:durationMs,waveform_path:waveformPath,waveform,analyzed_at:new Date().toISOString()};
+  }
+  auditionCacheWindow(startMs=0,{segmentMs=30000,strideMs=15000}={}){
+    const start=Math.max(0,Math.min(24*60*60*1000,Math.round(Number(startMs)||0))),segment=Math.max(12000,Math.min(60000,Math.round(Number(segmentMs)||30000))),stride=Math.max(5000,Math.min(segment,Math.round(Number(strideMs)||15000)));
+    return{start_ms:Math.floor(start/stride)*stride,duration_ms:segment,stride_ms:stride};
+  }
+  auditionCacheIdentity(sourcePath,details={}){
+    let stat={size:0,mtimeMs:0};try{stat=fs.statSync(sourcePath)}catch{}
+    const payload={source:path.resolve(String(sourcePath||"")),size:Number(stat.size||0),mtime_ms:Math.round(Number(stat.mtimeMs||0)),...details};
+    return crypto.createHash("sha256").update(JSON.stringify(payload)).digest("hex");
+  }
+  auditionCacheDir(){const dir=path.join(this.outputRoot,"_audition_cache");fs.mkdirSync(dir,{recursive:true});return dir}
+  auditionCacheSnapshot(){
+    const dir=path.join(this.outputRoot,"_audition_cache");let files=0,bytes=0;try{for(const name of fs.readdirSync(dir)){const f=path.join(dir,name);try{const st=fs.statSync(f);if(st.isFile()&&name.endsWith(".wav")){files++;bytes+=st.size}}catch{}}}catch{}
+    this.state.auditionCache={...(this.state.auditionCache||{}),files,bytes};return{...this.state.auditionCache};
+  }
+  pruneAuditionCache({maxFiles=64,maxBytes=512*1024*1024}={}){
+    const dir=path.join(this.outputRoot,"_audition_cache");let rows=[];try{rows=fs.readdirSync(dir).filter(n=>n.endsWith(".wav")).map(name=>{const file=path.join(dir,name),st=fs.statSync(file);return{file,size:st.size,mtimeMs:st.mtimeMs}}).sort((a,b)=>a.mtimeMs-b.mtimeMs)}catch{}
+    let bytes=rows.reduce((sum,row)=>sum+row.size,0),evicted=0;while(rows.length>maxFiles||bytes>maxBytes){const row=rows.shift();if(!row)break;try{fs.unlinkSync(row.file);bytes-=row.size;evicted++}catch{}}
+    this.state.auditionCache={...(this.state.auditionCache||{}),evictions:Number(this.state.auditionCache?.evictions||0)+evicted,files:rows.length,bytes:Math.max(0,bytes)};return evicted;
+  }
+  async cachedAuditionPreview({sourcePath,mode="mix",streamIndex=0,tracks=[],gainDb=0,pan=0,startMs=0,seconds=12}={}){
+    if(!sourcePath||!fs.existsSync(sourcePath))throw new Error("Lokale Recording-Datei fehlt.");
+    if(!this.ffmpegPath){const probe=await this.probe();if(!probe.available)throw new Error(probe.error||"FFmpeg wurde nicht gefunden.")}
+    const requestDuration=Math.max(1,Math.min(30,Number(seconds)||12));let window=this.auditionCacheWindow(startMs);const requestedStart=Math.max(0,Math.min(24*60*60*1000,Math.round(Number(startMs)||0)));if((requestedStart-window.start_ms)+Math.round(requestDuration*1000)>window.duration_ms)window={...window,start_ms:requestedStart};const normalizedTracks=(Array.isArray(tracks)?tracks:[]).slice(0,8).map((track,index)=>({key:String(track?.key||`source_${index+1}`),stream_index:Math.max(0,Math.min(15,Math.round(Number(track?.stream_index??index)))),enabled:track?.enabled!==false,mute:track?.mute===true,solo:track?.solo===true,gain_db:Number(clamp(track?.gain_db,-36,12,0).toFixed(2)),pan:Number(clamp(track?.pan,-1,1,0).toFixed(3))}));
+    const identity=this.auditionCacheIdentity(sourcePath,{mode,stream_index:Math.max(0,Math.min(15,Math.round(Number(streamIndex)||0))),gain_db:Number(clamp(gainDb,-36,12,0).toFixed(2)),pan:Number(clamp(pan,-1,1,0).toFixed(3)),tracks:normalizedTracks,window_start_ms:window.start_ms,window_duration_ms:window.duration_ms});
+    const outputPath=path.join(this.auditionCacheDir(),`${identity}.wav`),offset=Math.max(0,Math.round(Number(startMs)||0)-window.start_ms);
+    if(fs.existsSync(outputPath)&&fs.statSync(outputPath).size>44){this.state.auditionCache={...(this.state.auditionCache||{}),hits:Number(this.state.auditionCache?.hits||0)+1};try{const now=new Date();fs.utimesSync(outputPath,now,now)}catch{};this.auditionCacheSnapshot();return{preview_path:outputPath,start_ms:Math.round(Number(startMs)||0),duration_ms:Math.round(requestDuration*1000),cache_hit:true,cache_key:identity,cache_start_ms:window.start_ms,cache_duration_ms:window.duration_ms,play_offset_ms:offset,created_at:new Date().toISOString()}}
+    this.state.auditionCache={...(this.state.auditionCache||{}),misses:Number(this.state.auditionCache?.misses||0)+1};
+    if(this.auditionCacheInFlight.has(identity)){await this.auditionCacheInFlight.get(identity);this.state.auditionCache={...(this.state.auditionCache||{}),hits:Number(this.state.auditionCache?.hits||0)+1};this.auditionCacheSnapshot();return{preview_path:outputPath,start_ms:Math.round(Number(startMs)||0),duration_ms:Math.round(requestDuration*1000),cache_hit:true,cache_key:identity,cache_start_ms:window.start_ms,cache_duration_ms:window.duration_ms,play_offset_ms:offset,created_at:new Date().toISOString()}}
+    const render=(async()=>{
+      if(mode==="track"){
+        const idx=Math.max(0,Math.min(15,Math.round(Number(streamIndex)||0))),filters=["aresample=48000","aformat=sample_fmts=fltp:sample_rates=48000:channel_layouts=stereo"],gain=clamp(gainDb,-36,12,0),p=clamp(pan,-1,1,0);if(Math.abs(gain)>.01)filters.push(`volume=${gain.toFixed(1)}dB`);if(Math.abs(p)>.001)filters.push(this.panFilter(p));
+        await this.runProcess(this.ffmpegPath,["-hide_banner","-loglevel","error","-y","-ss",formatSeconds(window.start_ms),"-i",sourcePath,"-t",formatSeconds(window.duration_ms),"-map",`0:a:${idx}`,"-af",filters.join(","),"-c:a","pcm_s16le","-ar","48000","-ac","2",outputPath],{timeoutMs:120000});
+      }else{
+        const graph=this.sourceTrackAudioGraph({source_tracks:normalizedTracks},{},window.duration_ms);if(!graph)throw new Error("Für den Stem-Mix ist keine aktive Recording-Spur vorhanden.");
+        await this.runProcess(this.ffmpegPath,["-hide_banner","-loglevel","error","-y","-ss",formatSeconds(window.start_ms),"-i",sourcePath,"-t",formatSeconds(window.duration_ms),"-filter_complex",graph.filters.join(";"),"-map",`[${graph.label}]`,"-c:a","pcm_s16le","-ar","48000","-ac","2",outputPath],{timeoutMs:120000});
+      }
+      this.state.auditionCache={...(this.state.auditionCache||{}),renders:Number(this.state.auditionCache?.renders||0)+1};this.pruneAuditionCache();
+    })();
+    this.auditionCacheInFlight.set(identity,render);try{await render}finally{this.auditionCacheInFlight.delete(identity)}
+    this.auditionCacheSnapshot();return{preview_path:fs.existsSync(outputPath)?outputPath:"",start_ms:Math.round(Number(startMs)||0),duration_ms:Math.round(requestDuration*1000),cache_hit:false,cache_key:identity,cache_start_ms:window.start_ms,cache_duration_ms:window.duration_ms,play_offset_ms:offset,created_at:new Date().toISOString()};
+  }
+  createCachedEmbeddedTrackPreview(sourcePath,streamIndex=0,{seconds=12,startMs=0,gainDb=0,pan=0}={}){return this.cachedAuditionPreview({sourcePath,mode:"track",streamIndex,seconds,startMs,gainDb,pan})}
+  createCachedEmbeddedMixPreview(sourcePath,tracks=[],{seconds=12,startMs=0}={}){return this.cachedAuditionPreview({sourcePath,mode:"mix",tracks,seconds,startMs})}
+  async prefetchCachedEmbeddedMixPreview(sourcePath,tracks=[],{startMs=0,endMs=0,count=2}={}){
+    const limit=Math.max(1,Math.min(4,Math.round(Number(count)||2))),end=Math.max(0,Math.round(Number(endMs)||0));let cursor=Math.max(0,Math.round(Number(startMs)||0));const segments=[];
+    for(let i=0;i<limit;i++){
+      if(end>0&&cursor>=end)break;
+      const remaining=end>0?Math.max(0,end-cursor):30000;if(end>0&&remaining<1000)break;const seconds=Math.max(1,Math.min(30,remaining/1000));
+      const preview=await this.createCachedEmbeddedMixPreview(sourcePath,tracks,{startMs:cursor,seconds});
+      this.state.auditionCache={...(this.state.auditionCache||{}),prefetches:Number(this.state.auditionCache?.prefetches||0)+1,prefetchHits:Number(this.state.auditionCache?.prefetchHits||0)+(preview.cache_hit?1:0),prefetchRenders:Number(this.state.auditionCache?.prefetchRenders||0)+(preview.cache_hit?0:1)};
+      this.auditionCacheSnapshot();segments.push(preview);
+      const next=Math.max(cursor+1000,Number(preview.cache_start_ms||cursor)+Number(preview.cache_duration_ms||Math.round(seconds*1000)));if(next<=cursor)break;cursor=next;
+    }
+    return segments;
+  }
+
+  async createEmbeddedTrackPreview(sourcePath,streamIndex=0,key="embedded",{seconds=12,startMs=0,gainDb=0,pan=0}={}){
+    if(!sourcePath||!fs.existsSync(sourcePath))throw new Error("Lokale Recording-Datei fehlt.");
+    if(!this.ffmpegPath){const probe=await this.probe();if(!probe.available)throw new Error(probe.error||"FFmpeg wurde nicht gefunden.")}
+    const idx=Math.max(0,Math.min(15,Math.round(Number(streamIndex)||0))),duration=Math.max(1,Math.min(30,Number(seconds)||12)),start=Math.max(0,Math.min(24*60*60*1000,Number(startMs)||0));
+    const dir=path.join(this.outputRoot,"_preview");fs.mkdirSync(dir,{recursive:true});const outputPath=path.join(dir,`${safeName(key,"embedded")}-track.wav`);
+    const filters=["aresample=48000","aformat=sample_fmts=fltp:sample_rates=48000:channel_layouts=stereo"];const gain=clamp(gainDb,-36,12,0),p=clamp(pan,-1,1,0);if(Math.abs(gain)>.01)filters.push(`volume=${gain.toFixed(1)}dB`);if(Math.abs(p)>.001)filters.push(this.panFilter(p));
+    await this.runProcess(this.ffmpegPath,["-hide_banner","-loglevel","error","-y","-ss",formatSeconds(start),"-i",sourcePath,"-t",duration.toFixed(3),"-map",`0:a:${idx}`,"-af",filters.join(","),"-c:a","pcm_s16le","-ar","48000","-ac","2",outputPath],{timeoutMs:120000});
+    return{preview_path:fs.existsSync(outputPath)?outputPath:"",start_ms:Math.round(start),duration_ms:Math.round(duration*1000),created_at:new Date().toISOString()};
+  }
+  async createEmbeddedMixPreview(sourcePath,tracks=[],key="mix",{seconds=12,startMs=0}={}){
+    if(!sourcePath||!fs.existsSync(sourcePath))throw new Error("Lokale Recording-Datei fehlt.");
+    if(!this.ffmpegPath){const probe=await this.probe();if(!probe.available)throw new Error(probe.error||"FFmpeg wurde nicht gefunden.")}
+    const duration=Math.max(1,Math.min(30,Number(seconds)||12)),start=Math.max(0,Math.min(24*60*60*1000,Number(startMs)||0)),graph=this.sourceTrackAudioGraph({source_tracks:Array.isArray(tracks)?tracks:[]},{},Math.round(duration*1000));if(!graph)throw new Error("Für den Stem-Mix ist keine aktive Recording-Spur vorhanden.");
+    const dir=path.join(this.outputRoot,"_preview");fs.mkdirSync(dir,{recursive:true});const outputPath=path.join(dir,`${safeName(key,"mix")}-mix.wav`);
+    await this.runProcess(this.ffmpegPath,["-hide_banner","-loglevel","error","-y","-ss",formatSeconds(start),"-i",sourcePath,"-t",duration.toFixed(3),"-filter_complex",graph.filters.join(";"),"-map",`[${graph.label}]`,"-c:a","pcm_s16le","-ar","48000","-ac","2",outputPath],{timeoutMs:120000});
+    return{preview_path:fs.existsSync(outputPath)?outputPath:"",start_ms:Math.round(start),duration_ms:Math.round(duration*1000),tracks:graph.tracks,created_at:new Date().toISOString()};
   }
   async analyzeAudio(sourcePath,key="audio"){
     if(!sourcePath||!fs.existsSync(sourcePath))throw new Error("Lokale Audiodatei fehlt.");
@@ -255,6 +409,34 @@ class CutMediaEngine extends EventEmitter{
     if(preset.audio_normalize===true)filters.push("loudnorm=I=-16:LRA=11:TP=-1.5");
     return filters;
   }
+  sourceTrackAudioGraph(preset={},clip={},durationMs=0){
+    const tracks=(Array.isArray(preset.source_tracks)?preset.source_tracks:[]).slice(0,8);
+    if(!tracks.length)return null;
+    const candidates=tracks.map((track,index)=>({
+      key:String(track?.key||`source_${index+1}`),
+      label:String(track?.label||track?.title||`Audio ${index+1}`),
+      streamIndex:Math.max(0,Math.min(15,Math.round(Number(track?.stream_index??track?.streamIndex??index)))),
+      enabled:track?.enabled!==false,
+      mute:track?.mute===true,
+      solo:track?.solo===true,
+      gainDb:clamp(track?.gain_db,-36,12,0),
+      pan:clamp(track?.pan,-1,1,0)
+    }));
+    const anySolo=candidates.some(row=>row.enabled&&!row.mute&&row.solo),active=candidates.filter(row=>row.enabled&&!row.mute&&(!anySolo||row.solo));
+    if(!active.length)return null;
+    const filters=[],labels=[];
+    active.forEach((row,index)=>{
+      const label=`cfs_src_track_${index}`,chain=["aresample=48000","aformat=sample_fmts=fltp:sample_rates=48000:channel_layouts=stereo"];
+      if(Math.abs(row.gainDb)>.01)chain.push(`volume=${row.gainDb.toFixed(1)}dB`);
+      if(Math.abs(row.pan)>.001)chain.push(this.panFilter(row.pan));
+      filters.push(`[0:a:${row.streamIndex}]${chain.join(",")}[${label}]`);labels.push(`[${label}]`);
+    });
+    const mixed="cfs_src_track_mix";
+    if(labels.length===1)filters.push(`${labels[0]}anull[${mixed}]`);else filters.push(`${labels.join("")}amix=inputs=${labels.length}:duration=longest:dropout_transition=2:normalize=0[${mixed}]`);
+    const final="cfs_src_audio",post=this.audioFilters(clip,durationMs,preset);
+    filters.push(`[${mixed}]${post.join(",")}[${final}]`);
+    return{filters,label:final,tracks:active.map(row=>({key:row.key,label:row.label,streamIndex:row.streamIndex}))};
+  }
   resolveEncoder(preset={}){
     const requested=["software","nvenc","qsv","amf"].includes(String(preset.encoder||""))?String(preset.encoder):"software";
     const available=this.state.capabilities?.encoders||{};
@@ -289,24 +471,21 @@ class CutMediaEngine extends EventEmitter{
     }
     const caption=this.captionFilter(clip);if(caption)filters.push(caption);
 
-    const audio=this.audioFilters(clip,duration,preset),encoder=this.resolveEncoder(preset);
+    const audio=this.audioFilters(clip,duration,preset),encoder=this.resolveEncoder(preset),sourceTrackAudio=hasAudio?this.sourceTrackAudioGraph(preset,clip,duration):null;
     const args=["-hide_banner","-loglevel","warning","-y","-ss",formatSeconds(start),"-i",sourcePath];
     if(!hasAudio)args.push("-f","lavfi","-i","anullsrc=channel_layout=stereo:sample_rate=48000");
     args.push("-t",formatSeconds(duration));
 
+    const graph=[];
     if(wantsOpacity){
       const opacity=this.keyframePiecewise(points,"opacity",`min(1,T/${durationSec.toFixed(4)})`);
-      const graph=[
-        `[0:v]${filters.join(",")}[vproc]`,
-        `color=c=black:s=${width}x${height}:r=${fps}:d=${durationSec.toFixed(3)}[vbg]`,
-        `[vproc][vbg]blend=all_expr='A*(${opacity})+B*(1-(${opacity}))':shortest=1[vout]`
-      ].join(";");
-      args.push("-filter_complex",graph,"-map","[vout]");
-    }else{
-      args.push("-map","0:v:0","-vf",filters.join(","));
+      graph.push(`[0:v]${filters.join(",")}[vproc]`,`color=c=black:s=${width}x${height}:r=${fps}:d=${durationSec.toFixed(3)}[vbg]`,`[vproc][vbg]blend=all_expr='A*(${opacity})+B*(1-(${opacity}))':shortest=1[vout]`);
     }
+    if(sourceTrackAudio)graph.push(...sourceTrackAudio.filters);
+    if(graph.length)args.push("-filter_complex",graph.join(";"));
+    if(wantsOpacity)args.push("-map","[vout]");else args.push("-map","0:v:0","-vf",filters.join(","));
+    if(sourceTrackAudio)args.push("-map",`[${sourceTrackAudio.label}]`);else args.push("-map",hasAudio?"0:a:0":"1:a:0","-af",audio.join(","));
     args.push(
-      "-map",hasAudio?"0:a:0":"1:a:0","-af",audio.join(","),
       "-c:v",encoder.codec,...encoder.args,"-pix_fmt","yuv420p",
       "-c:a","aac","-b:a",`${bitrate}k`,"-ar","48000","-ac","2","-movflags","+faststart",
       outputPath

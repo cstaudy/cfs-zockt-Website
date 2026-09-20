@@ -9,12 +9,12 @@
     "dev": "electron .",
     "start": "electron .",
     "check": "node tools/static-check.mjs",
-    "dist:win": "electron-builder --win nsis portable --publish never",
-    "dist:portable": "electron-builder --win portable --publish never",
+    "dist:win": "npm run audio-helper:build && npm run game-capture:build && electron-builder --win nsis portable --publish never",
+    "dist:portable": "npm run audio-helper:build && npm run game-capture:build && electron-builder --win portable --publish never",
     "test:bridge": "node tools/bridge-client-test.mjs",
     "test:stability": "node tools/stability-pass-test.mjs",
     "qa": "npm run check && npm run test:stability && npm run test:bridge && npm run test:spool && npm run test:preflight && npm run test:gifts && npm run test:monitor && npm run test:obs-doctor && npm run test:shutdown && npm run test:backup && npm run test:recovery && npm run test:health && npm run test:manifest && npm run test:version-policy && npm run test:release-safety && npm run test:creator-profile && npm run test:device-link && npm run test:device-config && npm run test:output-window && npm run test:output-gate && npm run test:stream-deck-store && npm run test:stream-deck-actions && npm run test:post-v42-bridge && npm run test:acceptance-part2 && npm run test:entitlement-guard && npm run test:entitlement-preflight && npm run test:beta-session-v27 && npm run test:beta-feedback-v27 && npm run test:creator-tools-v28 && npm run test:game-rules-v29 && npm run test:cut-jobs-v29 && npm run test:flush-serialization-v29 && npm run test:media-source-v30 && npm run test:media-engine-v30 && npm run test:cut-job-retry-v30 && npm run test:cut-timeline-v31 && npm run test:cut-media-v31 && npm run test:cut-audio-v32 && npm run test:cut-transition-v32 && npm run ffmpeg:check && npm run test:cut-music-model-v33 && npm run test:media-source-v33 && npm run test:cut-media-v33 && npm run test:cut-free-kf-v34 && npm run test:media-source-v34 && npm run test:cut-multitrack-v34 && npm run test:cut-curve-mixer-v35 && npm run test:cut-media-v35 && npm run test:cut-final-v36 && npm run test:media-source-v36 && npm run test:cut-media-v36 && npm run test:billing-v37 && npm run test:production-evidence-v38 && npm run test:stripe-testmode-v38 && npm run test:windows-evidence-v38 && npm run test:production-canary-v38 && npm run test:production-static-v38 && npm run test:acceptance-v39 && npm run test:beta-cohort-v39 && npm run test:go-no-go-v39 && npm run test:release-ops-admin-v39 && npm run test:release-ops-v39 && npm run test:acceptance-template-v39 && npm run test:beta-profile && npm run test:session-store && npm run test:resume-protocol && npm run test:action-lease && npm run test:provider-switch && npm run test:logger-tail && npm run test:scenes && npm run test:e2e && npm run test:stress && npm run test:obs && npm run check:release",
-    "release:win": "npm run qa && electron-builder --win nsis portable --publish never",
+    "release:win": "npm run qa && npm run audio-helper:build && npm run game-capture:build && electron-builder --win nsis portable --publish never",
     "check:release": "node tools/release-check.mjs",
     "test:spool": "node tools/event-spool-test.mjs",
     "test:preflight": "node tools/preflight-test.mjs",
@@ -103,8 +103,18 @@
     "test:final-files-v42": "node ../tools/final-test-files-v42-test.mjs ..",
     "test:post-v42-bridge": "node tools/post-v42-bridge-controls-test.mjs",
     "test:acceptance-part2": "node tools/tiktool-provider-acceptance-part2-test.mjs && node tools/live-acceptance-part2-test.mjs && node ../tools/widget-runtime-audio-part2-test.mjs .. && node tools/output-window-manager-test.mjs && node tools/obs-multi-widget-load-test.mjs && node ../tools/post-v42-security-test.mjs ..",
-    "test:stream-engine21": "node ../tools/stream-engine-pass21-10-test.mjs .. && node ../tools/stream-engine-audio-stability-pass21-10-2-test.mjs ..",
-    "test:stream-engine-audio21": "node ../tools/stream-engine-audio-stability-pass21-10-2-test.mjs .."
+    "test:stream-engine21": "node ../tools/stream-engine-pass21-10-test.mjs .. && node ../tools/stream-engine-audio-stability-pass21-10-2-test.mjs .. && node ../tools/stream-studio-application-audio-pass21-10-15-test.mjs ..",
+    "test:stream-engine-audio21": "node ../tools/stream-engine-audio-stability-pass21-10-2-test.mjs ..",
+    "audio-helper:build": "cmd /c native\\audio-loopback\\build.cmd",
+    "test:stream-engine-audio15": "node ../tools/stream-studio-application-audio-pass21-10-15-test.mjs ..",
+    "audio-helper:doctor": "node tools/application-audio-windows-acceptance.mjs",
+    "audio-helper:acceptance": "node tools/application-audio-windows-acceptance.mjs",
+    "audio-helper:soak": "node tools/application-audio-windows-soak.mjs",
+    "game-capture:build": "cmd /c native\\game-capture\\build.cmd",
+    "game-capture:doctor": "node tools/game-capture-windows-acceptance.mjs",
+    "game-capture:soak": "node tools/game-capture-windows-soak.mjs",
+    "stream-evidence:summary": "node tools/stream-runtime-evidence-summary.mjs",
+    "stream-evidence:guard": "node tools/stream-runtime-evidence-summary.mjs --guard"
   },
   "devDependencies": {
     "electron": "38.0.0",
@@ -163,6 +173,20 @@
       {
         "from": "vendor/ffmpeg",
         "to": "ffmpeg",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "vendor/audio",
+        "to": "audio",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "vendor/game-capture",
+        "to": "game-capture",
         "filter": [
           "**/*"
         ]

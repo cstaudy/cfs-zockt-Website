@@ -369,6 +369,7 @@
             <div><span>PROJEKTE</span><strong id="toolsCutCount">0</strong></div>
             <div><span>CLIPS</span><strong id="toolsCutClips">0</strong></div>
             <div><span>EXPORT JOBS</span><strong id="toolsCutJobs">0</strong></div>
+            <div><span>REC HANDOFFS</span><strong id="toolsRecordingHandoffCount">0</strong></div>
           </div>
           <div class="media-engine-strip">
             <div><span>FFMPEG</span><strong id="toolsMediaStatus">NICHT GEPRÜFT</strong><small id="toolsMediaVersion">–</small></div>
@@ -377,6 +378,8 @@
             <div><span>ENGINE</span><strong id="toolsMediaProgress">IDLE</strong><small id="toolsMediaError">Lokale Verarbeitung</small></div>
             <div class="inline"><button class="btn" id="toolsProbeMedia">FFMPEG PRÜFEN</button><button class="btn" id="toolsOpenExports">EXPORT-ORDNER</button></div>
           </div>
+          <div class="mini-head tools-recording-handoff-head">STREAM RECORDING → CUT STUDIO</div>
+          <div id="toolsRecordingHandoffs" class="tools-recording-handoffs"><div class="launcher-scene-empty">Noch keine Recording-Handoffs.</div></div>
           <div id="toolsCutProjects" class="tools-cut-projects"><div class="launcher-scene-empty">Noch keine Cut-Projekte geladen.</div></div>
           <div class="mini-head tools-job-head">EXPORT JOB QUEUE</div>
           <div id="toolsCutJobList" class="tools-cut-jobs"><div class="launcher-scene-empty">Noch keine Export-Jobs.</div></div>
@@ -679,6 +682,9 @@
             <div><span>RECONNECTS</span><strong id="streamEngineReconnects">0</strong></div>
             <div><span>DROPPED</span><strong id="streamEngineDropped">0</strong></div>
             <div><span>WATCHDOG</span><strong id="streamEngineWatchdog">0</strong></div>
+            <div><span>PROGRAM SCENE</span><strong id="streamEngineScene">–</strong></div>
+            <div><span>HOT SWITCH</span><strong id="streamEngineSceneSwitches">0</strong></div>
+            <div><span>TRANSITION</span><strong id="streamEngineSceneTransition">–</strong></div>
           </div>
           <div class="inline">
             <button class="btn" id="probeStreamEngine">ENGINE PRÜFEN</button>
@@ -690,21 +696,40 @@
 
         <section class="panel">
           <div class="panel-head">
-            <div><span>LOCAL CAPTURE</span><h2>Bild & Ton</h2><p>Bildschirm, Fenster oder Kamera. Native Game-Capture-Hooks folgen separat; Borderless-Games können zunächst über Fenster-Capture getestet werden.</p></div>
+            <div><span>LOCAL CAPTURE</span><h2>Bild & Ton</h2><p>Bildschirm, Fenster, native Windows Game Capture oder Kamera. Spiel- und Gerätebindungen bleiben ausschließlich lokal auf diesem PC.</p></div>
           </div>
           <div class="form-grid">
-            <label><span>CAPTURE</span><select id="streamCaptureType"><option value="screen">Bildschirm</option><option value="window">Fenster / Borderless Game</option><option value="camera">Kamera</option></select></label>
+            <label><span>CAPTURE</span><select id="streamCaptureType"><option value="screen">Bildschirm</option><option value="window">Fenster</option><option value="game">Game Capture · Windows.Graphics.Capture</option><option value="camera">Kamera</option></select></label>
             <label><span>MONITOR</span><select id="streamDisplayId"><option value="">Gesamter Desktop</option></select></label>
             <label><span>FENSTERTITEL</span><input id="streamWindowTitle" maxlength="220" placeholder="z. B. Minecraft"></label>
+            <label><span>GAME-PROZESS</span><select id="streamGameProcess"><option value="">Spiel wählen…</option></select></label>
             <label><span>KAMERA</span><select id="streamVideoDevice"><option value="">Keine / Geräte laden</option></select></label>
-            <label><span>AUDIO 1 · MIC / MIX</span><select id="streamAudioDevice"><option value="">Ohne Audio / Geräte laden</option></select></label>
-            <label><span>AUDIO 2 · DESKTOP / LOOPBACK</span><select id="streamAudioDevice2"><option value="">Optional · zweiter Bus</option></select></label>
+            <label><span>MICROPHONE · DIRECTSHOW</span><select id="streamAudioDevice"><option value="">Ohne Mikrofon / Geräte laden</option></select></label>
+            <label><span>LEGACY LOOPBACK · FALLBACK</span><select id="streamAudioDevice2"><option value="">Optional · alter zweiter Bus</option></select></label>
             <label class="toggle-row"><input id="streamDrawMouse" type="checkbox"><span>Mauszeiger aufnehmen</span></label>
             <label class="toggle-row"><input id="streamRecordingEnabled" type="checkbox"><span>Parallel lokal aufnehmen</span></label>
           </div>
+          <div class="stream-app-audio-head">
+            <div><strong>NATIVE GAME CAPTURE · WINDOWS.GRAPHICS.CAPTURE</strong><small>D3D11 Capture eines lokalen Spiel-Fensters; kein Code wird in den Spielprozess injiziert.</small></div>
+            <span class="pill" id="streamGameCapturePill">NICHT GEPRÜFT</span>
+          </div>
+          <div class="stream-app-audio-status muted" id="streamGameCaptureStatus">Geräte laden oder den Game-Capture Helper testen.</div>
+          <div class="inline"><button class="btn" id="probeGameCapture">GAME CAPTURE TESTEN</button></div>
           <div class="stream-audio-mixer">
-            <div class="stream-audio-bus"><div><strong>AUDIO 1</strong><small>Mikrofon oder Mix</small></div><input id="streamAudioVolume" type="range" min="0" max="200" step="1" value="100"><output id="streamAudioVolumeValue">100%</output><label><span>DELAY</span><input id="streamAudioDelay" type="number" min="0" max="2000" step="10" value="0"><small>ms</small></label><label class="toggle-row"><input id="streamAudioMute" type="checkbox"><span>MUTE</span></label></div>
-            <div class="stream-audio-bus"><div><strong>AUDIO 2</strong><small>Desktop / Loopback</small></div><input id="streamAudioVolume2" type="range" min="0" max="200" step="1" value="100"><output id="streamAudioVolumeValue2">100%</output><label><span>DELAY</span><input id="streamAudioDelay2" type="number" min="0" max="2000" step="10" value="0"><small>ms</small></label><label class="toggle-row"><input id="streamAudioMute2" type="checkbox"><span>MUTE</span></label></div>
+            <div class="stream-audio-bus"><div><strong>MIC</strong><small>Lokaler Mikrofon-Trim</small></div><input id="streamAudioVolume" type="range" min="0" max="200" step="1" value="100"><output id="streamAudioVolumeValue">100%</output><label><span>DELAY</span><input id="streamAudioDelay" type="number" min="0" max="2000" step="10" value="0"><small>ms</small></label><label class="toggle-row"><input id="streamAudioMute" type="checkbox"><span>MUTE</span></label></div>
+            <div class="stream-audio-bus"><div><strong>LEGACY</strong><small>Nur wenn neue Busse nicht genutzt werden</small></div><input id="streamAudioVolume2" type="range" min="0" max="200" step="1" value="100"><output id="streamAudioVolumeValue2">100%</output><label><span>DELAY</span><input id="streamAudioDelay2" type="number" min="0" max="2000" step="10" value="0"><small>ms</small></label><label class="toggle-row"><input id="streamAudioMute2" type="checkbox"><span>MUTE</span></label></div>
+          </div>
+          <div class="stream-app-audio-head">
+            <div><strong>APPLICATION AUDIO · PROCESS LOOPBACK</strong><small>Game, Discord, Music und Alerts werden über Windows WASAPI pro Prozess getrennt abgegriffen.</small></div>
+            <span class="pill" id="streamApplicationAudioPill">NICHT GEPRÜFT</span>
+          </div>
+          <div class="stream-app-audio-status muted" id="streamApplicationAudioStatus">Geräte laden, um Prozesse und den lokalen WASAPI Helper zu prüfen.</div>
+          <div class="inline"><button class="btn" id="probeApplicationAudio">WASAPI HELPER TESTEN</button></div>
+          <div class="stream-audio-mixer stream-app-audio-mixer">
+            <div class="stream-audio-bus stream-app-audio-bus" data-app-audio="game"><label class="toggle-row"><input id="streamAudioGameEnabled" type="checkbox"><span>GAME</span></label><select id="streamAudioProcessGame"><option value="">Anwendung wählen…</option></select><input id="streamAudioVolumeGame" type="range" min="0" max="200" step="1" value="100"><output id="streamAudioVolumeGameValue">100%</output><label><span>DELAY</span><input id="streamAudioDelayGame" type="number" min="0" max="2000" step="10" value="0"><small>ms</small></label><label class="toggle-row"><input id="streamAudioMuteGame" type="checkbox"><span>MUTE</span></label></div>
+            <div class="stream-audio-bus stream-app-audio-bus" data-app-audio="discord"><label class="toggle-row"><input id="streamAudioDiscordEnabled" type="checkbox"><span>DISCORD</span></label><select id="streamAudioProcessDiscord"><option value="">Anwendung wählen…</option></select><input id="streamAudioVolumeDiscord" type="range" min="0" max="200" step="1" value="100"><output id="streamAudioVolumeDiscordValue">100%</output><label><span>DELAY</span><input id="streamAudioDelayDiscord" type="number" min="0" max="2000" step="10" value="0"><small>ms</small></label><label class="toggle-row"><input id="streamAudioMuteDiscord" type="checkbox"><span>MUTE</span></label></div>
+            <div class="stream-audio-bus stream-app-audio-bus" data-app-audio="music"><label class="toggle-row"><input id="streamAudioMusicEnabled" type="checkbox"><span>MUSIC</span></label><select id="streamAudioProcessMusic"><option value="">Anwendung wählen…</option></select><input id="streamAudioVolumeMusic" type="range" min="0" max="200" step="1" value="100"><output id="streamAudioVolumeMusicValue">100%</output><label><span>DELAY</span><input id="streamAudioDelayMusic" type="number" min="0" max="2000" step="10" value="0"><small>ms</small></label><label class="toggle-row"><input id="streamAudioMuteMusic" type="checkbox"><span>MUTE</span></label></div>
+            <div class="stream-audio-bus stream-app-audio-bus" data-app-audio="alerts"><label class="toggle-row"><input id="streamAudioAlertsEnabled" type="checkbox"><span>ALERTS</span></label><select id="streamAudioProcessAlerts"><option value="">Anwendung wählen…</option></select><input id="streamAudioVolumeAlerts" type="range" min="0" max="200" step="1" value="100"><output id="streamAudioVolumeAlertsValue">100%</output><label><span>DELAY</span><input id="streamAudioDelayAlerts" type="number" min="0" max="2000" step="10" value="0"><small>ms</small></label><label class="toggle-row"><input id="streamAudioMuteAlerts" type="checkbox"><span>MUTE</span></label></div>
           </div>
           <div class="stream-crop-box">
             <label class="toggle-row"><input id="streamCropEnabled" type="checkbox"><span>Capture zuschneiden</span></label>
@@ -719,10 +744,37 @@
             <label class="toggle-row"><input id="streamWatchdogEnabled" type="checkbox" checked><span>Watchdog / Auto-Recover</span></label>
             <label><span>STALL TIMEOUT</span><select id="streamWatchdogTimeout"><option value="12">12 Sekunden</option><option value="18" selected>18 Sekunden</option><option value="30">30 Sekunden</option><option value="45">45 Sekunden</option></select></label>
           </div>
-          <p class="muted">Desktop-Audio benötigt aktuell ein unter Windows verfügbares Loopback-Gerät, z. B. Stereo Mix oder ein bereits installiertes virtuelles Audiogerät. Native WASAPI-/Game-Audio-Capture bleibt bis zum echten Windows-Test offen.</p>
+          <p class="muted">Mic bleibt DirectShow. Game/Discord/Music/Alerts nutzen den CFS WASAPI Process-Loopback Helper und bleiben vollständig lokal. Der alte zweite DirectShow-Bus bleibt nur als Rückfallpfad für bestehende Setups erhalten.</p>
           <div class="inline"><button class="btn primary" id="saveStreamLocalSettings">CAPTURE & AUDIO SPEICHERN</button></div>
         </section>
       </div>
+
+      <section class="panel stream-profile-panel">
+        <div class="panel-head">
+          <div><span>SAVED OUTPUT PROFILES · PASS 21.10.24</span><h2>Streaming-Profile</h2><p>Speichere Output, Encoder, Bitraten, Zielauswahl, Recording und Audio als lokales Profil. Streamkeys und Tokens sind niemals Bestandteil eines Profils.</p></div>
+          <span class="pill" id="streamProfilePill">STUDIO</span>
+        </div>
+        <div class="form-grid">
+          <label><span>GESPEICHERTES PROFIL</span><select id="streamProfileSelect"><option value="">Studio / kein lokaler Override</option></select></label>
+          <label><span>PROFILNAME</span><input id="streamProfileName" maxlength="48" placeholder="z. B. Hauptstream 1080p60"></label>
+        </div>
+        <div class="output-local-status">
+          <div><span>OUTPUT</span><strong id="streamProfileOutput">Studio</strong></div>
+          <div><span>ENCODER</span><strong id="streamProfileEncoder">–</strong></div>
+          <div><span>ZIELE</span><strong id="streamProfileTargets">–</strong></div>
+          <div><span>RECORDING</span><strong id="streamProfileRecording">–</strong></div>
+          <div><span>AUDIO</span><strong id="streamProfileAudio">–</strong></div>
+          <div><span>SLOTS</span><strong id="streamProfileCount">0/12</strong></div>
+        </div>
+        <div class="inline">
+          <button class="btn primary" id="saveStreamProfile">AKTUELL SPEICHERN</button>
+          <button class="btn" id="loadStreamProfile">PROFIL LADEN</button>
+          <button class="btn" id="updateStreamProfile">PROFIL AKTUALISIEREN</button>
+          <button class="btn danger" id="deleteStreamProfile">LÖSCHEN</button>
+          <button class="btn" id="clearStreamProfile">STUDIO STANDARD</button>
+        </div>
+        <div class="notice compact" id="streamProfileNotice">Kein lokaler Profil-Override aktiv. Die aktuelle Stream-Studio-Konfiguration wird verwendet.</div>
+      </section>
 
       <section class="panel">
         <div class="panel-head">
@@ -745,7 +797,19 @@
           <button class="btn danger" id="stopStreamEngine" disabled>STREAM STOPPEN</button>
         </div>
         <div class="stream-destination-runtime" id="streamRuntimeTargets"><div class="launcher-scene-empty">Noch kein lokaler Stream gestartet.</div></div>
-        <div class="notice compact">Wichtig: Zwei lokale Audio-Busse, Mix-Lautstärken, Mute, Audio-Delay, Monitor-Auswahl, Crop, Dropped-Frame-Metrik und Watchdog sind jetzt vorbereitet. Native Game-Capture-Hooks, native WASAPI-Desktop-Audio-Erfassung und der echte Windows-Hardware-Dauertest bleiben offen und werden erst nach realer Prüfung als PASS markiert.</div>
+        <div class="stream-evidence-box">
+          <div class="stream-evidence-head"><div><span>RUNTIME EVIDENCE + SOAK GUARD · PASS 21.10.23</span><strong id="streamEvidenceStatus">BEREIT</strong><small id="streamEvidenceMeta">Beim Streamstart wird lokal automatisch eine Evidence-Session begonnen.</small></div><button class="btn" id="openStreamEvidence">EVIDENCE ORDNER</button></div>
+          <div class="stream-evidence-grid">
+            <div><span>SAMPLES</span><strong id="streamEvidenceSamples">0</strong></div>
+            <div><span>DAUER</span><strong id="streamEvidenceDuration">–</strong></div>
+            <div><span>LETZTE SESSION</span><strong id="streamEvidenceLast">–</strong></div>
+            <div><span>GUARD</span><strong id="streamEvidenceGuard">–</strong></div>
+            <div><span>ACCEPTANCE</span><strong id="streamEvidenceAcceptance">–</strong></div>
+            <div><span>ISSUES</span><strong id="streamEvidenceWarnings">0</strong></div>
+          </div>
+          <p class="muted" id="streamEvidenceNotice">Es werden nur technische Metriken, Zustände und Recovery-Zähler gespeichert – keine Streamkeys, Tokens, Audio- oder Videodaten.</p>
+        </div>
+        <div class="notice compact">Wichtig: Mic sowie getrennte Game/Discord/Music/Alerts-Busse, Multi-Track-Recording, Mix-Lautstärken, Mute, Audio-Delay, Monitor-Auswahl, Crop, Dropped-Frame-Metrik und Watchdog sind vorbereitet. Der Process-Loopback-Helper wird vor Nutzung runtime-verifiziert. App-Neustarts werden per Prozessname auf neue PIDs rebunden; während Recovery hält eine lokale PCM-Stille die FFmpeg-Audiopipe offen. Echte Windows-Process-Capture-, Game-Capture- und Hardware-Dauertests bleiben bewusst offen, bis sie auf dem Zielsystem real bestanden wurden.</div>
       </section>
     </section>
 
@@ -968,6 +1032,7 @@
     <div class="toast" id="toast" hidden></div>
   </main>
 </div>
+<script src="./cut-audition-web-audio.js"></script>
 <script src="./app.js"></script>
 </body>
 </html>

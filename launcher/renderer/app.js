@@ -19,6 +19,14 @@ let menuOpen=true;
 let streamBotConfig={enabled:false,prefix:"!",commands:[]};
 let streamBotLoaded=false;
 let experienceMode="simple";
+let cutAuditionAudio=null;
+let cutAuditionStopTimer=null;
+let cutAuditionTransport={projectId:"",startMs:0,durationMs:0,cacheStartMs:0,cacheDurationMs:0,playOffsetMs:0};
+let cutAuditionSession={active:false,id:"",projectId:"",startMs:0,endMs:0,paused:false,loopEnabled:false,loopStartMs:0,loopEndMs:0,loopCrossfadeMs:0,currentSegmentStartMs:0,waitingStartMs:null,positionMs:0,transport:"idle",segments:new Map()};
+let cutAuditionSessionAdvance=null;
+let cutAuditionWebAudio=null;
+let cutAuditionClockTimer=null;
+let cutAuditionClockLastState="idle";
 const EXPERIENCE_STORAGE_KEY="cfsLauncherExperienceMode";
 const PRO_ONLY_PAGES=new Set(["sync","audio","events","bot","streamengine","output","obs","system","beta"]);
 const EXPERIENCE_HELP=Object.freeze({
@@ -1042,8 +1050,8 @@ function renderCreatorTools(nextState=state){
   $("#toolsScoreAPlus").disabled=features.games!==true||!running;$("#toolsScoreBPlus").disabled=features.games!==true||!running;
   const url=game.source_url||"";$("#toolsGameUrl").value=url;$("#toolsCopyGameUrl").disabled=!url;$("#toolsPreviewGame").disabled=!url;$("#toolsPreviewGame").dataset.url=url;
 
-  const projects=library.cutProjects||[],jobs=library.cutJobs||[],sources=nextState?.mediaSources?.sources||{},media=nextState?.mediaEngine||{};
-  $("#toolsCutCount").textContent=String(projects.length);$("#toolsCutClips").textContent=String(projects.reduce((sum,p)=>sum+Number(p.clip_count||0),0));$("#toolsCutJobs").textContent=String(jobs.filter(job=>["queued","claimed","processing"].includes(job.status)).length);
+  const projects=library.cutProjects||[],jobs=library.cutJobs||[],sources=nextState?.mediaSources?.sources||{},media=nextState?.mediaEngine||{},recordingHandoffs=nextState?.recordingHandoffs||{items:[],pending:0,ready:0};
+  $("#toolsCutCount").textContent=String(projects.length);$("#toolsCutClips").textContent=String(projects.reduce((sum,p)=>sum+Number(p.clip_count||0),0));$("#toolsCutJobs").textContent=String(jobs.filter(job=>["queued","claimed","processing"].includes(job.status)).length);$("#toolsRecordingHandoffCount").textContent=String((recordingHandoffs.items||[]).length);
   const checked=Boolean(media.checkedAt),available=Boolean(media.available);
   $("#toolsMediaStatus").textContent=!checked?"NICHT GEPRÜFT":available?"BEREIT":"FEHLT";
   $("#toolsMediaStatus").className=available?"source-ok":checked?"source-missing":"";
@@ -1053,7 +1061,17 @@ function renderCreatorTools(nextState=state){
   $("#toolsMediaSource").textContent=`Quelle: ${String(media.ffmpegSource||"unbekannt").toUpperCase()}`;
   $("#toolsMediaGpu").textContent=["nvenc","qsv","amf"].filter(k=>enc[k]).map(k=>k.toUpperCase()).join(" · ")||"SOFTWARE";
   $("#toolsMediaProgress").textContent=media.status==="processing"?`${Number(media.progress||0)}% · ${String(media.phase||"clips").toUpperCase()} · ${String(media.encoder||"software").toUpperCase()}`:String(media.status||"idle").toUpperCase();
-  $("#toolsMediaError").textContent=media.error||media.lastOutputDir||"Lokale Verarbeitung";
+  const auditionCache=media.auditionCache||{};
+  $("#toolsMediaError").textContent=media.error||media.lastOutputDir||`Audition Cache · ${Number(auditionCache.hits||0)} HIT · ${Number(auditionCache.renders||0)} RENDER · ${Number(auditionCache.prefetchHits||0)} PREFETCH HIT · ${Number(auditionCache.files||0)} SEGMENTE · GAPLESS WEBAUDIO`;
+
+  const handoffItems=(recordingHandoffs.items||[]).slice(0,12);
+  $("#toolsRecordingHandoffs").innerHTML=handoffItems.length?handoffItems.map(item=>{
+    const status=String(item.status||"pending"),ready=status==="ready"&&item.projectId,error=status==="error",activeTracks=(item.tracks||[]).filter(track=>track.enabled!==false).map(track=>track.label||track.key).join(" · ")||"Stream Mix";
+    const stemRows=(item.tracks||[]).map(track=>{const a=track.analysis||{},preview=track.preview||{},peak=Number.isFinite(Number(a.peak_db))?`${Number(a.peak_db).toFixed(1)} dB`:"–",mean=Number.isFinite(Number(a.mean_db))?`${Number(a.mean_db).toFixed(1)} dB`:"–";const wave=a.waveform_exists&&a.waveform_path?`<img class="tools-recording-stem-wave" src="${escapeHtml(localFileUrl(a.waveform_path))}" alt="">`:`<div class="tools-recording-stem-wave empty">WAVEFORM –</div>`;const player=preview.exists&&preview.preview_path?`<audio class="tools-recording-preview" data-track-preview="${escapeHtml(item.id)}:${escapeHtml(track.key)}" controls preload="none" src="${escapeHtml(localFileUrl(preview.preview_path))}"></audio>`:"";return `<div class="tools-recording-stem"><div><b>${escapeHtml(track.label||track.key)}</b><small>STREAM ${Number(track.stream_index||0)} · PEAK ${escapeHtml(peak)} · MEAN ${escapeHtml(mean)}</small></div>${wave}<div class="tools-recording-stem-actions"><button class="btn" data-recording-preview-track="${escapeHtml(item.id)}" data-track-key="${escapeHtml(track.key)}">SPUR HÖREN</button></div>${player}</div>`}).join("");
+    const mixPlayer=item.mixPreview?.exists&&item.mixPreview?.preview_path?`<audio class="tools-recording-preview mix" data-mix-preview="${escapeHtml(item.id)}" controls preload="none" src="${escapeHtml(localFileUrl(item.mixPreview.preview_path))}"></audio>`:"";
+    return `<article class="tools-recording-handoff"><div class="tools-recording-handoff-main"><strong>${escapeHtml(item.fileName||"Stream Recording")}</strong><small class="${ready?"handoff-ready":error?"handoff-error":""}">${escapeHtml(status.toUpperCase())}${item.projectTitle?` · ${escapeHtml(item.projectTitle)}`:""} · ${Math.max(0,Math.round(Number(item.durationMs||0)/1000))} s</small><small>${escapeHtml(activeTracks)}</small>${item.error?`<small class="handoff-error">${escapeHtml(item.error)}</small>`:""}<div class="tools-recording-stems">${stemRows}</div>${mixPlayer}</div><div class="tools-recording-handoff-actions"><button class="btn" data-recording-analyze="${escapeHtml(item.id)}">WAVEFORMS</button><button class="btn" data-recording-preview-mix="${escapeHtml(item.id)}">MIX HÖREN</button><button class="btn" data-recording-handoff="${escapeHtml(item.id)}" data-open="${ready?"true":"false"}">${ready?"CUT ÖFFNEN":error?"ERNEUT VERKNÜPFEN":"ZU CUT STUDIO"}</button>${ready?`<button class="btn" data-recording-handoff="${escapeHtml(item.id)}" data-open="false">NEU SYNCEN</button>`:""}</div></article>`
+  }).join(""):`<div class="launcher-scene-empty">Noch keine Recording-Handoffs.</div>`;
+
 
   const musicMap=nextState?.mediaSources?.music||{},voiceMap=nextState?.mediaSources?.voice||{},musicTrackMap=nextState?.mediaSources?.musicTracks||{},voiceTrackMap=nextState?.mediaSources?.voiceTracks||{},sfxMap=nextState?.mediaSources?.sfx||{};
   $("#toolsCutProjects").innerHTML=projects.length?projects.map(project=>{
@@ -1178,25 +1196,50 @@ function streamProviderMeta(nextState,provider){
 function streamSupportLabel(value){return value==="supported"?"DIREKT UNTERSTÜTZT":value==="conditional"?"ZUGANG ABHÄNGIG":"MANUELL";}
 
 function renderStreamDeviceOptions(nextState){
-  const data=nextState?.streamCaptureDevices;
-  if(!data||!Array.isArray(data.devices))return;
-  const settings=nextState.settings||{};
-  const videos=data.devices.filter(item=>item.type==="video");
-  const audios=data.devices.filter(item=>item.type==="audio");
-  const videoSelect=$("#streamVideoDevice"),audioSelect=$("#streamAudioDevice"),audioSelect2=$("#streamAudioDevice2"),displaySelect=$("#streamDisplayId");
+  const data=nextState?.streamCaptureDevices||{};
+  const gameCapture=nextState?.gameCapture||data.gameCapture||{},gameDoctor=nextState?.gameCaptureDoctor||null,gamePill=$("#streamGameCapturePill"),gameStatus=$("#streamGameCaptureStatus");
+  const gameReady=gameCapture.runtimeVerified===true,gameStaged=gameCapture.staged===true||gameCapture.available===true;
+  if(gamePill){gamePill.textContent=gameReady?"WGC BEREIT":(gameStaged?"HELPER PRÜFEN":"HELPER FEHLT");gamePill.className="pill"+(gameReady?" online":"");}
+  if(gameStatus){const build=Number(gameCapture.windowsBuild||gameDoctor?.windowsBuild||0),buildText=build?` · Windows Build ${build}`:"",totals=gameCapture.totals||{},recoveries=Number(totals.helperRestarts||0),stalls=Number(totals.frameStalls||0),deviceLoss=Number(totals.deviceLossRestarts||0),windowRebinds=Number(totals.windowRebinds||0),recoveryText=recoveries?` · Recovery ${recoveries} (${stalls} Stall / ${deviceLoss} D3D / ${windowRebinds} Window-Rebind)`:"";gameStatus.textContent=gameReady?`Windows.Graphics.Capture runtime-verifiziert (${gameCapture.protocol||"CFS_GAME_CAPTURE_WGC_V1"})${buildText}${recoveryText}.`:(gameDoctor?.helper?.error||gameCapture.error||(gameStaged?"Helper ist gestaged, aber noch nicht erfolgreich mit --probe verifiziert.":"CFS Game-Capture Helper ist noch nicht gestaged."));}
+  const appAudio=nextState?.applicationAudio||data.applicationAudio||{},doctor=nextState?.applicationAudioDoctor||null,pill=$("#streamApplicationAudioPill"),status=$("#streamApplicationAudioStatus");
+  const ready=appAudio.runtimeVerified===true,staged=appAudio.staged===true||appAudio.available===true;
+  if(pill){pill.textContent=ready?"WASAPI BEREIT":(staged?"HELPER PRÜFEN":"HELPER FEHLT");pill.className="pill"+(ready?" online":"");}
+  if(status){const build=Number(appAudio.windowsBuild||doctor?.windowsBuild||0),buildText=build?` · Windows Build ${build}`:"";status.textContent=ready?`Process Loopback runtime-verifiziert (${appAudio.protocol||"CFS_AUDIO_LOOPBACK_V1"})${buildText}.`:(doctor?.helper?.error||appAudio.error||(staged?"Helper ist gestaged, aber noch nicht erfolgreich mit --probe verifiziert.":"CFS WASAPI Helper ist noch nicht gestaged."));}
+  if(!Array.isArray(data.devices))return;
+  const settings=nextState.settings||{},audioSources=settings.streamAudioSources||{};
+  const videos=data.devices.filter(item=>item.type==="video"),audios=data.devices.filter(item=>item.type==="audio"),processes=Array.isArray(data.processes)?data.processes:[];
+  const videoSelect=$("#streamVideoDevice"),audioSelect=$("#streamAudioDevice"),audioSelect2=$("#streamAudioDevice2"),displaySelect=$("#streamDisplayId"),gameSelect=$("#streamGameProcess");
   if(displaySelect){const displays=Array.isArray(data.displays)?data.displays:[];displaySelect.innerHTML='<option value="">Gesamter Desktop</option>'+displays.map(item=>`<option value="${escapeHtml(item.id)}">${escapeHtml(item.label||`Monitor ${item.id}`)} · ${Number(item.bounds?.width||0)}×${Number(item.bounds?.height||0)} @ ${Number(item.scaleFactor||1).toFixed(2)}x</option>`).join("");displaySelect.value=settings.streamDisplayId||"";}
   if(videoSelect){videoSelect.innerHTML='<option value="">Keine / nicht gewählt</option>'+videos.map(item=>`<option value="${escapeHtml(item.name)}">${escapeHtml(item.name)}</option>`).join("");videoSelect.value=settings.streamVideoDevice||"";}
-  if(audioSelect){audioSelect.innerHTML='<option value="">Ohne Audio</option>'+audios.map(item=>`<option value="${escapeHtml(item.name)}">${escapeHtml(item.name)}</option>`).join("");audioSelect.value=settings.streamAudioDevice||"";}
-  if(audioSelect2){audioSelect2.innerHTML='<option value="">Kein zweiter Bus</option>'+audios.map(item=>`<option value="${escapeHtml(item.name)}">${escapeHtml(item.name)}</option>`).join("");audioSelect2.value=settings.streamAudioDevice2||"";}
-}
+  if(audioSelect){audioSelect.innerHTML='<option value="">Ohne Mikrofon</option>'+audios.map(item=>`<option value="${escapeHtml(item.name)}">${escapeHtml(item.name)}</option>`).join("");audioSelect.value=audioSources.mic?.deviceName||settings.streamAudioDevice||"";}
+  if(audioSelect2){audioSelect2.innerHTML='<option value="">Kein Legacy-Bus</option>'+audios.map(item=>`<option value="${escapeHtml(item.name)}">${escapeHtml(item.name)}</option>`).join("");audioSelect2.value=settings.streamAudioDevice2||"";}
+  const label=row=>`${row.name}${row.title?` · ${row.title}`:""} · PID ${row.id}`;
+  if(gameSelect){const id=String(Number(settings.streamGameProcessId||0)||"");const gameRows=processes.filter(row=>String(row.title||"").trim());gameSelect.innerHTML='<option value="">Spiel wählen…</option>'+gameRows.map(row=>`<option value="${Number(row.id)}" data-process-name="${escapeHtml(row.name||"")}" data-window-title="${escapeHtml(row.title||"")}">${escapeHtml(label(row))}</option>`).join("");gameSelect.value=id;if(id&&!gameSelect.value){gameSelect.insertAdjacentHTML("beforeend",`<option value="${escapeHtml(id)}" data-process-name="${escapeHtml(settings.streamGameProcessName||"")}" data-window-title="${escapeHtml(settings.streamGameWindowTitle||"")}">${escapeHtml(settings.streamGameProcessName||"Gespeichertes Spiel")} · PID ${escapeHtml(id)} · aktuell nicht gefunden</option>`);gameSelect.value=id;}}
 
+  for(const key of ["Game","Discord","Music","Alerts"]){const select=$("#streamAudioProcess"+key);if(!select)continue;const id=String(Number(audioSources[key.toLowerCase()]?.processId||0)||"");select.innerHTML='<option value="">Anwendung wählen…</option>'+processes.map(row=>`<option value="${Number(row.id)}" data-process-name="${escapeHtml(row.name||"")}">${escapeHtml(label(row))}</option>`).join("");select.value=id;if(id&&!select.value){const saved=audioSources[key.toLowerCase()]||{};select.insertAdjacentHTML("beforeend",`<option value="${escapeHtml(id)}" data-process-name="${escapeHtml(saved.processName||"")}">${escapeHtml(saved.processName||"Gespeicherte Anwendung")} · PID ${escapeHtml(id)} · aktuell nicht gefunden</option>`);select.value=id;}}
+  if(status&&ready){const recovery=appAudio.recovery||{},recoveryCount=Number(recovery.recoveries||0),rebinds=Number(recovery.processRebinds||0),restarts=Number(recovery.helperRestarts||0);status.textContent=`${processes.length} lokale Prozesse erkannt · Process Loopback runtime-verifiziert${Number(appAudio.windowsBuild||0)?` · Windows Build ${Number(appAudio.windowsBuild)}`:""}${recoveryCount?` · Recovery ${recoveryCount} (${rebinds} Rebind / ${restarts} Helper)`:""}.`;}
+}
 function renderStreamEngine(nextState){
   const engine=nextState?.streamEngine||{},studio=nextState?.streamStudio||{},settings=nextState?.settings||{};
-  const config=studio.config||{},multi=config.multistream||{},targets=Array.isArray(multi.destinations)?multi.destinations:[];
+  const config=studio.effective_config||studio.config||{},multi=config.multistream||{},targets=Array.isArray(multi.destinations)?multi.destinations:[];
   const active=targets.filter(target=>target?.enabled===true),credentialMeta=studio.credentials?.targets||{};
   const caps=engine.capabilities?.encoders||{};
   const encoderList=[caps.nvenc&&"NVENC",caps.amd&&"AMD",caps.qsv&&"QSV",caps.software!==false&&"x264"].filter(Boolean).join(" / ")||"–";
   const running=engine.desiredRunning===true;
+  const profileState=nextState?.streamProfiles||{},profileRows=Array.isArray(profileState.profiles)?profileState.profiles:[],activeProfile=profileState.activeProfile||null,profileWarnings=studio.profile_override?.warnings||[];
+  const profileSelect=$("#streamProfileSelect");
+  if(profileSelect){const previous=profileSelect.value;profileSelect.innerHTML='<option value="">Studio / kein lokaler Override</option>'+profileRows.map(row=>`<option value="${escapeHtml(row.id)}">${escapeHtml(row.name)} · ${Number(row.enabledTargets?.length||0)} Ziele</option>`).join("");const wanted=profileRows.some(row=>row.id===previous)?previous:(profileState.activeProfileId||"");profileSelect.value=wanted;}
+  if($("#streamProfilePill")){ $("#streamProfilePill").textContent=activeProfile?activeProfile.name:"STUDIO"; $("#streamProfilePill").className="pill"+(activeProfile?" online":""); }
+  const effectiveOutput=config.output||{},effectiveTargets=Array.isArray(config?.multistream?.destinations)?config.multistream.destinations:[],effectiveEnabled=effectiveTargets.filter(row=>row?.enabled===true),effectiveAudio=settings.streamAudioSources||{};
+  if($("#streamProfileOutput"))$("#streamProfileOutput").textContent=activeProfile?String(effectiveOutput.profile||"–").toUpperCase():"Studio";
+  if($("#streamProfileEncoder"))$("#streamProfileEncoder").textContent=String(effectiveOutput.encoder||"auto").toUpperCase();
+  if($("#streamProfileTargets"))$("#streamProfileTargets").textContent=`${effectiveEnabled.length}/${effectiveTargets.length||0}`;
+  if($("#streamProfileRecording"))$("#streamProfileRecording").textContent=settings.streamRecordingEnabled===true?`${String(effectiveOutput.recording_format||"mkv").toUpperCase()} · AN`:`AUS`;
+  if($("#streamProfileAudio")){const enabledAudio=Object.entries(effectiveAudio).filter(([,row])=>row?.enabled===true).map(([key])=>key.toUpperCase());$("#streamProfileAudio").textContent=enabledAudio.length?enabledAudio.join(" / "):"KEINE";}
+  if($("#streamProfileCount"))$("#streamProfileCount").textContent=`${profileRows.length}/${Number(profileState.maxProfiles||12)}`;
+  if($("#streamProfileName")&&document.activeElement!==$("#streamProfileName")){const selected=profileRows.find(row=>row.id===$("#streamProfileSelect")?.value)||activeProfile;$("#streamProfileName").value=selected?.name||"";}
+  if($("#streamProfileNotice"))$("#streamProfileNotice").textContent=activeProfile?(profileWarnings.length?`Profil ${activeProfile.name} aktiv · ${profileWarnings.join(" · ")}`:`Profil ${activeProfile.name} aktiv · lokaler Runtime-Override · keine Streamkeys/Tokens gespeichert.`):"Kein lokaler Profil-Override aktiv. Die aktuelle Stream-Studio-Konfiguration wird verwendet.";
+  const selectedProfileId=$("#streamProfileSelect")?.value||"";for(const id of ["loadStreamProfile","updateStreamProfile","deleteStreamProfile"]){if($("#"+id))$("#"+id).disabled=running||!selectedProfileId;}if($("#clearStreamProfile"))$("#clearStreamProfile").disabled=running||!activeProfile;if($("#saveStreamProfile"))$("#saveStreamProfile").disabled=running||profileRows.length>=Number(profileState.maxProfiles||12);
   if($("#streamEnginePill")){ $("#streamEnginePill").textContent=engine.available?(running?"RUNNING":"BEREIT"):(engine.checkedAt?"NICHT BEREIT":"NICHT GEPRÜFT"); $("#streamEnginePill").className="pill"+(engine.available?" online":""); }
   if($("#streamEngineStatus"))$("#streamEngineStatus").textContent=engine.available?"FFmpeg bereit":engine.error||"Nicht geprüft";
   if($("#streamEngineEncoder"))$("#streamEngineEncoder").textContent=encoderList;
@@ -1204,7 +1247,10 @@ function renderStreamEngine(nextState){
   if($("#streamEngineReconnects"))$("#streamEngineReconnects").textContent=String(Number(engine.metrics?.reconnects||0));
   if($("#streamEngineDropped"))$("#streamEngineDropped").textContent=String(Number(engine.metrics?.droppedFrames||0));
   if($("#streamEngineWatchdog"))$("#streamEngineWatchdog").textContent=String(Number(engine.metrics?.watchdogRestarts||0));
-  if($("#streamEngineNotice"))$("#streamEngineNotice").textContent=engine.available?`${engine.version||"FFmpeg"} · gdigrab ${engine.capabilities?.gdigrab?"ja":"nein"} · dshow ${engine.capabilities?.dshow?"ja":"nein"}`:(engine.error||"Noch nicht geprüft.");
+  if($("#streamEngineScene"))$("#streamEngineScene").textContent=engine.sceneRuntime?.sceneName||engine.sceneGraph?.sceneName||"–";
+  if($("#streamEngineSceneSwitches"))$("#streamEngineSceneSwitches").textContent=`${Number(engine.metrics?.sceneSwitches||0)} / ${Number(engine.metrics?.sceneSwitchFailures||0)} FAIL`;
+  if($("#streamEngineSceneTransition")){const transition=engine.sceneRuntime?.lastTransition;$("#streamEngineSceneTransition").textContent=transition?`${String(transition.effectiveType||"cut").toUpperCase()}${Number(transition.durationMs||0)>0?` ${Number(transition.durationMs)}ms`:""}${transition.fallback?" FALLBACK":""}`:"–";}
+  if($("#streamEngineNotice")){const runtimeUpdate=studio.runtime_update;$("#streamEngineNotice").textContent=runtimeUpdate?.ok===false?`Scene Hot Switch: ${runtimeUpdate.error||"fehlgeschlagen"}`:engine.available?`${engine.version||"FFmpeg"} · gdigrab ${engine.capabilities?.gdigrab?"ja":"nein"} · dshow ${engine.capabilities?.dshow?"ja":"nein"} · xfade ${engine.capabilities?.xfade?"ja":"nein"} · App-Audio ${engine.capabilities?.processLoopback?"bereit":"Helper fehlt"}${engine.sceneRuntime?.mode==="frame_bus"?` · Scene Bus ${engine.sceneRuntime?.buses?.length||0}`:""}`:(engine.error||"Noch nicht geprüft.");}
   if($("#streamTargetLimit"))$("#streamTargetLimit").textContent=`${active.length}/${Math.max(1,Number(studio.multistream?.max_destinations||1))} AKTIV`;
   if($("#streamRunPill")){ $("#streamRunPill").textContent=running?"ON":"OFF"; $("#streamRunPill").className="pill"+(running?" live":""); }
   if($("#startStreamEngine"))$("#startStreamEngine").disabled=running||!nextState?.bridge?.connected;
@@ -1212,6 +1258,7 @@ function renderStreamEngine(nextState){
 
   if($("#streamCaptureType"))$("#streamCaptureType").value=settings.streamCaptureType||"screen";
   if($("#streamWindowTitle")){ $("#streamWindowTitle").value=settings.streamWindowTitle||""; $("#streamWindowTitle").disabled=(settings.streamCaptureType||"screen")!=="window"; }
+  if($("#streamGameProcess")){ $("#streamGameProcess").disabled=(settings.streamCaptureType||"screen")!=="game"; if($("#streamGameProcess").options.length>1)$("#streamGameProcess").value=String(Number(settings.streamGameProcessId||0)||""); }
   if($("#streamDisplayId")){$("#streamDisplayId").value=settings.streamDisplayId||"";$("#streamDisplayId").disabled=(settings.streamCaptureType||"screen")!=="screen";}
   if($("#streamVideoDevice")){ $("#streamVideoDevice").disabled=(settings.streamCaptureType||"screen")!=="camera"; if(!$("#streamVideoDevice").options.length||$("#streamVideoDevice").options.length===1)$("#streamVideoDevice").value=settings.streamVideoDevice||""; }
   if($("#streamAudioDevice")&&$("#streamAudioDevice").options.length>1)$("#streamAudioDevice").value=settings.streamAudioDevice||"";
@@ -1222,6 +1269,8 @@ function renderStreamEngine(nextState){
   if($("#streamAudioMute2"))$("#streamAudioMute2").checked=settings.streamAudioMute2===true;
   if($("#streamAudioDelay"))$("#streamAudioDelay").value=String(settings.streamAudioDelayMs||0);
   if($("#streamAudioDelay2"))$("#streamAudioDelay2").value=String(settings.streamAudioDelayMs2||0);
+  const sourceAudio=settings.streamAudioSources||{};
+  for(const key of ["Game","Discord","Music","Alerts"]){const slug=key.toLowerCase(),row=sourceAudio[slug]||{},enabled=$("#streamAudio"+key+"Enabled"),select=$("#streamAudioProcess"+key),slider=$("#streamAudioVolume"+key),out=$("#streamAudioVolume"+key+"Value"),delay=$("#streamAudioDelay"+key),mute=$("#streamAudioMute"+key),host=document.querySelector(`[data-app-audio="${slug}"]`);if(enabled)enabled.checked=row.enabled===true;if(select&&select.options.length>1)select.value=String(Number(row.processId||0)||"");if(slider){const value=Math.round(Number(row.volume??1)*100);slider.value=String(value);if(out)out.textContent=`${value}%`;}if(delay)delay.value=String(row.delayMs||0);if(mute)mute.checked=row.muted===true;if(host)host.classList.toggle("disabled",row.enabled!==true);}
   if($("#streamCropEnabled"))$("#streamCropEnabled").checked=settings.streamCropEnabled===true;
   if($("#streamCropX"))$("#streamCropX").value=String(settings.streamCropX||0);
   if($("#streamCropY"))$("#streamCropY").value=String(settings.streamCropY||0);
@@ -1253,6 +1302,17 @@ function renderStreamEngine(nextState){
     const rows=items.concat(recording?[recording]:[]);
     runtime.innerHTML=rows.length?rows.map(item=>{const status=String(item.status||"idle"),controllable=item.kind!=="recording"&&item.id;const activeState=["starting","live","reconnecting"].includes(status);return `<div class="stream-runtime-row"><div><strong>${escapeHtml(item.label||item.id||"Output")}</strong><small>${escapeHtml(item.provider||item.kind||"")}</small></div><b>${escapeHtml(status.toUpperCase())}</b><span>${Number(item.metrics?.fps||0).toFixed(0)} FPS</span><span>${Number(item.metrics?.bitrateKbps||0).toFixed(0)} kbit/s</span><span>DROP ${Number(item.metrics?.droppedFrames||0)}</span>${item.lastError?`<small class="stream-runtime-error">${escapeHtml(item.lastError)}</small>`:""}${controllable?`<button class="btn ${activeState?"danger":"primary"}" data-${activeState?"stop":"start"}-stream-target="${escapeHtml(item.id)}">${activeState?"ZIEL STOPPEN":"ZIEL STARTEN"}</button>`:""}</div>`}).join(""):'<div class="launcher-scene-empty">Noch kein lokaler Stream gestartet.</div>';
   }
+  const evidence=nextState?.runtimeEvidence||{},lastEvidence=evidence.lastEvidence||null,lastSummary=lastEvidence?.summary||{},guard=lastSummary.guard||lastEvidence?.guard||null;
+  if($("#streamEvidenceStatus"))$("#streamEvidenceStatus").textContent=evidence.active?"SOAK LÄUFT":guard?`GUARD ${String(guard.status||"–")}`:"BEREIT";
+  if($("#streamEvidenceSamples"))$("#streamEvidenceSamples").textContent=String(Number(evidence.samples||0));
+  if($("#streamEvidenceDuration")){const started=evidence.startedAt?new Date(evidence.startedAt).getTime():0,duration=started?Math.max(0,Date.now()-started):Number(lastSummary.durationMs||0);$("#streamEvidenceDuration").textContent=duration?`${Math.floor(duration/60000)}m ${Math.floor((duration%60000)/1000)}s`:"–";}
+  if($("#streamEvidenceLast"))$("#streamEvidenceLast").textContent=lastEvidence?.endedAt?new Date(lastEvidence.endedAt).toLocaleString("de-DE"):"–";
+  if($("#streamEvidenceGuard"))$("#streamEvidenceGuard").textContent=guard?.status||"–";
+  if($("#streamEvidenceAcceptance"))$("#streamEvidenceAcceptance").textContent=guard?.acceptanceStatus||"–";
+  if($("#streamEvidenceWarnings")){const counts=guard?.counts||{};$("#streamEvidenceWarnings").textContent=guard?String(Number(counts.WARN||0)+Number(counts.FAIL||0)+Number(counts.INCOMPLETE||0)):String(Array.isArray(lastSummary.warnings)?lastSummary.warnings.length:0);}
+  if($("#streamEvidenceMeta"))$("#streamEvidenceMeta").textContent=evidence.active?`Lokale Evidence läuft · ${Number(evidence.samples||0)} Samples · keine Rohmedien`:lastEvidence?`Letzte Evidence: ${Number(lastSummary.targetIds?.length||0)} Ziele · Guard ${guard?.status||"–"} · Acceptance ${guard?.acceptanceStatus||"–"}`:"Beim Streamstart wird lokal automatisch eine Evidence-Session begonnen.";
+  if($("#streamEvidenceNotice")){const warnings=Array.isArray(lastSummary.warnings)?lastSummary.warnings:[],issues=Array.isArray(guard?.checks)?guard.checks.filter(row=>row.status!=="PASS").slice(0,4):[],missing=Array.isArray(guard?.scenarioCoverage?.missing)?guard.scenarioCoverage.missing:[];$("#streamEvidenceNotice").textContent=guard?(issues.length?`Soak Guard: ${issues.map(row=>`${row.label} ${row.status}`).join(" · ")}${missing.length?` · Szenarien offen: ${missing.join(", ")}`:""}`:`Soak Guard ${guard.status}. Technische Bewertung – keine automatische reale Plattform-Abnahme.`):(warnings.length?`Letzte Session: ${warnings.join(" · ")}`:"Es werden nur technische Metriken, Zustände und Recovery-Zähler gespeichert – keine Streamkeys, Tokens, Audio- oder Videodaten.");}
+
   const preflight=nextState?.streamPreflight;
   if($("#streamEnginePreflightResult")){
     if(!preflight)$("#streamEnginePreflightResult").innerHTML='<div class="launcher-scene-empty">Noch nicht geprüft.</div>';
@@ -1366,6 +1426,53 @@ function localFileUrl(value){
   const raw=String(value||"").replace(/\\/g,"/");
   if(!raw)return"";
   return encodeURI(raw.startsWith("/")?`file://${raw}`:`file:///${raw}`);
+}
+async function reportCutAuditionClock(stateOverride="",force=false){
+  if(!cutAuditionSession.active||!cutAuditionSession.id||!window.CFSLauncher?.reportCutAuditionClock)return null;const transport=ensureCutAuditionWebAudio(),snap=transport?.snapshot?.()||{};
+  const state=stateOverride||((snap.paused||cutAuditionSession.paused)?"paused":"playing"),positionMs=Math.max(cutAuditionSession.startMs,Math.min(cutAuditionSession.endMs,Number(snap.positionMs??cutAuditionSession.positionMs??cutAuditionSession.startMs)||cutAuditionSession.startMs));
+  cutAuditionSession.positionMs=positionMs;cutAuditionClockLastState=state;try{return await window.CFSLauncher.reportCutAuditionClock({sessionId:cutAuditionSession.id,state,positionMs,force:force===true})}catch{return null}
+}
+function startCutAuditionClockReporter(){clearInterval(cutAuditionClockTimer);cutAuditionClockTimer=setInterval(()=>{if(cutAuditionSession.active)reportCutAuditionClock(cutAuditionSession.paused?"paused":"playing",false)},500)}
+function stopCutAuditionClockReporter(){clearInterval(cutAuditionClockTimer);cutAuditionClockTimer=null}
+function ensureCutAuditionWebAudio(){
+  if(cutAuditionWebAudio)return cutAuditionWebAudio;
+  const Transport=window.CFSCutAuditionAudioTransport;if(typeof Transport!=="function")return null;
+  cutAuditionWebAudio=new Transport({
+    loadSegmentBytes:async ({sessionId,cacheStartMs})=>{const result=await window.CFSLauncher.loadCutAuditionSegment({sessionId,cacheStartMs});return result?.bytes||new Uint8Array()},
+    onNeedPrefetch:startMs=>queueCutAuditionSessionPrefetch(startMs,2),
+    onEnded:()=>{const wasActive=cutAuditionSession.active;const finish=()=>{resetCutAuditionSessionLocal({pause:false,stopTransport:false});if(wasActive)toast("Gapless Audition hat das Timeline-Ende erreicht.")};if(wasActive)reportCutAuditionClock("ended",true).finally(finish);else finish()},
+    onError:error=>toast(`WebAudio Audition: ${error?.message||error}`,true),
+    onState:snapshot=>{if(cutAuditionSession.active&&snapshot?.sessionId===cutAuditionSession.id){cutAuditionSession.positionMs=Number(snapshot.positionMs||0);cutAuditionSession.transport="webaudio"}}
+  });
+  return cutAuditionWebAudio;
+}
+function resetCutAuditionSessionLocal({pause=true,stopTransport=true}={}){
+  if(pause){try{cutAuditionAudio?.pause?.()}catch{}}
+  if(stopTransport){try{cutAuditionWebAudio?.stop?.({clearSession:true,silent:true})}catch{}}
+  clearTimeout(cutAuditionStopTimer);cutAuditionStopTimer=null;cutAuditionSessionAdvance=null;stopCutAuditionClockReporter();
+  cutAuditionSession={active:false,id:"",projectId:"",startMs:0,endMs:0,paused:false,loopEnabled:false,loopStartMs:0,loopEndMs:0,loopCrossfadeMs:0,currentSegmentStartMs:0,waitingStartMs:null,positionMs:0,transport:"idle",segments:new Map()};
+}
+function cutAuditionSessionSegment(input={}){
+  const segment=input?.segment||input||{};const start=Math.max(0,Number(segment.cacheStartMs||0)),duration=Math.max(0,Number(segment.cacheDurationMs||segment.durationMs||0));
+  return{cacheHit:segment.cacheHit===true,cacheStartMs:start,cacheDurationMs:duration,playOffsetMs:Math.max(0,Number(segment.playOffsetMs||0)),durationMs:Math.max(0,Number(segment.durationMs||duration))};
+}
+function queueCutAuditionSessionPrefetch(afterMs,count=2){
+  if(!cutAuditionSession.active||!cutAuditionSession.id||!window.CFSLauncher?.prefetchCutAuditionSession)return;
+  const after=Math.max(0,Math.round(Number(afterMs)||0));if(after>=cutAuditionSession.endMs)return;
+  window.CFSLauncher.prefetchCutAuditionSession({sessionId:cutAuditionSession.id,afterMs:after,count}).catch(()=>{});
+}
+async function receiveCutAuditionSession(payload={}){
+  const event=String(payload?.event||"segment"),sessionId=String(payload?.sessionId||"");
+  if(event==="stop"){if(!sessionId||sessionId===cutAuditionSession.id)resetCutAuditionSessionLocal();return}
+  const segment=cutAuditionSessionSegment(payload);if(!sessionId||segment.cacheDurationMs<=0)return;
+  const transport=ensureCutAuditionWebAudio();if(!transport){toast("WebAudio Transport ist im Launcher nicht verfügbar.",true);return}
+  if(event==="start"){
+    resetCutAuditionSessionLocal();try{cutAuditionAudio?.pause?.()}catch{}
+    cutAuditionSession={active:true,id:sessionId,projectId:String(payload?.projectId||""),startMs:Number(payload?.startMs||0),endMs:Number(payload?.endMs||0),paused:false,loopEnabled:payload?.loopEnabled===true,loopStartMs:Number(payload?.loopStartMs||0),loopEndMs:Number(payload?.loopEndMs||0),loopCrossfadeMs:Number(payload?.loopCrossfadeMs||0),currentSegmentStartMs:Number(segment.cacheStartMs||0),waitingStartMs:null,positionMs:Number(payload?.positionMs??payload?.startMs??0),transport:"webaudio",segments:new Map([[Number(segment.cacheStartMs||0),segment]])};
+    try{await transport.startSession({sessionId,projectId:cutAuditionSession.projectId,startMs:cutAuditionSession.startMs,endMs:cutAuditionSession.endMs,positionMs:cutAuditionSession.positionMs,loopEnabled:cutAuditionSession.loopEnabled,loopStartMs:cutAuditionSession.loopStartMs,loopEndMs:cutAuditionSession.loopEndMs,loopCrossfadeMs:cutAuditionSession.loopCrossfadeMs,segment});startCutAuditionClockReporter();await reportCutAuditionClock("playing",true);const nextStart=Number(segment.cacheStartMs||0)+Number(segment.cacheDurationMs||0);queueCutAuditionSessionPrefetch(nextStart,2);toast(cutAuditionSession.loopEnabled?`A/B Loop · ${(cutAuditionSession.loopStartMs/1000).toFixed(1)}–${(cutAuditionSession.loopEndMs/1000).toFixed(1)} s · CLICK ${cutAuditionSession.loopCrossfadeMs?`${cutAuditionSession.loopCrossfadeMs} ms`:"AUS"} · WEBAUDIO.`:`Gapless Audition · ${(cutAuditionSession.positionMs/1000).toFixed(1)} s · WEBAUDIO.`)}catch(error){resetCutAuditionSessionLocal({pause:false});toast(`Gapless Audition konnte nicht starten: ${error?.message||error}`,true)}
+    return;
+  }
+  if(!cutAuditionSession.active||sessionId!==cutAuditionSession.id)return;cutAuditionSession.segments.set(Number(segment.cacheStartMs||0),segment);transport.addSegment(segment);
 }
 function audioAnalysisHtml(item){
   const a=item?.analysis||{};
@@ -1795,6 +1902,7 @@ async function init() {
   $("#toolsProbeMedia").onclick=async()=>{try{state=await window.CFSLauncher.probeMediaEngine();render(state);toast(state?.mediaEngine?.available?"FFmpeg ist bereit.":state?.mediaEngine?.error||"FFmpeg wurde nicht gefunden.",!state?.mediaEngine?.available)}catch(error){toast(error.message,true)}};
   $("#toolsOpenExports").onclick=async()=>{try{state=await window.CFSLauncher.openCutExportFolder();render(state)}catch(error){toast(error.message,true)}};
   async function selectCutSource(projectId,sourceName=""){try{state=await window.CFSLauncher.selectCutSource({projectId,sourceName});render(state);if(!state?.mediaSourceAction?.canceled)toast("Lokale Videodatei zugeordnet.")}catch(error){toast(error.message,true)}}
+  $("#toolsRecordingHandoffs").onclick=async event=>{const analyze=event.target.closest("[data-recording-analyze]"),trackPreview=event.target.closest("[data-recording-preview-track]"),mixPreview=event.target.closest("[data-recording-preview-mix]"),button=event.target.closest("[data-recording-handoff]");try{if(analyze){toast("Recording-Stems werden analysiert …");state=await window.CFSLauncher.analyzeRecordingHandoff({handoffId:analyze.dataset.recordingAnalyze});render(state);toast("Stem-Waveforms aktualisiert.");return}if(trackPreview){state=await window.CFSLauncher.previewRecordingTrack({handoffId:trackPreview.dataset.recordingPreviewTrack,trackKey:trackPreview.dataset.trackKey});render(state);const audio=document.querySelector(`[data-track-preview="${CSS.escape(trackPreview.dataset.recordingPreviewTrack)}:${CSS.escape(trackPreview.dataset.trackKey)}"]`);audio?.play?.().catch(()=>{});toast("Lokale Stem-Vorschau erzeugt.");return}if(mixPreview){state=await window.CFSLauncher.previewRecordingMix({handoffId:mixPreview.dataset.recordingPreviewMix});render(state);const audio=document.querySelector(`[data-mix-preview="${CSS.escape(mixPreview.dataset.recordingPreviewMix)}"]`);audio?.play?.().catch(()=>{});toast("Aktueller Stem-Mix wird lokal vorgespielt.");return}if(!button)return;state=await window.CFSLauncher.handoffRecordingToCut({handoffId:button.dataset.recordingHandoff,open:button.dataset.open==="true"});render(state);toast(button.dataset.open==="true"?"Cut Studio geöffnet.":"Recording mit Cut Studio verknüpft.")}catch(error){toast(error.message,true)}};
   $("#toolsCutProjects").onclick=async event=>{const open=event.target.closest("[data-open-cut-project]"),select=event.target.closest("[data-select-cut-source]"),music=event.target.closest("[data-select-cut-music]"),voice=event.target.closest("[data-select-cut-voice]"),musicTrack=event.target.closest("[data-select-cut-music-track]"),voiceTrack=event.target.closest("[data-select-cut-voice-track]"),sfx=event.target.closest("[data-select-cut-sfx]");if(open){try{state=await window.CFSLauncher.openCutProject(open.dataset.openCutProject);render(state)}catch(error){toast(error.message,true)};return}if(select){await selectCutSource(select.dataset.selectCutSource,select.dataset.sourceName||"");return}if(music){await selectCutMusic(music.dataset.selectCutMusic,music.dataset.musicName||"");return}if(voice){await selectCutVoice(voice.dataset.selectCutVoice,voice.dataset.voiceName||"");return}if(musicTrack){await selectCutMusicTrack(musicTrack.dataset.selectCutMusicTrack,musicTrack.dataset.trackId,musicTrack.dataset.trackName||"");return}if(voiceTrack){await selectCutVoiceTrack(voiceTrack.dataset.selectCutVoiceTrack,voiceTrack.dataset.trackId,voiceTrack.dataset.trackName||"");return}if(sfx){await selectCutSfx(sfx.dataset.selectCutSfx,sfx.dataset.sfxId,sfx.dataset.sfxName||"");return}};
   $("#toolsCutJobList").onclick=async event=>{const select=event.target.closest("[data-select-cut-source]"),music=event.target.closest("[data-select-cut-music]"),voice=event.target.closest("[data-select-cut-voice]"),musicTrack=event.target.closest("[data-select-cut-music-track]"),voiceTrack=event.target.closest("[data-select-cut-voice-track]"),sfx=event.target.closest("[data-select-cut-sfx]"),run=event.target.closest("[data-process-cut-job]"),folder=event.target.closest("[data-open-exports]");if(select){await selectCutSource(select.dataset.selectCutSource,select.dataset.sourceName||"");return}if(music){await selectCutMusic(music.dataset.selectCutMusic,music.dataset.musicName||"");return}if(voice){await selectCutVoice(voice.dataset.selectCutVoice,voice.dataset.voiceName||"");return}if(musicTrack){await selectCutMusicTrack(musicTrack.dataset.selectCutMusicTrack,musicTrack.dataset.trackId,musicTrack.dataset.trackName||"");return}if(voiceTrack){await selectCutVoiceTrack(voiceTrack.dataset.selectCutVoiceTrack,voiceTrack.dataset.trackId,voiceTrack.dataset.trackName||"");return}if(sfx){await selectCutSfx(sfx.dataset.selectCutSfx,sfx.dataset.sfxId,sfx.dataset.sfxName||"");return}if(folder){try{state=await window.CFSLauncher.openCutExportFolder();render(state)}catch(error){toast(error.message,true)};return}if(run){try{toast("Lokaler Cut-Export läuft …");state=await window.CFSLauncher.processCutJob(run.dataset.processCutJob);render(state);toast("Cut-Export lokal abgeschlossen.")}catch(error){toast(error.message,true)}}};
 
@@ -1901,16 +2009,29 @@ async function init() {
     }catch(error){toast(error.message,true)}
   };
 
+  function collectStreamProfileLocalSettings(){const audioSources={mic:{enabled:Boolean($("#streamAudioDevice").value),deviceName:$("#streamAudioDevice").value,volume:Number($("#streamAudioVolume")?.value||100)/100,muted:$("#streamAudioMute")?.checked===true,delayMs:Number($("#streamAudioDelay")?.value||0)}};for(const key of ["Game","Discord","Music","Alerts"]){const select=$("#streamAudioProcess"+key),option=select?.selectedOptions?.[0],slug=key.toLowerCase();audioSources[slug]={enabled:$("#streamAudio"+key+"Enabled")?.checked===true,processId:Number(select?.value||0),processName:String(option?.dataset?.processName||"").trim(),includeTree:true,volume:Number($("#streamAudioVolume"+key)?.value||100)/100,muted:$("#streamAudioMute"+key)?.checked===true,delayMs:Number($("#streamAudioDelay"+key)?.value||0)}}return{streamAudioDevice:$("#streamAudioDevice").value,streamAudioDevice2:$("#streamAudioDevice2")?.value||"",streamAudioVolume:Number($("#streamAudioVolume")?.value||100)/100,streamAudioVolume2:Number($("#streamAudioVolume2")?.value||100)/100,streamAudioMute:$("#streamAudioMute")?.checked===true,streamAudioMute2:$("#streamAudioMute2")?.checked===true,streamAudioDelayMs:Number($("#streamAudioDelay")?.value||0),streamAudioDelayMs2:Number($("#streamAudioDelay2")?.value||0),streamAudioSources:audioSources,streamRecordingEnabled:$("#streamRecordingEnabled").checked};}
+
+  $("#streamProfileSelect").onchange=()=>{const row=(state?.streamProfiles?.profiles||[]).find(item=>item.id===$("#streamProfileSelect").value);if($("#streamProfileName")&&row)$("#streamProfileName").value=row.name||"";renderStreamEngine(state);};
+  $("#saveStreamProfile").onclick=async()=>{try{const name=String($("#streamProfileName").value||"").trim();if(!name)throw new Error("Bitte einen Profilnamen eingeben.");state=await window.CFSLauncher.saveStreamProfile({name,localSettings:collectStreamProfileLocalSettings(),activate:true});render(state);toast("Streaming-Profil gespeichert und aktiviert.")}catch(error){toast(error.message,true)}};
+  $("#loadStreamProfile").onclick=async()=>{try{const id=$("#streamProfileSelect").value;if(!id)throw new Error("Bitte ein gespeichertes Profil wählen.");state=await window.CFSLauncher.activateStreamProfile(id);render(state);toast("Streaming-Profil geladen.")}catch(error){toast(error.message,true)}};
+  $("#updateStreamProfile").onclick=async()=>{try{const id=$("#streamProfileSelect").value,name=String($("#streamProfileName").value||"").trim();if(!id)throw new Error("Bitte ein gespeichertes Profil wählen.");state=await window.CFSLauncher.saveStreamProfile({id,name,localSettings:collectStreamProfileLocalSettings(),activate:true});render(state);toast("Streaming-Profil aktualisiert.")}catch(error){toast(error.message,true)}};
+  $("#deleteStreamProfile").onclick=async()=>{try{const id=$("#streamProfileSelect").value;if(!id)throw new Error("Bitte ein gespeichertes Profil wählen.");state=await window.CFSLauncher.deleteStreamProfile(id);render(state);toast("Streaming-Profil gelöscht.")}catch(error){toast(error.message,true)}};
+  $("#clearStreamProfile").onclick=async()=>{try{state=await window.CFSLauncher.clearStreamProfile();render(state);toast("Lokaler Profil-Override deaktiviert. Studio-Ausgabe ist wieder aktiv.")}catch(error){toast(error.message,true)}};
+
   $("#probeStreamEngine").onclick=async()=>{try{state=await window.CFSLauncher.probeStreamEngine();render(state);toast(state?.streamEngine?.available?"Streaming Engine ist bereit.":state?.streamEngine?.error||"Streaming Engine ist nicht bereit.",!state?.streamEngine?.available)}catch(error){toast(error.message,true)}};
+  $("#probeApplicationAudio").onclick=async()=>{try{state=await window.CFSLauncher.probeApplicationAudio();render(state);const ok=state?.applicationAudioDoctor?.ok===true;toast(ok?"WASAPI Process-Loopback Helper ist runtime-verifiziert.":state?.applicationAudioDoctor?.helper?.error||state?.applicationAudio?.error||"WASAPI Helper ist nicht bereit.",!ok)}catch(error){toast(error.message,true)}};
+  $("#probeGameCapture").onclick=async()=>{try{state=await window.CFSLauncher.probeGameCapture();render(state);const ok=state?.gameCaptureDoctor?.ok===true;toast(ok?"Windows Game-Capture Helper ist runtime-verifiziert.":state?.gameCaptureDoctor?.helper?.error||state?.gameCapture?.error||"Game-Capture Helper ist nicht bereit.",!ok)}catch(error){toast(error.message,true)}};
   $("#syncStreamStudio").onclick=async()=>{try{state=await window.CFSLauncher.syncStreamStudio();render(state);toast("Stream Studio Konfiguration synchronisiert.")}catch(error){toast(error.message,true)}};
   $("#refreshStreamDevices").onclick=async()=>{try{state=await window.CFSLauncher.listStreamCaptureDevices();render(state);toast("Lokale Capture-Geräte geladen.")}catch(error){toast(error.message,true)}};
-  $("#streamCaptureType").onchange=()=>{const type=$("#streamCaptureType").value;$("#streamWindowTitle").disabled=type!=="window";$("#streamVideoDevice").disabled=type!=="camera";$("#streamDisplayId").disabled=type!=="screen";$("#streamDrawMouse").disabled=type==="camera";};
-  $("#saveStreamLocalSettings").onclick=async()=>{try{state=await window.CFSLauncher.saveStreamLocalSettings({captureType:$("#streamCaptureType").value,displayId:$("#streamDisplayId")?.value||"",windowTitle:$("#streamWindowTitle").value,videoDevice:$("#streamVideoDevice").value,audioDevice:$("#streamAudioDevice").value,audioDevice2:$("#streamAudioDevice2")?.value||"",audioVolume:Number($("#streamAudioVolume")?.value||100)/100,audioVolume2:Number($("#streamAudioVolume2")?.value||100)/100,audioMute:$("#streamAudioMute")?.checked===true,audioMute2:$("#streamAudioMute2")?.checked===true,audioDelayMs:Number($("#streamAudioDelay")?.value||0),audioDelayMs2:Number($("#streamAudioDelay2")?.value||0),cropEnabled:$("#streamCropEnabled")?.checked===true,cropX:Number($("#streamCropX")?.value||0),cropY:Number($("#streamCropY")?.value||0),cropWidth:Number($("#streamCropWidth")?.value||1920),cropHeight:Number($("#streamCropHeight")?.value||1080),watchdogEnabled:$("#streamWatchdogEnabled")?.checked!==false,watchdogTimeoutSec:Number($("#streamWatchdogTimeout")?.value||18),drawMouse:$("#streamDrawMouse").checked,recordingEnabled:$("#streamRecordingEnabled").checked});render(state);toast("Lokale Capture-, Crop- und Audio-Einstellungen gespeichert.")}catch(error){toast(error.message,true)}};
-  for(const [sliderId,outId] of [["streamAudioVolume","streamAudioVolumeValue"],["streamAudioVolume2","streamAudioVolumeValue2"]]){const slider=$("#"+sliderId),out=$("#"+outId);if(slider&&out)slider.oninput=()=>{out.textContent=`${slider.value}%`;};}
+  $("#streamCaptureType").onchange=()=>{const type=$("#streamCaptureType").value;$("#streamWindowTitle").disabled=type!=="window";$("#streamGameProcess").disabled=type!=="game";$("#streamVideoDevice").disabled=type!=="camera";$("#streamDisplayId").disabled=type!=="screen";$("#streamDrawMouse").disabled=type==="camera";};
+  $("#saveStreamLocalSettings").onclick=async()=>{try{const audioSources={mic:{enabled:Boolean($("#streamAudioDevice").value),deviceName:$("#streamAudioDevice").value,volume:Number($("#streamAudioVolume")?.value||100)/100,muted:$("#streamAudioMute")?.checked===true,delayMs:Number($("#streamAudioDelay")?.value||0)}};for(const key of ["Game","Discord","Music","Alerts"]){const select=$("#streamAudioProcess"+key),option=select?.selectedOptions?.[0],slug=key.toLowerCase();audioSources[slug]={enabled:$("#streamAudio"+key+"Enabled")?.checked===true,processId:Number(select?.value||0),processName:String(option?.dataset?.processName||"").trim(),includeTree:true,volume:Number($("#streamAudioVolume"+key)?.value||100)/100,muted:$("#streamAudioMute"+key)?.checked===true,delayMs:Number($("#streamAudioDelay"+key)?.value||0)}}const gameOption=$("#streamGameProcess")?.selectedOptions?.[0];state=await window.CFSLauncher.saveStreamLocalSettings({captureType:$("#streamCaptureType").value,displayId:$("#streamDisplayId")?.value||"",windowTitle:$("#streamWindowTitle").value,gameProcessId:Number($("#streamGameProcess")?.value||0),gameProcessName:String(gameOption?.dataset?.processName||"").trim(),gameWindowTitle:String(gameOption?.dataset?.windowTitle||"").trim(),videoDevice:$("#streamVideoDevice").value,audioDevice:$("#streamAudioDevice").value,audioDevice2:$("#streamAudioDevice2")?.value||"",audioVolume:Number($("#streamAudioVolume")?.value||100)/100,audioVolume2:Number($("#streamAudioVolume2")?.value||100)/100,audioMute:$("#streamAudioMute")?.checked===true,audioMute2:$("#streamAudioMute2")?.checked===true,audioDelayMs:Number($("#streamAudioDelay")?.value||0),audioDelayMs2:Number($("#streamAudioDelay2")?.value||0),audioSources,cropEnabled:$("#streamCropEnabled")?.checked===true,cropX:Number($("#streamCropX")?.value||0),cropY:Number($("#streamCropY")?.value||0),cropWidth:Number($("#streamCropWidth")?.value||1920),cropHeight:Number($("#streamCropHeight")?.value||1080),watchdogEnabled:$("#streamWatchdogEnabled")?.checked!==false,watchdogTimeoutSec:Number($("#streamWatchdogTimeout")?.value||18),drawMouse:$("#streamDrawMouse").checked,recordingEnabled:$("#streamRecordingEnabled").checked});render(state);toast("Lokale Capture-, Crop- und Multi-Track-Audio-Einstellungen gespeichert.")}catch(error){toast(error.message,true)}};
+  for(const [sliderId,outId] of [["streamAudioVolume","streamAudioVolumeValue"],["streamAudioVolume2","streamAudioVolumeValue2"],["streamAudioVolumeGame","streamAudioVolumeGameValue"],["streamAudioVolumeDiscord","streamAudioVolumeDiscordValue"],["streamAudioVolumeMusic","streamAudioVolumeMusicValue"],["streamAudioVolumeAlerts","streamAudioVolumeAlertsValue"]]){const slider=$("#"+sliderId),out=$("#"+outId);if(slider&&out)slider.oninput=()=>{out.textContent=`${slider.value}%`;};}
+  for(const key of ["Game","Discord","Music","Alerts"]){const toggle=$("#streamAudio"+key+"Enabled"),host=document.querySelector(`[data-app-audio="${key.toLowerCase()}"]`);if(toggle&&host)toggle.onchange=()=>host.classList.toggle("disabled",!toggle.checked);}
   $("#streamEngineTargets").onclick=async event=>{const save=event.target.closest("[data-save-stream-credential]"),remove=event.target.closest("[data-remove-stream-credential]"),docs=event.target.closest("[data-open-provider-docs]");if(docs){try{await window.CFSLauncher.openStreamProviderDocs(docs.dataset.openProviderDocs)}catch(error){toast(error.message,true)}return}if(save){const id=save.dataset.saveStreamCredential,server=$("[data-stream-server=\""+CSS.escape(id)+"\"]")?.value||"",key=$("[data-stream-key=\""+CSS.escape(id)+"\"]")?.value||"";if(!server||!key){toast("Bitte Server-URL und Stream-Key vollständig eingeben.",true);return}try{state=await window.CFSLauncher.saveStreamCredential({targetId:id,serverUrl:server,streamKey:key});render(state);toast("Stream-Zugangsdaten lokal verschlüsselt gespeichert.")}catch(error){toast(error.message,true)}return}if(remove){const id=remove.dataset.removeStreamCredential;if(!confirm("Lokalen Stream-Key für dieses Ziel entfernen?"))return;try{state=await window.CFSLauncher.removeStreamCredential(id);render(state);toast("Lokaler Stream-Key entfernt.")}catch(error){toast(error.message,true)}}};
   $("#preflightStreamEngine").onclick=async()=>{try{state=await window.CFSLauncher.preflightStreamEngine();render(state);toast(state?.streamPreflight?.ok?"Multistream Preflight: bereit.":"Multistream Preflight: bitte offene Punkte prüfen.",!state?.streamPreflight?.ok)}catch(error){toast(error.message,true)}};
   $("#startStreamEngine").onclick=async()=>{try{state=await window.CFSLauncher.startStreamEngine();render(state);toast("Lokale Streaming Engine gestartet.")}catch(error){toast(error.message,true)}};
   $("#stopStreamEngine").onclick=async()=>{try{state=await window.CFSLauncher.stopStreamEngine();render(state);toast("Lokale Streaming Engine gestoppt.")}catch(error){toast(error.message,true)}};
+  $("#openStreamEvidence").onclick=async()=>{try{state=await window.CFSLauncher.openStreamEvidence();render(state);toast("Runtime-Evidence-Ordner geöffnet.")}catch(error){toast(error.message,true)}};
   $("#streamRuntimeTargets").onclick=async event=>{const stop=event.target.closest("[data-stop-stream-target]"),start=event.target.closest("[data-start-stream-target]");try{if(stop){state=await window.CFSLauncher.stopStreamTarget(stop.dataset.stopStreamTarget);render(state);toast("Streaming-Ziel gestoppt. Andere Ziele laufen weiter.");return}if(start){state=await window.CFSLauncher.startStreamTarget(start.dataset.startStreamTarget);render(state);toast("Streaming-Ziel wieder gestartet.")}}catch(error){toast(error.message,true)}};
 
   $("#refreshScenes").onclick=()=>loadLauncherScenes();
@@ -2065,6 +2186,43 @@ async function init() {
 
   window.CFSLauncher.onState(next => render(next));
   window.CFSLauncher.onAction(action => queueTts(action));
+  window.CFSLauncher.onCutAudition(payload=>{
+    const previewPath=String(payload?.previewPath||"");
+    if(!previewPath)return;
+    resetCutAuditionSessionLocal();
+    try{cutAuditionAudio?.pause?.()}catch{}
+    clearTimeout(cutAuditionStopTimer);
+    cutAuditionTransport={projectId:String(payload?.projectId||""),startMs:Number(payload?.startMs||0),durationMs:Number(payload?.durationMs||0),cacheStartMs:Number(payload?.cacheStartMs||0),cacheDurationMs:Number(payload?.cacheDurationMs||0),playOffsetMs:Number(payload?.playOffsetMs||0)};
+    cutAuditionAudio=new Audio(localFileUrl(previewPath));
+    cutAuditionAudio.preload="auto";
+    const begin=()=>{
+      const offset=Math.max(0,Number(cutAuditionTransport.playOffsetMs||0)/1000);
+      try{cutAuditionAudio.currentTime=offset}catch{}
+      cutAuditionAudio.play().then(()=>{
+        const seconds=Math.max(1,Number(cutAuditionTransport.durationMs||4000)/1000);
+        clearTimeout(cutAuditionStopTimer);cutAuditionStopTimer=setTimeout(()=>{try{cutAuditionAudio?.pause?.()}catch{}},seconds*1000);
+        toast(`Cut-Vorschau ab ${(Number(payload?.startMs||0)/1000).toFixed(1)} s · ${payload?.cacheHit?"CACHE":"FFMPEG"}.`);
+      }).catch(()=>toast("Cut-Vorschau ist bereit – Wiedergabe wurde vom System blockiert.",true));
+    };
+    if(cutAuditionAudio.readyState>=1)begin();else cutAuditionAudio.addEventListener("loadedmetadata",begin,{once:true});
+  });
+  window.CFSLauncher.onCutAuditionControl(async payload=>{
+    const action=String(payload?.action||""),projectId=String(payload?.projectId||""),continuous=cutAuditionSession.active&&projectId===String(cutAuditionSession.projectId||"");
+    if(continuous){
+      const transport=ensureCutAuditionWebAudio();if(!transport)return;
+      if(action==="pause"){cutAuditionSession.paused=true;await transport.pause();await reportCutAuditionClock("paused",true);toast("Gapless Audition pausiert.");return}
+      if(action==="stop"){await reportCutAuditionClock("stopped",true);transport.stop({clearSession:true,silent:true});resetCutAuditionSessionLocal({pause:false,stopTransport:false});toast("Gapless Audition gestoppt.");return}
+      if(action==="resume"){cutAuditionSession.paused=false;await transport.resume();startCutAuditionClockReporter();await reportCutAuditionClock("playing",true);const snap=transport.snapshot();queueCutAuditionSessionPrefetch(snap.scheduledThroughMs,2);toast("Gapless Audition läuft weiter.");return}
+    }
+    if(!cutAuditionAudio||projectId!==String(cutAuditionTransport.projectId||""))return;
+    if(action==="pause"){clearTimeout(cutAuditionStopTimer);cutAuditionAudio.pause();toast("Cut-Vorschau pausiert.");return}
+    if(action==="stop"){clearTimeout(cutAuditionStopTimer);cutAuditionAudio.pause();try{cutAuditionAudio.currentTime=Math.max(0,Number(cutAuditionTransport.playOffsetMs||0)/1000)}catch{}toast("Cut-Vorschau gestoppt.");return}
+    if(action==="resume"){
+      const end=(Number(cutAuditionTransport.playOffsetMs||0)+Number(cutAuditionTransport.durationMs||0))/1000,remaining=Math.max(.2,end-Number(cutAuditionAudio.currentTime||0));
+      cutAuditionAudio.play().then(()=>{clearTimeout(cutAuditionStopTimer);cutAuditionStopTimer=setTimeout(()=>{try{cutAuditionAudio?.pause?.()}catch{}},remaining*1000);toast("Cut-Vorschau läuft weiter.")}).catch(()=>toast("Cut-Vorschau konnte nicht fortgesetzt werden.",true));
+    }
+  });
+  window.CFSLauncher.onCutAuditionSession(payload=>{receiveCutAuditionSession(payload).catch(error=>toast(`Gapless Audition: ${error?.message||error}`,true))});
 }
 
 async function selectCutMusic(projectId,musicName=""){

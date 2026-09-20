@@ -123,8 +123,12 @@ class BridgeClient extends EventEmitter {
   async gameReset(){return this.request("/api/bridge/games/runtime/reset",{method:"POST",body:{},timeoutMs:8000});}
   async gameScore(team,delta=1){return this.request("/api/bridge/games/runtime/score",{method:"POST",body:{team,delta},timeoutMs:8000});}
   async cutProjects(){return this.request("/api/bridge/cut-studio/projects",{method:"GET",timeoutMs:8000});}
+  async createCutProject(payload={}){return this.request("/api/bridge/cut-studio/projects",{method:"POST",body:payload,timeoutMs:10000});}
+  async updateCutProject(projectId,payload={}){return this.request(`/api/bridge/cut-studio/projects/${encodeURIComponent(projectId)}`,{method:"PUT",body:payload,timeoutMs:10000});}
+  async createCutClip(projectId,payload={}){return this.request(`/api/bridge/cut-studio/projects/${encodeURIComponent(projectId)}/clips`,{method:"POST",body:payload,timeoutMs:10000});}
   async gameRules(){return this.request("/api/bridge/games/rules",{method:"GET",timeoutMs:8000});}
   async cutJobs(){return this.request("/api/bridge/cut-studio/jobs",{method:"GET",timeoutMs:8000});}
+  async updateCutAuditionRuntime(payload={}){return this.request("/api/bridge/cut-studio/audition-runtime",{method:"POST",body:payload,timeoutMs:5000});}
   async claimCutJob(id){return this.request(`/api/bridge/cut-studio/jobs/${encodeURIComponent(id)}/claim`,{method:"POST",body:{},timeoutMs:8000});}
   async startCutJob(id){return this.request(`/api/bridge/cut-studio/jobs/${encodeURIComponent(id)}/processing`,{method:"POST",body:{},timeoutMs:8000});}
   async completeCutJob(id,result={}){return this.request(`/api/bridge/cut-studio/jobs/${encodeURIComponent(id)}/complete`,{method:"POST",body:{result},timeoutMs:8000});}

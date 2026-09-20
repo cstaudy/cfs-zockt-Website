@@ -25,17 +25,28 @@ contextBridge.exposeInMainWorld("CFSLauncher", {
   refreshCreatorTools: () => ipcRenderer.invoke("launcher:creator-tools-refresh"),
   gameControl: input => ipcRenderer.invoke("launcher:game-control", input),
   openCutProject: projectId => ipcRenderer.invoke("launcher:open-cut-project", projectId),
+  handoffRecordingToCut: input => ipcRenderer.invoke("launcher:recording-handoff", input),
+  analyzeRecordingHandoff: input => ipcRenderer.invoke("launcher:recording-handoff-analyze", input),
+  previewRecordingTrack: input => ipcRenderer.invoke("launcher:recording-handoff-preview-track", input),
+  previewRecordingMix: input => ipcRenderer.invoke("launcher:recording-handoff-preview-mix", input),
   probeMediaEngine: () => ipcRenderer.invoke("launcher:media-engine-probe"),
   probeStreamEngine: () => ipcRenderer.invoke("launcher:stream-engine-probe"),
+  probeApplicationAudio: () => ipcRenderer.invoke("launcher:application-audio-doctor"),
   syncStreamStudio: () => ipcRenderer.invoke("launcher:stream-studio-sync"),
   listStreamCaptureDevices: () => ipcRenderer.invoke("launcher:stream-capture-devices"),
   saveStreamLocalSettings: input => ipcRenderer.invoke("launcher:stream-local-settings", input),
+  saveStreamProfile: input => ipcRenderer.invoke("launcher:stream-profile-save", input),
+  activateStreamProfile: profileId => ipcRenderer.invoke("launcher:stream-profile-activate", profileId),
+  clearStreamProfile: () => ipcRenderer.invoke("launcher:stream-profile-clear"),
+  deleteStreamProfile: profileId => ipcRenderer.invoke("launcher:stream-profile-delete", profileId),
+  probeGameCapture: () => ipcRenderer.invoke("launcher:game-capture-doctor"),
   saveStreamCredential: input => ipcRenderer.invoke("launcher:stream-credential-save", input),
   removeStreamCredential: targetId => ipcRenderer.invoke("launcher:stream-credential-remove", targetId),
   openStreamProviderDocs: provider => ipcRenderer.invoke("launcher:stream-provider-docs", provider),
   preflightStreamEngine: () => ipcRenderer.invoke("launcher:stream-engine-preflight"),
   startStreamEngine: () => ipcRenderer.invoke("launcher:stream-engine-start"),
   stopStreamEngine: () => ipcRenderer.invoke("launcher:stream-engine-stop"),
+  openStreamEvidence: () => ipcRenderer.invoke("launcher:stream-evidence-open"),
   startStreamTarget: targetId => ipcRenderer.invoke("launcher:stream-target-start", targetId),
   stopStreamTarget: targetId => ipcRenderer.invoke("launcher:stream-target-stop", targetId),
   selectCutSource: input => ipcRenderer.invoke("launcher:cut-source-select", input),
@@ -95,5 +106,23 @@ contextBridge.exposeInMainWorld("CFSLauncher", {
     const fn = (_event, action) => callback(action);
     ipcRenderer.on("launcher:action", fn);
     return () => ipcRenderer.removeListener("launcher:action", fn);
-  }
+  },
+  onCutAudition: callback => {
+    const fn = (_event, payload) => callback(payload);
+    ipcRenderer.on("launcher:cut-audition", fn);
+    return () => ipcRenderer.removeListener("launcher:cut-audition", fn);
+  },
+  onCutAuditionControl: callback => {
+    const fn = (_event, payload) => callback(payload);
+    ipcRenderer.on("launcher:cut-audition-control", fn);
+    return () => ipcRenderer.removeListener("launcher:cut-audition-control", fn);
+  },
+  onCutAuditionSession: callback => {
+    const fn = (_event, payload) => callback(payload);
+    ipcRenderer.on("launcher:cut-audition-session", fn);
+    return () => ipcRenderer.removeListener("launcher:cut-audition-session", fn);
+  },
+  prefetchCutAuditionSession: input => ipcRenderer.invoke("launcher:cut-audition-prefetch", input || {}),
+  loadCutAuditionSegment: input => ipcRenderer.invoke("launcher:cut-audition-segment-bytes", input || {}),
+  reportCutAuditionClock: input => ipcRenderer.invoke("launcher:cut-audition-clock", input || {})
 });

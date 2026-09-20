@@ -7,6 +7,24 @@ function parseObjectJson(text) {
   return parsed;
 }
 
+
+const STREAM_AUDIO_SOURCE_KEYS = Object.freeze(["mic","game","discord","music","alerts"]);
+function normalizeStreamAudioSources(input={},fallback={}) {
+  const source=input&&typeof input==="object"&&!Array.isArray(input)?input:{};
+  const previous=fallback&&typeof fallback==="object"&&!Array.isArray(fallback)?fallback:{};
+  const out={};
+  for(const key of STREAM_AUDIO_SOURCE_KEYS){
+    const raw=source[key]&&typeof source[key]==="object"&&!Array.isArray(source[key])?source[key]:{};
+    const old=previous[key]&&typeof previous[key]==="object"&&!Array.isArray(previous[key])?previous[key]:{};
+    const enabled=typeof raw.enabled==="boolean"?raw.enabled:old.enabled===true;
+    const volume=Math.max(0,Math.min(2,Number(raw.volume??old.volume??1)));
+    const muted=typeof raw.muted==="boolean"?raw.muted:old.muted===true;
+    const delayMs=Math.max(0,Math.min(2000,Math.round(Number(raw.delayMs??old.delayMs??0)||0)));
+    if(key==="mic")out[key]={enabled,deviceName:String(raw.deviceName??old.deviceName??"").trim().slice(0,220),volume,muted,delayMs};
+    else out[key]={enabled,processId:Math.max(0,Math.min(0x7fffffff,Math.round(Number(raw.processId??old.processId??0)||0))),processName:String(raw.processName??old.processName??"").trim().slice(0,160),includeTree:raw.includeTree!==false,volume,muted,delayMs};
+  }
+  return out;
+}
 function atomicWriteJson(filePath, value) {
   const dir = path.dirname(filePath);
   fs.mkdirSync(dir, { recursive: true });
@@ -49,6 +67,9 @@ const DEFAULTS = {
   setupCompletedAt: "",
   streamCaptureType: "screen",
   streamWindowTitle: "",
+  streamGameProcessId: 0,
+  streamGameProcessName: "",
+  streamGameWindowTitle: "",
   streamDisplayId: "",
   streamCropEnabled: false,
   streamCropX: 0,
@@ -64,6 +85,9 @@ const DEFAULTS = {
   streamAudioMute2: false,
   streamAudioDelayMs: 0,
   streamAudioDelayMs2: 0,
+  streamAudioSources: normalizeStreamAudioSources({
+    mic:{enabled:false},game:{enabled:false},discord:{enabled:false},music:{enabled:false},alerts:{enabled:false}
+  }),
   streamWatchdogEnabled: true,
   streamWatchdogTimeoutSec: 18,
   streamDrawMouse: true,
@@ -169,8 +193,11 @@ class ConfigStore {
       autoRecoverLive: typeof input.autoRecoverLive === "boolean" ? input.autoRecoverLive : current.autoRecoverLive !== false,
       setupVersion: Math.max(0, Math.min(99, Number(input.setupVersion ?? current.setupVersion ?? 0) || 0)),
       setupCompletedAt: String(input.setupCompletedAt ?? current.setupCompletedAt ?? "").slice(0, 60),
-      streamCaptureType: ["screen","window","camera"].includes(input.streamCaptureType) ? input.streamCaptureType : (["screen","window","camera"].includes(current.streamCaptureType) ? current.streamCaptureType : "screen"),
+      streamCaptureType: ["screen","window","game","camera"].includes(input.streamCaptureType) ? input.streamCaptureType : (["screen","window","game","camera"].includes(current.streamCaptureType) ? current.streamCaptureType : "screen"),
       streamWindowTitle: String(input.streamWindowTitle ?? current.streamWindowTitle ?? "").trim().slice(0, 220),
+      streamGameProcessId: Math.max(0, Math.min(0x7fffffff, Math.round(Number(input.streamGameProcessId ?? current.streamGameProcessId ?? 0) || 0))),
+      streamGameProcessName: String(input.streamGameProcessName ?? current.streamGameProcessName ?? "").trim().slice(0, 160),
+      streamGameWindowTitle: String(input.streamGameWindowTitle ?? current.streamGameWindowTitle ?? "").trim().slice(0, 220),
       streamDisplayId: String(input.streamDisplayId ?? current.streamDisplayId ?? "").trim().slice(0, 80),
       streamCropEnabled: typeof input.streamCropEnabled === "boolean" ? input.streamCropEnabled : current.streamCropEnabled === true,
       streamCropX: Math.max(0, Math.min(10000, Math.round(Number(input.streamCropX ?? current.streamCropX ?? 0) || 0))),
@@ -186,6 +213,7 @@ class ConfigStore {
       streamAudioMute2: typeof input.streamAudioMute2 === "boolean" ? input.streamAudioMute2 : current.streamAudioMute2 === true,
       streamAudioDelayMs: Math.max(0, Math.min(2000, Math.round(Number(input.streamAudioDelayMs ?? current.streamAudioDelayMs ?? 0) || 0))),
       streamAudioDelayMs2: Math.max(0, Math.min(2000, Math.round(Number(input.streamAudioDelayMs2 ?? current.streamAudioDelayMs2 ?? 0) || 0))),
+      streamAudioSources: normalizeStreamAudioSources(input.streamAudioSources ?? current.streamAudioSources ?? {}, current.streamAudioSources ?? {}),
       streamWatchdogEnabled: typeof input.streamWatchdogEnabled === "boolean" ? input.streamWatchdogEnabled : current.streamWatchdogEnabled !== false,
       streamWatchdogTimeoutSec: Math.max(10, Math.min(60, Math.round(Number(input.streamWatchdogTimeoutSec ?? current.streamWatchdogTimeoutSec ?? 18) || 18))),
       streamDrawMouse: typeof input.streamDrawMouse === "boolean" ? input.streamDrawMouse : current.streamDrawMouse !== false,
@@ -302,4 +330,4 @@ class ConfigStore {
   }
 }
 
-module.exports = { ConfigStore, DEFAULTS, atomicWriteJson, parseObjectJson };
+module.exports = { ConfigStore, DEFAULTS, atomicWriteJson, parseObjectJson, normalizeStreamAudioSources, STREAM_AUDIO_SOURCE_KEYS };

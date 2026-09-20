@@ -1,6 +1,8 @@
 const path = require("node:path");
 const os = require("node:os");
 const fs = require("node:fs");
+const crypto = require("node:crypto");
+const { execFile } = require("node:child_process");
 const {
   app, BrowserWindow, ipcMain, safeStorage, Tray, Menu, shell, nativeImage, dialog, screen
 } = require("electron");
@@ -26,9 +28,15 @@ const { executeStreamDeckAction } = require("./src/stream-deck-actions");
 const { assertFeature, assertStreamDeckButton } = require("./src/entitlement-guard");
 const { BetaSessionStore } = require("./src/beta-session-store");
 const { MediaSourceStore } = require("./src/media-source-store");
+const { RecordingHandoffStore } = require("./src/recording-handoff-store");
 const { CutMediaEngine } = require("./src/cut-media-engine");
 const { StreamEngine } = require("./src/stream-engine");
+const { WidgetLayerRenderer } = require("./src/widget-layer-renderer");
+const { ApplicationAudioSourceManager } = require("./src/application-audio-source-manager");
+const { GameCaptureSourceManager } = require("./src/game-capture-source-manager");
+const { StreamRuntimeEvidenceRecorder } = require("./src/stream-runtime-evidence");
 const { StreamCredentialStore } = require("./src/stream-credential-store");
+const { StreamProfileStore, localSettingsPatch } = require("./src/stream-profile-store");
 const { providerInfo: streamProviderInfo, providerCatalogPublic } = require("./src/stream-provider-catalog");
 const { checkCloudHealth, creatorReady } = require("./src/cloud-health");
 const { planSettingsTransition, assertLiveSafeSecretChange } = require("./src/runtime-stability");
@@ -64,10 +72,25 @@ let outputGatePath = "";
 let streamDeckStore = null;
 let betaSessionStore = null;
 let mediaSourceStore = null;
+let recordingHandoffStore = null;
 let cutMediaEngine = null;
 let streamEngine = null;
+let widgetLayerRenderer = null;
+let applicationAudioSourceManager = null;
+let gameCaptureSourceManager = null;
+let streamRuntimeEvidence = null;
 let streamCredentialStore = null;
-let streamStudioCloud = {config:null,program_scene:null,overlays:[],multistream:{max_destinations:1},engine:{},loadedAt:null,error:""};
+let streamProfileStore = null;
+let streamStudioCloud = {config:null,program_scene:null,overlays:[],multistream:{max_destinations:1},engine:{},loadedAt:null,error:"",runtime_update:null};
+let streamStudioRuntimeSyncTimer = null;
+let streamStudioRuntimeSyncInFlight = false;
+let cutAuditionTimer = null;
+let cutAuditionPolling = false;
+let cutAuditionSession = null;
+let cutAuditionClockRevision = 0;
+let cutAuditionClockLastSentAt = 0;
+let cutAuditionClockTimer = null;
+let cutAuditionClockPending = null;
 let betaCloud = {beta:{status:"none",active:false},active_session:null,recent_feedback:[],loadedAt:null,error:""};
 
 
@@ -97,6 +120,9 @@ function currentPreflight() {
 
 function appState(extra = {}) {
   const settings = configStore?.publicSettings?.() || {};
+  const profileLimit=Math.max(1,Number(streamStudioCloud?.multistream?.max_destinations||1));
+  const profileApplied=streamProfileStore?.apply?.(streamStudioCloud?.config||{},profileLimit)||{config:streamStudioCloud?.config||{},profile:null,warnings:[]};
+  const profileSnapshot=streamProfileStore?.snapshot?.()||{schema:1,pass:"21.10.24",maxProfiles:12,activeProfileId:"",activeProfile:null,profiles:[],secretFieldsPersisted:false,cloudConfigMutated:false};
   return {
     appVersion: pkg.version,
     platform: process.platform,
@@ -128,8 +154,14 @@ function appState(extra = {}) {
     betaCenter:{cloud:betaCloud,localSession:betaSessionStore?.snapshot?.() || {active:false,sessionId:null,lastError:""}},
     mediaEngine:cutMediaEngine?.snapshot?.() || {status:"idle",available:false,ffmpegPath:"",ffmpegSource:"",version:"",capabilities:{drawtext:false,concat:true,xfade:false,acrossfade:false,loudnorm:false,zoompan:false,rotate:false,blend:false,amix:false,sidechaincompress:false,encoders:{software:true,nvenc:false,qsv:false,amf:false}},jobId:null,progress:0,phase:"idle",mode:"clips",encoder:"software",transition:"cut",error:""},
     mediaSources:mediaSourceStore?.snapshot?.() || {schema:4,sources:{},music:{},voice:{},musicTracks:{},voiceTracks:{},sfx:{}},
-    streamEngine:streamEngine?.snapshot?.() || {status:"idle",available:false,desiredRunning:false,capabilities:{gdigrab:false,dshow:false,encoders:{software:true,nvenc:false,amd:false,qsv:false}},destinations:{},recording:null,error:""},
-    streamStudio:{...streamStudioCloud,credentials:streamCredentialStore?.snapshot?.((streamStudioCloud?.config?.multistream?.destinations||[]).map(item=>item.id)) || {encryptionAvailable:safeStorage.isEncryptionAvailable(),targets:{}}},
+    recordingHandoffs:recordingHandoffStore?.snapshot?.() || {schema:2,pass:"21.10.26",maxItems:30,pending:0,ready:0,items:[]},
+    cutAuditionSession:publicCutAuditionSession(),
+    streamEngine:streamEngine?.snapshot?.() || {status:"idle",available:false,desiredRunning:false,capabilities:{gdigrab:false,dshow:false,processLoopback:false,gameCaptureWgc:false,encoders:{software:true,nvenc:false,amd:false,qsv:false}},destinations:{},recording:null,error:""},
+    applicationAudio:applicationAudioSourceManager?.snapshot?.() || {available:false,prepared:0,sources:[],error:""},
+    gameCapture:gameCaptureSourceManager?.snapshot?.() || {available:false,staged:false,runtimeVerified:false,sources:[],error:""},
+    runtimeEvidence:streamRuntimeEvidence?.snapshot?.() || {schema:1,pass:"21.10.22",active:false,samples:0,events:0,lastEvidence:null,rawMediaPersisted:false,secretsPersisted:false},
+    streamStudio:{...streamStudioCloud,effective_config:profileApplied.config,profile_override:{active:Boolean(profileApplied.profile),profile:profileApplied.profile,warnings:profileApplied.warnings||[]},credentials:streamCredentialStore?.snapshot?.((profileApplied.config?.multistream?.destinations||streamStudioCloud?.config?.multistream?.destinations||[]).map(item=>item.id)) || {encryptionAvailable:safeStorage.isEncryptionAvailable(),targets:{}}},
+    streamProfiles:profileSnapshot,
     streamProviders:providerCatalogPublic(),
     encryptionAvailable: safeStorage.isEncryptionAvailable(),
     ...extra
@@ -302,6 +334,226 @@ async function openCutProject(projectId){
   return true;
 }
 
+function recordingHandoffProjectPayload(handoff={}){
+  const profile=String(handoff.profile||"").toLowerCase(),format=profile.includes("vertical")?"vertical":"landscape";
+  const stamp=new Date(handoff.stoppedAt||handoff.createdAt||Date.now()),title=`Stream Recording · ${stamp.toLocaleString("de-DE",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"})}`;
+  return{title,status:"draft",format,source_name:handoff.fileName||"CFS Recording",notes:`Automatischer lokaler Recording-Handoff aus CFS Stream Studio. ${handoff.sceneName?`Scene: ${handoff.sceneName}. `:""}Die Mediendatei bleibt ausschließlich auf dem Launcher-PC.`,export_preset:{fps:profile.includes("60")?60:30,quality:"high",mode:"clips",transition:"cut",encoder:"software",audio_normalize:false,audio_bitrate_kbps:192,source_tracks:(handoff.tracks||[]).map(track=>({key:track.key,label:track.label,stream_index:track.stream_index,enabled:track.enabled!==false,gain_db:Number(track.gain_db||0),mute:track.mute===true,solo:track.solo===true,pan:Number(track.pan||0),waveform:(track.analysis?.waveform||[]).slice(0,64),peak_db:track.analysis?.peak_db??null,mean_db:track.analysis?.mean_db??null,analyzed_at:track.analysis?.analyzed_at||""})),source_handoff_id:String(handoff.id||"")}};
+}
+
+async function materializeRecordingHandoff(handoffId,{open=false}={}){
+  assertFeature(creatorFeatures(),"cut_studio","Cut Studio");
+  if(!bridge?.snapshot?.().connected)throw new Error("Creator Bridge ist nicht verbunden.");
+  const handoff=recordingHandoffStore?.get?.(handoffId);if(!handoff)throw new Error("Recording-Handoff wurde nicht gefunden.");
+  if(!handoff.exists)throw new Error("Die lokale Recording-Datei wurde nicht gefunden.");
+  let project=handoff.projectId?(creatorLibrary.cutProjects||[]).find(row=>String(row.id)===String(handoff.projectId)):null;
+  if(!project){const created=await bridge.createCutProject(recordingHandoffProjectPayload(handoff));project=created?.project;if(!project?.id)throw new Error("Cut-Projekt für Recording konnte nicht erstellt werden.");recordingHandoffStore.setProject(handoff.id,{projectId:project.id,projectTitle:project.title});}
+  mediaSourceStore.set(project.id,{sourceName:handoff.fileName,filePath:handoff.filePath});
+  const existingCount=Number(project.clip_count||0);
+  if(existingCount<1){
+    let duration=Math.max(100,Number(handoff.durationMs||0));
+    try{const info=await configureCutMediaEngine().probeMediaInfo(handoff.filePath);if(Number(info?.duration_ms)>0)duration=Number(info.duration_ms)}catch{}
+    const clip=await bridge.createCutClip(project.id,{label:"Gesamte Aufnahme",in_ms:0,out_ms:Math.max(100,Math.round(duration)),selected:true,caption:"",caption_enabled:false,audio_gain_db:0,audio_fade_in_ms:0,audio_fade_out_ms:0});
+    if(clip?.clip)project={...project,clip_count:1};
+  }
+  recordingHandoffStore.markLinked(handoff.id,{projectId:project.id,projectTitle:project.title});
+  await refreshCreatorLibrary({notify:false});
+  const finalProject=(creatorLibrary.cutProjects||[]).find(row=>String(row.id)===String(project.id))||project;
+  send("launcher:state",appState({recordingHandoffAction:{ok:true,handoffId:handoff.id,projectId:project.id}}));
+  if(open)await shell.openExternal(safeCreatorToolUrl(`/pages/cut-studio.html?project=${encodeURIComponent(project.id)}`));
+  return appState({recordingHandoffAction:{ok:true,handoffId:handoff.id,project:finalProject}});
+}
+
+function recordingHandoffProjectTracks(handoff={},project={}){
+  const local=new Map((handoff.tracks||[]).map(track=>[String(track.key||""),track]));
+  const source=(project?.export_preset?.source_tracks||handoff.tracks||[]).slice(0,8);
+  return source.map((track,index)=>{const row=local.get(String(track.key||""))||handoff.tracks?.[index]||{},analysis=row.analysis||{};return{key:String(track.key||row.key||`source_${index+1}`),label:String(track.label||row.label||`Audio ${index+1}`),stream_index:Number(track.stream_index??row.stream_index??index),enabled:track.enabled!==false,gain_db:Number(track.gain_db||0),mute:track.mute===true,solo:track.solo===true,pan:Number(track.pan||0),waveform:(analysis.waveform||[]).slice(0,64),peak_db:analysis.peak_db??null,mean_db:analysis.mean_db??null,analyzed_at:analysis.analyzed_at||""}});
+}
+async function syncRecordingHandoffAnalysisToProject(handoffId){
+  const handoff=recordingHandoffStore?.get?.(handoffId);if(!handoff?.projectId||!bridge?.snapshot?.().connected)return false;
+  await refreshCreatorLibrary({notify:false});const project=(creatorLibrary.cutProjects||[]).find(row=>String(row.id)===String(handoff.projectId));if(!project)return false;
+  const payload={title:project.title,status:project.status,format:project.format,source_name:project.source_name||handoff.fileName||"",notes:project.notes||"",export_preset:{...(project.export_preset||{}),source_tracks:recordingHandoffProjectTracks(handoff,project),source_handoff_id:String(handoff.id||"")}};
+  const updated=await bridge.updateCutProject(project.id,payload);if(updated?.project){creatorLibrary={...creatorLibrary,cutProjects:(creatorLibrary.cutProjects||[]).map(row=>String(row.id)===String(project.id)?updated.project:row)}}return true;
+}
+async function analyzeRecordingHandoff(handoffId){
+  assertFeature(creatorFeatures(),"cut_studio","Cut Studio");const handoff=recordingHandoffStore?.get?.(handoffId);if(!handoff)throw new Error("Recording-Handoff wurde nicht gefunden.");if(!handoff.exists)throw new Error("Die lokale Recording-Datei wurde nicht gefunden.");
+  const engine=configureCutMediaEngine();const probe=await engine.probe();if(!probe.available)throw new Error(probe.error||"FFmpeg wurde nicht gefunden.");
+  for(const track of handoff.tracks||[]){const analysis=await engine.analyzeEmbeddedAudio(handoff.filePath,track.stream_index,`${handoff.id}-${track.key}`);recordingHandoffStore.setTrackAnalysis(handoff.id,track.key,analysis)}
+  await syncRecordingHandoffAnalysisToProject(handoff.id).catch(error=>logger?.warn?.("Recording waveform sync failed",error?.message));const next=appState({recordingHandoffAction:{ok:true,analyzed:true,handoffId:handoff.id}});send("launcher:state",next);return next;
+}
+async function previewRecordingHandoffTrack(handoffId,trackKey){
+  assertFeature(creatorFeatures(),"cut_studio","Cut Studio");let handoff=recordingHandoffStore?.get?.(handoffId);if(!handoff)throw new Error("Recording-Handoff wurde nicht gefunden.");if(!handoff.exists)throw new Error("Die lokale Recording-Datei wurde nicht gefunden.");
+  if(bridge?.snapshot?.().connected&&handoff.projectId)await refreshCreatorLibrary({notify:false}).catch(()=>{});handoff=recordingHandoffStore.get(handoff.id);const localTrack=(handoff.tracks||[]).find(track=>String(track.key)===String(trackKey));if(!localTrack)throw new Error("Recording-Stem wurde nicht gefunden.");
+  const project=(creatorLibrary.cutProjects||[]).find(row=>String(row.id)===String(handoff.projectId)),current=(project?.export_preset?.source_tracks||[]).find(track=>String(track.key)===String(localTrack.key))||localTrack;
+  const preview=await configureCutMediaEngine().createEmbeddedTrackPreview(handoff.filePath,localTrack.stream_index,`${handoff.id}-${localTrack.key}`,{seconds:12,gainDb:Number(current.gain_db||0),pan:Number(current.pan||0)});recordingHandoffStore.setTrackPreview(handoff.id,localTrack.key,preview);const next=appState({recordingHandoffAction:{ok:true,preview:true,handoffId:handoff.id,trackKey:localTrack.key}});send("launcher:state",next);return next;
+}
+async function previewRecordingHandoffMix(handoffId){
+  assertFeature(creatorFeatures(),"cut_studio","Cut Studio");let handoff=recordingHandoffStore?.get?.(handoffId);if(!handoff)throw new Error("Recording-Handoff wurde nicht gefunden.");if(!handoff.exists)throw new Error("Die lokale Recording-Datei wurde nicht gefunden.");
+  if(bridge?.snapshot?.().connected&&handoff.projectId)await refreshCreatorLibrary({notify:false}).catch(()=>{});handoff=recordingHandoffStore.get(handoff.id);const project=(creatorLibrary.cutProjects||[]).find(row=>String(row.id)===String(handoff.projectId)),tracks=project?.export_preset?.source_tracks||handoff.tracks||[];
+  const preview=await configureCutMediaEngine().createEmbeddedMixPreview(handoff.filePath,tracks,`${handoff.id}-current`,{seconds:12});recordingHandoffStore.setMixPreview(handoff.id,preview);const next=appState({recordingHandoffAction:{ok:true,mixPreview:true,handoffId:handoff.id}});send("launcher:state",next);return next;
+}
+
+function isCutAuditionJob(job){return String(job?.manifest?.kind||"")==="cut_audition"}
+function publicCutAuditionSession(){
+  const row=cutAuditionSession;if(!row)return{active:false,sessionId:"",projectId:"",state:"idle",startMs:0,endMs:0,positionMs:0,loopEnabled:false,loopStartMs:0,loopEndMs:0,loopCrossfadeMs:0,prefetched:0};
+  return{active:true,sessionId:String(row.id||""),projectId:String(row.projectId||""),state:String(row.state||"playing"),startMs:Number(row.startMs||0),endMs:Number(row.endMs||0),positionMs:Number(row.positionMs??row.startMs??0),loopEnabled:row.loopEnabled===true,loopStartMs:Number(row.loopStartMs||0),loopEndMs:Number(row.loopEndMs||0),loopCrossfadeMs:Number(row.loopCrossfadeMs||0),prefetched:Number(row.prefetched||0)};
+}
+function cutAuditionClockPacket(session,input={}){
+  if(!session)return null;const state=["playing","paused","stopped","ended"].includes(String(input.state||""))?String(input.state):String(session.state||"playing");
+  const startMs=Math.max(0,Math.round(Number(session.startMs||0))),endMs=Math.max(startMs,Math.round(Number(session.endMs||startMs))),positionMs=Math.max(startMs,Math.min(endMs,Math.round(Number(input.positionMs??session.positionMs??startMs)||startMs)));
+  session.positionMs=positionMs;session.state=state;return{project_id:String(session.projectId||""),session_id:String(session.id||""),state,transport:"webaudio",position_ms:positionMs,start_ms:startMs,end_ms:endMs,loop_enabled:session.loopEnabled===true,loop_start_ms:Number(session.loopStartMs||0),loop_end_ms:Number(session.loopEndMs||0),revision:++cutAuditionClockRevision,sampled_at_ms:Date.now()};
+}
+async function flushCutAuditionClock(){
+  clearTimeout(cutAuditionClockTimer);cutAuditionClockTimer=null;const packet=cutAuditionClockPending;cutAuditionClockPending=null;if(!packet||!bridge?.snapshot?.().connected)return false;
+  cutAuditionClockLastSentAt=Date.now();try{await bridge.updateCutAuditionRuntime(packet);return true}catch(error){logger?.warn?.("Cut audition clock sync failed",error?.message||error);return false}
+}
+function publishCutAuditionClock(session,input={}, {force=false}={}){
+  const packet=cutAuditionClockPacket(session,input);if(!packet?.project_id||!packet?.session_id)return false;cutAuditionClockPending=packet;
+  const elapsed=Date.now()-cutAuditionClockLastSentAt;if(force||elapsed>=850){flushCutAuditionClock().catch(()=>{});return true}
+  if(!cutAuditionClockTimer){cutAuditionClockTimer=setTimeout(()=>flushCutAuditionClock().catch(()=>{}),Math.max(20,850-elapsed));cutAuditionClockTimer.unref?.()}return true;
+}
+function receiveCutAuditionClock(input={}){
+  const session=cutAuditionSession;if(!session||String(input?.sessionId||input?.session_id||"")!==String(session.id||""))return{ok:false,reason:"session_mismatch",session:publicCutAuditionSession()};
+  const state=["playing","paused","stopped","ended"].includes(String(input?.state||""))?String(input.state):String(session.state||"playing"),positionMs=Number(input?.positionMs??input?.position_ms??session.positionMs??session.startMs);
+  publishCutAuditionClock(session,{state,positionMs},{force:state!=="playing"||input?.force===true});
+  if(state==="ended"){const ended=publicCutAuditionSession();setTimeout(()=>{if(cutAuditionSession?.id===session.id)clearCutAuditionSession("timeline_end")},0);return{ok:true,ended:true,session:ended}}
+  return{ok:true,session:publicCutAuditionSession()};
+}
+function clearCutAuditionSession(reason="stop"){
+  const previous=cutAuditionSession;cutAuditionSession=null;
+  if(previous){if(!["timeline_end"].includes(reason))publishCutAuditionClock(previous,{state:"stopped",positionMs:Number(previous.positionMs??previous.startMs??0)},{force:true});send("launcher:cut-audition-session",{event:"stop",sessionId:String(previous.id||""),projectId:String(previous.projectId||""),reason});}
+  return previous;
+}
+function cutAuditionTimelineEnd(job,handoff,startMs=0){
+  const clips=Array.isArray(job?.manifest?.clips)?job.manifest.clips:[];const clipEnd=Math.max(0,...clips.map(row=>Math.max(Number(row?.out_ms||0),Number(row?.in_ms||0))));
+  return Math.max(Number(startMs||0)+1000,clipEnd,Number(handoff?.durationMs||handoff?.duration_ms||0));
+}
+function localCutAuditionMixTracks(preset={},handoff={}){
+  const local=new Map((handoff.tracks||[]).map(track=>[String(track.key||""),track]));
+  return(preset.source_tracks||[]).map(track=>{const row=local.get(String(track.key||""));return row?{...track,stream_index:Number(row.stream_index)}:null}).filter(Boolean);
+}
+function rememberCutAuditionSessionPreview(session,preview){
+  if(!session||!preview?.preview_path)return null;session.segments=session.segments||new Map();
+  const cacheStartMs=Math.max(0,Math.round(Number(preview.cache_start_ms||0))),filePath=String(preview.preview_path||"");
+  const row={filePath,cacheStartMs,cacheDurationMs:Math.max(0,Math.round(Number(preview.cache_duration_ms||0))),cacheKey:String(preview.cache_key||"")};session.segments.set(cacheStartMs,row);return row;
+}
+function cutAuditionSessionPayload(session,preview,event="segment"){
+  const cacheStartMs=Number(preview?.cache_start_ms||0),rawCacheDurationMs=Number(preview?.cache_duration_ms||0),usableCacheDurationMs=Math.max(0,Math.min(rawCacheDurationMs,Number(session.endMs||0)-cacheStartMs));
+  return{event,sessionId:String(session.id||""),projectId:String(session.projectId||""),startMs:Number(session.startMs||0),endMs:Number(session.endMs||0),positionMs:Number(session.positionMs??session.startMs??0),loopEnabled:session.loopEnabled===true,loopStartMs:Number(session.loopStartMs||0),loopEndMs:Number(session.loopEndMs||0),loopCrossfadeMs:Number(session.loopCrossfadeMs||0),segment:{cacheHit:preview?.cache_hit===true,cacheStartMs,cacheDurationMs:usableCacheDurationMs,playOffsetMs:Number(preview?.play_offset_ms||0),durationMs:Math.max(0,Math.min(Number(preview?.duration_ms||usableCacheDurationMs),Number(session.endMs||0)-Number(preview?.start_ms||cacheStartMs)))}};
+}
+function cutAuditionSegmentBytes(sessionId,cacheStartMs){
+  const session=cutAuditionSession;if(!session||String(session.id)!==String(sessionId||""))throw new Error("Audition Session ist nicht mehr aktiv.");
+  const start=Math.max(0,Math.round(Number(cacheStartMs)||0)),row=session.segments?.get?.(start);if(!row?.filePath)throw new Error("Audition Segment ist lokal nicht verfügbar.");
+  const engine=configureCutMediaEngine(),cacheRoot=path.resolve(engine.auditionCacheDir()),filePath=path.resolve(String(row.filePath||""));
+  if(path.dirname(filePath)!==cacheRoot||!/^([a-f0-9]{64})\.wav$/i.test(path.basename(filePath)))throw new Error("Audition Segment wurde außerhalb des lokalen Cache abgelehnt.");
+  const stat=fs.statSync(filePath);if(!stat.isFile()||stat.size<44||stat.size>8*1024*1024)throw new Error("Audition Segment hat eine ungültige Größe.");
+  return{ok:true,sessionId:String(session.id),cacheStartMs:start,bytes:new Uint8Array(fs.readFileSync(filePath))};
+}
+async function prefetchCutAuditionSession(sessionId,afterMs=null,count=2){
+  const session=cutAuditionSession;if(!session||String(session.id)!==String(sessionId||""))return{ok:false,reason:"session_missing",session:publicCutAuditionSession()};
+  const start=Math.max(0,Math.round(Number(afterMs??session.nextPrefetchMs??session.startMs)||0));if(start>=session.endMs)return{ok:true,done:true,session:publicCutAuditionSession(),segments:0};
+  const token=`${start}:${Math.max(1,Math.min(4,Math.round(Number(count)||2)))}`;if(session.prefetchInFlight?.has(token))return{ok:true,inFlight:true,session:publicCutAuditionSession(),segments:0};
+  session.prefetchInFlight=session.prefetchInFlight||new Set();session.prefetchInFlight.add(token);
+  try{
+    const engine=configureCutMediaEngine(),segments=await engine.prefetchCachedEmbeddedMixPreview(session.sourcePath,session.tracks,{startMs:start,endMs:session.endMs,count});let sent=0,last=start;
+    for(const preview of segments){if(!cutAuditionSession||cutAuditionSession.id!==session.id)break;rememberCutAuditionSessionPreview(session,preview);const payload=cutAuditionSessionPayload(session,preview,"segment");send("launcher:cut-audition-session",payload);sent++;last=Math.max(last,Number(preview.cache_start_ms||0)+Number(preview.cache_duration_ms||0));}
+    if(cutAuditionSession?.id===session.id){session.prefetched=Number(session.prefetched||0)+sent;session.nextPrefetchMs=Math.max(Number(session.nextPrefetchMs||0),last);send("launcher:state",appState({cutAuditionSession:publicCutAuditionSession()}));}
+    return{ok:true,segments:sent,nextMs:last,session:publicCutAuditionSession()};
+  }finally{session.prefetchInFlight?.delete(token)}
+}
+async function startCutAuditionSession(job,handoff,preset,startMs=0,{seek=false,loopEnabled=false,loopStartMs=0,loopEndMs=0,loopCrossfadeMs=0}={}){
+  clearCutAuditionSession(seek?"seek_replace":"session_replace");
+  const engine=configureCutMediaEngine(),probe=await engine.probe();if(!probe.available)throw new Error(probe.error||"FFmpeg wurde nicht gefunden.");
+  const tracks=localCutAuditionMixTracks(preset,handoff);if(!tracks.length)throw new Error("Für die Continuous Audition Session ist keine lokale Recording-Spur verfügbar.");
+  const timelineEnd=cutAuditionTimelineEnd(job,handoff,startMs),loopStart=Math.max(0,Math.min(timelineEnd,Math.round(Number(loopStartMs)||0))),loopEnd=Math.max(loopStart,Math.min(timelineEnd,Math.round(Number(loopEndMs)||0))),looping=loopEnabled===true&&loopEnd-loopStart>=500;
+  const effectiveLoopCrossfadeMs=looping?Math.max(0,Math.min(50,Math.round(Number(loopCrossfadeMs)||0),Math.floor((loopEnd-loopStart)/4))):0;
+  const rangeStart=looping?loopStart:Number(startMs||0),endMs=looping?loopEnd:timelineEnd,positionMs=looping?Math.max(loopStart,Math.min(loopEnd-1,Math.round(Number(startMs)||loopStart))):Number(startMs||0),seconds=Math.max(1,Math.min(30,(endMs-positionMs)/1000||1)),preview=await engine.createCachedEmbeddedMixPreview(handoff.filePath,tracks,{seconds,startMs:positionMs});
+  const id=crypto.randomUUID?crypto.randomUUID():crypto.randomBytes(16).toString("hex");cutAuditionSession={id,projectId:String(job.project_id||""),handoffId:String(handoff.id||""),sourcePath:String(handoff.filePath||""),tracks,startMs:rangeStart,endMs,positionMs,state:"playing",loopEnabled:looping,loopStartMs:looping?loopStart:0,loopEndMs:looping?loopEnd:0,loopCrossfadeMs:effectiveLoopCrossfadeMs,prefetched:0,nextPrefetchMs:Number(preview.cache_start_ms||positionMs)+Number(preview.cache_duration_ms||0),prefetchInFlight:new Set(),segments:new Map()};
+  rememberCutAuditionSessionPreview(cutAuditionSession,preview);publishCutAuditionClock(cutAuditionSession,{state:"playing",positionMs},{force:true});send("launcher:cut-audition-session",cutAuditionSessionPayload(cutAuditionSession,preview,"start"));send("launcher:state",appState({cutAuditionSession:publicCutAuditionSession()}));
+  setTimeout(()=>prefetchCutAuditionSession(id,cutAuditionSession?.nextPrefetchMs,2).catch(error=>logger?.warn?.("Cut audition prefetch failed",error?.message||error)),20).unref?.();
+  return{preview,session:publicCutAuditionSession()};
+}
+function auditionRecordingHandoff(job={}){
+  const handoffId=String(job?.manifest?.export_preset?.source_handoff_id||"");
+  const projectId=String(job?.project_id||job?.manifest?.project_id||"");
+  if(!handoffId||!projectId)return null;
+  return(recordingHandoffStore?.snapshot?.().items||[]).find(item=>String(item.id||"")===handoffId&&String(item.projectId||"")===projectId&&item.exists&&item.filePath)||null;
+}
+async function processCutAuditionJob(inputJob){
+  if(!inputJob?.id||!isCutAuditionJob(inputJob))return false;
+  let job=inputJob;
+  try{
+    if(job.status==="queued"){job=(await bridge.claimCutJob(job.id)).job;updateCutJobInLibrary(job)}
+    if(job.status!=="claimed")return false;
+    const handoff=auditionRecordingHandoff(job);
+    if(!handoff)throw new Error("Lokaler Recording-Handoff für Timeline-Audition wurde nicht gefunden.");
+    const audition=job.manifest?.audition||{},action=["pause","resume","stop","session_start","session_seek","loop_start","loop_seek","inspect_zero_cross"].includes(String(audition.action||""))?String(audition.action):"preview",mode=audition.mode==="track"?"track":"mix";
+    const startMs=Math.max(0,Math.min(24*60*60*1000,Math.round(Number(audition.start_ms||0)))),loopStartMs=Math.max(0,Math.min(24*60*60*1000,Math.round(Number(audition.loop_start_ms||0)))),loopEndMs=Math.max(loopStartMs,Math.min(24*60*60*1000,Math.round(Number(audition.loop_end_ms||0)))),loopCrossfadeMs=Math.max(0,Math.min(50,Math.round(Number(audition.loop_crossfade_ms||0)))),zeroCrossRadiusMs=Math.max(5,Math.min(50,Math.round(Number(audition.search_radius_ms||20))));
+    const durationMs=Math.max(1000,Math.min(30000,Math.round(Number(audition.duration_ms||4000))));
+    const preset=job.manifest?.export_preset||{},localTracks=new Map((handoff.tracks||[]).map(track=>[String(track.key||""),track]));
+    job=(await bridge.startCutJob(job.id)).job;updateCutJobInLibrary(job);
+    if(action==="inspect_zero_cross"){
+      const engine=configureCutMediaEngine(),probe=await engine.probe();if(!probe.available)throw new Error(probe.error||"FFmpeg wurde nicht gefunden.");
+      const tracks=(preset.source_tracks||[]).map(track=>{const local=localTracks.get(String(track.key||""));return local?{...track,stream_index:Number(local.stream_index)}:null}).filter(Boolean);
+      const zeroCross=await engine.inspectMixZeroCrossings(handoff.filePath,tracks,{aMs:loopStartMs,bMs:loopEndMs,radiusMs:zeroCrossRadiusMs,sampleRate:48000});
+      job=(await bridge.completeCutJob(job.id,{output_name:"local-zero-cross-inspector",duration_ms:0,bytes:0,codec:"analysis",note:"cut_audition_zero_cross",zero_cross:zeroCross})).job;updateCutJobInLibrary(job);
+      return true;
+    }
+    if(["pause","resume","stop"].includes(action)){
+      if(cutAuditionSession&&String(cutAuditionSession.projectId)===String(job.project_id)){cutAuditionSession.state=action==="pause"?"paused":action==="resume"?"playing":"stopped";publishCutAuditionClock(cutAuditionSession,{state:cutAuditionSession.state,positionMs:Number(cutAuditionSession.positionMs??cutAuditionSession.startMs??0)},{force:true});if(action==="stop")clearCutAuditionSession("user_stop");}
+      job=(await bridge.completeCutJob(job.id,{output_name:"local-transport",duration_ms:0,bytes:0,codec:"none",note:`cut_audition_${action}`})).job;updateCutJobInLibrary(job);
+      send("launcher:cut-audition-control",{jobId:String(job.id),projectId:String(job.project_id),action,session:publicCutAuditionSession()});
+      return true;
+    }
+    if(["session_start","session_seek","loop_start","loop_seek"].includes(action)){
+      const looping=["loop_start","loop_seek"].includes(action);if(looping&&loopEndMs-loopStartMs<500)throw new Error("A/B Loop benötigt mindestens 0,5 Sekunden Auswahl.");
+      const sessionResult=await startCutAuditionSession(job,handoff,preset,startMs,{seek:["session_seek","loop_seek"].includes(action),loopEnabled:looping,loopStartMs,loopEndMs,loopCrossfadeMs}),preview=sessionResult.preview,stat=preview?.preview_path&&fs.existsSync(preview.preview_path)?fs.statSync(preview.preview_path):null;
+      job=(await bridge.completeCutJob(job.id,{output_name:"local-audition-session.wav",duration_ms:Number(preview?.duration_ms||0),bytes:Number(stat?.size||0),codec:"pcm_s16le",note:preview?.cache_hit?"cut_audition_session_cache_hit":"cut_audition_session_cache_render"})).job;updateCutJobInLibrary(job);
+      return true;
+    }
+    clearCutAuditionSession("finite_preview");
+    const engine=configureCutMediaEngine(),probe=await engine.probe();if(!probe.available)throw new Error(probe.error||"FFmpeg wurde nicht gefunden.");
+    let preview,trackKey="";
+    if(mode==="track"){
+      trackKey=String(audition.track_key||"");
+      const local=localTracks.get(trackKey),current=(preset.source_tracks||[]).find(track=>String(track.key||"")===trackKey);
+      if(!local||!current)throw new Error("Recording-Spur für Timeline-Audition ist lokal nicht verfügbar.");
+      preview=await engine.createCachedEmbeddedTrackPreview(handoff.filePath,local.stream_index,{seconds:durationMs/1000,startMs,gainDb:Number(current.gain_db||0),pan:Number(current.pan||0)});
+    }else{
+      const tracks=(preset.source_tracks||[]).map(track=>{const local=localTracks.get(String(track.key||""));return local?{...track,stream_index:Number(local.stream_index)}:null}).filter(Boolean);
+      preview=await engine.createCachedEmbeddedMixPreview(handoff.filePath,tracks,{seconds:durationMs/1000,startMs});
+    }
+    const stat=preview?.preview_path&&fs.existsSync(preview.preview_path)?fs.statSync(preview.preview_path):null;
+    job=(await bridge.completeCutJob(job.id,{output_name:"local-audition.wav",duration_ms:Number(preview?.duration_ms||durationMs),bytes:Number(stat?.size||0),codec:"pcm_s16le",note:preview?.cache_hit?"cut_audition_cache_hit":"cut_audition_cache_render"})).job;updateCutJobInLibrary(job);
+    send("launcher:cut-audition",{jobId:String(job.id),projectId:String(job.project_id),mode,trackKey,startMs:Number(preview?.start_ms??startMs),durationMs:Number(preview?.duration_ms||durationMs),previewPath:String(preview?.preview_path||""),cacheHit:preview?.cache_hit===true,cacheStartMs:Number(preview?.cache_start_ms||0),cacheDurationMs:Number(preview?.cache_duration_ms||0),playOffsetMs:Number(preview?.play_offset_ms||0)});
+    return true;
+  }catch(error){
+    const latest=job;
+    if(latest?.id&&["claimed","processing"].includes(String(latest.status||""))){try{const failed=(await bridge.failCutJob(latest.id,String(error?.message||error))).job;updateCutJobInLibrary(failed)}catch{}}
+    throw error;
+  }
+}
+async function pollCutAuditionJobs(){
+  if(cutAuditionPolling||!bridge?.snapshot?.().connected)return;
+  cutAuditionPolling=true;
+  try{
+    const data=await bridge.cutJobs(),jobs=Array.isArray(data?.jobs)?data.jobs:[];
+    const queued=jobs.find(job=>isCutAuditionJob(job)&&job.status==="queued");
+    if(queued)await processCutAuditionJob(queued);
+  }catch(error){logger?.warn?.("Cut audition poll failed",error?.message||error)}finally{cutAuditionPolling=false}
+}
+function startCutAuditionLoop(){clearInterval(cutAuditionTimer);cutAuditionTimer=setInterval(()=>pollCutAuditionJobs().catch(()=>{}),1500);cutAuditionTimer.unref?.();setTimeout(()=>pollCutAuditionJobs().catch(()=>{}),600)}
+function stopCutAuditionLoop(){clearInterval(cutAuditionTimer);cutAuditionTimer=null;cutAuditionPolling=false;clearCutAuditionSession("loop_stop")}
+
+async function handleRecordingFinalized(payload={}){
+  if(!payload?.ok||!payload.filePath)return;
+  let duration=0;try{const info=await configureCutMediaEngine().probeMediaInfo(payload.filePath);duration=Number(info?.duration_ms||0)}catch{}
+  const handoff=recordingHandoffStore.create({...payload,durationMs:duration||0,sceneId:payload.sceneGraph?.sceneId||"",sceneName:payload.sceneGraph?.sceneName||"",format:path.extname(payload.filePath).replace(/^\./,"")||"mkv"});
+  send("launcher:state",appState({recordingHandoffAction:{ok:true,created:true,handoffId:handoff.id}}));
+  if(bridge?.snapshot?.().connected&&creatorFeatures().cut_studio===true){
+    try{await materializeRecordingHandoff(handoff.id)}catch(error){recordingHandoffStore.markError(handoff.id,error);logger?.warn?.("Recording to Cut Studio handoff failed",error?.message);send("launcher:state",appState({recordingHandoffAction:{ok:false,handoffId:handoff.id,error:String(error?.message||error)}}))}
+  }
+}
+
 function configureCutMediaEngine(){
   if(cutMediaEngine)return cutMediaEngine;
   const outputRoot=path.join(app.getPath("videos"),"CFS Creator Suite","Exports");
@@ -316,20 +568,67 @@ async function probeCutMediaEngine(){
   return appState();
 }
 
+function configureStreamRuntimeEvidence(){
+  if(streamRuntimeEvidence)return streamRuntimeEvidence;
+  const evidenceDir=path.join(userDataPath||app.getPath("userData"),"stream-studio","runtime-evidence");
+  streamRuntimeEvidence=new StreamRuntimeEvidenceRecorder({
+    baseDir:evidenceDir,
+    logger,
+    telemetryProvider:()=>streamEngine?.telemetry?.()||{},
+    gameCaptureProvider:()=>gameCaptureSourceManager?.snapshot?.()||{},
+    applicationAudioProvider:()=>applicationAudioSourceManager?.snapshot?.()||{}
+  });
+  return streamRuntimeEvidence;
+}
+
+function beginStreamRuntimeEvidence({targets=[],recording=false,capture={},scene=null,output={}}={}){
+  const recorder=configureStreamRuntimeEvidence();
+  if(recorder.snapshot().active)recorder.finalize("new_stream_replaces_stale_evidence");
+  const audioSources=capture?.audioSources&&typeof capture.audioSources==="object"?Object.entries(capture.audioSources).filter(([,row])=>row?.enabled!==false).map(([key])=>key):[];
+  return recorder.start({label:"multistream",expectedTargets:Array.isArray(targets)?targets.length:0,recordingExpected:recording===true,captureType:capture?.type||"",profiles:Array.isArray(targets)?targets.map(row=>row?.profile||""):[],providers:Array.isArray(targets)?targets.map(row=>row?.provider||""):[],audioSources,sceneName:scene?.name||"",expectedFps:Number(output?.fps||0),sampleMs:2000});
+}
+
+function finishStreamRuntimeEvidence(reason="stream_stop"){
+  try{return streamRuntimeEvidence?.finalize?.(reason)||null}catch(error){logger?.warn?.("Stream runtime evidence finalize failed",error?.message);return null}
+}
+
+async function openStreamRuntimeEvidenceFolder(){
+  const recorder=configureStreamRuntimeEvidence();
+  fs.mkdirSync(recorder.baseDir,{recursive:true});
+  const error=await shell.openPath(recorder.baseDir);
+  if(error)throw new Error(error);
+  return appState();
+}
+
 function configureStreamEngine(){
   if(streamEngine)return streamEngine;
+  if(!widgetLayerRenderer)widgetLayerRenderer=new WidgetLayerRenderer({BrowserWindow,logger});
+  if(!applicationAudioSourceManager){
+    applicationAudioSourceManager=new ApplicationAudioSourceManager({logger,env:process.env,platform:process.platform,resourcesPath:process.resourcesPath,devHelperPath:path.join(__dirname,"vendor","audio","cfs-audio-loopback.exe"),processResolver:listWindowsProcessCandidates});
+    applicationAudioSourceManager.on("recovery",event=>{logger?.info?.("Application audio recovery",event);streamRuntimeEvidence?.event?.("application_audio_recovery",event);send("launcher:state",appState());});
+    applicationAudioSourceManager.on("source-error",event=>{logger?.warn?.("Application audio source error",event);streamRuntimeEvidence?.event?.("application_audio_error",event);send("launcher:state",appState());});
+  }
+  if(!gameCaptureSourceManager){
+    gameCaptureSourceManager=new GameCaptureSourceManager({logger,env:process.env,platform:process.platform,resourcesPath:process.resourcesPath,devHelperPath:path.join(__dirname,"vendor","game-capture","cfs-game-capture.exe"),processResolver:listWindowsProcessCandidates});
+    gameCaptureSourceManager.on("recovery",event=>{logger?.info?.("Game capture recovery",event);streamRuntimeEvidence?.event?.("game_capture_recovery",event);send("launcher:state",appState());});
+    gameCaptureSourceManager.on("rebind",event=>{logger?.info?.("Game capture process rebound",event);streamRuntimeEvidence?.event?.("game_capture_rebind",event);send("launcher:state",appState());});
+  }
   streamEngine=new StreamEngine({
     logger,
     env:process.env,
     platform:process.platform,
     resourcesPath:process.resourcesPath,
-    videosPath:app.getPath("videos")
+    videosPath:app.getPath("videos"),
+    widgetFrameSourceManager:widgetLayerRenderer,
+    applicationAudioSourceManager,
+    gameCaptureSourceManager
   });
-  streamEngine.on("state",engineState=>send("launcher:state",appState({streamEngine:engineState})));
+  streamEngine.on("state",engineState=>{streamRuntimeEvidence?.capture?.("engine_state");send("launcher:state",appState({streamEngine:engineState}));});
+  streamEngine.on("recording-finalized",payload=>{handleRecordingFinalized(payload).catch(error=>logger?.warn?.("Recording handoff finalize failed",error?.message));});
   return streamEngine;
 }
 
-async function syncStreamStudioConfig({notify=true}={}){
+async function syncStreamStudioConfig({notify=true,applyRunningScene=true}={}){
   if(!bridge?.snapshot?.().connected)throw new Error("Creator Bridge ist nicht verbunden.");
   try{
     const data=await bridge.fetchStreamStudioConfig();
@@ -340,14 +639,34 @@ async function syncStreamStudioConfig({notify=true}={}){
       multistream:data?.multistream||{max_destinations:1},
       engine:data?.engine||{},
       loadedAt:new Date().toISOString(),
-      error:""
+      error:"",
+      runtime_update:streamStudioCloud.runtime_update||null
     };
+    if(applyRunningScene&&streamEngine?.snapshot?.().desiredRunning&&data?.program_scene){
+      try{
+        const update=await streamEngine.updateScene(data.program_scene,{source:"cloud_program_sync",transition:data?.config?.transition||null});
+        streamStudioCloud={...streamStudioCloud,runtime_update:{ok:true,changed:update?.changed===true,reason:update?.reason||"",scene_id:String(data.program_scene?.id||""),scene_name:String(data.program_scene?.name||""),elapsed_ms:Number(update?.elapsedMs||0),transition:update?.transition||null,at:new Date().toISOString(),error:""}};
+      }catch(error){
+        const message=String(error?.message||error);streamStudioCloud={...streamStudioCloud,runtime_update:{ok:false,changed:false,scene_id:String(data.program_scene?.id||""),scene_name:String(data.program_scene?.name||""),elapsed_ms:0,at:new Date().toISOString(),error:message}};logger?.warn?.("Program Scene hot switch failed",message);
+      }
+    }
   }catch(error){
     streamStudioCloud={...streamStudioCloud,error:String(error?.message||error)};
     throw error;
   }finally{if(notify)send("launcher:state",appState())}
   return streamStudioCloud;
 }
+
+function startStreamStudioRuntimeSync(){
+  if(streamStudioRuntimeSyncTimer)return;
+  streamStudioRuntimeSyncTimer=setInterval(async()=>{
+    if(streamStudioRuntimeSyncInFlight||!streamEngine?.snapshot?.().desiredRunning||!bridge?.snapshot?.().connected)return;
+    streamStudioRuntimeSyncInFlight=true;
+    try{await syncStreamStudioConfig({notify:true,applyRunningScene:true})}catch(error){logger?.warn?.("Stream Studio runtime sync failed",error?.message)}finally{streamStudioRuntimeSyncInFlight=false}
+  },2000);streamStudioRuntimeSyncTimer.unref?.();
+}
+
+function stopStreamStudioRuntimeSync(){if(streamStudioRuntimeSyncTimer)clearInterval(streamStudioRuntimeSyncTimer);streamStudioRuntimeSyncTimer=null;streamStudioRuntimeSyncInFlight=false}
 
 function streamDisplayRegion(displayId="") {
   const id=String(displayId||"").trim();
@@ -363,10 +682,61 @@ function streamDisplayRegion(displayId="") {
   return {x:start.x,y:start.y,width:Math.max(64,Math.abs(end.x-start.x)),height:Math.max(64,Math.abs(end.y-start.y)),displayId:id};
 }
 
+function effectiveStreamStudioConfig(config=streamStudioCloud?.config||{}){
+  const limit=Math.max(1,Number(streamStudioCloud?.multistream?.max_destinations||1));
+  return streamProfileStore?.apply?.(config||{},limit)||{config:config||{},profile:null,warnings:[]};
+}
+
+function streamProfileLocalDraft(input={}){
+  const current=configStore.publicSettings();
+  const source=input&&typeof input==="object"&&!Array.isArray(input)?input:{};
+  return {
+    ...current,
+    streamAudioDevice:String(source.streamAudioDevice??source.audioDevice??current.streamAudioDevice??""),
+    streamAudioDevice2:String(source.streamAudioDevice2??source.audioDevice2??current.streamAudioDevice2??""),
+    streamAudioVolume:Number(source.streamAudioVolume??source.audioVolume??current.streamAudioVolume??1),
+    streamAudioVolume2:Number(source.streamAudioVolume2??source.audioVolume2??current.streamAudioVolume2??1),
+    streamAudioMute:typeof (source.streamAudioMute??source.audioMute)==="boolean"?(source.streamAudioMute??source.audioMute):current.streamAudioMute===true,
+    streamAudioMute2:typeof (source.streamAudioMute2??source.audioMute2)==="boolean"?(source.streamAudioMute2??source.audioMute2):current.streamAudioMute2===true,
+    streamAudioDelayMs:Number(source.streamAudioDelayMs??source.audioDelayMs??current.streamAudioDelayMs??0),
+    streamAudioDelayMs2:Number(source.streamAudioDelayMs2??source.audioDelayMs2??current.streamAudioDelayMs2??0),
+    streamAudioSources:source.streamAudioSources??source.audioSources??current.streamAudioSources??{},
+    streamRecordingEnabled:typeof (source.streamRecordingEnabled??source.recordingEnabled)==="boolean"?(source.streamRecordingEnabled??source.recordingEnabled):current.streamRecordingEnabled===true
+  };
+}
+
+function assertStreamProfileMutable(){if(streamEngine?.snapshot?.().desiredRunning)throw new Error("Streaming-Profile können während eines laufenden Streams nicht umgeschaltet oder verändert werden.");if(!streamProfileStore)throw new Error("Streaming-Profil-Speicher ist nicht bereit.");}
+
+async function saveStreamProfile(input={}){
+  assertStreamProfileMutable();
+  if(bridge?.snapshot?.().connected)await syncStreamStudioConfig({notify:false,applyRunningScene:false});
+  if(!streamStudioCloud?.config)throw new Error("Stream Studio Konfiguration zuerst synchronisieren.");
+  const profile=streamProfileStore.save({id:input.id||"",name:input.name||"",config:streamStudioCloud.config,settings:streamProfileLocalDraft(input.localSettings||{})});
+  if(input.activate!==false){streamProfileStore.activate(profile.id);configStore.save(localSettingsPatch(profile));}
+  logger?.info?.("Local streaming profile saved",profile.name);
+  return appState({streamProfileAction:{ok:true,action:input.id?"updated":"saved",profileId:profile.id}});
+}
+
+async function activateStreamProfile(profileId){
+  assertStreamProfileMutable();
+  const profile=streamProfileStore.activate(profileId);
+  const patch=localSettingsPatch(profile),processes=await listWindowsProcessCandidates();
+  for(const key of ["game","discord","music","alerts"]){const row=patch.streamAudioSources?.[key];if(!row?.processName)continue;const match=processes.find(item=>String(item.name||"").toLowerCase()===String(row.processName||"").toLowerCase());if(match)row.processId=Number(match.id||0)}
+  configStore.save(patch);
+  logger?.info?.("Local streaming profile activated",profile.name);
+  return appState({streamProfileAction:{ok:true,action:"activated",profileId:profile.id}});
+}
+
+function clearActiveStreamProfile(){assertStreamProfileMutable();streamProfileStore.clearActive();logger?.info?.("Local streaming profile override cleared");return appState({streamProfileAction:{ok:true,action:"cleared"}})}
+function deleteStreamProfile(profileId){assertStreamProfileMutable();const removed=streamProfileStore.remove(profileId);if(!removed)throw new Error("Streaming-Profil wurde nicht gefunden.");logger?.info?.("Local streaming profile removed",String(profileId||""));return appState({streamProfileAction:{ok:true,action:"deleted",profileId:String(profileId||"")}})}
+
 function saveStreamLocalSettings(input={}){
   const settings=configStore.save({
-    streamCaptureType:["screen","window","camera"].includes(input.captureType)?input.captureType:undefined,
+    streamCaptureType:["screen","window","game","camera"].includes(input.captureType)?input.captureType:undefined,
     streamWindowTitle:String(input.windowTitle??configStore.publicSettings().streamWindowTitle??""),
+    streamGameProcessId:Number(input.gameProcessId??configStore.publicSettings().streamGameProcessId??0),
+    streamGameProcessName:String(input.gameProcessName??configStore.publicSettings().streamGameProcessName??""),
+    streamGameWindowTitle:String(input.gameWindowTitle??configStore.publicSettings().streamGameWindowTitle??""),
     streamDisplayId:String(input.displayId??configStore.publicSettings().streamDisplayId??""),
     streamCropEnabled:typeof input.cropEnabled==="boolean"?input.cropEnabled:configStore.publicSettings().streamCropEnabled,
     streamCropX:Number(input.cropX??configStore.publicSettings().streamCropX??0),
@@ -382,6 +752,7 @@ function saveStreamLocalSettings(input={}){
     streamAudioMute2:typeof input.audioMute2==="boolean"?input.audioMute2:configStore.publicSettings().streamAudioMute2,
     streamAudioDelayMs:Number(input.audioDelayMs??configStore.publicSettings().streamAudioDelayMs??0),
     streamAudioDelayMs2:Number(input.audioDelayMs2??configStore.publicSettings().streamAudioDelayMs2??0),
+    streamAudioSources:input.audioSources??configStore.publicSettings().streamAudioSources??{},
     streamWatchdogEnabled:typeof input.watchdogEnabled==="boolean"?input.watchdogEnabled:configStore.publicSettings().streamWatchdogEnabled,
     streamWatchdogTimeoutSec:Number(input.watchdogTimeoutSec??configStore.publicSettings().streamWatchdogTimeoutSec??18),
     streamDrawMouse:typeof input.drawMouse==="boolean"?input.drawMouse:configStore.publicSettings().streamDrawMouse,
@@ -404,11 +775,65 @@ function removeStreamCredential(targetId){
   return appState({streamCredentialAction:{ok:true,removed,targetId:String(targetId||"")}});
 }
 
+function listWindowsProcessCandidates(){
+  if(process.platform!=="win32")return Promise.resolve([]);
+  const command='Get-Process | Where-Object { $_.Id -gt 0 -and $_.ProcessName } | Select-Object Id,ProcessName,MainWindowTitle,MainWindowHandle,Responding | Sort-Object ProcessName,Id | ConvertTo-Json -Compress';
+  return new Promise(resolve=>{
+    execFile("powershell.exe",["-NoLogo","-NoProfile","-NonInteractive","-ExecutionPolicy","Bypass","-Command",command],{windowsHide:true,timeout:7000,maxBuffer:2*1024*1024},(error,stdout)=>{
+      if(error){logger?.warn?.("Application audio process enumeration failed",error.message);resolve([]);return}
+      try{const parsed=JSON.parse(String(stdout||"[]")||"[]"),rows=Array.isArray(parsed)?parsed:(parsed?[parsed]:[]),seen=new Set(),out=[];for(const row of rows){const id=Math.max(0,Math.round(Number(row?.Id)||0)),name=String(row?.ProcessName||"").trim().slice(0,160),title=String(row?.MainWindowTitle||"").trim().slice(0,220),windowHandle=Math.max(0,Math.round(Number(row?.MainWindowHandle)||0)),responding=row?.Responding!==false;if(!id||!name)continue;const key=`${id}:${name.toLowerCase()}`;if(seen.has(key))continue;seen.add(key);out.push({id,name,title,windowHandle,responding});if(out.length>=500)break}resolve(out)}catch{resolve([])}
+    });
+  });
+}
+
+async function resolveStreamAudioSources(settings={},studioAudio={}){
+  const local=settings.streamAudioSources&&typeof settings.streamAudioSources==="object"?settings.streamAudioSources:{};
+  const configured=Object.values(local).some(row=>row&&row.enabled===true&&(row.deviceName||Number(row.processId)>0||row.processName));
+  if(!configured)return null;
+  const processes=await listWindowsProcessCandidates();
+  const byId=new Map(processes.map(row=>[Number(row.id),row]));
+  const byName=name=>processes.find(row=>String(row.name||"").toLowerCase()===String(name||"").toLowerCase())||null;
+  const out={};
+  for(const key of ["mic","game","discord","music","alerts"]){
+    const raw=local[key]&&typeof local[key]==="object"?local[key]:{};
+    const cloudKey=key==="mic"?"microphone":key;const cloud=studioAudio[cloudKey]&&typeof studioAudio[cloudKey]==="object"?studioAudio[cloudKey]:(key==="game"&&studioAudio.desktop&&typeof studioAudio.desktop==="object"?studioAudio.desktop:{});
+    const localVolume=Math.max(0,Math.min(2,Number(raw.volume??1))),cloudVolume=Math.max(0,Math.min(1,Number(cloud.level??100)/100));
+    if(key==="mic"){out[key]={enabled:raw.enabled===true,deviceName:String(raw.deviceName||"").trim().slice(0,220),volume:localVolume*cloudVolume,muted:raw.muted===true||cloud.muted===true,delayMs:Math.max(0,Math.min(2000,Math.round(Number(raw.delayMs)||0)))};continue}
+    let processId=Math.max(0,Math.round(Number(raw.processId)||0)),processName=String(raw.processName||"").trim().slice(0,160),row=byId.get(processId)||null;
+    if((!row||processName&&String(row.name).toLowerCase()!==processName.toLowerCase())&&processName){row=byName(processName);if(row)processId=Number(row.id)}
+    if(row&&!processName)processName=row.name;
+    out[key]={enabled:raw.enabled===true,processId,processName,includeTree:raw.includeTree!==false,volume:localVolume*cloudVolume,muted:raw.muted===true||cloud.muted===true,delayMs:Math.max(0,Math.min(2000,Math.round(Number(raw.delayMs)||0)))};
+  }
+  return out;
+}
+
+async function applicationAudioDoctor(){
+  configureStreamEngine();
+  const doctor=applicationAudioSourceManager?.doctor?await applicationAudioSourceManager.doctor():{ok:false,checks:[],helper:{error:"Application Audio Helper nicht initialisiert."}};
+  return appState({applicationAudioDoctor:doctor});
+}
+
+async function gameCaptureDoctor(){
+  configureStreamEngine();
+  const doctor=gameCaptureSourceManager?.doctor?await gameCaptureSourceManager.doctor():{ok:false,checks:[],helper:{error:"Game Capture Helper nicht initialisiert."}};
+  return appState({gameCaptureDoctor:doctor});
+}
+
+function sceneUsesNativeType(scene,type){
+  const wanted=String(type||"");if(!scene||!wanted)return false;
+  const config=scene.published_config&&typeof scene.published_config==="object"?scene.published_config:{};
+  const layouts=config.layouts&&typeof config.layouts==="object"?Object.values(config.layouts):[];
+  const root=Array.isArray(config.items)?[{items:config.items}]:[];
+  return [...layouts,...root].some(layout=>(Array.isArray(layout?.items)?layout.items:[]).some(item=>String(item?.native_source?.type||item?.nativeSource?.type||"")===wanted));
+}
+
 async function streamCaptureDevices(){
   const engine=configureStreamEngine();
   const probe=await engine.probe();
-  const devices=probe.available?await engine.listWindowsAudioDevices():[];
-  return appState({streamCaptureDevices:{devices,displays:(screen?.getAllDisplays?.()||[]).map(display=>({id:String(display.id),label:display.label||`Display ${display.id}`,bounds:display.bounds,scaleFactor:display.scaleFactor}))}});
+  const [devices,processes]=await Promise.all([probe.available?engine.listWindowsAudioDevices():[],listWindowsProcessCandidates()]);
+  const applicationAudio=applicationAudioSourceManager?.snapshot?.()||{available:false,error:"Application Audio Helper nicht initialisiert."};
+  const gameCapture=gameCaptureSourceManager?.snapshot?.()||{available:false,error:"Game Capture Helper nicht initialisiert."};
+  return appState({streamCaptureDevices:{devices,processes,applicationAudio,gameCapture,displays:(screen?.getAllDisplays?.()||[]).map(display=>({id:String(display.id),label:display.label||`Display ${display.id}`,bounds:display.bounds,scaleFactor:display.scaleFactor}))}});
 }
 
 async function openStreamProviderDocs(provider){
@@ -424,7 +849,7 @@ async function streamEnginePreflight(){
   const engine=configureStreamEngine();
   let engineState=engine.snapshot();
   if(!engineState.checkedAt)engineState=await engine.probe();
-  const config=cloud.config||{};
+  const applied=effectiveStreamStudioConfig(cloud.config||{}),config=applied.config||{};
   const active=(config?.multistream?.destinations||[]).filter(target=>target?.enabled===true);
   const limit=Math.max(1,Number(cloud?.multistream?.max_destinations||1));
   const checks=[];
@@ -432,7 +857,13 @@ async function streamEnginePreflight(){
   push("bridge",Boolean(bridge?.snapshot?.().connected),"Launcher Bridge",bridge?.snapshot?.().connected?"Mit CFS Cloud verbunden.":"Launcher zuerst mit deinem Creator-Account verbinden.");
   push("engine",Boolean(engineState.available),"Streaming Engine",engineState.available?(engineState.version||"FFmpeg bereit"):(engineState.error||"FFmpeg nicht bereit."));
   push("encryption",Boolean(streamCredentialStore?.encryptionAvailable?.()),"Lokaler Secret-Speicher",streamCredentialStore?.encryptionAvailable?.()?"Windows SafeStorage verfügbar.":"SafeStorage-Verschlüsselung ist erforderlich.");
-  push("target_count",active.length>0||configStore.publicSettings().streamRecordingEnabled===true,"Streaming-Ziel / Aufnahme",active.length?`${active.length} Streaming-Ziel${active.length===1?"":"e"} aktiviert.`:(configStore.publicSettings().streamRecordingEnabled===true?"Nur lokale Aufnahme aktiviert.":"Kein Ziel aktiviert."));
+  if(applied.profile)push("stream_profile",!(applied.warnings||[]).length,`Streaming-Profil · ${applied.profile.name}`,(applied.warnings||[]).length?(applied.warnings||[]).join(" · "):"Lokaler Output-/Multistream-Override aktiv · ohne Streamkeys oder Tokens im Profil.");
+  const localSettings=configStore.publicSettings(),localAudio=localSettings.streamAudioSources&&typeof localSettings.streamAudioSources==="object"?localSettings.streamAudioSources:{};
+  const appAudioRows=["game","discord","music","alerts"].map(key=>({key,...(localAudio[key]||{})})).filter(row=>row.enabled===true);
+  if(appAudioRows.length){const audioProbe=applicationAudioSourceManager?.probeRuntime?await applicationAudioSourceManager.probeRuntime():applicationAudioSourceManager?.probe?.()||{available:false,error:"Application Audio Helper fehlt."};const audioReady=audioProbe.available===true&&audioProbe.runtimeVerified!==false;push("application_audio_helper",audioReady,"Application Audio Capture",audioReady?`${appAudioRows.length} Process-Loopback-Bus${appAudioRows.length===1?"":"se"} konfiguriert · Helper runtime-verifiziert.`:(audioProbe.error||"WASAPI Helper fehlt oder ist nicht verifiziert."));const processes=await listWindowsProcessCandidates();for(const row of appAudioRows){const match=processes.find(item=>Number(item.id)===Number(row.processId))||processes.find(item=>String(item.name||"").toLowerCase()===String(row.processName||"").toLowerCase());push(`application_audio_${row.key}`,Boolean(match),`Audio · ${row.key.toUpperCase()}`,match?`${match.name} · PID ${match.id}`:`${row.processName||"Anwendung"} läuft nicht oder muss neu gewählt werden.`)}}
+  const needsGameCapture=localSettings.streamCaptureType==="game"||sceneUsesNativeType(cloud.program_scene,"game");
+  if(needsGameCapture){const gameProbe=gameCaptureSourceManager?.probeRuntime?await gameCaptureSourceManager.probeRuntime():gameCaptureSourceManager?.probe?.()||{available:false,error:"Game Capture Helper fehlt."};const gameReady=gameProbe.available===true&&gameProbe.runtimeVerified!==false;push("game_capture_helper",gameReady||Boolean(localSettings.streamGameWindowTitle),"Native Game Capture",gameReady?"Windows.Graphics.Capture Helper runtime-verifiziert.":(localSettings.streamGameWindowTitle?"Native Helper nicht bereit · GDI-Fenster-Fallback ist konfiguriert.":(gameProbe.error||"Game Capture Helper fehlt.")));const processes=await listWindowsProcessCandidates();const match=processes.find(item=>Number(item.id)===Number(localSettings.streamGameProcessId))||processes.find(item=>String(item.name||"").toLowerCase()===String(localSettings.streamGameProcessName||"").toLowerCase());push("game_capture_process",Boolean(match)||Boolean(localSettings.streamGameWindowTitle),"Game-Prozess",match?`${match.name} · PID ${match.id}${match.title?` · ${match.title}`:""}`:(localSettings.streamGameWindowTitle?`Fallback-Fenster: ${localSettings.streamGameWindowTitle}`:"Kein laufendes Spiel gewählt."));}
+  push("target_count",active.length>0||localSettings.streamRecordingEnabled===true,"Streaming-Ziel / Aufnahme",active.length?`${active.length} Streaming-Ziel${active.length===1?"":"e"} aktiviert.`:(localSettings.streamRecordingEnabled===true?"Nur lokale Aufnahme aktiviert.":"Kein Ziel aktiviert."));
   push("plan_limit",active.length<=limit,"Plan-Limit",`${active.length}/${limit} aktive Ziele.`);
   for(const target of active){
     const meta=streamCredentialStore?.publicEntry?.(target.id)||{configured:false};
@@ -461,7 +892,7 @@ async function stopStreamDestination(targetId){
 async function startStreamingEngine(){
   if(streamEngine?.snapshot?.().desiredRunning)throw new Error("Streaming Engine läuft bereits.");
   const cloud=await syncStreamStudioConfig({notify:false});
-  const config=cloud.config||{};
+  const applied=effectiveStreamStudioConfig(cloud.config||{}),config=applied.config||{};
   const settings=configStore.publicSettings();
   const active=(config?.multistream?.destinations||[]).filter(target=>target?.enabled===true);
   const limit=Math.max(1,Number(cloud?.multistream?.max_destinations||1));
@@ -473,9 +904,14 @@ async function startStreamingEngine(){
     credentials[target.id]=credential;
   }
   const output=config.output||{};
+  const audioSources=await resolveStreamAudioSources(settings,config.audio||{});
   const capture={
     type:settings.streamCaptureType||"screen",
-    windowTitle:settings.streamWindowTitle||"",
+    windowTitle:(settings.streamCaptureType||"screen")==="game"?(settings.streamGameWindowTitle||settings.streamWindowTitle||""):(settings.streamWindowTitle||""),
+    gameProcessId:settings.streamGameProcessId||0,
+    gameProcessName:settings.streamGameProcessName||"",
+    gameWidth:1920,
+    gameHeight:1080,
     displayId:settings.streamDisplayId||"",
     region:(settings.streamCaptureType||"screen")==="screen"?streamDisplayRegion(settings.streamDisplayId||""):null,
     crop:settings.streamCropEnabled===true?{x:settings.streamCropX||0,y:settings.streamCropY||0,width:settings.streamCropWidth||1920,height:settings.streamCropHeight||1080}:null,
@@ -488,6 +924,7 @@ async function startStreamingEngine(){
     audioMuted2:settings.streamAudioMute2===true,
     audioDelayMs:settings.streamAudioDelayMs||0,
     audioDelayMs2:settings.streamAudioDelayMs2||0,
+    ...(audioSources?{audioSources}:{}),
     drawMouse:settings.streamDrawMouse!==false,
     encoder:output.encoder||"auto"
   };
@@ -498,16 +935,23 @@ async function startStreamingEngine(){
     credentials,
     recording:settings.streamRecordingEnabled===true,
     output,
+    scene:cloud.program_scene||null,
+    transition:cloud.config?.transition||{type:"cut",duration_ms:0,easing:"smooth"},
     watchdog:{enabled:settings.streamWatchdogEnabled!==false,timeoutSec:settings.streamWatchdogTimeoutSec||18}
   });
-  logger?.info?.("Local streaming engine started",`${active.length} destination(s), recording=${settings.streamRecordingEnabled===true}`);
+  beginStreamRuntimeEvidence({targets:active,recording:settings.streamRecordingEnabled===true,capture,scene:cloud.program_scene||null,output});
+  streamRuntimeEvidence?.capture?.("engine_started");
+  startStreamStudioRuntimeSync();
+  logger?.info?.("Local streaming engine started",`${active.length} destination(s), recording=${settings.streamRecordingEnabled===true}${applied.profile?`, profile=${applied.profile.name}`:""}`);
   return appState({streamEngine:result});
 }
 
 async function stopStreamingEngine(){
+  stopStreamStudioRuntimeSync();
   const result=await configureStreamEngine().stop();
+  const runtimeEvidence=finishStreamRuntimeEvidence("stream_stop");
   logger?.info?.("Local streaming engine stopped");
-  return appState({streamEngine:result});
+  return appState({streamEngine:result,runtimeEvidence:streamRuntimeEvidence?.snapshot?.()||null,runtimeEvidenceFinalized:runtimeEvidence});
 }
 
 function findCutJob(jobId){
@@ -644,6 +1088,7 @@ async function clearCutSfx(projectId,trackId){
 
 function updateCutJobInLibrary(job){
   if(!job?.id)return;
+  if(isCutAuditionJob(job))return;
   const jobs=Array.isArray(creatorLibrary.cutJobs)?creatorLibrary.cutJobs.slice():[];
   const index=jobs.findIndex(item=>String(item.id)===String(job.id));
   if(index>=0)jobs[index]=job;else jobs.unshift(job);
@@ -658,7 +1103,10 @@ async function processCutJob(jobId){
   if(!job)throw new Error("Cut-Export-Job ist nicht in deinem Creator Account verfügbar.");
   const source=mediaSourceStore.get(job.project_id);
   if(!source?.exists)throw new Error("Ordne diesem Cut-Projekt zuerst eine lokale Videodatei zu.");
-  const preset=job?.manifest?.export_preset||{};
+  const linkedRecordingHandoff=(recordingHandoffStore?.snapshot?.().items||[]).find(item=>{if(String(item.projectId||"")!==String(job.project_id||"")||!item.filePath)return false;try{return path.resolve(item.filePath)===path.resolve(source.filePath)}catch{return String(item.filePath)===String(source.filePath)}})||null;
+  const manifestPreset=job?.manifest?.export_preset||{};
+  const preset=linkedRecordingHandoff?manifestPreset:{...manifestPreset,source_tracks:[],source_handoff_id:""};
+  const effectiveJob=linkedRecordingHandoff?job:{...job,manifest:{...(job.manifest||{}),export_preset:preset}};
   const reelMode=["reel","both"].includes(String(preset.mode||"clips"));
   const needsMusic=preset.music_enabled===true&&preset.music_mute!==true&&reelMode;
   const needsVoice=preset.voiceover_enabled===true&&preset.voiceover_mute!==true&&reelMode;
@@ -692,7 +1140,7 @@ async function processCutJob(jobId){
     }
     if(job.status!=="claimed")throw new Error(`Cut-Job hat den Status ${job.status} und kann jetzt nicht lokal gestartet werden.`);
     job=(await bridge.startCutJob(job.id)).job;updateCutJobInLibrary(job);send("launcher:state",appState());
-    const exported=await engine.runJob({job,sourcePath:source.filePath,musicPath:music?.filePath||null,voicePath:voice?.filePath||null,musicTrackSources:musicTrackSources.filter(source=>source.exists),voiceTrackSources:voiceTrackSources.filter(source=>source.exists),sfxSources:sfxSources.filter(source=>source.exists)});
+    const exported=await engine.runJob({job:effectiveJob,sourcePath:source.filePath,musicPath:music?.filePath||null,voicePath:voice?.filePath||null,musicTrackSources:musicTrackSources.filter(source=>source.exists),voiceTrackSources:voiceTrackSources.filter(source=>source.exists),sfxSources:sfxSources.filter(source=>source.exists)});
     job=(await bridge.completeCutJob(job.id,exported.result)).job;updateCutJobInLibrary(job);
     send("launcher:state",appState({cutJobAction:{ok:true,job,outputs:exported.outputs,outputDir:exported.outputDir}}));
     return appState({cutJobAction:{ok:true,job,outputs:exported.outputs,outputDir:exported.outputDir}});
@@ -854,7 +1302,7 @@ async function refreshCreatorLibrary({notify=true} = {}) {
       gameRules:Array.isArray(data?.game_rules)?data.game_rules:[],
       gameRuleHits:Array.isArray(data?.game_rule_hits)?data.game_rule_hits:[],
       cutProjects:Array.isArray(data?.cut_projects)?data.cut_projects:[],
-      cutJobs:Array.isArray(data?.cut_jobs)?data.cut_jobs:[],
+      cutJobs:Array.isArray(data?.cut_jobs)?data.cut_jobs.filter(job=>!isCutAuditionJob(job)):[],
       creator:data?.creator || null,
       loadedAt:new Date().toISOString(),
       error:""
@@ -978,7 +1426,9 @@ async function logoutLauncherDevice() {
   }
 
   try { await outputManager?.stop?.(); } catch {}
+  stopStreamStudioRuntimeSync();
   try { await streamEngine?.stop?.(); } catch {}
+  finishStreamRuntimeEvidence("device_logout");
   let remoteRevoked = false;
   try {
     if (bridge?.token) {
@@ -1171,7 +1621,9 @@ async function gracefulShutdown(reason = "app_quit") {
   if (shutdownInProgress) return;
   shutdownInProgress = true;
   try { await outputManager?.stop?.(); } catch {}
+  stopStreamStudioRuntimeSync();
   try { await streamEngine?.stop?.(); } catch {}
+  finishStreamRuntimeEvidence(reason);
 
   logger?.info("Graceful shutdown started", reason);
   try {
@@ -1358,17 +1810,32 @@ function registerIpc() {
 
   ipcMain.handle("launcher:media-engine-probe", async () => probeCutMediaEngine());
   ipcMain.handle("launcher:stream-engine-probe", async () => {await configureStreamEngine().probe();return appState();});
+  ipcMain.handle("launcher:application-audio-doctor", async () => applicationAudioDoctor());
   ipcMain.handle("launcher:stream-studio-sync", async () => {await syncStreamStudioConfig({notify:false});return appState();});
   ipcMain.handle("launcher:stream-capture-devices", async () => streamCaptureDevices());
   ipcMain.handle("launcher:stream-local-settings", async (_event,input) => saveStreamLocalSettings(input||{}));
+  ipcMain.handle("launcher:stream-profile-save", async (_event,input) => saveStreamProfile(input||{}));
+  ipcMain.handle("launcher:stream-profile-activate", async (_event,profileId) => activateStreamProfile(profileId));
+  ipcMain.handle("launcher:stream-profile-clear", async () => clearActiveStreamProfile());
+  ipcMain.handle("launcher:stream-profile-delete", async (_event,profileId) => deleteStreamProfile(profileId));
+  ipcMain.handle("launcher:game-capture-doctor", async () => gameCaptureDoctor());
   ipcMain.handle("launcher:stream-credential-save", async (_event,input) => saveStreamCredential(input||{}));
   ipcMain.handle("launcher:stream-credential-remove", async (_event,targetId) => removeStreamCredential(targetId));
   ipcMain.handle("launcher:stream-provider-docs", async (_event,provider) => openStreamProviderDocs(provider));
   ipcMain.handle("launcher:stream-engine-preflight", async () => streamEnginePreflight());
   ipcMain.handle("launcher:stream-engine-start", async () => startStreamingEngine());
   ipcMain.handle("launcher:stream-engine-stop", async () => stopStreamingEngine());
+  ipcMain.handle("launcher:stream-evidence-open", async () => openStreamRuntimeEvidenceFolder());
   ipcMain.handle("launcher:stream-target-start", async (_event,targetId) => startStreamDestination(targetId));
   ipcMain.handle("launcher:stream-target-stop", async (_event,targetId) => stopStreamDestination(targetId));
+
+  ipcMain.handle("launcher:recording-handoff", async (_event,input) => materializeRecordingHandoff(input?.handoffId,{open:input?.open===true}));
+  ipcMain.handle("launcher:recording-handoff-analyze", async (_event,input) => analyzeRecordingHandoff(input?.handoffId));
+  ipcMain.handle("launcher:recording-handoff-preview-track", async (_event,input) => previewRecordingHandoffTrack(input?.handoffId,input?.trackKey));
+  ipcMain.handle("launcher:recording-handoff-preview-mix", async (_event,input) => previewRecordingHandoffMix(input?.handoffId));
+  ipcMain.handle("launcher:cut-audition-prefetch", async (_event,input) => prefetchCutAuditionSession(input?.sessionId,input?.afterMs,input?.count));
+  ipcMain.handle("launcher:cut-audition-segment-bytes", async (_event,input) => cutAuditionSegmentBytes(input?.sessionId,input?.cacheStartMs));
+  ipcMain.handle("launcher:cut-audition-clock", async (_event,input) => receiveCutAuditionClock(input||{}));
 
   ipcMain.handle("launcher:cut-source-select", async (_event,input) => {
     return chooseCutSource(input?.projectId,input?.sourceName||"");
@@ -1729,9 +2196,12 @@ app.whenReady().then(async () => {
   streamDeckStore=new StreamDeckStore(path.join(userData,"stream-deck","layout.json"));
   betaSessionStore=new BetaSessionStore(path.join(userData,"beta","active-session.json"));
   mediaSourceStore=new MediaSourceStore(path.join(userData,"cut-studio","media-sources.json"));
+  recordingHandoffStore=new RecordingHandoffStore(path.join(userData,"cut-studio","recording-handoffs.json"));
   streamCredentialStore=new StreamCredentialStore(path.join(userData,"stream-studio","credentials.json"),safeStorage,logger);
+  streamProfileStore=new StreamProfileStore(path.join(userData,"stream-studio","streaming-profiles.json"),{logger});
   configureCutMediaEngine();
   configureStreamEngine();
+  configureStreamRuntimeEvidence();
   configureOutputManager();
 
   const settings = configStore.read();
@@ -1748,6 +2218,7 @@ app.whenReady().then(async () => {
   rebuildBridge();
   if (configStore.getPendingDeviceLink?.()) scheduleDeviceLinkPolling(1200);
   createWindow();
+  startCutAuditionLoop();
   createTray();
   updates.start(configStore.publicSettings());
   startCloudHealthLoop();
@@ -1759,6 +2230,7 @@ app.on("before-quit", event => {
   if (shutdownInProgress) return;
   event.preventDefault();
   quitting = true;
+  stopCutAuditionLoop();
   gracefulShutdown("app_quit").finally(() => {
     shutdownInProgress = true;
     app.exit(0);
