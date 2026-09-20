@@ -117,7 +117,7 @@
     "stream-evidence:guard": "node tools/stream-runtime-evidence-summary.mjs --guard"
   },
   "devDependencies": {
-    "electron": "38.0.0",
+    "electron": "44.4.1",
     "electron-builder": "26.0.12"
   },
   "build": {
