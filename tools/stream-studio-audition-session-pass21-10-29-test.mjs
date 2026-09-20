@@ -1,0 +1,107 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { createRequire } from 'node:module';
+const require=createRequire(import.meta.url);
+const root=path.resolve(process.argv[2]||'.');
+const {CutMediaEngine}=require(path.join(root,'launcher/src/cut-media-engine.js'));
+const read=p=>fs.readFileSync(path.join(root,p),'utf8');
+const main=read('launcher/main.js'),preload=read('launcher/preload.js'),renderer=read('launcher/renderer/app.js'),server=read('server.js'),cutJs=read('public/assets/js/cut-studio.js'),cutHtml=read('public/pages/cut-studio.html'),cutCss=read('public/assets/css/cut-studio.css'),pkg=JSON.parse(read('package.json')),checklist=read('CFS_MASTER_CHECKLIST_PASS21.md'),docs=read('STREAM_STUDIO_AUDITION_SESSION_PASS21_10_29.md');
+let pass=0,fail=0;async function ok(name,fn){try{await fn();pass++;console.log('PASS',name)}catch(e){fail++;console.error('FAIL',name);console.error(e?.stack||e)}}
+
+const tmp=fs.mkdtempSync(path.join(os.tmpdir(),'cfs-session29-')),source=path.join(tmp,'recording.mkv'),out=path.join(tmp,'out');fs.mkdirSync(out,{recursive:true});fs.writeFileSync(source,Buffer.alloc(512,9));
+const engine=new CutMediaEngine({outputRoot:out});engine.ffmpegPath='ffmpeg';engine.state.available=true;let renders=0;engine.runProcess=async(_cmd,args)=>{renders++;const dest=args.at(-1);fs.mkdirSync(path.dirname(dest),{recursive:true});fs.writeFileSync(dest,Buffer.alloc(8192,renders));return{code:0,stdout:'',stderr:''}};
+const mix=[{key:'mic',stream_index:1,enabled:true,gain_db:0,mute:false,solo:false,pan:0},{key:'game',stream_index:2,enabled:true,gain_db:-2,mute:false,solo:false,pan:0}];
+let prefetched,reused;
+await ok('Media engine initializes prefetch counters',()=>{const c=engine.auditionCacheSnapshot();assert.equal(c.prefetches,0);assert.equal(c.prefetchHits,0);assert.equal(c.prefetchRenders,0)});
+await ok('Prefetch API returns three requested segments',async()=>{prefetched=await engine.prefetchCachedEmbeddedMixPreview(source,mix,{startMs:0,endMs:65000,count:3});assert.equal(prefetched.length,3)});
+await ok('Prefetch first segment starts at zero',()=>assert.equal(prefetched[0].cache_start_ms,0));
+await ok('Prefetch second segment starts at 30 seconds',()=>assert.equal(prefetched[1].cache_start_ms,30000));
+await ok('Prefetch third segment starts at 60 seconds',()=>assert.equal(prefetched[2].cache_start_ms,60000));
+await ok('Prefetch final request duration respects timeline remainder',()=>assert.equal(prefetched[2].duration_ms,5000));
+await ok('First prefetch renders each segment once',()=>assert.equal(renders,3));
+await ok('Prefetch telemetry records requests',()=>assert.equal(engine.auditionCacheSnapshot().prefetches,3));
+await ok('Prefetch telemetry records render count',()=>assert.equal(engine.auditionCacheSnapshot().prefetchRenders,3));
+await ok('Repeated prefetch uses cached WAVs',async()=>{reused=await engine.prefetchCachedEmbeddedMixPreview(source,mix,{startMs:0,endMs:65000,count:3});assert.ok(reused.every(x=>x.cache_hit));assert.equal(renders,3)});
+await ok('Repeated prefetch telemetry records hits',()=>assert.equal(engine.auditionCacheSnapshot().prefetchHits,3));
+await ok('Prefetch count clamps to four',async()=>{const rows=await engine.prefetchCachedEmbeddedMixPreview(source,mix,{startMs:90000,endMs:220000,count:99});assert.equal(rows.length,4)});
+await ok('Prefetch stops at end before requesting empty segment',async()=>{const rows=await engine.prefetchCachedEmbeddedMixPreview(source,mix,{startMs:64000,endMs:64500,count:2});assert.equal(rows.length,0)});
+await ok('Prefetch remains local and contains no network call',()=>{const src=read('launcher/src/cut-media-engine.js'),a=src.indexOf('async prefetchCachedEmbeddedMixPreview'),b=src.indexOf('async createEmbeddedTrackPreview',a),block=src.slice(a,b);assert.ok(!/fetch\(|https?:\/\//i.test(block))});
+await ok('Prefetch uses existing mixer-sensitive cached preview',()=>assert.ok(read('launcher/src/cut-media-engine.js').includes('await this.createCachedEmbeddedMixPreview(sourcePath,tracks')));
+
+await ok('Server audition schema remains at least 10',()=>assert.ok(/schema:(?:1[0-9]|[2-9][0-9])/.test(server)&&server.includes('kind:"cut_audition"')));
+await ok('Server supports session_start',()=>assert.ok(server.includes('"session_start"')));
+await ok('Server supports session_seek',()=>assert.ok(server.includes('"session_seek"')));
+await ok('Server retains finite preview action',()=>assert.ok(server.includes('"preview"')));
+await ok('Server retains pause/resume/stop controls',()=>{for(const action of ['pause','resume','stop'])assert.ok(server.includes(`"${action}"`))});
+await ok('Server session request still requires handoff',()=>assert.ok(server.includes('Timeline-Audition ist nur für einen lokalen Recording-Handoff verfügbar.')));
+await ok('Web request cannot carry local source path',()=>{const a=cutJs.indexOf('async function requestCutAudition'),b=cutJs.indexOf('function fallbackPoints',a),block=cutJs.slice(a,b);assert.ok(!/previewPath|recordingPath|filePath|file_path|recording_path|preview_path/.test(block))});
+
+await ok('Launcher has one active local audition session slot',()=>assert.ok(main.includes('let cutAuditionSession = null')));
+await ok('Launcher session id uses crypto random UUID or random bytes',()=>assert.ok(main.includes('crypto.randomUUID?crypto.randomUUID():crypto.randomBytes(16)')));
+await ok('Launcher session stores local source path only in main process',()=>assert.ok(main.includes('sourcePath:String(handoff.filePath||"")')));
+await ok('Launcher maps session stems through verified local handoff indices',()=>assert.ok(main.includes('localCutAuditionMixTracks')));
+await ok('Launcher derives timeline end from clips or handoff duration',()=>assert.ok(main.includes('cutAuditionTimelineEnd')));
+await ok('Launcher session payload clamps cache duration to timeline end',()=>assert.ok(main.includes('usableCacheDurationMs=Math.max(0,Math.min(rawCacheDurationMs,Number(session.endMs||0)-cacheStartMs))')));
+await ok('Launcher initial session uses cached embedded mix',()=>assert.ok(main.includes('createCachedEmbeddedMixPreview(handoff.filePath,tracks')));
+await ok('Launcher background prefetch uses dedicated engine API',()=>assert.ok(main.includes('prefetchCachedEmbeddedMixPreview(session.sourcePath,session.tracks')));
+await ok('Launcher prefetch defaults to two segments',()=>assert.ok(main.includes('async function prefetchCutAuditionSession(sessionId,afterMs=null,count=2)')));
+await ok('Launcher limits prefetch request count',()=>assert.ok(main.includes('Math.max(1,Math.min(4,Math.round(Number(count)||2)))')));
+await ok('Launcher rejects stale local session id',()=>assert.ok(main.includes('String(session.id)!==String(sessionId||"")')));
+await ok('Launcher emits local session start event',()=>assert.ok(main.includes('cutAuditionSessionPayload(cutAuditionSession,preview,"start")')));
+await ok('Launcher emits local session segment event',()=>assert.ok(main.includes('cutAuditionSessionPayload(session,preview,"segment")')));
+await ok('Launcher finite preview replaces continuous session',()=>assert.ok(main.includes('clearCutAuditionSession("finite_preview")')));
+await ok('Launcher session seek replaces prior session',()=>assert.ok(main.includes('seek?"seek_replace":"session_replace"')));
+await ok('Launcher stop clears local continuous session',()=>assert.ok(main.includes('clearCutAuditionSession("user_stop")')));
+await ok('Launcher pause and resume remain metadata-only jobs',()=>{const a=main.indexOf('if(["pause","resume","stop"].includes(action))'),b=main.indexOf('if(["session_start","session_seek","loop_start","loop_seek"].includes(action))',a),block=main.slice(a,b);assert.ok(block.includes('output_name:"local-transport"'));assert.ok(!block.includes('engine.probe'))});
+await ok('Launcher starts or seeks session before finite preview path',()=>{const a=main.indexOf('if(["session_start","session_seek","loop_start","loop_seek"].includes(action))'),b=main.indexOf('clearCutAuditionSession("finite_preview")',a);assert.ok(a>=0&&b>a)});
+await ok('Launcher registers local prefetch IPC',()=>assert.ok(main.includes('ipcMain.handle("launcher:cut-audition-prefetch"')));
+await ok('Launcher app state exposes only sanitized session metadata',()=>assert.ok(main.includes('cutAuditionSession:publicCutAuditionSession()')));
+await ok('Public session snapshot contains no source path',()=>{const a=main.indexOf('function publicCutAuditionSession'),b=main.indexOf('function clearCutAuditionSession',a),block=main.slice(a,b);assert.ok(!/sourcePath|filePath/.test(block))});
+
+await ok('Preload exposes local audition session callback',()=>assert.ok(preload.includes('onCutAuditionSession: callback')));
+await ok('Preload exposes local session prefetch invoke',()=>assert.ok(preload.includes('prefetchCutAuditionSession: input => ipcRenderer.invoke("launcher:cut-audition-prefetch"')));
+await ok('Preload session channel is Electron-local',()=>assert.ok(preload.includes('launcher:cut-audition-session')));
+
+await ok('Renderer tracks continuous session locally',()=>assert.ok(renderer.includes('let cutAuditionSession={active:false')));
+await ok('Renderer stores prefetched session segments in a Map',()=>assert.ok(renderer.includes('segments:new Map()')));
+await ok('Renderer requests prefetch only through local preload API',()=>assert.ok(renderer.includes('window.CFSLauncher.prefetchCutAuditionSession')));
+await ok('Renderer requests two segments ahead',()=>assert.ok(renderer.includes('queueCutAuditionSessionPrefetch(nextStart,2)')));
+await ok('Renderer handles session start event',()=>assert.ok(renderer.includes('if(event==="start")')));
+await ok('Renderer handles session stop event',()=>assert.ok(renderer.includes('if(event==="stop")')));
+await ok('Renderer continuous transport remains implemented after later milestones',()=>assert.ok(renderer.includes('receiveCutAuditionSession')&&renderer.includes('queueCutAuditionSessionPrefetch')));
+await ok('Renderer still requests missing future session segments locally',()=>assert.ok(renderer.includes('queueCutAuditionSessionPrefetch')));
+await ok('Renderer still consumes arriving session segment events',()=>assert.ok(renderer.includes('transport.addSegment(segment)')||renderer.includes('waitingStartMs===Number(segment.cacheStartMs||0)')));
+await ok('Pass 21.10.29 local segment chaining remains present or is superseded by WebAudio scheduling',()=>assert.ok(renderer.includes('function armCutAuditionSessionBoundary')||renderer.includes('ensureCutAuditionWebAudio')));
+await ok('Renderer segment boundary uses audio currentTime',()=>assert.ok(renderer.includes('Number(cutAuditionAudio.currentTime||0)')));
+await ok('Renderer stops at timeline end',()=>assert.ok(/Timeline-Ende erreicht/.test(renderer)));
+await ok('Renderer pause marks session paused',()=>assert.ok(renderer.includes('cutAuditionSession.paused=true')));
+await ok('Renderer resume continues the active local session',()=>assert.ok(renderer.includes('transport.resume()')||renderer.includes('armCutAuditionSessionBoundary();toast("Continuous Audition läuft weiter."')));
+await ok('Renderer stop resets session queue',()=>assert.ok(renderer.includes('resetCutAuditionSessionLocal({pause:false})')));
+await ok('Renderer finite preview resets continuous session',()=>{const a=renderer.indexOf('window.CFSLauncher.onCutAudition(payload=>');const block=renderer.slice(a,a+400);assert.ok(block.includes('resetCutAuditionSessionLocal()'))});
+await ok('Launcher UI surfaces prefetch hit telemetry',()=>assert.ok(renderer.includes('PREFETCH HIT')));
+
+await ok('Cut Studio labels continuous play button',()=>assert.ok(cutHtml.includes('CONTINUOUS PLAY')));
+await ok('Cut Studio explains local segment chaining',()=>assert.ok(/Segmentwechsel[^<]{0,140}Bridge-Job/i.test(cutHtml)));
+await ok('Cut Studio remembers requested session state only in browser memory',()=>assert.ok(cutJs.includes('let auditionSessionRequested=false')));
+await ok('First Play starts session_start',()=>assert.ok(cutJs.includes('?"resume":"session_start"')));
+await ok('Play after session request uses resume',()=>assert.ok(cutJs.includes('auditionSessionRequested?"resume":"session_start"')));
+await ok('Stop clears browser session request state',()=>assert.ok(cutJs.includes('auditionSessionRequested=false')));
+await ok('Scrub during active session still supports session_seek',()=>assert.ok(cutJs.includes('"session_seek"')&&cutJs.includes('"loop_seek"')));
+await ok('Back and forward can use session seek',()=>assert.ok((cutJs.match(/Session Seek/g)||[]).length>=2));
+await ok('Session start and seek save current mixer state first',()=>assert.ok(/renderAction=\[[^\]]*\"session_start\"[^\]]*\"session_seek\"[^\]]*\"loop_start\"[^\]]*\"loop_seek\"[^\]]*\]\.includes\(action\)/.test(cutJs)));
+await ok('Pass 21.10.29 CSS marker exists',()=>assert.ok(cutCss.includes('Pass 21.10.29')));
+
+await ok('Root package registers Pass 21.10.29 check',()=>assert.ok(pkg.scripts?.['studio-audition-session21:check']?.includes('pass21-10-29-test.mjs')));
+await ok('Combined Stream Studio check includes Pass 21.10.29',()=>assert.ok(pkg.scripts?.['stream-studio21:check']?.includes('studio-audition-session21:check')));
+await ok('Master checklist retains Pass 21.10.29 milestone',()=>assert.ok(checklist.includes('## Pass 21.10.29 Update – Continuous Audition Session / Prefetch')));
+await ok('Master checklist contains Pass 21.10.29 section',()=>assert.ok(checklist.includes('Pass 21.10.29 Update – Continuous Audition Session / Prefetch')));
+await ok('Pass 21.10.28 marks continuous prefetch as completed by 21.10.29',()=>assert.ok(checklist.includes('kontinuierliches Segment-Prefetch für längere Play-Strecken umgesetzt in Pass 21.10.29')));
+await ok('Detail documentation exists',()=>assert.ok(fs.existsSync(path.join(root,'STREAM_STUDIO_AUDITION_SESSION_PASS21_10_29.md'))));
+await ok('Detail docs state no bridge job per segment',()=>assert.ok(/ohne[^.]{0,80}Bridge-Job|keinen neuen[^.]{0,80}Bridge-Job/i.test(docs)));
+await ok('Detail docs preserve local path security boundary',()=>assert.ok(/absolute lokale Pfade bleiben ausschließlich im Launcher/i.test(docs)));
+await ok('Detail docs do not claim gapless playback',()=>assert.ok(/nicht als sample-genau|nicht.*gapless/i.test(docs)));
+await ok('Detail docs keep Windows acceptance open',()=>assert.ok(/Windows-Abnahme.*offen/i.test(docs)));
+
+console.log(`\nStream Studio Continuous Audition Session Pass 21.10.29: ${pass}/${pass+fail} PASS`);if(fail)process.exit(1);

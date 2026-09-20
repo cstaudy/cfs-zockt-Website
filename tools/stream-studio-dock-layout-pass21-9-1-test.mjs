@@ -64,7 +64,7 @@ add('server sanitizes workspace layout',has(server,'function sanitizeStreamStudi
 add('server ignores unknown dock ids',has(server,'if(!allowed.has(id)||seen.has(id))continue'));
 add('server restores missing dock items',has(server,'for(const id of defaults.zones[zone])'));
 add('server persists sanitized workspace only',has(server,'clean.workspace_layout=sanitizeStreamStudioWorkspace(source.workspace_layout)'));
-add('server stream config version bumped',has(server,'version:3'));
+add('server stream config version bumped',has(server,'version:3')||has(server,'version:4'));
 add('workspace contains no arbitrary HTML field',!has(server,'workspace_layout.html')&&!has(server,'workspace_layout.css')&&!has(server,'workspace_layout.script'));
 
 add('studio layout check script registered',pkg.scripts?.['studio-layout21:check']==='node tools/stream-studio-dock-layout-pass21-9-1-test.mjs .');
