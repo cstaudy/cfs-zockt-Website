@@ -35,6 +35,15 @@ const packageDeps=Object.entries(pkg.dependencies||{}).sort(([a],[b])=>a.localeC
 const lockedDeps=Object.entries(lock.packages?.['']?.dependencies||{}).sort(([a],[b])=>a.localeCompare(b));
 add('deps_lock','Locked root dependencies exactly match package.json',JSON.stringify(lockedDeps)===JSON.stringify(packageDeps),`${packageDeps.length} runtime deps`);
 add('node_engine','Node engine requires 22+',/^>=?22(?:\.|$)/.test(String(pkg.engines?.node||'')),String(pkg.engines?.node||'missing'));
+
+const localRuntimeRequires=[...server.matchAll(/require\(\s*["'](\.\/[^"']+)["']\s*\)/g)].map(match=>match[1]);
+const missingRuntimeModules=[];
+for(const specifier of [...new Set(localRuntimeRequires)]){
+  const rel=specifier.replace(/^\.\//,'');
+  const candidates=[rel,`${rel}.js`,`${rel}.cjs`,`${rel}.json`,path.join(rel,'index.js'),path.join(rel,'index.cjs')];
+  if(!candidates.some(candidate=>exists(candidate)))missingRuntimeModules.push(specifier);
+}
+add('runtime_local_modules','All local server runtime modules exist',missingRuntimeModules.length===0,missingRuntimeModules.join(', '));
 add('launcher_version','Launcher release values match launcher package',blueprintLauncher===launcher.version&&blueprintEvidence===launcher.version,`${launcher.version} / ${blueprintLauncher||'missing'} / ${blueprintEvidence||'missing'}`);
 
 add('render_manual','Render auto deploy stays explicitly disabled',/autoDeployTrigger:\s*["']?off["']?/.test(blueprint));

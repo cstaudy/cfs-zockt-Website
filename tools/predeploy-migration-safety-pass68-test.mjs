@@ -79,6 +79,13 @@ check('failed unlock destroys pooled client',()=>assert.match(lockLib,/client\.r
 
 check('server imports bootstrap lock',()=>assert.match(server,/require\("\.\/lib\/database-bootstrap-lock"\)/));
 check('server imports schema contract',()=>assert.match(server,/database-schema-contract/));
+const localRuntimeRequires=[...server.matchAll(/require\(\s*["'](\.\/[^"']+)["']\s*\)/g)].map(match=>match[1]);
+const missingRuntimeModules=[...new Set(localRuntimeRequires)].filter(specifier=>{
+  const rel=specifier.replace(/^\.\//,'');
+  return ![rel,`${rel}.js`,`${rel}.cjs`,`${rel}.json`,path.join(rel,'index.js'),path.join(rel,'index.cjs')].some(candidate=>fs.existsSync(path.join(root,candidate)));
+});
+check('all local server runtime modules exist',()=>assert.deepEqual(missingRuntimeModules,[]));
+check('launch production gate runtime module exists',()=>assert.equal(fs.existsSync(path.join(root,'lib/launch-production-gate.js')),true));
 check('server bootstraps DB under advisory lock',()=>assert.match(server,/withDatabaseBootstrapLock\([\s\S]{0,500}\(\) => initDatabase\(\)/));
 const startBlock=server.slice(server.indexOf('async function startServer()'));
 check('workers start after locked DB bootstrap',()=>assert.ok(startBlock.indexOf('withDatabaseBootstrapLock(')<startBlock.indexOf('startAccountMailOutboxWorker();')));
@@ -102,6 +109,7 @@ check('security68 script registered',()=>assert.equal(pkg.scripts['security68:ch
 check('full predeploy gate registered',()=>assert.equal(pkg.scripts['predeploy:gate'],'npm run predeploy:doctor && npm run release:preflight'));
 check('security68 wired into project check',()=>assert.match(project,/\['security68',\['npm','run','security68:check'\]\]/));
 check('doctor verifies lockfile parity',()=>assert.match(doctor,/Locked root dependencies exactly match package\.json/));
+check('doctor verifies local runtime modules exist',()=>assert.match(doctor,/All local server runtime modules exist/));
 check('doctor scans merge conflicts',()=>assert.match(doctor,/No unresolved merge-conflict markers/));
 check('doctor verifies schema mismatch fail-closed',()=>assert.match(doctor,/Health fails closed on schema mismatch/));
 check('R59 checks deployed schema generation',()=>assert.match(r59,/health_schema/));
