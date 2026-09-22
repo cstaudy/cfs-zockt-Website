@@ -50,7 +50,8 @@ if(exists('render.blueprint.example.yaml')){
   add('static','database_external_secret','DATABASE_URL is not hardcoded',/key:\s*DATABASE_URL[\s\S]{0,80}sync:\s*false/.test(y));
   add('static','launcher_key_external_secret','Launcher API key is not hardcoded',/key:\s*CFS_LAUNCHER_API_KEY[\s\S]{0,80}sync:\s*false/.test(y));
   const generated=['CFS_TOKEN_ENCRYPTION_KEY','CFS_CSRF_SIGNING_SECRET','CFS_PUBLIC_REVIEW_HASH_SALT','CFS_PUBLIC_SUPPORT_HASH_SALT','CFS_MFA_RECOVERY_HASH_SALT','CFS_ADMIN_ELEVATION_SECRET','CFS_ACCOUNT_ELEVATION_SECRET','CFS_ADMIN_AUDIT_HMAC_SECRET'];
-  add('static','generated_secrets','Independent security secrets are generated',generated.every(name=>new RegExp(`key:\\s*${name}[\\s\\S]{0,80}generateValue:\\s*true`).test(y)),`${generated.length} secrets`);
+  const missingGenerated=generated.filter(name=>!new RegExp(`key:\\s*${name}[\\s\\S]{0,80}generateValue:\\s*true`).test(y));
+  add('static','generated_secrets','Independent security secrets are generated',missingGenerated.length===0,missingGenerated.length?`missing: ${missingGenerated.join(', ')}`:`${generated.length} independent secrets`);
   add('static','no_plaintext_secrets','Blueprint contains no obvious plaintext production credential',!/(sk_live_|rk_live_|whsec_[A-Za-z0-9_-]{12,}|postgres(?:ql)?:\/\/[^\s]+@|BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY)/.test(y));
 }
 // ---------- Runtime environment readiness ----------
