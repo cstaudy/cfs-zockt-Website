@@ -9,6 +9,7 @@
 "use strict";
 
 const express = require("express");
+const http = require("http");
 const crypto = require("crypto");
 const fs = require("fs");
 const path = require("path");
@@ -26,16 +27,24 @@ const { buildCutJobManifest, sanitizeCutJobResult, publicCutJob, canTransitionCu
 const { profileSyncStatus, bridgeConnectionStatus, creatorReadiness } = require("./lib/creator-admin-health");
 const { billingAccessState, effectivePlan: effectiveBillingPlan, stripeSubscriptionSnapshot, publicBillingSubscription, billingConfigState, eventSummary: billingEventSummary, shouldApplyStripeEvent, stripeSubscriptionIdFromInvoice } = require("./lib/creator-billing");
 const { productionReleaseReadiness } = require("./lib/production-release-readiness");
-const { EVIDENCE_KINDS, sanitizeProductionEvidence, publicProductionEvidence, verificationFlagsFromEvidence } = require("./lib/production-evidence");
+const { EVIDENCE_KINDS, MANUAL_EVIDENCE_KINDS, AUTOMATED_EVIDENCE_KIND_SET, sanitizeProductionEvidence, publicProductionEvidence, verificationFlagsFromEvidence } = require("./lib/production-evidence");
+const { evaluateLaunchGate } = require("./lib/launch-production-gate");
 const { stripeTestmodeE2E } = require("./lib/stripe-testmode-evidence");
 const { PROTOCOLS: RELEASE_ACCEPTANCE_PROTOCOLS, PROTOCOL_KEYS: RELEASE_ACCEPTANCE_KEYS, sanitizeAcceptance, publicAcceptance, latestAcceptances } = require("./lib/release-acceptance");
 const { STAGES: BETA_COHORT_STAGES, sanitizeCohort, sanitizeMember, evaluateCohort, releaseCohortReadiness } = require("./lib/beta-cohort-operations");
 const { goNoGoAssessment, sanitizeDecision } = require("./lib/release-go-no-go");
 const { runtimeDoctor } = require("./lib/config-doctor");
+const { databaseRuntimeSecurity } = require("./lib/database-runtime-security");
+const { withDatabaseBootstrapLock } = require("./lib/database-bootstrap-lock");
+const { DATABASE_SCHEMA_VERSION, DATABASE_SCHEMA_SLOT } = require("./lib/database-schema-contract");
+const { canonicalAppOrigin, parseAllowedHosts, tiktokRedirectUri } = require("./lib/runtime-origin-security");
+const { assertOutboundHttpsUrl, readResponseTextBounded } = require("./lib/outbound-http-security");
 const { MAX_ASSET_COUNT, MAX_TOTAL_BYTES, MAX_UPLOAD_BYTES, CATEGORY_LABELS: WIDGET_ASSET_CATEGORY_LABELS, safeName: safeWidgetAssetName, safeLabel: safeWidgetAssetLabel, detectWidgetAsset, publicWidgetAsset, normalizeAssetCategory } = require("./lib/creator-widget-assets");
-const { accountMailConfig, validateAccountMailConfig, createAccountActionToken, accountActionTokenHash, validAccountActionToken, sendAccountMail } = require("./lib/account-mail-security");
+const { accountMailConfig, validateAccountMailConfig, createAccountActionToken, accountActionTokenHash, validAccountActionToken, normalizeMailMessage, sendAccountMail } = require("./lib/account-mail-security");
 const { createTotpSecret, verifyTotp, createRecoveryCodes, recoveryCodeHash, otpauthUri } = require("./lib/account-mfa-security");
 const { simpleWebAuthn, webauthnUserID, normalizePasskeyName, passkeyReference, validChallengeId } = require("./lib/account-passkey-security");
+const { DEVICE_LINK_DELIVERY_LEGACY, DEVICE_LINK_DELIVERY_POLL_V2, normalizeCredentialDelivery, validDeviceSecret, normalizeDeviceCode, deriveBridgeToken, shouldDeliverPollCredential } = require("./lib/launcher-device-link-security");
+const { monitorAlertConfig, validateMonitorAlertConfig, sendProductionMonitorAlert, evaluateProductionMonitor } = require("./lib/production-monitor-security");
 
 const app = express();
 
@@ -61,9 +70,25 @@ const BACKEND_VERSION =
     "3.12.0";
 
 
+const HTTP_MAX_HEADER_SIZE = 16 * 1024;
+const HTTP_HEADERS_TIMEOUT_MS = 20 * 1000;
+const HTTP_REQUEST_TIMEOUT_MS = 120 * 1000;
+const HTTP_KEEP_ALIVE_TIMEOUT_MS = 10 * 1000;
+const HTTP_MAX_REQUESTS_PER_SOCKET = 500;
+const MAX_REQUEST_TARGET_LENGTH = 8 * 1024;
+const SHUTDOWN_GRACE_MS = 25 * 1000;
+
+let isShuttingDown = false;
+let httpServer = null;
+
+
 const DATABASE_URL =
     process.env.DATABASE_URL ||
     "";
+
+const DATABASE_RUNTIME_SECURITY = DATABASE_URL
+    ? databaseRuntimeSecurity({databaseUrl:DATABASE_URL,nodeEnv:NODE_ENV})
+    : null;
 
 const CLIENT_KEY =
     process.env.TIKTOK_CLIENT_KEY ||
@@ -112,6 +137,14 @@ const ADMIN_ELEVATION_SECRET =
         (NODE_ENV === "development" ? "cfs-admin-elevation-dev-signing-secret-change-me" : "")
     );
 
+// Separates Signing-Secret für kurzlebige Creator-Step-up-Freigaben bei
+// hochkritischen Account-Aktionen wie Export, Credential-Änderung und Löschung.
+const ACCOUNT_ELEVATION_SECRET =
+    String(
+        process.env.CFS_ACCOUNT_ELEVATION_SECRET ||
+        (NODE_ENV === "development" ? "cfs-account-elevation-dev-signing-secret-change-me" : "")
+    );
+
 // Separater HMAC-Schlüssel für die manipulationssichtbare Admin-Audit-Kette.
 // Neue Audit-Ereignisse werden verkettet signiert; das Secret liegt ausschließlich
 // in der Runtime-Konfiguration und niemals in der Datenbank.
@@ -121,20 +154,14 @@ const ADMIN_AUDIT_HMAC_SECRET =
         (NODE_ENV === "development" ? "cfs-admin-audit-dev-hmac-secret-change-me" : "")
     );
 
-const APP_BASE_URL =
+const RAW_APP_BASE_URL =
     process.env.APP_BASE_URL ||
     "https://cfs-zockt.de";
 
-const APP_BASE = (() => {
-    try {
-        return new URL(APP_BASE_URL);
-    }
-    catch {
-        throw new Error("APP_BASE_URL ist keine gültige URL.");
-    }
-})();
-
-const APP_CANONICAL_ORIGIN = APP_BASE.origin;
+const APP_BASE_SECURITY = canonicalAppOrigin(RAW_APP_BASE_URL,NODE_ENV);
+const APP_BASE = APP_BASE_SECURITY.url;
+const APP_BASE_URL = APP_BASE_SECURITY.origin;
+const APP_CANONICAL_ORIGIN = APP_BASE_SECURITY.origin;
 const APP_CANONICAL_HOSTNAME = APP_BASE.hostname.toLowerCase();
 const APP_CANONICAL_WWW_ALIAS = APP_CANONICAL_HOSTNAME.startsWith("www.")
     ? APP_CANONICAL_HOSTNAME.slice(4)
@@ -144,10 +171,7 @@ const RENDER_EXTERNAL_HOSTNAME = String(process.env.RENDER_EXTERNAL_HOSTNAME || 
     .trim()
     .toLowerCase();
 
-const EXTRA_ALLOWED_HOSTS = String(process.env.CFS_ALLOWED_HOSTS || "")
-    .split(",")
-    .map(value => value.trim().toLowerCase())
-    .filter(Boolean);
+const EXTRA_ALLOWED_HOSTS = parseAllowedHosts(process.env.CFS_ALLOWED_HOSTS || "");
 
 const HSTS_INCLUDE_SUBDOMAINS =
     String(process.env.CFS_HSTS_INCLUDE_SUBDOMAINS || "false").trim().toLowerCase() === "true";
@@ -171,6 +195,16 @@ const ACCOUNT_MAIL_CONFIG =
         NODE_ENV
     );
 
+const ACCOUNT_MAIL_OUTBOX_MAX_ATTEMPTS = 6;
+const ACCOUNT_MAIL_OUTBOX_POLL_MS = 5 * 1000;
+const ACCOUNT_MAIL_OUTBOX_LOCK_MS = 2 * 60 * 1000;
+const ACCOUNT_MAIL_OUTBOX_BATCH = 8;
+const ACCOUNT_MAIL_OUTBOX_METADATA_RETENTION_DAYS = 30;
+
+const PRODUCTION_MONITOR_CONFIG = monitorAlertConfig(process.env, NODE_ENV);
+const PRODUCTION_MONITOR_RETENTION_DAYS = 90;
+const PRODUCTION_MONITOR_MAX_ALERTS = 100;
+
 
 // WebAuthn / Passkeys: in Produktion an die kanonische Domain gebunden.
 // In Development werden localhost/127.0.0.1 als erwartete Origins zugelassen.
@@ -193,15 +227,23 @@ const PASSKEY_EXPECTED_ORIGINS = Object.freeze(
 
 const STRIPE_SECRET_KEY = String(process.env.CFS_STRIPE_SECRET_KEY || "").trim();
 const STRIPE_WEBHOOK_SECRET = String(process.env.CFS_STRIPE_WEBHOOK_SECRET || "").trim();
+function stripeSecretMode(value) {
+    const key=String(value||"").trim();
+    if (/^(?:sk|rk)_live_/i.test(key)) return "live";
+    if (/^(?:sk|rk)_test_/i.test(key)) return "test";
+    return key ? "unknown" : "disabled";
+}
+const STRIPE_SECRET_MODE = stripeSecretMode(STRIPE_SECRET_KEY);
 const STRIPE_PRICE_CREATOR_MONTHLY = String(process.env.CFS_STRIPE_PRICE_CREATOR_MONTHLY || "").trim();
 const STRIPE_PRICE_PRO_MONTHLY = String(process.env.CFS_STRIPE_PRICE_PRO_MONTHLY || "").trim();
+const BILLING_LIVE_REQUIRED = String(process.env.CFS_BILLING_LIVE_REQUIRED || "false").trim().toLowerCase() === "true";
 const BILLING_GRACE_DAYS = Math.max(0,Math.min(30,Math.round(Number(process.env.CFS_BILLING_GRACE_DAYS || 3))));
 const BILLING_PRICE_PLAN = Object.freeze({
     ...(STRIPE_PRICE_CREATOR_MONTHLY ? {[STRIPE_PRICE_CREATOR_MONTHLY]:"creator"} : {}),
     ...(STRIPE_PRICE_PRO_MONTHLY ? {[STRIPE_PRICE_PRO_MONTHLY]:"pro"} : {})
 });
 const BILLING_PLAN_PRICE = Object.freeze({creator:STRIPE_PRICE_CREATOR_MONTHLY,pro:STRIPE_PRICE_PRO_MONTHLY});
-const BILLING_CONFIG = billingConfigState({secretKey:STRIPE_SECRET_KEY,webhookSecret:STRIPE_WEBHOOK_SECRET,creatorPriceId:STRIPE_PRICE_CREATOR_MONTHLY,proPriceId:STRIPE_PRICE_PRO_MONTHLY,graceDays:BILLING_GRACE_DAYS});
+const BILLING_CONFIG = billingConfigState({secretKey:STRIPE_SECRET_KEY,webhookSecret:STRIPE_WEBHOOK_SECRET,creatorPriceId:STRIPE_PRICE_CREATOR_MONTHLY,proPriceId:STRIPE_PRICE_PRO_MONTHLY,graceDays:BILLING_GRACE_DAYS,mode:STRIPE_SECRET_MODE,liveRequired:BILLING_LIVE_REQUIRED});
 const ALLOW_LEGACY_PRODUCTION_FLAGS =
     String(process.env.CFS_ALLOW_LEGACY_VERIFICATION_FLAGS || "false").trim().toLowerCase() === "true";
 const PRODUCTION_VERIFICATION_FLAGS = Object.freeze(ALLOW_LEGACY_PRODUCTION_FLAGS ? {
@@ -226,9 +268,11 @@ function stripeClient(){
     return stripeClientCache;
 }
 
-const REDIRECT_URI =
-    process.env.TIKTOK_REDIRECT_URI ||
-    `${APP_BASE_URL}/auth/tiktok/callback`;
+const REDIRECT_URI = tiktokRedirectUri(
+    process.env.TIKTOK_REDIRECT_URI || `${APP_BASE_URL}/auth/tiktok/callback`,
+    APP_CANONICAL_ORIGIN,
+    NODE_ENV
+);
 
 const DEFAULT_CREATOR_ID =
     "default";
@@ -393,6 +437,16 @@ const ADMIN_ELEVATION_COOKIE =
         ? "cfs_admin_elevation_dev"
         : "__Host-cfs_admin_elevation";
 
+const ACCOUNT_ELEVATION_COOKIE =
+    NODE_ENV === "development"
+        ? "cfs_account_elevation_dev"
+        : "__Host-cfs_account_elevation";
+
+const ACCOUNT_ELEVATION_PENDING_COOKIE =
+    NODE_ENV === "development"
+        ? "cfs_account_elevation_pending_dev"
+        : "__Host-cfs_account_elevation_pending";
+
 const TIKTOK_STATE_COOKIE =
     NODE_ENV === "development"
         ? "cfs_tiktok_state_dev"
@@ -400,6 +454,15 @@ const TIKTOK_STATE_COOKIE =
 
 const CREATOR_SESSION_TTL_MS =
     30 * 24 * 60 * 60 * 1000;
+
+// Absolute Laufzeit bleibt 30 Tage, zusätzlich läuft eine Session nach
+// längerer Inaktivität aus. last_seen_at wird nur periodisch aktualisiert,
+// damit normale API-Nutzung nicht bei jedem Request einen DB-Write erzeugt.
+const CREATOR_SESSION_IDLE_TTL_MS =
+    14 * 24 * 60 * 60 * 1000;
+
+const CREATOR_SESSION_TOUCH_INTERVAL_MS =
+    5 * 60 * 1000;
 
 const CREATOR_MAX_SESSIONS =
     8;
@@ -440,6 +503,21 @@ const ACCOUNT_EXPORT_RATE_WINDOW_MS =
 const ACCOUNT_EXPORT_RATE_MAX =
     5;
 
+// Authentifizierte Creator-Schreibzugriffe: Defense-in-depth gegen
+// versehentliche Request-Loops und Missbrauch. Autosave bleibt mit
+// großzügigem Burst-Limit problemlos möglich.
+const CREATOR_WRITE_RATE_WINDOW_MS =
+    60 * 1000;
+
+const CREATOR_WRITE_RATE_MAX =
+    300;
+
+const CREATOR_ASSET_UPLOAD_RATE_WINDOW_MS =
+    5 * 60 * 1000;
+
+const CREATOR_ASSET_UPLOAD_RATE_MAX =
+    30;
+
 const PASSWORD_CHANGE_RATE_WINDOW_MS =
     60 * 60 * 1000;
 
@@ -454,6 +532,24 @@ const ADMIN_ELEVATION_RATE_WINDOW_MS =
 
 const ADMIN_ELEVATION_RATE_MAX =
     5;
+
+const ADMIN_SENSITIVE_READ_RATE_WINDOW_MS =
+    5 * 60 * 1000;
+
+const ADMIN_SENSITIVE_READ_RATE_MAX =
+    120;
+
+const ACCOUNT_ELEVATION_TTL_MS =
+    10 * 60 * 1000;
+
+const ACCOUNT_ELEVATION_PENDING_TTL_MS =
+    5 * 60 * 1000;
+
+const ACCOUNT_ELEVATION_RATE_WINDOW_MS =
+    15 * 60 * 1000;
+
+const ACCOUNT_ELEVATION_RATE_MAX =
+    8;
 
 const ADMIN_AUDIT_RETENTION_DAYS =
     180;
@@ -572,6 +668,12 @@ const WIDGET_READ_RATE_WINDOW_MS =
 const WIDGET_READ_RATE_MAX =
     180;
 
+const PUBLIC_RUNTIME_IP_RATE_WINDOW_MS =
+    60 * 1000;
+
+const PUBLIC_RUNTIME_IP_RATE_MAX =
+    1200;
+
 // Widget Studio V6 - Launcher Bridge transport
 const WIDGET_BRIDGE_TOKEN_BYTES =
     32;
@@ -615,6 +717,10 @@ app.set(
     "query parser",
     "simple"
 );
+
+// Dynamische Antworten erhalten keine automatisch erzeugten Express-ETags.
+// Statische Dateien setzen ihr eigenes ETag weiterhin explizit.
+app.set("etag", false);
 
 // ============================================================
 // REQUEST CORRELATION · PUBLIC RESILIENCE PASS 15
@@ -687,6 +793,12 @@ function transportSecurityError(req, res, status, message) {
 
     return res.status(status).type("text/plain; charset=utf-8").send(message);
 }
+
+app.use((req,res,next)=>{
+    if (String(req.originalUrl || req.url || "").length <= MAX_REQUEST_TARGET_LENGTH) return next();
+    res.setHeader("Cache-Control","no-store");
+    return transportSecurityError(req,res,414,"Anfrage-URL ist zu lang.");
+});
 
 app.use((req, res, next) => {
     if (NODE_ENV !== "production") {
@@ -883,6 +995,14 @@ app.use(
         }
 
         if (
+            req.path.startsWith("/api/widgets/") ||
+            req.path.startsWith("/api/games/") ||
+            req.path.startsWith("/widget-assets/")
+        ) {
+            res.setHeader("Cross-Origin-Resource-Policy", "same-origin");
+        }
+
+        if (
             NODE_ENV ===
             "production"
         ) {
@@ -932,6 +1052,8 @@ app.use((req, res, next) => {
 
     if (sensitive) {
         res.setHeader("Cache-Control", "no-store, private, max-age=0");
+        res.setHeader("CDN-Cache-Control", "no-store");
+        res.setHeader("Surrogate-Control", "no-store");
         res.setHeader("Pragma", "no-cache");
         res.setHeader("Expires", "0");
         res.vary("Cookie");
@@ -1004,7 +1126,7 @@ app.use(async(req,res,next)=>{
         }
         return res.status(503).type("text/plain; charset=utf-8").send(message);
     }catch(error){
-        console.error("Incident Write Freeze Fehler:",error);
+        safeLogError("Incident Write Freeze Fehler:",error);
         return res.status(503).json({ok:false,code:"incident_state_unavailable",error:"Schreibzugriffe sind vorübergehend nicht verfügbar.",reference:req.requestId||null});
     }
 });
@@ -1096,7 +1218,7 @@ function createRateLimiter({
                 requestIp(
                     req
                 )
-            );
+            ).slice(0, 512);
 
         let entry =
             store.get(
@@ -1508,6 +1630,23 @@ const accountPasswordChangeLimiter =
     });
 
 
+const creatorWriteLimiter =
+    createRateLimiter({
+        windowMs: CREATOR_WRITE_RATE_WINDOW_MS,
+        max: CREATOR_WRITE_RATE_MAX,
+        keyGenerator: req => `${String(req.creatorAccount?.id || "unknown")}|${requestIp(req)}`,
+        message: "Zu viele Änderungen in kurzer Zeit. Bitte warte kurz und versuche es erneut."
+    });
+
+const creatorAssetUploadLimiter =
+    createRateLimiter({
+        windowMs: CREATOR_ASSET_UPLOAD_RATE_WINDOW_MS,
+        max: CREATOR_ASSET_UPLOAD_RATE_MAX,
+        keyGenerator: req => `${String(req.creatorAccount?.id || "unknown")}|${requestIp(req)}`,
+        message: "Zu viele Medien-Uploads in kurzer Zeit. Bitte warte einige Minuten."
+    });
+
+
 const adminElevationLimiter =
     createRateLimiter({
         windowMs: ADMIN_ELEVATION_RATE_WINDOW_MS,
@@ -1516,6 +1655,31 @@ const adminElevationLimiter =
         message: "Zu viele Admin-Bestätigungen. Bitte warte einige Minuten und versuche es erneut."
     });
 
+const adminSensitiveReadLimiter =
+    createRateLimiter({
+        windowMs: ADMIN_SENSITIVE_READ_RATE_WINDOW_MS,
+        max: ADMIN_SENSITIVE_READ_RATE_MAX,
+        keyGenerator: req => `${String(req.creatorAccount?.id || "unknown")}|${requestIp(req)}`,
+        message: "Zu viele sensible Admin-Abfragen in kurzer Zeit. Bitte warte kurz und versuche es erneut."
+    });
+
+
+const accountElevationLimiter =
+    createRateLimiter({
+        windowMs: ACCOUNT_ELEVATION_RATE_WINDOW_MS,
+        max: ACCOUNT_ELEVATION_RATE_MAX,
+        keyGenerator: req => `${String(req.creatorAccount?.id || "unknown")}|${requestIp(req)}`,
+        message: "Zu viele Sicherheitsbestätigungen. Bitte warte einige Minuten und versuche es erneut."
+    });
+
+
+const publicRuntimeIpLimiter =
+    createRateLimiter({
+        windowMs: PUBLIC_RUNTIME_IP_RATE_WINDOW_MS,
+        max: PUBLIC_RUNTIME_IP_RATE_MAX,
+        keyGenerator: req => requestIp(req),
+        message: "Zu viele öffentliche Runtime-Anfragen von dieser Verbindung. Bitte warte kurz."
+    });
 
 const widgetReadLimiter =
     createRateLimiter({
@@ -1534,6 +1698,8 @@ const widgetReadLimiter =
                     ) +
                     "|" +
                     String(
+                        req.params?.publicToken ||
+                        req.params?.token ||
                         req.params?.sourceKey ||
                         "widget"
                     )
@@ -1607,6 +1773,22 @@ const launcherDevicePollLimiter =
         message: "Zu viele Statusabfragen für diese Launcher-Verknüpfung."
     });
 
+const launcherDeviceCodeInspectLimiter =
+    createRateLimiter({
+        windowMs: 10 * 60 * 1000,
+        max: 60,
+        keyGenerator: req => `${req.creatorAccount?.id || "anonymous"}|${requestIp(req)}`,
+        message: "Zu viele Geräte-Codes geprüft. Bitte warte einige Minuten."
+    });
+
+const launcherDeviceConfirmLimiter =
+    createRateLimiter({
+        windowMs: 10 * 60 * 1000,
+        max: 20,
+        keyGenerator: req => `${req.creatorAccount?.id || "anonymous"}|${requestIp(req)}`,
+        message: "Zu viele Geräte-Bestätigungen. Bitte warte einige Minuten."
+    });
+
 
 
 
@@ -1669,6 +1851,7 @@ function creatorCsrfCookieOptions() {
         httpOnly:false,
         secure:NODE_ENV !== "development",
         sameSite:"strict",
+        priority:"high",
         path:"/"
     };
 }
@@ -1893,6 +2076,8 @@ function validateConfiguration() {
         DATABASE_URL
     );
 
+    databaseRuntimeSecurity({databaseUrl:DATABASE_URL,nodeEnv:NODE_ENV});
+
     requireEnv(
         "TIKTOK_CLIENT_KEY",
         CLIENT_KEY
@@ -1907,14 +2092,8 @@ function validateConfiguration() {
         "CFS_LAUNCHER_API_KEY",
         LAUNCHER_API_KEY
     );
-
-    if (
-        NODE_ENV === "production" &&
-        APP_BASE.protocol !== "https:"
-    ) {
-        throw new Error(
-            "APP_BASE_URL muss in Produktion HTTPS verwenden."
-        );
+    if (NODE_ENV === "production" && String(LAUNCHER_API_KEY).length < 32) {
+        throw new Error("CFS_LAUNCHER_API_KEY muss in Produktion mindestens 32 Zeichen lang sein.");
     }
 
     if (
@@ -1929,6 +2108,35 @@ function validateConfiguration() {
     validateAccountMailConfig(
         ACCOUNT_MAIL_CONFIG
     );
+
+    validateMonitorAlertConfig(
+        PRODUCTION_MONITOR_CONFIG
+    );
+
+    const stripeConfigured = Boolean(
+        STRIPE_SECRET_KEY || STRIPE_WEBHOOK_SECRET || STRIPE_PRICE_CREATOR_MONTHLY || STRIPE_PRICE_PRO_MONTHLY
+    );
+    if (stripeConfigured) {
+        if (!STRIPE_SECRET_KEY || !STRIPE_WEBHOOK_SECRET) {
+            throw new Error("Stripe Billing benötigt Secret-Key und Webhook-Secret gemeinsam.");
+        }
+        if (STRIPE_SECRET_MODE === "unknown") {
+            throw new Error("CFS_STRIPE_SECRET_KEY hat kein erwartetes Stripe Secret-/Restricted-Key-Format.");
+        }
+        if (!/^whsec_[A-Za-z0-9_-]+$/.test(STRIPE_WEBHOOK_SECRET)) {
+            throw new Error("CFS_STRIPE_WEBHOOK_SECRET hat kein erwartetes Stripe Webhook-Secret-Format.");
+        }
+        for (const [name,value] of [["CFS_STRIPE_PRICE_CREATOR_MONTHLY",STRIPE_PRICE_CREATOR_MONTHLY],["CFS_STRIPE_PRICE_PRO_MONTHLY",STRIPE_PRICE_PRO_MONTHLY]]) {
+            if (value && !/^price_[A-Za-z0-9]+$/.test(value)) {
+                throw new Error(`${name} hat kein erwartetes Stripe Price-ID-Format.`);
+            }
+        }
+        if (BILLING_LIVE_REQUIRED && STRIPE_SECRET_MODE !== "live") {
+            throw new Error("CFS_BILLING_LIVE_REQUIRED=true verlangt einen Stripe LIVE Secret-/Restricted-Key.");
+        }
+    } else if (BILLING_LIVE_REQUIRED) {
+        throw new Error("CFS_BILLING_LIVE_REQUIRED=true verlangt eine vollständige Stripe Billing-Konfiguration.");
+    }
 
 
     if (!PASSKEY_RP_ID || PASSKEY_RP_ID.includes(":") || PASSKEY_RP_ID.includes("/")) {
@@ -1972,6 +2180,13 @@ function validateConfiguration() {
             throw new Error("CFS_ADMIN_ELEVATION_SECRET muss mindestens 32 Zeichen lang sein.");
         }
         requireEnv(
+            "CFS_ACCOUNT_ELEVATION_SECRET",
+            ACCOUNT_ELEVATION_SECRET
+        );
+        if (ACCOUNT_ELEVATION_SECRET.length < 32) {
+            throw new Error("CFS_ACCOUNT_ELEVATION_SECRET muss mindestens 32 Zeichen lang sein.");
+        }
+        requireEnv(
             "CFS_ADMIN_AUDIT_HMAC_SECRET",
             ADMIN_AUDIT_HMAC_SECRET
         );
@@ -1980,17 +2195,6 @@ function validateConfiguration() {
         }
     }
 
-    if (
-        !/^https:\/\//i.test(
-            REDIRECT_URI
-        )
-    ) {
-
-        throw new Error(
-            "TIKTOK_REDIRECT_URI muss HTTPS verwenden."
-        );
-
-    }
 
 }
 
@@ -2005,15 +2209,7 @@ const pool =
         connectionString:
             DATABASE_URL,
 
-        ssl:
-            /render\.com/i.test(
-                DATABASE_URL
-            )
-                ? {
-                    rejectUnauthorized:
-                        false
-                }
-                : undefined
+        ...(DATABASE_RUNTIME_SECURITY?.poolOptions || {})
 
     });
 
@@ -2022,8 +2218,8 @@ pool.on(
     "error",
     error => {
 
-        console.error(
-            "PostgreSQL Fehler:",
+        safeLogError(
+            "postgresql:pool",
             error
         );
 
@@ -2499,6 +2695,11 @@ async function initDatabase() {
     `);
 
     await pool.query(`
+        ALTER TABLE creator_sessions
+        ADD COLUMN IF NOT EXISTS last_seen_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    `);
+
+    await pool.query(`
         CREATE INDEX IF NOT EXISTS
             idx_creator_sessions_creator
 
@@ -2514,6 +2715,15 @@ async function initDatabase() {
 
         ON creator_sessions (
             expires_at
+        )
+    `);
+
+    await pool.query(`
+        CREATE INDEX IF NOT EXISTS
+            idx_creator_sessions_last_seen
+
+        ON creator_sessions (
+            last_seen_at
         )
     `);
 
@@ -2703,6 +2913,105 @@ async function initDatabase() {
 
 
     // --------------------------------------------------------
+    // ACCOUNT MAIL OUTBOX
+    // Recovery-/Security-Mails werden verschlüsselt persistiert und
+    // erst nach erfolgreicher Relay-Zustellung aus dem Payload entfernt.
+    // --------------------------------------------------------
+
+    await pool.query(`
+        CREATE TABLE IF NOT EXISTS creator_mail_outbox (
+            id UUID PRIMARY KEY,
+            creator_id TEXT REFERENCES creator_accounts(id) ON DELETE SET NULL,
+            kind VARCHAR(64) NOT NULL,
+            payload_ciphertext TEXT,
+            status VARCHAR(16) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','sending','sent','dead')),
+            attempts INTEGER NOT NULL DEFAULT 0 CHECK (attempts >= 0),
+            max_attempts INTEGER NOT NULL DEFAULT 6 CHECK (max_attempts BETWEEN 1 AND 12),
+            available_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            expires_at TIMESTAMPTZ NOT NULL,
+            locked_at TIMESTAMPTZ,
+            locked_by VARCHAR(80),
+            sent_at TIMESTAMPTZ,
+            last_error_code VARCHAR(80),
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        )
+    `);
+
+    await pool.query(`
+        CREATE INDEX IF NOT EXISTS idx_creator_mail_outbox_delivery
+        ON creator_mail_outbox (status, available_at, created_at)
+    `);
+
+    await pool.query(`
+        CREATE INDEX IF NOT EXISTS idx_creator_mail_outbox_creator
+        ON creator_mail_outbox (creator_id, created_at DESC)
+    `);
+
+
+    // --------------------------------------------------------
+    // PRODUCTION MONITORING / ALERTING · R65
+    // Nur aggregierte Betriebsmetriken und Alarmzustände. Keine Mail-Adressen,
+    // IPs, Request-Bodies, Tokens oder sonstige Creator-Inhalte.
+    // --------------------------------------------------------
+
+    await pool.query(`
+        CREATE TABLE IF NOT EXISTS creator_operational_evidence (
+            id BIGSERIAL PRIMARY KEY,
+            kind VARCHAR(64) NOT NULL,
+            status VARCHAR(24) NOT NULL CHECK (status IN ('success','failed','dry_run_ready')),
+            observed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            details JSONB NOT NULL DEFAULT '{}'::jsonb
+        )
+    `);
+
+    await pool.query(`
+        CREATE INDEX IF NOT EXISTS idx_creator_operational_evidence_kind_observed
+        ON creator_operational_evidence (kind, observed_at DESC)
+    `);
+
+    await pool.query(`
+        CREATE TABLE IF NOT EXISTS creator_production_monitor_alerts (
+            alert_key VARCHAR(100) PRIMARY KEY,
+            state VARCHAR(16) NOT NULL DEFAULT 'open' CHECK (state IN ('open','resolved')),
+            severity VARCHAR(16) NOT NULL CHECK (severity IN ('info','warning','critical')),
+            title VARCHAR(180) NOT NULL,
+            summary TEXT NOT NULL DEFAULT '',
+            details JSONB NOT NULL DEFAULT '{}'::jsonb,
+            first_seen_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            last_seen_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            resolved_at TIMESTAMPTZ,
+            occurrences INTEGER NOT NULL DEFAULT 1 CHECK (occurrences >= 1),
+            last_notified_at TIMESTAMPTZ,
+            notification_failures INTEGER NOT NULL DEFAULT 0 CHECK (notification_failures >= 0),
+            last_delivery_error VARCHAR(80)
+        )
+    `);
+
+    await pool.query(`
+        CREATE INDEX IF NOT EXISTS idx_creator_production_monitor_alerts_state
+        ON creator_production_monitor_alerts (state, severity, last_seen_at DESC)
+    `);
+
+    await pool.query(`
+        CREATE TABLE IF NOT EXISTS creator_production_monitor_state (
+            slot VARCHAR(32) PRIMARY KEY,
+            status VARCHAR(24) NOT NULL DEFAULT 'unknown',
+            last_run_at TIMESTAMPTZ,
+            last_success_at TIMESTAMPTZ,
+            snapshot JSONB NOT NULL DEFAULT '{}'::jsonb,
+            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        )
+    `);
+
+    await pool.query(`
+        INSERT INTO creator_production_monitor_state(slot,status,snapshot,updated_at)
+        VALUES('production','unknown','{}'::jsonb,NOW())
+        ON CONFLICT(slot) DO NOTHING
+    `);
+
+
+    // --------------------------------------------------------
     // ACCOUNT MFA / TOTP
     // Shared Secrets werden mit dem bestehenden AES-256-GCM Key
     // verschlüsselt. Recovery-Codes werden nur als HMAC-Hash gespeichert.
@@ -2780,13 +3089,37 @@ async function initDatabase() {
         CREATE TABLE IF NOT EXISTS creator_webauthn_challenges (
             id UUID PRIMARY KEY,
             creator_id TEXT NOT NULL REFERENCES creator_accounts(id) ON DELETE CASCADE,
-            purpose VARCHAR(24) NOT NULL CHECK (purpose IN ('register','authenticate')),
+            purpose VARCHAR(24) NOT NULL CHECK (purpose IN ('register','authenticate','account_elevation','admin_elevation')),
             challenge TEXT NOT NULL,
             session_hash CHAR(64),
             mfa_challenge_hash CHAR(64),
             expires_at TIMESTAMPTZ NOT NULL,
             created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
         )
+    `);
+
+    // R55: Bestehende Installationen aus der ursprünglichen Passkey-Version
+    // erlaubten in der DB nur register/authenticate. Step-up-Challenges müssen
+    // ebenfalls explizit von der Constraint erlaubt werden. Die Migration läuft
+    // nur, wenn die vorhandene Constraint noch nicht die neuen Zwecke enthält.
+    await pool.query(`
+        DO $$
+        DECLARE purpose_def TEXT;
+        BEGIN
+            SELECT pg_get_constraintdef(oid) INTO purpose_def
+            FROM pg_constraint
+            WHERE conrelid='creator_webauthn_challenges'::regclass
+              AND conname='creator_webauthn_challenges_purpose_check';
+            IF purpose_def IS NULL
+               OR POSITION('account_elevation' IN purpose_def)=0
+               OR POSITION('admin_elevation' IN purpose_def)=0 THEN
+                ALTER TABLE creator_webauthn_challenges
+                    DROP CONSTRAINT IF EXISTS creator_webauthn_challenges_purpose_check;
+                ALTER TABLE creator_webauthn_challenges
+                    ADD CONSTRAINT creator_webauthn_challenges_purpose_check
+                    CHECK (purpose IN ('register','authenticate','account_elevation','admin_elevation'));
+            END IF;
+        END $$
     `);
 
     await pool.query(`
@@ -3271,6 +3604,7 @@ async function initDatabase() {
     `);
     await pool.query(`CREATE INDEX IF NOT EXISTS idx_public_support_reports_status ON public_support_reports (status, priority, created_at DESC)`);
     await pool.query(`CREATE INDEX IF NOT EXISTS idx_public_support_reports_submitter ON public_support_reports (submitter_hash, created_at DESC)`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_public_support_reports_retention ON public_support_reports (status, handled_at)`);
 
 
     // --------------------------------------------------------
@@ -3624,6 +3958,11 @@ async function initDatabase() {
         ADD COLUMN IF NOT EXISTS device_link_id TEXT
     `);
 
+    await pool.query(`
+        ALTER TABLE creator_launcher_device_links
+        ADD COLUMN IF NOT EXISTS credential_delivery TEXT NOT NULL DEFAULT 'start_legacy'
+    `);
+
 
     // --------------------------------------------------------
     // WIDGET STUDIO V8 - SESSION HISTORY + INTERACTIONS
@@ -3822,6 +4161,38 @@ async function initDatabase() {
     `);
 
 
+    // --------------------------------------------------------
+    // SCHEMA BOOTSTRAP STATE
+    //
+    // Render-Rolling-Deploys koennen alte und neue Instanzen kurz
+    // ueberlappen. Die aktuelle Schema-Generation wird deshalb erst
+    // nach allen idempotenten DDL-Schritten persistiert. /api/health
+    // kann so eine Instanz mit nicht passendem DB-Stand fail-closed
+    // aus dem Traffic nehmen.
+    // --------------------------------------------------------
+
+    await pool.query(`
+        CREATE TABLE IF NOT EXISTS creator_database_schema_state (
+            slot TEXT PRIMARY KEY,
+            schema_version INTEGER NOT NULL,
+            backend_version TEXT NOT NULL,
+            applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            CONSTRAINT creator_database_schema_state_slot_check
+                CHECK (slot = 'production')
+        )
+    `);
+
+    await pool.query(
+        `INSERT INTO creator_database_schema_state (slot, schema_version, backend_version, applied_at)
+         VALUES ($1, $2, $3, NOW())
+         ON CONFLICT (slot) DO UPDATE SET
+            schema_version = EXCLUDED.schema_version,
+            backend_version = EXCLUDED.backend_version,
+            applied_at = NOW()`,
+        [DATABASE_SCHEMA_SLOT, DATABASE_SCHEMA_VERSION, BACKEND_VERSION]
+    );
+
+
     await cleanupExpiredOAuthStates();
 
     await cleanupExpiredCreatorSessions();
@@ -3829,6 +4200,8 @@ async function initDatabase() {
     await cleanupOldSecurityEvents();
 
     await cleanupOldAdminAuditEvents();
+
+    await cleanupOldSupportReports();
 
     console.log(
         "PostgreSQL bereit."
@@ -3856,7 +4229,8 @@ async function cleanupExpiredCreatorSessions() {
     await pool.query(`
         DELETE FROM creator_sessions
         WHERE expires_at < NOW()
-    `);
+           OR last_seen_at < NOW() - ($1::bigint * INTERVAL '1 millisecond')
+    `,[CREATOR_SESSION_IDLE_TTL_MS]);
 
 }
 
@@ -3906,6 +4280,31 @@ async function cleanupOldAdminAuditEvents() {
     } finally {
         client.release();
     }
+}
+
+async function cleanupOldSupportReports() {
+    // Privacy-by-default: Kontakt-E-Mails werden nach Abschluss früh entfernt;
+    // abgeschlossene Meldungen bleiben nur begrenzt für Nachvollziehbarkeit bestehen.
+    const contactResult=await pool.query(
+        `UPDATE public_support_reports
+         SET contact_email='',updated_at=NOW()
+         WHERE contact_email<>''
+           AND status IN ('resolved','rejected')
+           AND handled_at IS NOT NULL
+           AND handled_at < NOW() - ($1::int * INTERVAL '1 day')`,
+        [PUBLIC_SUPPORT_CONTACT_RETENTION_DAYS]
+    );
+    const deleteResult=await pool.query(
+        `DELETE FROM public_support_reports
+         WHERE status IN ('resolved','rejected')
+           AND handled_at IS NOT NULL
+           AND handled_at < NOW() - ($1::int * INTERVAL '1 day')`,
+        [PUBLIC_SUPPORT_RESOLVED_RETENTION_DAYS]
+    );
+    return {
+        contact_emails_removed:Number(contactResult.rowCount||0),
+        reports_deleted:Number(deleteResult.rowCount||0)
+    };
 }
 
 
@@ -4390,7 +4789,9 @@ function publicAccountMailStatus() {
         mode: ACCOUNT_MAIL_CONFIG.enabled ? "webhook" : "disabled",
         email_verification_available: ACCOUNT_MAIL_CONFIG.enabled,
         email_verification_required: ACCOUNT_MAIL_CONFIG.verificationRequired,
-        password_recovery_available: ACCOUNT_MAIL_CONFIG.enabled
+        password_recovery_available: ACCOUNT_MAIL_CONFIG.enabled,
+        durable_delivery: ACCOUNT_MAIL_CONFIG.enabled,
+        delivery_max_attempts: ACCOUNT_MAIL_CONFIG.enabled ? ACCOUNT_MAIL_OUTBOX_MAX_ATTEMPTS : 0
     };
 }
 
@@ -4458,11 +4859,411 @@ async function markAccountActionTokenUsed(tokenId, client = pool) {
     );
 }
 
-function queueAccountMail(message) {
-    setImmediate(() => {
-        sendAccountMail(ACCOUNT_MAIL_CONFIG, message)
-            .catch(error => console.error("[account-mail] Versand fehlgeschlagen:", error?.code || error?.message || "unknown"));
-    });
+async function revokeCreatorPendingAuthArtifacts(client, creatorId, {keepPasswordResetTokenId=""} = {}) {
+    await client.query(`DELETE FROM creator_mfa_challenges WHERE creator_id=$1`,[creatorId]);
+    await client.query(`DELETE FROM creator_webauthn_challenges WHERE creator_id=$1`,[creatorId]);
+    await client.query(`DELETE FROM tiktok_oauth_states WHERE creator_id=$1`,[creatorId]);
+    if (keepPasswordResetTokenId) {
+        await client.query(
+            `DELETE FROM creator_account_action_tokens WHERE creator_id=$1 AND purpose='password_reset' AND id<>$2`,
+            [creatorId,keepPasswordResetTokenId]
+        );
+    } else {
+        await client.query(
+            `DELETE FROM creator_account_action_tokens WHERE creator_id=$1 AND purpose='password_reset'`,
+            [creatorId]
+        );
+    }
+}
+
+const ACCOUNT_MAIL_OUTBOX_WORKER_ID = crypto.randomUUID();
+let accountMailOutboxTimer = null;
+let accountMailOutboxRunPromise = null;
+let accountMailOutboxStopping = false;
+
+function accountMailOutboxExpiry(kind) {
+    const key = String(kind || "").toLowerCase();
+    if (key === "password_reset") return new Date(Date.now() + PASSWORD_RESET_TOKEN_TTL_MS);
+    if (key === "email_verification") return new Date(Date.now() + EMAIL_VERIFICATION_TOKEN_TTL_MS);
+    return new Date(Date.now() + 24 * 60 * 60 * 1000);
+}
+function accountMailRetryDelayMs(attempt) {
+    const n = Math.max(1, Math.min(ACCOUNT_MAIL_OUTBOX_MAX_ATTEMPTS, Number(attempt || 1)));
+    return Math.min(30 * 60 * 1000, 5 * 1000 * (5 ** (n - 1)));
+}
+function accountMailErrorCode(error) {
+    const status = Number(error?.status || 0);
+    if (status >= 100 && status <= 599) return `relay_http_${status}`;
+    const code = String(error?.code || "delivery_failed").toLowerCase().replace(/[^a-z0-9_-]/g, "_").slice(0, 64);
+    return code || "delivery_failed";
+}
+function accountMailRetryable(error) {
+    const status = Number(error?.status || 0);
+    if (!status) return true;
+    if ([408, 425, 429].includes(status)) return true;
+    if (status >= 500) return true;
+    return false;
+}
+async function enqueueAccountMail(message, {creatorId = null, expiresAt = null} = {}) {
+    if (!ACCOUNT_MAIL_CONFIG.enabled) {
+        const error = new Error("Account-Mailversand ist nicht konfiguriert.");
+        error.code = "account_mail_unavailable";
+        throw error;
+    }
+    if (NODE_ENV === "production" && !TOKEN_ENCRYPTION_KEY) throw new Error("Account-Mail-Outbox benötigt in Produktion CFS_TOKEN_ENCRYPTION_KEY.");
+    const normalized = normalizeMailMessage(message);
+    const id = crypto.randomUUID();
+    const payloadCiphertext = encryptSecret(JSON.stringify(normalized));
+    const expiry = expiresAt instanceof Date && Number.isFinite(expiresAt.getTime()) ? expiresAt : accountMailOutboxExpiry(normalized.kind);
+    if (expiry.getTime() <= Date.now()) throw new Error("Account-Mail ist bereits abgelaufen.");
+    await pool.query(
+        `INSERT INTO creator_mail_outbox(
+            id,creator_id,kind,payload_ciphertext,status,attempts,max_attempts,available_at,expires_at,created_at,updated_at
+         ) VALUES($1,$2,$3,$4,'pending',0,$5,NOW(),$6,NOW(),NOW())`,
+        [id, creatorId || null, normalized.kind, payloadCiphertext, ACCOUNT_MAIL_OUTBOX_MAX_ATTEMPTS, expiry]
+    );
+    kickAccountMailOutboxWorker();
+    return {queued:true,delivery_id:id,expires_at:expiry};
+}
+async function queueAccountMail(message, options = {}) {
+    try { return await enqueueAccountMail(message, options); }
+    catch (error) { safeLogError("account-mail-outbox-enqueue", error); return {queued:false,delivery_id:null,expires_at:null}; }
+}
+async function cleanupAccountMailOutbox() {
+    await pool.query(
+        `UPDATE creator_mail_outbox
+         SET status='dead',payload_ciphertext=NULL,locked_at=NULL,locked_by=NULL,last_error_code='expired',updated_at=NOW()
+         WHERE status IN ('pending','sending') AND expires_at<=NOW()`
+    );
+    await pool.query(
+        `DELETE FROM creator_mail_outbox
+         WHERE payload_ciphertext IS NULL AND status IN ('sent','dead')
+           AND updated_at < NOW() - ($1::int * INTERVAL '1 day')`,
+        [ACCOUNT_MAIL_OUTBOX_METADATA_RETENTION_DAYS]
+    );
+}
+async function claimNextAccountMail() {
+    const result = await pool.query(
+        `WITH candidate AS (
+            SELECT id FROM creator_mail_outbox
+            WHERE payload_ciphertext IS NOT NULL AND expires_at>NOW() AND attempts<max_attempts AND available_at<=NOW()
+              AND (status='pending' OR (status='sending' AND (locked_at IS NULL OR locked_at < NOW() - ($2::bigint * INTERVAL '1 millisecond'))))
+            ORDER BY created_at ASC FOR UPDATE SKIP LOCKED LIMIT 1
+         )
+         UPDATE creator_mail_outbox o
+         SET status='sending',attempts=o.attempts+1,locked_at=NOW(),locked_by=$1,updated_at=NOW()
+         FROM candidate WHERE o.id=candidate.id RETURNING o.*`,
+        [ACCOUNT_MAIL_OUTBOX_WORKER_ID, ACCOUNT_MAIL_OUTBOX_LOCK_MS]
+    );
+    return result.rows[0] || null;
+}
+async function finishAccountMailDelivery(row) {
+    await pool.query(
+        `UPDATE creator_mail_outbox
+         SET status='sent',payload_ciphertext=NULL,sent_at=NOW(),locked_at=NULL,locked_by=NULL,last_error_code=NULL,updated_at=NOW()
+         WHERE id=$1 AND locked_by=$2`,
+        [row.id, ACCOUNT_MAIL_OUTBOX_WORKER_ID]
+    );
+}
+async function failAccountMailDelivery(row, error) {
+    const retryable = accountMailRetryable(error);
+    const terminal = !retryable || Number(row.attempts || 0) >= Number(row.max_attempts || ACCOUNT_MAIL_OUTBOX_MAX_ATTEMPTS) || new Date(row.expires_at).getTime() <= Date.now();
+    const errorCode = accountMailErrorCode(error);
+    if (terminal) {
+        await pool.query(
+            `UPDATE creator_mail_outbox
+             SET status='dead',payload_ciphertext=NULL,locked_at=NULL,locked_by=NULL,last_error_code=$3,updated_at=NOW()
+             WHERE id=$1 AND locked_by=$2`,
+            [row.id, ACCOUNT_MAIL_OUTBOX_WORKER_ID, errorCode]
+        );
+        safeLogError(`account-mail-outbox:${errorCode}`, error);
+        return;
+    }
+    const delayMs = accountMailRetryDelayMs(row.attempts);
+    await pool.query(
+        `UPDATE creator_mail_outbox
+         SET status='pending',available_at=NOW() + ($3::bigint * INTERVAL '1 millisecond'),locked_at=NULL,locked_by=NULL,last_error_code=$4,updated_at=NOW()
+         WHERE id=$1 AND locked_by=$2`,
+        [row.id, ACCOUNT_MAIL_OUTBOX_WORKER_ID, delayMs, errorCode]
+    );
+}
+async function deliverClaimedAccountMail(row) {
+    let message;
+    try { message = normalizeMailMessage(JSON.parse(decryptSecret(row.payload_ciphertext))); }
+    catch (error) {
+        await pool.query(
+            `UPDATE creator_mail_outbox
+             SET status='dead',payload_ciphertext=NULL,locked_at=NULL,locked_by=NULL,last_error_code='payload_invalid',updated_at=NOW()
+             WHERE id=$1 AND locked_by=$2`,
+            [row.id, ACCOUNT_MAIL_OUTBOX_WORKER_ID]
+        );
+        safeLogError("account-mail-outbox:payload_invalid", error);
+        return;
+    }
+    try {
+        await sendAccountMail(ACCOUNT_MAIL_CONFIG, message, globalThis.fetch, {deliveryId:row.id});
+        await finishAccountMailDelivery(row);
+    } catch (error) { await failAccountMailDelivery(row, error); }
+}
+async function drainAccountMailOutbox() {
+    await cleanupAccountMailOutbox();
+    for (let index = 0; index < ACCOUNT_MAIL_OUTBOX_BATCH && !accountMailOutboxStopping; index += 1) {
+        const row = await claimNextAccountMail();
+        if (!row) break;
+        await deliverClaimedAccountMail(row);
+    }
+}
+async function accountMailOutboxStats() {
+    if (!ACCOUNT_MAIL_CONFIG.enabled) return {enabled:false,pending:0,sending:0,dead:0,oldest_pending_seconds:null};
+    const result = await pool.query(`
+        SELECT
+            COUNT(*) FILTER (WHERE status='pending')::int AS pending,
+            COUNT(*) FILTER (WHERE status='sending')::int AS sending,
+            COUNT(*) FILTER (WHERE status='dead' AND updated_at > NOW() - INTERVAL '24 hours')::int AS dead,
+            EXTRACT(EPOCH FROM (NOW() - MIN(created_at) FILTER (WHERE status='pending')))::int AS oldest_pending_seconds
+        FROM creator_mail_outbox
+    `);
+    const row = result.rows[0] || {};
+    return {enabled:true,pending:Number(row.pending||0),sending:Number(row.sending||0),dead:Number(row.dead||0),oldest_pending_seconds:row.oldest_pending_seconds==null?null:Number(row.oldest_pending_seconds),max_attempts:ACCOUNT_MAIL_OUTBOX_MAX_ATTEMPTS};
+}
+function kickAccountMailOutboxWorker() {
+    if (!ACCOUNT_MAIL_CONFIG.enabled || accountMailOutboxStopping || accountMailOutboxRunPromise) return;
+    accountMailOutboxRunPromise = Promise.resolve().then(() => drainAccountMailOutbox()).catch(error => safeLogError("account-mail-outbox-worker", error)).finally(() => { accountMailOutboxRunPromise = null; });
+}
+function startAccountMailOutboxWorker() {
+    if (!ACCOUNT_MAIL_CONFIG.enabled || accountMailOutboxTimer) return;
+    accountMailOutboxStopping = false;
+    accountMailOutboxTimer = setInterval(kickAccountMailOutboxWorker, ACCOUNT_MAIL_OUTBOX_POLL_MS);
+    accountMailOutboxTimer.unref?.();
+    kickAccountMailOutboxWorker();
+}
+async function stopAccountMailOutboxWorker() {
+    accountMailOutboxStopping = true;
+    if (accountMailOutboxTimer) clearInterval(accountMailOutboxTimer);
+    accountMailOutboxTimer = null;
+    if (accountMailOutboxRunPromise) await Promise.race([accountMailOutboxRunPromise,new Promise(resolve => setTimeout(resolve, 12_000))]);
+}
+
+// ============================================================
+// PRODUCTION MONITORING / ALERTING · R65
+//
+// Der Monitor speichert ausschließlich aggregierte Betriebsmetriken.
+// Keine IPs, E-Mail-Adressen, Tokens, Request-Bodies oder Creator-Inhalte.
+// Ein PostgreSQL Advisory Lock verhindert doppelte Alarmierung bei mehreren
+// App-Instanzen. DB-Ausfälle werden direkt über den externen Webhook gemeldet,
+// weil in diesem Fall bewusst keine DB-Outbox vorausgesetzt werden kann.
+// ============================================================
+
+const PRODUCTION_MONITOR_ADVISORY_LOCK = 65065001;
+let productionMonitorTimer = null;
+let productionMonitorRunPromise = null;
+let productionMonitorStopping = false;
+let productionMonitorRuntimeUnavailable = false;
+let productionMonitorLastDirectAlertAt = 0;
+
+function monitorDeliveryErrorCode(error) {
+    const status=Number(error?.status||0);
+    if(status>=100&&status<=599)return `webhook_http_${status}`;
+    return String(error?.code||"delivery_failed").toLowerCase().replace(/[^a-z0-9_-]/g,"_").slice(0,80)||"delivery_failed";
+}
+function productionMonitorWebhookHost() {
+    try { return PRODUCTION_MONITOR_CONFIG.webhookUrl ? new URL(PRODUCTION_MONITOR_CONFIG.webhookUrl).hostname : ""; } catch { return ""; }
+}
+async function collectProductionMonitorMetrics() {
+    const started=Date.now();
+    await pool.query("SELECT 1");
+    const dbLatencyMs=Date.now()-started;
+    const [mail,billing,auth,incident,operations]=await Promise.all([
+        accountMailOutboxStats(),
+        BILLING_CONFIG.enabled
+            ? pool.query(`
+                SELECT
+                    COUNT(*) FILTER (WHERE outcome='failed' AND processed_at>=NOW()-INTERVAL '15 minutes')::int AS failed_15m,
+                    COUNT(*) FILTER (WHERE outcome='processing' AND processed_at<NOW()-INTERVAL '10 minutes')::int AS stuck_processing
+                FROM creator_billing_events
+            `).then(r=>({enabled:true,failed_15m:Number(r.rows[0]?.failed_15m||0),stuck_processing:Number(r.rows[0]?.stuck_processing||0)}))
+            : Promise.resolve({enabled:false,failed_15m:0,stuck_processing:0}),
+        pool.query(`
+            SELECT
+                COUNT(*) FILTER (WHERE event_type='login_throttled' AND created_at>=NOW()-INTERVAL '15 minutes')::int AS login_throttled_15m,
+                COUNT(*) FILTER (WHERE event_type='mfa_after_password_failed' AND created_at>=NOW()-INTERVAL '15 minutes')::int AS mfa_failed_15m,
+                COUNT(*) FILTER (WHERE event_type IN ('account_elevation_failed','admin_elevation_failed') AND created_at>=NOW()-INTERVAL '15 minutes')::int AS stepup_failed_15m,
+                COUNT(*) FILTER (WHERE event_type='password_reset_requested' AND created_at>=NOW()-INTERVAL '15 minutes')::int AS password_reset_requested_15m
+            FROM creator_security_events
+        `).then(r=>{const row=r.rows[0]||{};return{login_throttled_15m:Number(row.login_throttled_15m||0),mfa_failed_15m:Number(row.mfa_failed_15m||0),stepup_failed_15m:Number(row.stepup_failed_15m||0),password_reset_requested_15m:Number(row.password_reset_requested_15m||0)}}),
+        getWebsiteIncidentState(),
+        pool.query(`
+            SELECT kind,
+                   MAX(observed_at) FILTER (WHERE status='success') AS last_success_at,
+                   MAX(observed_at) FILTER (WHERE status='failed') AS last_failure_at
+            FROM creator_operational_evidence
+            WHERE kind IN ('logical_backup','recovery_drill')
+            GROUP BY kind
+        `).then(r=>{
+            const result={backup_last_success_at:null,backup_last_failure_at:null,recovery_last_success_at:null,recovery_last_failure_at:null};
+            for(const row of r.rows){
+                if(row.kind==='logical_backup'){result.backup_last_success_at=row.last_success_at||null;result.backup_last_failure_at=row.last_failure_at||null;}
+                if(row.kind==='recovery_drill'){result.recovery_last_success_at=row.last_success_at||null;result.recovery_last_failure_at=row.last_failure_at||null;}
+            }
+            return result;
+        })
+    ]);
+    return{
+        database:{connected:true},
+        db_latency_ms:dbLatencyMs,
+        mail,
+        billing,
+        auth,
+        incident:{mode:String(incident?.mode||"normal")},
+        operations,
+        process:{uptime_seconds:Math.round(process.uptime())}
+    };
+}
+function publicProductionMonitorAlert(row={}) {
+    return{
+        alert_key:String(row.alert_key||""),state:String(row.state||""),severity:String(row.severity||""),
+        title:String(row.title||""),summary:String(row.summary||""),details:row.details&&typeof row.details==='object'?row.details:{},
+        first_seen_at:row.first_seen_at||null,last_seen_at:row.last_seen_at||null,resolved_at:row.resolved_at||null,
+        occurrences:Number(row.occurrences||0),last_notified_at:row.last_notified_at||null,
+        notification_failures:Number(row.notification_failures||0),last_delivery_error:String(row.last_delivery_error||"")
+    };
+}
+async function deliverProductionMonitorAlert(row,{status="open",summary=""}={}) {
+    if(!PRODUCTION_MONITOR_CONFIG.enabled)return{delivered:false,reason:"disabled"};
+    try{
+        await sendProductionMonitorAlert(PRODUCTION_MONITOR_CONFIG,{
+            alert_id:crypto.randomUUID(),alert_key:row.alert_key,status,severity:row.severity,title:row.title,
+            summary:summary||row.summary,observed_at:new Date().toISOString(),service:APP_NAME,version:BACKEND_VERSION,environment:NODE_ENV,details:row.details||{}
+        });
+        await pool.query(`UPDATE creator_production_monitor_alerts SET last_notified_at=NOW(),last_delivery_error=NULL WHERE alert_key=$1`,[row.alert_key]);
+        return{delivered:true};
+    }catch(error){
+        const code=monitorDeliveryErrorCode(error);
+        await pool.query(`UPDATE creator_production_monitor_alerts SET notification_failures=notification_failures+1,last_delivery_error=$2 WHERE alert_key=$1`,[row.alert_key,code]).catch(()=>{});
+        safeLogError(`production-monitor-delivery:${code}`,error);
+        return{delivered:false,reason:code};
+    }
+}
+async function reconcileProductionMonitorAlerts(evaluation) {
+    const existingRows=(await pool.query(`SELECT * FROM creator_production_monitor_alerts`)).rows;
+    const existing=new Map(existingRows.map(row=>[String(row.alert_key),row]));
+    const activeKeys=new Set();
+    const repeatMs=PRODUCTION_MONITOR_CONFIG.repeatMinutes*60*1000;
+
+    for(const alert of evaluation.alerts||[]){
+        activeKeys.add(alert.alert_key);
+        const previous=existing.get(alert.alert_key);
+        const reopen=!previous||previous.state!=="open";
+        const severityChanged=Boolean(previous&&previous.severity!==alert.severity);
+        const row=(await pool.query(`
+            INSERT INTO creator_production_monitor_alerts(alert_key,state,severity,title,summary,details,first_seen_at,last_seen_at,resolved_at,occurrences)
+            VALUES($1,'open',$2,$3,$4,$5::jsonb,NOW(),NOW(),NULL,1)
+            ON CONFLICT(alert_key) DO UPDATE SET
+                state='open',severity=EXCLUDED.severity,title=EXCLUDED.title,summary=EXCLUDED.summary,details=EXCLUDED.details,
+                first_seen_at=CASE WHEN creator_production_monitor_alerts.state='resolved' THEN NOW() ELSE creator_production_monitor_alerts.first_seen_at END,
+                last_seen_at=NOW(),resolved_at=NULL,occurrences=creator_production_monitor_alerts.occurrences+1
+            RETURNING *
+        `,[alert.alert_key,alert.severity,alert.title,alert.summary,JSON.stringify(alert.details||{})])).rows[0];
+        const lastNotified=row.last_notified_at?new Date(row.last_notified_at).getTime():0;
+        if(PRODUCTION_MONITOR_CONFIG.enabled&&(reopen||severityChanged||!lastNotified||Date.now()-lastNotified>=repeatMs)){
+            await deliverProductionMonitorAlert(row,{status:"open"});
+        }
+    }
+
+    for(const row of existingRows){
+        if(row.state!=="open"||activeKeys.has(String(row.alert_key)))continue;
+        const resolved=(await pool.query(`
+            UPDATE creator_production_monitor_alerts
+            SET state='resolved',resolved_at=NOW(),last_seen_at=NOW()
+            WHERE alert_key=$1 AND state='open' RETURNING *
+        `,[row.alert_key])).rows[0];
+        if(resolved&&PRODUCTION_MONITOR_CONFIG.enabled){
+            await deliverProductionMonitorAlert(resolved,{status:"resolved",summary:`Behoben: ${resolved.summary}`});
+        }
+    }
+
+    await pool.query(`DELETE FROM creator_production_monitor_alerts WHERE state='resolved' AND resolved_at < NOW() - ($1::int * INTERVAL '1 day')`,[PRODUCTION_MONITOR_RETENTION_DAYS]);
+}
+async function sendDirectProductionMonitorAlert({status="open",alertKey="monitor.runtime",severity="critical",title="Production Monitor nicht verfügbar",summary="Der interne Production-Monitor konnte keinen vollständigen Lauf ausführen."}={}) {
+    if(!PRODUCTION_MONITOR_CONFIG.enabled)return false;
+    try{
+        await sendProductionMonitorAlert(PRODUCTION_MONITOR_CONFIG,{alert_id:crypto.randomUUID(),alert_key:alertKey,status,severity,title,summary,observed_at:new Date().toISOString(),service:APP_NAME,version:BACKEND_VERSION,environment:NODE_ENV,details:{}});
+        return true;
+    }catch(error){safeLogError("production-monitor-direct-delivery",error);return false;}
+}
+async function runProductionMonitor() {
+    let lockClient=null,locked=false;
+    try{
+        lockClient=await pool.connect();
+        const lockResult=await lockClient.query(`SELECT pg_try_advisory_lock($1::bigint) AS locked`,[PRODUCTION_MONITOR_ADVISORY_LOCK]);
+        locked=Boolean(lockResult.rows[0]?.locked);
+        if(!locked)return;
+
+        const metrics=await collectProductionMonitorMetrics();
+        const evaluation=evaluateProductionMonitor(metrics,PRODUCTION_MONITOR_CONFIG);
+        await reconcileProductionMonitorAlerts(evaluation);
+        const snapshot={schema:1,generated_at:new Date().toISOString(),status:evaluation.status,severities:evaluation.severities,metrics};
+        await pool.query(`
+            INSERT INTO creator_production_monitor_state(slot,status,last_run_at,last_success_at,snapshot,updated_at)
+            VALUES('production',$1,NOW(),NOW(),$2::jsonb,NOW())
+            ON CONFLICT(slot) DO UPDATE SET status=EXCLUDED.status,last_run_at=NOW(),last_success_at=NOW(),snapshot=EXCLUDED.snapshot,updated_at=NOW()
+        `,[evaluation.status,JSON.stringify(snapshot)]);
+
+        if(productionMonitorRuntimeUnavailable){
+            productionMonitorRuntimeUnavailable=false;
+            productionMonitorLastDirectAlertAt=0;
+            await sendDirectProductionMonitorAlert({status:"resolved",alertKey:"monitor.runtime",severity:"critical",title:"Production Monitor wieder verfügbar",summary:"Datenbank und Monitoring-Lauf sind wieder erreichbar."});
+        }
+    }catch(error){
+        safeLogError("production-monitor-run",error);
+        productionMonitorRuntimeUnavailable=true;
+        const cooldownMs=Math.max(15*60*1000,PRODUCTION_MONITOR_CONFIG.repeatMinutes*60*1000);
+        if(PRODUCTION_MONITOR_CONFIG.enabled&&(Date.now()-productionMonitorLastDirectAlertAt>=cooldownMs)){
+            productionMonitorLastDirectAlertAt=Date.now();
+            await sendDirectProductionMonitorAlert({status:"open",alertKey:"monitor.runtime",severity:"critical",title:"Production Monitor / Datenbank nicht erreichbar",summary:"Der Production-Monitor konnte keinen vollständigen Datenbank-/Health-Lauf ausführen."});
+        }
+    }finally{
+        if(lockClient){
+            if(locked)await lockClient.query(`SELECT pg_advisory_unlock($1::bigint)`,[PRODUCTION_MONITOR_ADVISORY_LOCK]).catch(()=>{});
+            lockClient.release();
+        }
+    }
+}
+function kickProductionMonitorWorker() {
+    if(productionMonitorStopping||productionMonitorRunPromise)return;
+    productionMonitorRunPromise=Promise.resolve().then(()=>runProductionMonitor()).finally(()=>{productionMonitorRunPromise=null;});
+}
+function startProductionMonitorWorker() {
+    if(productionMonitorTimer)return;
+    productionMonitorStopping=false;
+    productionMonitorTimer=setInterval(kickProductionMonitorWorker,PRODUCTION_MONITOR_CONFIG.intervalSeconds*1000);
+    productionMonitorTimer.unref?.();
+    setTimeout(kickProductionMonitorWorker,3000).unref?.();
+}
+async function stopProductionMonitorWorker() {
+    productionMonitorStopping=true;
+    if(productionMonitorTimer)clearInterval(productionMonitorTimer);
+    productionMonitorTimer=null;
+    if(productionMonitorRunPromise)await Promise.race([productionMonitorRunPromise,new Promise(resolve=>setTimeout(resolve,10_000))]);
+}
+async function productionMonitorStatus() {
+    const [stateResult,alertsResult]=await Promise.all([
+        pool.query(`SELECT status,last_run_at,last_success_at,snapshot,updated_at FROM creator_production_monitor_state WHERE slot='production' LIMIT 1`),
+        pool.query(`SELECT * FROM creator_production_monitor_alerts ORDER BY CASE severity WHEN 'critical' THEN 0 WHEN 'warning' THEN 1 ELSE 2 END,state ASC,last_seen_at DESC LIMIT $1`,[PRODUCTION_MONITOR_MAX_ALERTS])
+    ]);
+    const state=stateResult.rows[0]||{};
+    const alerts=alertsResult.rows.map(publicProductionMonitorAlert);
+    const active=alerts.filter(item=>item.state==='open');
+    const lastSuccessMs=state.last_success_at?new Date(state.last_success_at).getTime():0;
+    const workerFresh=Boolean(lastSuccessMs&&Date.now()-lastSuccessMs<=PRODUCTION_MONITOR_CONFIG.intervalSeconds*1000*3);
+    return{
+        configured:PRODUCTION_MONITOR_CONFIG.enabled,required:PRODUCTION_MONITOR_CONFIG.required,mode:PRODUCTION_MONITOR_CONFIG.mode,
+        webhook_host:productionMonitorWebhookHost(),interval_seconds:PRODUCTION_MONITOR_CONFIG.intervalSeconds,repeat_minutes:PRODUCTION_MONITOR_CONFIG.repeatMinutes,
+        backup_max_age_hours:PRODUCTION_MONITOR_CONFIG.backupMaxAgeHours,recovery_max_age_days:PRODUCTION_MONITOR_CONFIG.recoveryMaxAgeDays,
+        worker_fresh:workerFresh,status:String(state.status||'unknown'),last_run_at:state.last_run_at||null,last_success_at:state.last_success_at||null,
+        snapshot:state.snapshot&&typeof state.snapshot==='object'?state.snapshot:{},
+        active_alerts:active,alert_history:alerts,active_counts:{critical:active.filter(a=>a.severity==='critical').length,warning:active.filter(a=>a.severity==='warning').length,info:active.filter(a=>a.severity==='info').length}
+    };
 }
 
 function verificationMailMessage(account, token) {
@@ -4491,6 +5292,15 @@ function passwordResetCompletedMailMessage(account) {
         to: account.email,
         subject: "cfs_zockt – Passwort wurde geändert",
         text: `Hallo ${account.display_name || "Creator"},\n\ndas Passwort deines cfs_zockt Kontos wurde über den Recovery-Pfad geändert. Alle bestehenden Login-Sitzungen wurden beendet.\n\nFalls du das nicht warst, melde den Vorfall bitte sofort über ${APP_BASE_URL}/pages/support.html.`
+    };
+}
+
+function passwordChangedMailMessage(account) {
+    return {
+        kind: "password_changed",
+        to: account.email,
+        subject: "cfs_zockt – Passwort wurde geändert",
+        text: `Hallo ${account.display_name || "Creator"},\n\ndas Passwort deines cfs_zockt Kontos wurde in einer angemeldeten Sitzung geändert. Andere Login-Sitzungen sowie offene Login-/Recovery-Challenges wurden beendet.\n\nFalls du das nicht warst, nutze bitte sofort den Passwort-Recovery-Weg und melde den Vorfall über ${APP_BASE_URL}/pages/support.html.`
     };
 }
 
@@ -4633,9 +5443,9 @@ async function notifyAccountLoginThrottle(creatorId) {
     try {
         if (!(await securityAlertAllowed(creatorId,"password_login_throttled"))) return;
         const account=await findCreatorById(creatorId);
-        if (account) queueAccountMail(passwordThrottleMailMessage(account));
+        if (account) await queueAccountMail(passwordThrottleMailMessage(account),{creatorId});
     } catch (error) {
-        console.error("Login Throttle Warnung Fehler:",error);
+        safeLogError("Login Throttle Warnung Fehler:",error);
     }
 }
 
@@ -4644,9 +5454,9 @@ async function queueSuccessfulLoginAlert(creatorId, method) {
     try {
         if (!(await securityAlertAllowed(creatorId,"successful_login"))) return;
         const account = await findCreatorById(creatorId);
-        if (account) queueAccountMail(successfulLoginMailMessage(account,method));
+        if (account) await queueAccountMail(successfulLoginMailMessage(account,method),{creatorId});
     } catch (error) {
-        console.error("Login Sicherheitswarnung Fehler:",error);
+        safeLogError("Login Sicherheitswarnung Fehler:",error);
     }
 }
 
@@ -4657,9 +5467,9 @@ async function recordSuspiciousMfaFailure(creatorId, method) {
     try {
         if (!(await securityAlertAllowed(creatorId,"mfa_after_password_failed"))) return;
         const account = await findCreatorById(creatorId);
-        if (account) queueAccountMail(suspiciousMfaMailMessage(account,method));
+        if (account) await queueAccountMail(suspiciousMfaMailMessage(account,method),{creatorId});
     } catch (error) {
-        console.error("MFA Sicherheitswarnung Fehler:",error);
+        safeLogError("MFA Sicherheitswarnung Fehler:",error);
     }
 }
 
@@ -4839,11 +5649,17 @@ function stripePlanFromObject(object={}){
     return normalizePlan(BILLING_PRICE_PLAN[priceId]||"free");
 }
 async function creatorIdForStripeObject(object={}){
-    const direct=stripeCreatorIdFromObject(object);if(direct)return direct;
+    const direct=stripeCreatorIdFromObject(object);
     const subscriptionId=object?.object==="subscription"?stripeId(object.id):stripeSubscriptionIdFromInvoice(object);
     const customerId=stripeId(object.customer);
     const result=await pool.query(`SELECT creator_id FROM creator_billing_subscriptions WHERE (provider='stripe' AND provider_subscription_id=$1 AND $1<>'') OR (provider='stripe' AND provider_customer_id=$2 AND $2<>'') LIMIT 1`,[subscriptionId,customerId]);
-    return result.rows[0]?.creator_id||"";
+    const mapped=String(result.rows[0]?.creator_id||"");
+    if(direct&&mapped&&direct!==mapped){
+        const error=new Error("Stripe Creator-/Customer-Zuordnung ist widersprüchlich.");
+        error.code="billing_creator_mismatch";
+        throw error;
+    }
+    return direct||mapped;
 }
 async function recordBillingEvent(event,creatorId,outcome,extra={}){
     const summary={...billingEventSummary(event),...extra};
@@ -4851,7 +5667,20 @@ async function recordBillingEvent(event,creatorId,outcome,extra={}){
         summary.id||String(event?.id||""),summary.type||String(event?.type||""),creatorId||null,summary.customer_id||"",summary.subscription_id||"",Number(summary.created||0),Boolean(summary.livemode),String(outcome||"processed"),JSON.stringify(summary)
     ]);
 }
-async function billingEventAlreadyProcessed(eventId){const r=await pool.query(`SELECT outcome FROM creator_billing_events WHERE event_id=$1 LIMIT 1`,[String(eventId||"")]);return Boolean(r.rows[0]&&["processed","ignored_stale","ignored_unmapped"].includes(r.rows[0].outcome));}
+async function claimBillingEvent(event){
+    const summary=billingEventSummary(event),eventId=String(summary.id||event?.id||"");
+    if(!eventId)return false;
+    const result=await pool.query(`
+      INSERT INTO creator_billing_events(event_id,provider,event_type,creator_id,provider_customer_id,provider_subscription_id,event_created,livemode,outcome,summary,processed_at)
+      VALUES($1,'stripe',$2,NULL,$3,$4,$5,$6,'processing',$7::jsonb,NOW())
+      ON CONFLICT(event_id) DO UPDATE SET
+        outcome='processing',summary=EXCLUDED.summary,processed_at=NOW()
+      WHERE creator_billing_events.outcome='failed'
+         OR (creator_billing_events.outcome='processing' AND creator_billing_events.processed_at < NOW()-INTERVAL '10 minutes')
+      RETURNING event_id
+    `,[eventId,summary.type||String(event?.type||""),summary.customer_id||"",summary.subscription_id||"",Number(summary.created||0),Boolean(summary.livemode),JSON.stringify(summary)]);
+    return Boolean(result.rows[0]);
+}
 async function upsertStripeSubscription(creatorId,subscription,event,{graceEndsAt=null,lastInvoiceStatus=""}={}){
     const snapshot=stripeSubscriptionSnapshot(subscription,BILLING_PRICE_PLAN,event),existing=await pool.query(`SELECT last_event_id,last_event_created,grace_ends_at,last_invoice_status FROM creator_billing_subscriptions WHERE creator_id=$1 LIMIT 1`,[creatorId]),row=existing.rows[0]||{};
     if(!shouldApplyStripeEvent(row,event))return{applied:false,reason:"stale",snapshot};
@@ -4870,32 +5699,35 @@ async function upsertStripeSubscription(creatorId,subscription,event,{graceEndsA
     return{applied:true,snapshot};
 }
 async function handleStripeEvent(event){
-    if(await billingEventAlreadyProcessed(event.id))return{duplicate:true};
+    if(!(await claimBillingEvent(event)))return{duplicate:true};
     const object=event?.data?.object||{},type=String(event?.type||""),client=stripeClient();
-    let creatorId=await creatorIdForStripeObject(object);
+    let creatorId="";
     try{
+        creatorId=await creatorIdForStripeObject(object);
         if(type==="checkout.session.completed"&&object?.mode==="subscription"){
             creatorId=creatorId||stripeCreatorIdFromObject(object);
             const subscriptionId=stripeId(object.subscription);
             if(!creatorId||!subscriptionId){await recordBillingEvent(event,creatorId,"ignored_unmapped",{reason:"checkout_missing_creator_or_subscription"});return{ignored:true};}
             const subscription=await client.subscriptions.retrieve(subscriptionId);
             const synced=await upsertStripeSubscription(creatorId,subscription,event,{graceEndsAt:null,lastInvoiceStatus:"checkout_completed"});
-            await recordBillingEvent(event,creatorId,synced.applied?"processed":"ignored_stale");return synced;
+            await recordBillingEvent(event,creatorId,synced.applied?"processed":"ignored_stale",{subscription_id:subscriptionId,plan:synced.snapshot.plan,subscription_status:synced.snapshot.status,cancel_at_period_end:synced.snapshot.cancel_at_period_end,checkout_plan:stripePlanFromObject(object)});return synced;
         }
         if(type.startsWith("customer.subscription.")){
             creatorId=creatorId||stripeCreatorIdFromObject(object);
             if(!creatorId){await recordBillingEvent(event,null,"ignored_unmapped",{reason:"subscription_creator_missing"});return{ignored:true};}
             const synced=await upsertStripeSubscription(creatorId,object,event,{graceEndsAt:object.status==="active"||object.status==="trialing"?null:undefined});
-            await recordBillingEvent(event,creatorId,synced.applied?"processed":"ignored_stale");return synced;
+            await recordBillingEvent(event,creatorId,synced.applied?"processed":"ignored_stale",{plan:synced.snapshot.plan,subscription_status:synced.snapshot.status,cancel_at_period_end:synced.snapshot.cancel_at_period_end,current_period_end:synced.snapshot.current_period_end});return synced;
         }
-        if(type==="invoice.payment_failed"||type==="invoice.paid"){
+        if(type==="invoice.payment_failed"||type==="invoice.payment_action_required"||type==="invoice.paid"){
             const subscriptionId=stripeSubscriptionIdFromInvoice(object);
             if(!creatorId&&subscriptionId){const r=await pool.query(`SELECT creator_id FROM creator_billing_subscriptions WHERE provider='stripe' AND provider_subscription_id=$1 LIMIT 1`,[subscriptionId]);creatorId=r.rows[0]?.creator_id||"";}
             if(!creatorId||!subscriptionId){await recordBillingEvent(event,creatorId,"ignored_unmapped",{reason:"invoice_subscription_unmapped"});return{ignored:true};}
             const subscription=await client.subscriptions.retrieve(subscriptionId);
-            const graceEndsAt=type==="invoice.payment_failed"?new Date(Date.now()+BILLING_GRACE_DAYS*86400000):null;
-            const synced=await upsertStripeSubscription(creatorId,subscription,event,{graceEndsAt,lastInvoiceStatus:type==="invoice.paid"?"paid":"payment_failed"});
-            await recordBillingEvent(event,creatorId,synced.applied?"processed":"ignored_stale",{grace_ends_at:graceEndsAt});return synced;
+            const paymentProblem=type!=="invoice.paid";
+            const graceEndsAt=paymentProblem?new Date(Date.now()+BILLING_GRACE_DAYS*86400000):null;
+            const invoiceState=type==="invoice.paid"?"paid":type==="invoice.payment_action_required"?"payment_action_required":"payment_failed";
+            const synced=await upsertStripeSubscription(creatorId,subscription,event,{graceEndsAt,lastInvoiceStatus:invoiceState});
+            await recordBillingEvent(event,creatorId,synced.applied?"processed":"ignored_stale",{grace_ends_at:graceEndsAt,plan:synced.snapshot.plan,subscription_status:synced.snapshot.status,cancel_at_period_end:synced.snapshot.cancel_at_period_end,last_invoice_status:invoiceState});return synced;
         }
         await recordBillingEvent(event,creatorId||null,"ignored_unmapped",{reason:"event_not_required"});return{ignored:true};
     }catch(error){await recordBillingEvent(event,creatorId||null,"failed",{error:studioText(error?.message,300,"billing event failed")});throw error;}
@@ -4906,7 +5738,12 @@ async function stripeBillingWebhook(req,res){
     if(!signature)return res.status(400).json({ok:false,error:"Stripe-Signatur fehlt."});
     let event;
     try{event=stripeClient().webhooks.constructEvent(req.body,signature,STRIPE_WEBHOOK_SECRET);}catch(error){return res.status(400).json({ok:false,error:"Ungültige Stripe-Webhook-Signatur."});}
-    try{const result=await handleStripeEvent(event);return res.json({received:true,duplicate:Boolean(result?.duplicate)});}catch(error){console.error("[billing:webhook]",error?.message||error);return res.status(500).json({ok:false,error:"Billing Event konnte nicht verarbeitet werden."});}
+    const expectedLive=STRIPE_SECRET_MODE==="live";
+    if((STRIPE_SECRET_MODE==="live"||STRIPE_SECRET_MODE==="test")&&Boolean(event?.livemode)!==expectedLive){
+        await recordBillingEvent(event,null,"rejected_mode",{reason:"stripe_mode_mismatch",expected_mode:STRIPE_SECRET_MODE});
+        return res.status(400).json({ok:false,error:"Stripe Event passt nicht zum konfigurierten Billing-Modus."});
+    }
+    try{const result=await handleStripeEvent(event);return res.json({received:true,duplicate:Boolean(result?.duplicate)});}catch(error){safeLogError("billing:webhook",error);return res.status(500).json({ok:false,error:"Billing Event konnte nicht verarbeitet werden."});}
 }
 
 // ============================================================
@@ -5283,18 +6120,19 @@ function mfaChallengeHash(token) {
     return crypto.createHash("sha256").update(`cfs-mfa-challenge-v1|${String(token || "")}`).digest("hex");
 }
 
-function mfaChallengeCookieOptions() {
+function mfaChallengeCookieOptions({includeMaxAge=true} = {}) {
     return {
         httpOnly: true,
         secure: NODE_ENV !== "development",
         sameSite: "strict",
-        maxAge: MFA_CHALLENGE_TTL_MS,
+        priority: "high",
+        ...(includeMaxAge ? {maxAge: MFA_CHALLENGE_TTL_MS} : {}),
         path: "/"
     };
 }
 
 function clearMfaChallengeCookie(res) {
-    res.clearCookie(MFA_CHALLENGE_COOKIE, { path: "/" });
+    res.clearCookie(MFA_CHALLENGE_COOKIE, mfaChallengeCookieOptions({includeMaxAge:false}));
 }
 
 async function issueMfaChallenge(res, creatorId) {
@@ -5465,6 +6303,51 @@ function currentCreatorSessionHash(req) {
 const EXPORT_SENSITIVE_KEY = /(?:password|secret|token|hash|authorization|api[_-]?key|source[_-]?key|device[_-]?secret|bridge[_-]?token)/i;
 const EXPORT_SENSITIVE_URL = /\/(?:api\/)?(?:widgets?\/source|assets?\/public|bridge\/token)\/[A-Za-z0-9._~-]{12,}/i;
 
+function redactSensitiveText(value) {
+    return String(value ?? "")
+        .replace(/(authorization\s*:\s*bearer\s+)[A-Za-z0-9._~+\/=-]{12,}/gi,"$1[redacted]")
+        .replace(/\b(?:cfsb|cfsd)_[A-Za-z0-9_-]{16,}\b/gi,"[redacted-cfs-token]")
+        .replace(/\b(?:sk|rk)_(?:live|test)_[A-Za-z0-9]{12,}\b/gi,"[redacted-provider-key]")
+        .replace(/\bgh[pousr]_[A-Za-z0-9_]{20,}\b/g,"[redacted-github-token]")
+        .replace(/((?:access[_ -]?token|refresh[_ -]?token|api[_ -]?key|client[_ -]?secret|device[_ -]?secret|bridge[_ -]?token|stream[_ -]?key|password|passwort|secret)\s*[:=]\s*["']?)[A-Za-z0-9._~+\/=-]{8,}/gi,"$1[redacted]")
+        .replace(/https:\/\/(?:discord(?:app)?\.com)\/api\/webhooks\/\d+\/[A-Za-z0-9._-]+/gi,"[redacted-webhook]");
+}
+
+function safeLogError(label,error) {
+    const raw=error?.stack||error?.message||String(error||"unknown error");
+    const safe=redactSensitiveText(raw).replace(/[\r\n]{3,}/g,"\n\n").slice(0,8000);
+    console.error(`[${String(label||"server").slice(0,80)}]`,safe);
+}
+
+function clientSafeErrorPayload(req,error,status,fallback,{includeCode=false,extra={}}={}) {
+    const safeStatus=Math.max(400,Math.min(599,Number(status)||500));
+    const safeFallback=String(fallback||"Die Anfrage konnte nicht verarbeitet werden.")
+        .replace(/[\u0000-\u001f\u007f]/g," ")
+        .replace(/\s+/g," ")
+        .trim()
+        .slice(0,300)||"Die Anfrage konnte nicht verarbeitet werden.";
+    const payload={ok:false,...(extra&&typeof extra==="object"?extra:{}),error:safeFallback};
+
+    if(safeStatus>=500){
+        safeLogError(`api-${safeStatus}:${req?.method||"REQUEST"}:${req?.path||"unknown"}:${req?.requestId||"no-request-id"}`,error);
+        payload.reference=req?.requestId||null;
+        return payload;
+    }
+
+    const detail=redactSensitiveText(error?.message||"")
+        .replace(/[\u0000-\u001f\u007f]/g," ")
+        .replace(/\s+/g," ")
+        .trim()
+        .slice(0,300);
+    if(detail)payload.error=detail;
+    if(includeCode&&/^[a-z0-9_]{2,80}$/i.test(String(error?.code||"")))payload.code=String(error.code);
+    return payload;
+}
+
+function clearSensitiveBrowserState(res) {
+    res.setHeader("Clear-Site-Data", '"cache", "cookies", "storage"');
+}
+
 function sanitizeAccountExportValue(value, depth = 0) {
     if (depth > 18) return "[depth-limit]";
 
@@ -5486,7 +6369,8 @@ function sanitizeAccountExportValue(value, depth = 0) {
 
     if (typeof value === "string") {
         if (EXPORT_SENSITIVE_URL.test(value)) return "[redacted-url]";
-        return value.length > 250000 ? `${value.slice(0, 250000)}…[truncated]` : value;
+        const redacted=redactSensitiveText(value);
+        return redacted.length > 250000 ? `${redacted.slice(0, 250000)}…[truncated]` : redacted;
     }
 
     return value;
@@ -5593,6 +6477,32 @@ async function buildCreatorAccountExport(creatorId) {
 // CREATOR SESSION
 // ============================================================
 
+function creatorSessionCookieOptions({includeMaxAge=true} = {}) {
+    return {
+        httpOnly:true,
+        secure:NODE_ENV !== "development",
+        sameSite:"lax",
+        priority:"high",
+        ...(includeMaxAge ? {maxAge:CREATOR_SESSION_TTL_MS} : {}),
+        path:"/"
+    };
+}
+
+function clearCreatorSessionCookie(res) {
+    res.clearCookie(CREATOR_SESSION_COOKIE,creatorSessionCookieOptions({includeMaxAge:false}));
+    if (CREATOR_SESSION_COOKIE !== LEGACY_CREATOR_SESSION_COOKIE) {
+        res.clearCookie(LEGACY_CREATOR_SESSION_COOKIE,{path:"/"});
+    }
+}
+
+function clearCreatorAuthCookies(res) {
+    clearCreatorSessionCookie(res);
+    clearCreatorCsrfCookie(res);
+    clearMfaChallengeCookie(res);
+    clearAdminElevationCookie(res);
+    clearAccountElevationCookies(res);
+}
+
 async function createCreatorSession(
     res,
     creatorId,
@@ -5621,14 +6531,16 @@ async function createCreatorSession(
             token_hash,
             creator_id,
             expires_at,
-            auth_method
+            auth_method,
+            last_seen_at
         )
 
         VALUES (
             $1,
             $2,
             $3,
-            $4
+            $4,
+            NOW()
         )
         `,
         [
@@ -5669,25 +6581,7 @@ async function createCreatorSession(
     res.cookie(
         CREATOR_SESSION_COOKIE,
         token,
-        {
-
-            httpOnly:
-                true,
-
-            secure:
-                NODE_ENV !==
-                "development",
-
-            sameSite:
-                "lax",
-
-            maxAge:
-                CREATOR_SESSION_TTL_MS,
-
-            path:
-                "/"
-
-        }
+        creatorSessionCookieOptions()
     );
 
     setCreatorCsrfCookie(
@@ -5729,23 +6623,7 @@ async function destroyCreatorSession(
 
     }
 
-    res.clearCookie(
-        CREATOR_SESSION_COOKIE,
-        {
-            path:
-                "/"
-        }
-    );
-
-    if (CREATOR_SESSION_COOKIE !== LEGACY_CREATOR_SESSION_COOKIE) {
-        res.clearCookie(LEGACY_CREATOR_SESSION_COOKIE, {path:"/"});
-    }
-
-    clearCreatorCsrfCookie(
-        res
-    );
-
-    clearAdminElevationCookie(res);
+    clearCreatorAuthCookies(res);
 
 }
 
@@ -5784,7 +6662,8 @@ async function getCreatorFromRequest(
                 a.status,
                 a.email_verified_at,
                 a.created_at,
-                a.updated_at
+                a.updated_at,
+                s.last_seen_at AS _session_last_seen_at
 
             FROM creator_sessions s
 
@@ -5798,19 +6677,33 @@ async function getCreatorFromRequest(
                 s.expires_at > NOW()
 
             AND
+                s.last_seen_at > NOW() - ($2::bigint * INTERVAL '1 millisecond')
+
+            AND
                 a.status = 'active'
 
             LIMIT 1
             `,
             [
-                tokenHash
+                tokenHash,
+                CREATOR_SESSION_IDLE_TTL_MS
             ]
         );
 
-    return (
-        result.rows[0] ||
-        null
-    );
+    const account=result.rows[0]||null;
+    if (!account) return null;
+
+    const lastSeenAt=account._session_last_seen_at;
+    delete account._session_last_seen_at;
+    const lastSeenMs=lastSeenAt ? new Date(lastSeenAt).getTime() : 0;
+    if (!Number.isFinite(lastSeenMs) || Date.now()-lastSeenMs >= CREATOR_SESSION_TOUCH_INTERVAL_MS) {
+        await pool.query(
+            `UPDATE creator_sessions SET last_seen_at=NOW() WHERE token_hash=$1 AND expires_at>NOW()`,
+            [tokenHash]
+        );
+    }
+
+    return account;
 
 }
 
@@ -6019,11 +6912,12 @@ async function scoreCreatorGameRuntime(creatorId,input={}) {
 }
 
 async function getPublicGameRuntimeByToken(token) {
+    if(!validGamePublicToken(token))return null;
     const result=await pool.query(
         `SELECT r.*,c.display_name AS creator_display_name
          FROM creator_game_runtime r JOIN creator_accounts c ON c.id=r.creator_id
-         WHERE r.public_token=$1 LIMIT 1`,
-        [studioText(token,160,"")]
+         WHERE r.public_token=$1 AND c.status='active' LIMIT 1`,
+        [String(token)]
     );
     if(!result.rows[0])return null;
     return{runtime:publicGameRuntime(result.rows[0],APP_BASE_URL),creator:{display_name:result.rows[0].creator_display_name||"Creator"}};
@@ -6222,23 +7116,22 @@ async function createCutExportJob(creatorId,projectId,access) {
     const manifest=buildCutJobManifest(projectData.project,projectData.clips);
     if(!manifest.clips.length)throw Object.assign(new Error("Für einen Export-Job muss mindestens ein gültiger Clip ausgewählt sein."),{code:"cut_job_empty"});
 
-    const active=await pool.query(
-        `SELECT COUNT(*)::int AS count FROM creator_cut_export_jobs WHERE creator_id=$1 AND status IN ('queued','claimed','processing') AND COALESCE(manifest->>'kind','cut_export')<>'cut_audition'`,
-        [creatorId]
-    );
     const max=Math.max(0,Number(access?.entitlements?.max_pending_cut_jobs||0));
-    if(Number(active.rows[0]?.count||0)>=max){
-        const error=new Error(`Dein Zugriff erlaubt maximal ${max} gleichzeitig ausstehende Cut-Jobs.`);
-        error.code="cut_job_limit";
-        throw error;
-    }
-
-    const result=await pool.query(
-        `INSERT INTO creator_cut_export_jobs(creator_id,project_id,status,manifest,result,requested_at,updated_at)
-         VALUES($1,$2,'queued',$3::jsonb,'{}'::jsonb,NOW(),NOW())
-         RETURNING *`,
-        [creatorId,projectId,JSON.stringify(manifest)]
-    );
+    const result=await withCreatorResourceLock(creatorId,async client=>{
+        const active=await client.query(
+            `SELECT COUNT(*)::int AS count FROM creator_cut_export_jobs WHERE creator_id=$1 AND status IN ('queued','claimed','processing') AND COALESCE(manifest->>'kind','cut_export')<>'cut_audition'`,
+            [creatorId]
+        );
+        if(Number(active.rows[0]?.count||0)>=max){
+            throw creatorResourceLimitError(`Dein Zugriff erlaubt maximal ${max} gleichzeitig ausstehende Cut-Jobs.`,"cut_job_limit");
+        }
+        return client.query(
+            `INSERT INTO creator_cut_export_jobs(creator_id,project_id,status,manifest,result,requested_at,updated_at)
+             VALUES($1,$2,'queued',$3::jsonb,'{}'::jsonb,NOW(),NOW())
+             RETURNING *`,
+            [creatorId,projectId,JSON.stringify(manifest)]
+        );
+    });
     return publicCutJob(result.rows[0]);
 }
 
@@ -6257,20 +7150,6 @@ async function createCutAuditionJob(creatorId,projectId,input={}) {
     if(!String(base.export_preset?.source_handoff_id||""))throw Object.assign(new Error("Timeline-Audition ist nur für einen lokalen Recording-Handoff verfügbar."),{code:"cut_audition_handoff"});
     if(action==="preview"&&mode==="track"&&!base.export_preset?.source_tracks?.some(track=>String(track.key)===trackKey))throw Object.assign(new Error("Recording-Spur ist in diesem Projekt nicht vorhanden."),{code:"cut_audition_track"});
 
-    await pool.query(
-        `UPDATE creator_cut_export_jobs SET status='canceled',updated_at=NOW(),completed_at=NOW(),error_message='superseded_by_new_audition' WHERE creator_id=$1 AND project_id=$2 AND status='queued' AND manifest->>'kind'='cut_audition'`,
-        [creatorId,projectId]
-    );
-    await pool.query(
-        `DELETE FROM creator_cut_export_jobs WHERE creator_id=$1 AND manifest->>'kind'='cut_audition' AND status IN ('completed','failed','canceled') AND requested_at < NOW()-INTERVAL '1 hour'`,
-        [creatorId]
-    );
-    const active=await pool.query(
-        `SELECT COUNT(*)::int AS count FROM creator_cut_export_jobs WHERE creator_id=$1 AND status IN ('claimed','processing') AND manifest->>'kind'='cut_audition'`,
-        [creatorId]
-    );
-    if(Number(active.rows[0]?.count||0)>=2)throw Object.assign(new Error("Es laufen bereits zwei lokale Timeline-Vorschauen."),{code:"cut_audition_busy"});
-
     const manifest={
         ...base,
         schema:13,
@@ -6288,10 +7167,27 @@ async function createCutAuditionJob(creatorId,projectId,input={}) {
             requested_at:new Date().toISOString()
         }
     };
-    const result=await pool.query(
-        `INSERT INTO creator_cut_export_jobs(creator_id,project_id,status,manifest,result,requested_at,updated_at) VALUES($1,$2,'queued',$3::jsonb,'{}'::jsonb,NOW(),NOW()) RETURNING *`,
-        [creatorId,projectId,JSON.stringify(manifest)]
-    );
+    const result=await withCreatorResourceLock(creatorId,async client=>{
+        await client.query(
+            `UPDATE creator_cut_export_jobs SET status='canceled',updated_at=NOW(),completed_at=NOW(),error_message='superseded_by_new_audition' WHERE creator_id=$1 AND project_id=$2 AND status='queued' AND manifest->>'kind'='cut_audition'`,
+            [creatorId,projectId]
+        );
+        await client.query(
+            `DELETE FROM creator_cut_export_jobs WHERE creator_id=$1 AND manifest->>'kind'='cut_audition' AND status IN ('completed','failed','canceled') AND requested_at < NOW()-INTERVAL '1 hour'`,
+            [creatorId]
+        );
+        const active=await client.query(
+            `SELECT COUNT(*)::int AS count FROM creator_cut_export_jobs WHERE creator_id=$1 AND status IN ('claimed','processing') AND manifest->>'kind'='cut_audition'`,
+            [creatorId]
+        );
+        if(Number(active.rows[0]?.count||0)>=2){
+            throw creatorResourceLimitError("Es laufen bereits zwei lokale Timeline-Vorschauen.","cut_audition_busy");
+        }
+        return client.query(
+            `INSERT INTO creator_cut_export_jobs(creator_id,project_id,status,manifest,result,requested_at,updated_at) VALUES($1,$2,'queued',$3::jsonb,'{}'::jsonb,NOW(),NOW()) RETURNING *`,
+            [creatorId,projectId,JSON.stringify(manifest)]
+        );
+    });
     return publicCutJob(result.rows[0]);
 }
 
@@ -6362,6 +7258,48 @@ async function getCutProject(creatorId,projectId) {
     return{project:publicCutProject(row,row.clip_count),clips:clips.rows.map(publicCutClip)};
 }
 
+async function createCutProjectWithLimit(creatorId,clean,maxProjects){
+    return withCreatorResourceLock(creatorId,async client=>{
+        const count=await client.query(`SELECT COUNT(*)::int AS count FROM creator_cut_projects WHERE creator_id=$1`,[creatorId]);
+        if(Number(count.rows[0]?.count||0)>=Number(maxProjects||0)){
+            throw creatorResourceLimitError(`Dein Zugriff erlaubt maximal ${Number(maxProjects||0)} Cut-Studio Projekte.`,"cut_project_limit");
+        }
+        return client.query(
+            `INSERT INTO creator_cut_projects(creator_id,title,status,format,notes,source_name,export_preset,created_at,updated_at) VALUES($1,$2,$3,$4,$5,$6,$7::jsonb,NOW(),NOW()) RETURNING *`,
+            [creatorId,clean.title,clean.status,clean.format,clean.notes,clean.source_name,JSON.stringify(clean.export_preset)]
+        );
+    });
+}
+
+async function createCutClipWithLimit(creatorId,projectId,requested,maxClips){
+    return withCreatorResourceLock(creatorId,async client=>{
+        const project=(await client.query(
+            `SELECT id FROM creator_cut_projects WHERE creator_id=$1 AND id=$2 FOR UPDATE`,
+            [creatorId,projectId]
+        )).rows[0];
+        if(!project){
+            const error=new Error("Cut-Projekt nicht gefunden.");
+            error.code="cut_project_missing";
+            error.statusCode=404;
+            throw error;
+        }
+        const count=await client.query(
+            `SELECT COUNT(*)::int AS count,COALESCE(MAX(sort_order),-1)+1 AS next_order FROM creator_cut_clips WHERE creator_id=$1 AND project_id=$2`,
+            [creatorId,projectId]
+        );
+        if(Number(count.rows[0]?.count||0)>=Number(maxClips||0)){
+            throw creatorResourceLimitError(`Dieses Projekt erlaubt maximal ${Number(maxClips||0)} Clips.`,"cut_clip_limit");
+        }
+        const clean={...requested,sort_order:Number(count.rows[0]?.next_order||0)};
+        const result=await client.query(
+            `INSERT INTO creator_cut_clips(project_id,creator_id,label,in_ms,out_ms,caption,selected,sort_order,caption_enabled,caption_position,caption_size,caption_style,audio_gain_db,audio_fade_in_ms,audio_fade_out_ms,keyframe_enabled,keyframe_zoom_start,keyframe_zoom_end,keyframe_pan_x_start,keyframe_pan_x_end,keyframe_pan_y_start,keyframe_pan_y_end,keyframe_easing,visual_keyframes,created_at,updated_at) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24::jsonb,NOW(),NOW()) RETURNING *`,
+            [projectId,creatorId,clean.label,clean.in_ms,clean.out_ms,clean.caption,clean.selected,clean.sort_order,clean.caption_enabled,clean.caption_position,clean.caption_size,clean.caption_style,clean.audio_gain_db,clean.audio_fade_in_ms,clean.audio_fade_out_ms,clean.keyframe_enabled,clean.keyframe_zoom_start,clean.keyframe_zoom_end,clean.keyframe_pan_x_start,clean.keyframe_pan_x_end,clean.keyframe_pan_y_start,clean.keyframe_pan_y_end,clean.keyframe_easing,JSON.stringify(clean.visual_keyframes||[])]
+        );
+        await client.query(`UPDATE creator_cut_projects SET updated_at=NOW() WHERE creator_id=$1 AND id=$2`,[creatorId,projectId]);
+        return result;
+    });
+}
+
 async function getCreatorSceneWidgets(creatorId) {
     const result=await pool.query(
         `SELECT * FROM creator_widgets WHERE creator_id=$1 ORDER BY updated_at DESC`,
@@ -6377,6 +7315,7 @@ async function getCreatorSceneRow(creatorId,sceneId) {
     return result.rows[0]||null;
 }
 async function getPublicSceneRow(token) {
+    if(!validScenePublicToken(token))return null;
     const result=await pool.query(
         `
         SELECT s.*,c.display_name AS creator_display_name
@@ -6385,9 +7324,10 @@ async function getPublicSceneRow(token) {
         WHERE s.public_token=$1
           AND s.status='live'
           AND s.published_config IS NOT NULL
+          AND c.status='active'
         LIMIT 1
         `,
-        [token]
+        [String(token)]
     );
     return result.rows[0]||null;
 }
@@ -6694,6 +7634,47 @@ function publicStreamStudioSource(source){
 }
 
 // ============================================================
+// CREATOR RESOURCE TRANSACTIONS · SECURITY HARDENING R44
+//
+// Quoten werden nicht nur im UI geprüft. Alle count->insert-Pfade, die
+// ein Creator-Limit schützen, können diese Transaktion nutzen. Das
+// SELECT ... FOR UPDATE auf dem Creator-Datensatz serialisiert konkurrierende
+// Requests auch über mehrere Node/Render-Instanzen hinweg.
+// ============================================================
+
+function creatorResourceLimitError(message, code = "creator_resource_limit") {
+    const error = new Error(String(message || "Creator-Limit erreicht."));
+    error.code = code;
+    error.statusCode = 403;
+    return error;
+}
+
+async function withCreatorResourceLock(creatorId, task) {
+    const client = await pool.connect();
+    try {
+        await client.query("BEGIN");
+        const owner = await client.query(
+            `SELECT id FROM creator_accounts WHERE id=$1 FOR UPDATE`,
+            [creatorId]
+        );
+        if (!owner.rows[0]) {
+            const error = new Error("Creator-Account nicht gefunden.");
+            error.code = "creator_missing";
+            error.statusCode = 404;
+            throw error;
+        }
+        const value = await task(client);
+        await client.query("COMMIT");
+        return value;
+    } catch (error) {
+        try { await client.query("ROLLBACK"); } catch {}
+        throw error;
+    } finally {
+        client.release();
+    }
+}
+
+// ============================================================
 // CREATOR AUTH MIDDLEWARE
 // ============================================================
 
@@ -6737,15 +7718,16 @@ async function requireCreatorAccount(
             res
         );
 
+        if (!isSafeHttpMethod(req.method)) {
+            return creatorWriteLimiter(req, res, next);
+        }
+
         next();
 
     }
     catch (error) {
 
-        console.error(
-            "Creator Auth Fehler:",
-            error
-        );
+        safeLogError("Creator Auth Fehler:",error);
 
         return res
             .status(500)
@@ -6781,10 +7763,13 @@ const ALLOWED_SECURITY_EVENT_TYPES =
         "mfa_after_password_failed",
         "login_throttled",
         "logout_all",
+        "logout_others",
         "profile_updated",
         "session_revoked",
         "data_export_requested",
         "tiktok_disconnected",
+        "public_output_token_rotated",
+        "asset_public_token_rotated",
         "password_changed",
         "email_verification_requested",
         "email_verified",
@@ -6798,9 +7783,15 @@ const ALLOWED_SECURITY_EVENT_TYPES =
         "passkey_removed",
         "admin_elevation_granted",
         "admin_elevation_failed",
+        "account_elevation_granted",
+        "account_elevation_totp_granted",
+        "account_elevation_recovery_granted",
+        "account_elevation_passkey_granted",
+        "account_elevation_failed",
         "admin_audit_exported",
         "incident_mode_changed",
-        "incident_sessions_revoked"
+        "incident_sessions_revoked",
+        "incident_launchers_revoked"
     ]);
 
 
@@ -6846,10 +7837,7 @@ async function recordSecurityEvent(
     }
     catch (error) {
 
-        console.error(
-            "Security Event Log Fehler:",
-            error
-        );
+        safeLogError("Security Event Log Fehler:",error);
 
     }
 
@@ -6879,37 +7867,222 @@ async function requireCreatorAdmin(req,res,next) {
         }
         next();
     } catch (error) {
-        console.error("Creator Admin Auth Fehler:",error);
+        safeLogError("Creator Admin Auth Fehler:",error);
         return res.status(500).json({ok:false,error:"Admin-Berechtigung konnte nicht geprüft werden."});
     }
 }
 
 
-function adminElevationCookieOptions() {
+function accountElevationCookieOptions({includeMaxAge=true,pending=false} = {}) {
     return {
         httpOnly:true,
         secure:NODE_ENV!=="development",
         sameSite:"strict",
-        maxAge:ADMIN_ELEVATION_TTL_MS,
+        priority:"high",
+        ...(includeMaxAge ? {maxAge:pending?ACCOUNT_ELEVATION_PENDING_TTL_MS:ACCOUNT_ELEVATION_TTL_MS} : {}),
+        path:"/"
+    };
+}
+
+function clearAccountElevationCookies(res) {
+    res.clearCookie(ACCOUNT_ELEVATION_COOKIE,accountElevationCookieOptions({includeMaxAge:false}));
+    res.clearCookie(ACCOUNT_ELEVATION_PENDING_COOKIE,accountElevationCookieOptions({includeMaxAge:false,pending:true}));
+}
+
+function createAccountElevationToken(req,{pending=false,factor="password"}={}) {
+    const sessionHash=currentCreatorSessionHash(req);
+    if(!sessionHash || !req.creatorAccount?.id || !ACCOUNT_ELEVATION_SECRET) return "";
+    const ttl=pending?ACCOUNT_ELEVATION_PENDING_TTL_MS:ACCOUNT_ELEVATION_TTL_MS;
+    const payload=Buffer.from(JSON.stringify({
+        v:1,
+        cid:String(req.creatorAccount.id),
+        exp:Date.now()+ttl,
+        pending:Boolean(pending),
+        factor:String(factor||"password").slice(0,32),
+        nonce:crypto.randomBytes(12).toString("base64url")
+    }),"utf8").toString("base64url");
+    const scope=pending?"pending":"active";
+    const signature=crypto.createHmac("sha256",ACCOUNT_ELEVATION_SECRET)
+        .update(`cfs-account-elevation-v1|${scope}|${payload}|${sessionHash}`)
+        .digest("base64url");
+    return `${payload}.${signature}`;
+}
+
+function accountElevationTokenState(req,{pending=false}={}) {
+    const cookies=parseCookies(req);
+    const cookieName=pending?ACCOUNT_ELEVATION_PENDING_COOKIE:ACCOUNT_ELEVATION_COOKIE;
+    const raw=String(cookies[cookieName]||"");
+    const sessionHash=currentCreatorSessionHash(req);
+    if(!raw || !sessionHash || !ACCOUNT_ELEVATION_SECRET || !req.creatorAccount?.id) return {active:false,expires_at:null,factor:null};
+    const [payloadPart,signature]=raw.split(".");
+    if(!payloadPart || !signature) return {active:false,expires_at:null,factor:null};
+    const scope=pending?"pending":"active";
+    const expected=crypto.createHmac("sha256",ACCOUNT_ELEVATION_SECRET)
+        .update(`cfs-account-elevation-v1|${scope}|${payloadPart}|${sessionHash}`)
+        .digest("base64url");
+    if(!safeEqualText(signature,expected)) return {active:false,expires_at:null,factor:null};
+    try {
+        const payload=JSON.parse(Buffer.from(payloadPart,"base64url").toString("utf8"));
+        if(payload?.v!==1 || String(payload?.cid||"")!==String(req.creatorAccount.id) || Boolean(payload?.pending)!==Boolean(pending)) return {active:false,expires_at:null,factor:null};
+        const expiresAt=Number(payload?.exp||0),ttl=pending?ACCOUNT_ELEVATION_PENDING_TTL_MS:ACCOUNT_ELEVATION_TTL_MS;
+        if(!Number.isFinite(expiresAt) || expiresAt<=Date.now() || expiresAt>Date.now()+ttl+30000) return {active:false,expires_at:null,factor:null};
+        return {active:true,expires_at:new Date(expiresAt).toISOString(),factor:String(payload?.factor||"password")};
+    } catch {
+        return {active:false,expires_at:null,factor:null};
+    }
+}
+
+function grantAccountElevation(req,res,factor="password") {
+    const token=createAccountElevationToken(req,{factor});
+    if(!token) return null;
+    const expiresAt=new Date(Date.now()+ACCOUNT_ELEVATION_TTL_MS).toISOString();
+    res.cookie(ACCOUNT_ELEVATION_COOKIE,token,accountElevationCookieOptions());
+    res.clearCookie(ACCOUNT_ELEVATION_PENDING_COOKIE,accountElevationCookieOptions({includeMaxAge:false,pending:true}));
+    return {active:true,expires_at:expiresAt,factor};
+}
+
+function requireCreatorAccountElevation(req,res,next) {
+    const state=accountElevationTokenState(req);
+    if(state.active){req.accountElevation=state;return next();}
+    res.clearCookie(ACCOUNT_ELEVATION_COOKIE,accountElevationCookieOptions({includeMaxAge:false}));
+    return res.status(428).json({
+        ok:false,
+        code:"account_reauth_required",
+        error:"Diese sensible Aktion benötigt eine frische Sicherheitsbestätigung.",
+        elevation_required:true
+    });
+}
+
+app.get("/api/account/elevation",requireCreatorAccount,async(req,res)=>{
+    res.set("Cache-Control","no-store");
+    const [state,methods]=await Promise.all([
+        Promise.resolve(accountElevationTokenState(req)),
+        creatorAuthMethods(req.creatorAccount.id)
+    ]);
+    return res.json({ok:true,active:state.active,expires_at:state.expires_at,factor:state.factor,ttl_seconds:Math.floor(ACCOUNT_ELEVATION_TTL_MS/1000),methods:{totp:methods.totp,passkey:methods.passkey,recovery:methods.recovery_codes_remaining>0}});
+});
+
+app.post("/api/account/elevation",requireCreatorAccount,accountElevationLimiter,async(req,res)=>{
+    res.set("Cache-Control","no-store");
+    const password=String(req.body?.password||"");
+    const code=String(req.body?.code||"").trim();
+    const recoveryCode=String(req.body?.recovery_code||"").trim();
+    const method=String(req.body?.method||"").trim().toLowerCase();
+    if(!password || password.length>PASSWORD_MAX_LENGTH) return res.status(400).json({ok:false,error:"Bitte bestätige dein aktuelles Passwort."});
+    if(!(await verifyCreatorPasswordForLifecycle(req.creatorAccount.id,password))){
+        clearAccountElevationCookies(res);
+        await recordSecurityEvent(req.creatorAccount.id,"account_elevation_failed");
+        return res.status(401).json({ok:false,error:"Das aktuelle Passwort ist nicht korrekt."});
+    }
+    const methods=await creatorAuthMethods(req.creatorAccount.id);
+    const requiresSecondFactor=Boolean(methods.totp||methods.passkey);
+    if(!requiresSecondFactor){
+        const state=grantAccountElevation(req,res,"password");
+        if(!state)return res.status(500).json({ok:false,error:"Sicherheitsfreigabe konnte nicht erstellt werden."});
+        await recordSecurityEvent(req.creatorAccount.id,"account_elevation_granted");
+        return res.json({ok:true,...state,methods:{totp:false,passkey:false,recovery:false}});
+    }
+    if(method==="passkey"){
+        if(!methods.passkey)return res.status(409).json({ok:false,error:"Für dieses Konto ist kein Passkey registriert."});
+        const token=createAccountElevationToken(req,{pending:true,factor:"password+passkey"});
+        if(!token)return res.status(500).json({ok:false,error:"Passkey-Bestätigung konnte nicht vorbereitet werden."});
+        res.cookie(ACCOUNT_ELEVATION_PENDING_COOKIE,token,accountElevationCookieOptions({pending:true}));
+        return res.json({ok:true,active:false,passkey_required:true,methods:{totp:methods.totp,passkey:methods.passkey,recovery:methods.recovery_codes_remaining>0}});
+    }
+    if(code||recoveryCode){
+        const client=await pool.connect();
+        try{
+            await client.query("BEGIN");
+            let verified=false,factor="totp";
+            if(code&&methods.totp)verified=await consumeTotpForCreator(client,req.creatorAccount.id,code);
+            if(!verified&&recoveryCode&&methods.recovery_codes_remaining>0){verified=await consumeRecoveryCode(client,req.creatorAccount.id,recoveryCode);factor="recovery_code";}
+            if(!verified){await client.query("ROLLBACK");await recordSecurityEvent(req.creatorAccount.id,"account_elevation_failed");return res.status(401).json({ok:false,error:"Der zweite Faktor ist nicht korrekt oder wurde bereits verwendet."});}
+            await client.query("COMMIT");
+            const state=grantAccountElevation(req,res,factor);
+            if(factor==="recovery_code") {
+                await recordSecurityEvent(req.creatorAccount.id,"mfa_recovery_code_used");
+                await recordSecurityEvent(req.creatorAccount.id,"account_elevation_recovery_granted");
+            } else {
+                await recordSecurityEvent(req.creatorAccount.id,"account_elevation_totp_granted");
+            }
+            await recordSecurityEvent(req.creatorAccount.id,"account_elevation_granted");
+            return res.json({ok:true,...state,methods:{totp:methods.totp,passkey:methods.passkey,recovery:methods.recovery_codes_remaining>0}});
+        }catch(error){try{await client.query("ROLLBACK");}catch{}safeLogError("Account Step-up Fehler:",error);return res.status(500).json({ok:false,error:"Sicherheitsbestätigung konnte nicht abgeschlossen werden."});}
+        finally{client.release();}
+    }
+    return res.status(428).json({ok:false,code:"account_second_factor_required",error:"Bestätige zusätzlich deinen zweiten Faktor.",methods:{totp:methods.totp,passkey:methods.passkey,recovery:methods.recovery_codes_remaining>0}});
+});
+
+app.post("/api/account/elevation/passkey/options",requireCreatorAccount,accountElevationLimiter,async(req,res)=>{
+    res.set("Cache-Control","no-store");
+    try{
+        const pending=accountElevationTokenState(req,{pending:true});
+        if(!pending.active)return res.status(401).json({ok:false,error:"Die Passwortbestätigung ist abgelaufen. Bitte starte die Sicherheitsfreigabe erneut."});
+        const passkeys=await creatorPasskeys(req.creatorAccount.id);
+        if(!passkeys.length)return res.status(409).json({ok:false,error:"Für dieses Konto ist kein Passkey registriert."});
+        const {generateAuthenticationOptions}=await simpleWebAuthn();
+        const options=await generateAuthenticationOptions({rpID:PASSKEY_RP_ID,timeout:60000,userVerification:"required",allowCredentials:passkeys.map(row=>({id:row.credential_id,transports:row.transports||[]}))});
+        const challenge=await createPasskeyChallenge({creatorId:req.creatorAccount.id,purpose:"account_elevation",challenge:options.challenge,sessionHash:currentCreatorSessionHash(req)});
+        return res.json({ok:true,challenge_id:challenge.id,expires_at:challenge.expiresAt,options});
+    }catch(error){safeLogError("Account Step-up Passkey Options Fehler:",error);return res.status(500).json({ok:false,error:"Passkey-Bestätigung konnte nicht gestartet werden."});}
+});
+
+app.post("/api/account/elevation/passkey/verify",requireCreatorAccount,accountElevationLimiter,async(req,res)=>{
+    res.set("Cache-Control","no-store");
+    const response=req.body?.response,challengeId=String(req.body?.challenge_id||"");
+    if(!response||typeof response!=="object")return res.status(400).json({ok:false,error:"Passkey-Antwort fehlt."});
+    try{
+        const pending=accountElevationTokenState(req,{pending:true});
+        if(!pending.active)return res.status(401).json({ok:false,error:"Die Passwortbestätigung ist abgelaufen. Bitte starte die Sicherheitsfreigabe erneut."});
+        const challenge=await takePasskeyChallenge(pool,{challengeId,creatorId:req.creatorAccount.id,purpose:"account_elevation",sessionHash:currentCreatorSessionHash(req)});
+        if(!challenge)return res.status(401).json({ok:false,error:"Die Passkey-Challenge ist abgelaufen oder wurde bereits verwendet."});
+        const credentialId=String(response.id||"");
+        const passkey=(await pool.query(`SELECT credential_id,public_key,counter,transports,label FROM creator_webauthn_credentials WHERE creator_id=$1 AND credential_id=$2 LIMIT 1`,[req.creatorAccount.id,credentialId])).rows[0];
+        if(!passkey){await recordSecurityEvent(req.creatorAccount.id,"account_elevation_failed");return res.status(401).json({ok:false,error:"Passkey konnte nicht bestätigt werden."});}
+        const {verifyAuthenticationResponse}=await simpleWebAuthn();
+        const verification=await verifyAuthenticationResponse({response,expectedChallenge:challenge.challenge,expectedOrigin:PASSKEY_EXPECTED_ORIGINS,expectedRPID:PASSKEY_RP_ID,requireUserVerification:true,credential:{id:passkey.credential_id,publicKey:new Uint8Array(passkey.public_key),counter:Number(passkey.counter||0),transports:passkey.transports||[]}});
+        if(!verification.verified){await recordSecurityEvent(req.creatorAccount.id,"account_elevation_failed");return res.status(401).json({ok:false,error:"Passkey konnte nicht bestätigt werden."});}
+        await pool.query(`UPDATE creator_webauthn_credentials SET counter=$3,last_used_at=NOW() WHERE creator_id=$1 AND credential_id=$2`,[req.creatorAccount.id,credentialId,Number(verification.authenticationInfo?.newCounter||0)]);
+        const state=grantAccountElevation(req,res,"passkey");
+        await recordSecurityEvent(req.creatorAccount.id,"account_elevation_passkey_granted");
+        await recordSecurityEvent(req.creatorAccount.id,"account_elevation_granted");
+        return res.json({ok:true,...state});
+    }catch(error){safeLogError("Account Step-up Passkey Verify Fehler:",error);await recordSecurityEvent(req.creatorAccount.id,"account_elevation_failed");return res.status(401).json({ok:false,error:"Passkey konnte nicht bestätigt werden."});}
+});
+
+app.delete("/api/account/elevation",requireCreatorAccount,(req,res)=>{
+    res.set("Cache-Control","no-store");
+    clearAccountElevationCookies(res);
+    return res.json({ok:true,active:false});
+});
+
+function adminElevationCookieOptions({includeMaxAge=true} = {}) {
+    return {
+        httpOnly:true,
+        secure:NODE_ENV!=="development",
+        sameSite:"strict",
+        priority:"high",
+        ...(includeMaxAge ? {maxAge:ADMIN_ELEVATION_TTL_MS} : {}),
         path:"/"
     };
 }
 
 function clearAdminElevationCookie(res) {
-    res.clearCookie(ADMIN_ELEVATION_COOKIE,{path:"/"});
+    res.clearCookie(ADMIN_ELEVATION_COOKIE,adminElevationCookieOptions({includeMaxAge:false}));
 }
 
-function createAdminElevationToken(req) {
+function createAdminElevationToken(req,{factor="password"}={}) {
     const sessionHash=currentCreatorSessionHash(req);
     if(!sessionHash || !req.creatorAccount?.id || !ADMIN_ELEVATION_SECRET) return "";
     const payload=Buffer.from(JSON.stringify({
-        v:1,
+        v:2,
         cid:String(req.creatorAccount.id),
         exp:Date.now()+ADMIN_ELEVATION_TTL_MS,
+        factor:String(factor||"password").slice(0,32),
         nonce:crypto.randomBytes(12).toString("base64url")
     }),"utf8").toString("base64url");
     const signature=crypto.createHmac("sha256",ADMIN_ELEVATION_SECRET)
-        .update(`cfs-admin-elevation-v1|${payload}|${sessionHash}`)
+        .update(`cfs-admin-elevation-v2|${payload}|${sessionHash}`)
         .digest("base64url");
     return `${payload}.${signature}`;
 }
@@ -6918,21 +8091,21 @@ function adminElevationState(req) {
     const cookies=parseCookies(req);
     const raw=String(cookies[ADMIN_ELEVATION_COOKIE]||"");
     const sessionHash=currentCreatorSessionHash(req);
-    if(!raw || !sessionHash || !ADMIN_ELEVATION_SECRET || !req.creatorAccount?.id) return {active:false,expires_at:null};
+    if(!raw || !sessionHash || !ADMIN_ELEVATION_SECRET || !req.creatorAccount?.id) return {active:false,expires_at:null,factor:null};
     const [payloadPart,signature]=raw.split(".");
-    if(!payloadPart || !signature) return {active:false,expires_at:null};
+    if(!payloadPart || !signature) return {active:false,expires_at:null,factor:null};
     const expected=crypto.createHmac("sha256",ADMIN_ELEVATION_SECRET)
-        .update(`cfs-admin-elevation-v1|${payloadPart}|${sessionHash}`)
+        .update(`cfs-admin-elevation-v2|${payloadPart}|${sessionHash}`)
         .digest("base64url");
-    if(!safeEqualText(signature,expected)) return {active:false,expires_at:null};
+    if(!safeEqualText(signature,expected)) return {active:false,expires_at:null,factor:null};
     try {
         const payload=JSON.parse(Buffer.from(payloadPart,"base64url").toString("utf8"));
-        if(payload?.v!==1 || String(payload?.cid||"")!==String(req.creatorAccount.id)) return {active:false,expires_at:null};
+        if(payload?.v!==2 || String(payload?.cid||"")!==String(req.creatorAccount.id)) return {active:false,expires_at:null,factor:null};
         const expiresAt=Number(payload?.exp||0);
-        if(!Number.isFinite(expiresAt) || expiresAt<=Date.now() || expiresAt>Date.now()+ADMIN_ELEVATION_TTL_MS+30000) return {active:false,expires_at:null};
-        return {active:true,expires_at:new Date(expiresAt).toISOString()};
+        if(!Number.isFinite(expiresAt) || expiresAt<=Date.now() || expiresAt>Date.now()+ADMIN_ELEVATION_TTL_MS+30000) return {active:false,expires_at:null,factor:null};
+        return {active:true,expires_at:new Date(expiresAt).toISOString(),factor:String(payload?.factor||"password")};
     } catch {
-        return {active:false,expires_at:null};
+        return {active:false,expires_at:null,factor:null};
     }
 }
 
@@ -6994,7 +8167,7 @@ async function recordAdminAuditEvent(req,statusCode) {
         await client.query("COMMIT");
     } catch(error) {
         await client.query("ROLLBACK").catch(()=>{});
-        console.error("Admin Audit Log Fehler:",error);
+        safeLogError("Admin Audit Log Fehler:",error);
     } finally {
         client.release();
     }
@@ -7039,38 +8212,81 @@ async function verifyAdminAuditIntegrity() {
 }
 
 function requireCreatorAdminElevation(req,res,next) {
-    const state=adminElevationState(req);
-    if(state.active){req.adminElevation=state;return next();}
+    const adminState=adminElevationState(req);
+    const accountState=accountElevationTokenState(req);
+    if(adminState.active && accountState.active){
+        req.adminElevation=adminState;
+        req.accountElevation=accountState;
+        return next();
+    }
     clearAdminElevationCookie(res);
     return res.status(428).json({
         ok:false,
-        code:"admin_reauth_required",
-        error:"Admin-Schutz gesperrt. Bitte bestätige dein aktuelles Passwort erneut.",
-        elevation_required:true
+        code:accountState.active?"admin_reauth_required":"admin_strong_reauth_required",
+        error:accountState.active
+            ? "Admin-Schutz gesperrt. Bitte entsperre sensible Admin-Daten und privilegierte Aktionen erneut."
+            : "Admin-Schutz benötigt eine frische starke Sicherheitsbestätigung.",
+        elevation_required:true,
+        strong_elevation_required:!accountState.active
     });
 }
 
-app.get("/api/admin/creator-suite/elevation",requireCreatorAccount,requireCreatorAdmin,(req,res)=>{
+function requireCreatorAdminSensitiveRead(req,res,next) {
+    return adminSensitiveReadLimiter(req,res,()=>requireCreatorAdminElevation(req,res,()=>{
+        res.set("Cache-Control","no-store");
+        res.set("Pragma","no-cache");
+        res.on("finish",()=>{ void recordAdminAuditEvent(req,res.statusCode); });
+        next();
+    }));
+}
+
+function creatorAdminSensitiveDetailsUnlocked(req) {
+    return Boolean(adminElevationState(req).active && accountElevationTokenState(req).active);
+}
+
+app.get("/api/admin/creator-suite/elevation",requireCreatorAccount,requireCreatorAdmin,async(req,res)=>{
     res.set("Cache-Control","no-store");
-    const state=adminElevationState(req);
-    return res.json({ok:true,active:state.active,expires_at:state.expires_at,ttl_seconds:Math.floor(ADMIN_ELEVATION_TTL_MS/1000)});
+    const [state,accountState,methods]=await Promise.all([
+        Promise.resolve(adminElevationState(req)),
+        Promise.resolve(accountElevationTokenState(req)),
+        creatorAuthMethods(req.creatorAccount.id)
+    ]);
+    const active=Boolean(state.active&&accountState.active);
+    if(state.active&&!accountState.active)clearAdminElevationCookie(res);
+    return res.json({
+        ok:true,active,expires_at:active?state.expires_at:null,factor:active?state.factor:null,
+        ttl_seconds:Math.floor(ADMIN_ELEVATION_TTL_MS/1000),
+        account_elevation:{active:accountState.active,expires_at:accountState.expires_at,factor:accountState.factor},
+        methods:{totp:methods.totp,passkey:methods.passkey,recovery:methods.recovery_codes_remaining>0}
+    });
 });
 
 app.post("/api/admin/creator-suite/elevation",requireCreatorAccount,requireCreatorAdmin,adminElevationLimiter,async(req,res)=>{
     res.set("Cache-Control","no-store");
-    const password=String(req.body?.password||"");
-    const ok=await verifyCreatorPasswordForLifecycle(req.creatorAccount.id,password);
-    if(!ok){
+    const accountState=accountElevationTokenState(req);
+    if(!accountState.active){
         clearAdminElevationCookie(res);
         await recordSecurityEvent(req.creatorAccount.id,"admin_elevation_failed");
-        return res.status(401).json({ok:false,error:"Das aktuelle Passwort ist nicht korrekt."});
+        return res.status(428).json({
+            ok:false,code:"admin_strong_reauth_required",
+            error:"Bestätige zuerst Passwort und vorhandenen zweiten Faktor.",
+            strong_elevation_required:true
+        });
     }
-    const token=createAdminElevationToken(req);
+    const methods=await creatorAuthMethods(req.creatorAccount.id);
+    const secondFactorConfigured=Boolean(methods.totp||methods.passkey);
+    const strongFactors=new Set(["totp","recovery_code","passkey"]);
+    if(secondFactorConfigured&&!strongFactors.has(String(accountState.factor||""))){
+        clearAdminElevationCookie(res);
+        await recordSecurityEvent(req.creatorAccount.id,"admin_elevation_failed");
+        return res.status(428).json({ok:false,code:"admin_second_factor_required",error:"Für Admin-Schreibzugriffe ist dein zweiter Faktor erforderlich.",strong_elevation_required:true});
+    }
+    const token=createAdminElevationToken(req,{factor:accountState.factor});
     if(!token)return res.status(500).json({ok:false,error:"Admin-Schutz konnte nicht freigeschaltet werden."});
     const expiresAt=new Date(Date.now()+ADMIN_ELEVATION_TTL_MS).toISOString();
     res.cookie(ADMIN_ELEVATION_COOKIE,token,adminElevationCookieOptions());
     await recordSecurityEvent(req.creatorAccount.id,"admin_elevation_granted");
-    return res.json({ok:true,active:true,expires_at:expiresAt,ttl_seconds:Math.floor(ADMIN_ELEVATION_TTL_MS/1000)});
+    return res.json({ok:true,active:true,expires_at:expiresAt,factor:accountState.factor,ttl_seconds:Math.floor(ADMIN_ELEVATION_TTL_MS/1000)});
 });
 
 app.delete("/api/admin/creator-suite/elevation",requireCreatorAccount,requireCreatorAdmin,(req,res)=>{
@@ -7090,7 +8306,7 @@ app.use("/api/admin/",(req,res,next)=>{
     })));
 });
 
-app.get("/api/admin/creator-suite/audit-events",requireCreatorAccount,requireCreatorAdmin,async(req,res)=>{
+app.get("/api/admin/creator-suite/audit-events",requireCreatorAccount,requireCreatorAdmin,requireCreatorAdminSensitiveRead,async(req,res)=>{
     res.set("Cache-Control","no-store");
     try{
         const [rows,integrity]=await Promise.all([
@@ -7099,12 +8315,12 @@ app.get("/api/admin/creator-suite/audit-events",requireCreatorAccount,requireCre
         ]);
         return res.json({ok:true,retention_days:ADMIN_AUDIT_RETENTION_DAYS,integrity,events:rows.rows});
     }catch(error){
-        console.error("Admin Audit Events Fehler:",error);
+        safeLogError("Admin Audit Events Fehler:",error);
         return res.status(500).json({ok:false,error:"Admin-Audit konnte nicht geladen werden."});
     }
 });
 
-app.post("/api/admin/creator-suite/audit-export",async(req,res)=>{
+app.post("/api/admin/creator-suite/audit-export",requireCreatorAccount,requireCreatorAdmin,requireCreatorAdminSensitiveRead,async(req,res)=>{
     res.set("Cache-Control","no-store");
     try{
         const [rows,integrity]=await Promise.all([
@@ -7123,7 +8339,7 @@ app.post("/api/admin/creator-suite/audit-export",async(req,res)=>{
             }
         });
     }catch(error){
-        console.error("Admin Audit Export Fehler:",error);
+        safeLogError("Admin Audit Export Fehler:",error);
         return res.status(500).json({ok:false,error:"Admin-Audit-Export konnte nicht erstellt werden."});
     }
 });
@@ -7138,42 +8354,81 @@ app.get("/api/admin/creator-suite/incident-state",requireCreatorAccount,requireC
         const incident=await getWebsiteIncidentState();
         return res.json({ok:true,incident,allowed_modes:[...INCIDENT_MODES]});
     }catch(error){
-        console.error("Incident State Laden Fehler:",error);
+        safeLogError("Incident State Laden Fehler:",error);
         return res.status(500).json({ok:false,error:"Incident-Status konnte nicht geladen werden."});
     }
 });
 
 app.put("/api/admin/creator-suite/incident-state",async(req,res)=>{
     res.set("Cache-Control","no-store");
+    const client=await pool.connect();
     try{
         const mode=String(req.body?.mode||"").trim().toLowerCase();
         if(!INCIDENT_MODES.has(mode))return res.status(400).json({ok:false,error:"Ungültiger Incident-Modus."});
         const publicMessage=incidentPublicMessage(req.body?.public_message);
         const revokeSessions=Boolean(req.body?.revoke_other_sessions);
+        const revokeLauncherAccess=Boolean(req.body?.revoke_launcher_access);
+        if(mode==="security_lockdown"&&!publicMessage){
+            return res.status(400).json({ok:false,error:"Für den Security Lockdown ist eine kurze öffentliche Meldung erforderlich."});
+        }
+
         let currentHash="";
         if(revokeSessions && mode==="security_lockdown"){
             currentHash=currentCreatorSessionHash(req);
             if(!currentHash)return res.status(400).json({ok:false,error:"Aktuelle Admin-Session konnte nicht sicher bestimmt werden."});
         }
-        const previous=await getWebsiteIncidentState();
-        const startedAt=mode==="normal"?null:(previous.mode==="normal"||!previous.started_at?new Date():previous.started_at);
-        await pool.query(`
+
+        await client.query("BEGIN");
+        const previousResult=await client.query(`SELECT mode,public_message,started_at,updated_at,updated_by FROM creator_incident_state WHERE slot='website' FOR UPDATE`);
+        const previousRow=previousResult.rows[0]||{};
+        const previousMode=INCIDENT_MODES.has(String(previousRow.mode||""))?String(previousRow.mode):"normal";
+        const startedAt=mode==="normal"?null:(previousMode==="normal"||!previousRow.started_at?new Date():previousRow.started_at);
+        await client.query(`
             UPDATE creator_incident_state
             SET mode=$1,public_message=$2,started_at=$3,updated_at=NOW(),updated_by=$4
             WHERE slot='website'
         `,[mode,publicMessage,startedAt,req.creatorAccount.id]);
-        let revoked=0;
+
+        let revokedSessions=0;
+        let revokedBridges=0;
+        let revokedDeviceLinks=0;
         if(revokeSessions && mode==="security_lockdown"){
-            const result=await pool.query(`DELETE FROM creator_sessions WHERE token_hash<>$1`,[currentHash]);
-            revoked=Number(result.rowCount||0);
-            await recordSecurityEvent(req.creatorAccount.id,"incident_sessions_revoked");
+            const result=await client.query(`DELETE FROM creator_sessions WHERE token_hash<>$1`,[currentHash]);
+            revokedSessions=Number(result.rowCount||0);
         }
+        if(revokeLauncherAccess && mode==="security_lockdown"){
+            const bridgeResult=await client.query(`
+                UPDATE creator_live_bridges
+                SET status='revoked',revoked_at=NOW(),updated_at=NOW()
+                WHERE status='active'
+            `);
+            revokedBridges=Number(bridgeResult.rowCount||0);
+            const linkResult=await client.query(`
+                UPDATE creator_launcher_device_links
+                SET status='revoked',revoked_at=NOW(),updated_at=NOW()
+                WHERE status IN ('pending','approved')
+            `);
+            revokedDeviceLinks=Number(linkResult.rowCount||0);
+            await client.query(`UPDATE creator_live_state SET bridge_heartbeat_at=NULL WHERE bridge_heartbeat_at IS NOT NULL`);
+        }
+        await client.query("COMMIT");
+
+        if(revokedSessions>0)await recordSecurityEvent(req.creatorAccount.id,"incident_sessions_revoked");
+        if(revokedBridges>0||revokedDeviceLinks>0)await recordSecurityEvent(req.creatorAccount.id,"incident_launchers_revoked");
         await recordSecurityEvent(req.creatorAccount.id,"incident_mode_changed");
         const incident=await getWebsiteIncidentState();
-        return res.json({ok:true,incident,revoked_sessions:revoked});
+        return res.json({
+            ok:true,incident,
+            revoked_sessions:revokedSessions,
+            revoked_bridges:revokedBridges,
+            revoked_device_links:revokedDeviceLinks
+        });
     }catch(error){
-        console.error("Incident State Update Fehler:",error);
+        await client.query("ROLLBACK").catch(()=>{});
+        safeLogError("Incident State Update Fehler:",error);
         return res.status(500).json({ok:false,error:"Incident-Status konnte nicht aktualisiert werden."});
+    }finally{
+        client.release();
     }
 });
 
@@ -10025,6 +11280,14 @@ function validStudioWidgetToken(
 
 }
 
+function validScenePublicToken(value) {
+    return /^cfss_[A-Za-z0-9_-]{32}$/.test(String(value || ""));
+}
+
+function validGamePublicToken(value) {
+    return /^cfsg_[A-Za-z0-9_-]{32}$/.test(String(value || ""));
+}
+
 
 function validStudioWidgetId(
     value
@@ -10218,7 +11481,11 @@ async function createLauncherDeviceLink(input = {}) {
 
     const id = crypto.randomUUID();
     const deviceSecret = launcherDeviceSecret();
-    const bridgeToken = studioBridgeToken();
+    const credentialDelivery = normalizeCredentialDelivery(input.credential_delivery);
+    const bridgeToken = credentialDelivery === DEVICE_LINK_DELIVERY_POLL_V2
+        ? deriveBridgeToken(id, deviceSecret)
+        : studioBridgeToken();
+    if (!bridgeToken) throw new Error("Sichere Launcher-Zugangsdaten konnten nicht erzeugt werden.");
     const machineName = studioText(input.machine_name, 120, "Creator PC");
     const clientVersion = studioText(input.client_version, 80, "");
     const expiresAt = new Date(Date.now() + LAUNCHER_DEVICE_LINK_TTL_MS);
@@ -10239,9 +11506,9 @@ async function createLauncherDeviceLink(input = {}) {
         `
         INSERT INTO creator_launcher_device_links (
             id,user_code,device_secret_hash,bridge_token_hash,bridge_token_prefix,
-            status,machine_name,client_version,expires_at,created_at,updated_at
+            status,machine_name,client_version,credential_delivery,expires_at,created_at,updated_at
         )
-        VALUES ($1,$2,$3,$4,$5,'pending',$6,$7,$8,NOW(),NOW())
+        VALUES ($1,$2,$3,$4,$5,'pending',$6,$7,$8,$9,NOW(),NOW())
         `,
         [
             id,
@@ -10251,6 +11518,7 @@ async function createLauncherDeviceLink(input = {}) {
             bridgeToken.slice(0,13),
             machineName,
             clientVersion,
+            credentialDelivery,
             expiresAt
         ]
     );
@@ -10258,7 +11526,8 @@ async function createLauncherDeviceLink(input = {}) {
     return {
         device_link_id:id,
         device_secret:deviceSecret,
-        bridge_token:bridgeToken,
+        ...(credentialDelivery === DEVICE_LINK_DELIVERY_LEGACY ? {bridge_token:bridgeToken} : {}),
+        credential_delivery:credentialDelivery,
         user_code:userCode,
         verification_url:
             APP_BASE_URL + "/pages/launcher-connect.html?code=" + encodeURIComponent(userCode),
@@ -10270,7 +11539,7 @@ async function createLauncherDeviceLink(input = {}) {
 }
 
 async function getLauncherDeviceLinkBySecret(id, secret) {
-    if (!id || !secret || !String(secret).startsWith("cfsd_")) return null;
+    if (!id || !validDeviceSecret(secret)) return null;
     const result = await pool.query(
         `
         SELECT *
@@ -10292,7 +11561,7 @@ function launcherDeviceCodeFromRequest(req) {
         40,
         ""
     ).toUpperCase();
-    if (direct) return direct;
+    if (direct) return normalizeDeviceCode(direct);
 
     try {
         const referer = studioText(req.get?.("referer"), 1000, "");
@@ -10300,7 +11569,7 @@ function launcherDeviceCodeFromRequest(req) {
         const url = new URL(referer);
         const base = new URL(APP_BASE_URL);
         if (url.origin !== base.origin) return "";
-        return studioText(url.searchParams.get("code"), 40, "").toUpperCase();
+        return normalizeDeviceCode(studioText(url.searchParams.get("code"), 40, "").toUpperCase());
     } catch {
         return "";
     }
@@ -10309,11 +11578,15 @@ function launcherDeviceCodeFromRequest(req) {
 async function approveLauncherDeviceLink(creatorId, userCode) {
     await cleanupLauncherDeviceLinks();
     const access=await creatorAccessProfile(creatorId);
-    const activeResult=await pool.query(`SELECT COUNT(*)::int AS count FROM creator_live_bridges WHERE creator_id=$1 AND status='active'`,[creatorId]);
-    if(Number(activeResult.rows[0]?.count||0)>=Number(access.entitlements.max_active_devices||1)){const error=new Error(`Dein Zugriff erlaubt maximal ${Number(access.entitlements.max_active_devices||1)} aktive Launcher-Geräte.`);error.code="device_limit_reached";throw error;}
     const client = await pool.connect();
     try {
         await client.query("BEGIN");
+        const owner=await client.query(`SELECT id FROM creator_accounts WHERE id=$1 FOR UPDATE`,[creatorId]);
+        if(!owner.rows[0]){const error=new Error("Creator-Account nicht gefunden.");error.code="creator_missing";throw error;}
+        const activeResult=await client.query(`SELECT COUNT(*)::int AS count FROM creator_live_bridges WHERE creator_id=$1 AND status='active'`,[creatorId]);
+        if(Number(activeResult.rows[0]?.count||0)>=Number(access.entitlements.max_active_devices||1)){
+            throw creatorResourceLimitError(`Dein Zugriff erlaubt maximal ${Number(access.entitlements.max_active_devices||1)} aktive Launcher-Geräte.`,"device_limit_reached");
+        }
         const linkResult = await client.query(
             `
             SELECT *
@@ -10321,7 +11594,7 @@ async function approveLauncherDeviceLink(creatorId, userCode) {
             WHERE user_code=$1
             FOR UPDATE
             `,
-            [studioText(userCode, 40, "").toUpperCase()]
+            [normalizeDeviceCode(userCode)]
         );
         const link = linkResult.rows[0];
         if (!link) {
@@ -10411,7 +11684,7 @@ async function inspectLauncherDeviceLink(userCode) {
         WHERE user_code=$1
         LIMIT 1
         `,
-        [studioText(userCode,40,"").toUpperCase()]
+        [normalizeDeviceCode(userCode)]
     );
     const row = result.rows[0];
     if (!row) return null;
@@ -10535,7 +11808,7 @@ async function requireStudioBridge(req, res, next) {
         req.studioBridge = bridge;
         next();
     } catch (error) {
-        console.error("Widget Studio Bridge Auth Fehler:", error);
+        safeLogError("Widget Studio Bridge Auth Fehler:",error);
         return res.status(500).json({ ok:false, error:"Bridge konnte nicht authentifiziert werden." });
     }
 }
@@ -11020,16 +12293,16 @@ async function applyStudioLiveEvent(creatorId, input = {}, provider = "simulator
     } finally { client.release(); }
 
     if (insertedEvent && WIDGET_STUDIO_INTERACTION_EVENT_TYPES.has(insertedEvent.event_type)) {
-        processStudioInteractionEvent(creatorId, insertedEvent).catch(error=>console.error("Widget Studio Interaction Fehler:",error));
+        processStudioInteractionEvent(creatorId, insertedEvent).catch(error=>safeLogError("Widget Studio Interaction Fehler:",error));
     }
     if (insertedEvent && insertedEvent.event_type === "chat") {
-        processStreamBotChatEvent(creatorId, insertedEvent).catch(error=>console.error("Stream Bot Chat Fehler:",error));
+        processStreamBotChatEvent(creatorId, insertedEvent).catch(error=>safeLogError("Stream Bot Chat Fehler:",error));
     }
     if (insertedEvent && ["follow","like","gift","share"].includes(insertedEvent.event_type)) {
         await processCreatorGameLiveEvent(creatorId, insertedEvent)
-            .catch(error=>console.error("Creator Game LIVE Rule Fehler:",error));
+            .catch(error=>safeLogError("Creator Game LIVE Rule Fehler:",error));
     }
-    if (type === "live_end") cleanupStudioLiveHistory(creatorId).catch(error=>console.error("Widget Studio Cleanup Fehler:",error));
+    if (type === "live_end") cleanupStudioLiveHistory(creatorId).catch(error=>safeLogError("Widget Studio Cleanup Fehler:",error));
     return getStudioLiveState(creatorId);
 }
 
@@ -11150,6 +12423,22 @@ async function studioAssetUsageCount(creatorId,publicToken) {
     return Number(result.rows[0]?.count||0);
 }
 
+function replaceStudioAssetUrl(value, oldUrl, newUrl) {
+    if (typeof value === "string") return value.includes(oldUrl) ? value.split(oldUrl).join(newUrl) : value;
+    if (Array.isArray(value)) return value.map(item=>replaceStudioAssetUrl(item,oldUrl,newUrl));
+    if (value && typeof value === "object") {
+        const next={};
+        for (const [key,item] of Object.entries(value)) next[key]=replaceStudioAssetUrl(item,oldUrl,newUrl);
+        return next;
+    }
+    return value;
+}
+
+function studioConfigContainsAssetUrl(value, assetUrl) {
+    if (!value || !assetUrl) return false;
+    try { return JSON.stringify(value).includes(assetUrl); } catch { return false; }
+}
+
 async function getPublicStudioWidget(
     publicToken
 ) {
@@ -11209,12 +12498,12 @@ app.post(
             const account = await findCreatorByEmail(email);
             if (account && !account.email_verified_at && ["active","pending_email"].includes(account.status)) {
                 const verification = await issueAccountActionToken(account.id,"verify_email",EMAIL_VERIFICATION_TOKEN_TTL_MS);
-                queueAccountMail(verificationMailMessage(account, verification.token));
+                await queueAccountMail(verificationMailMessage(account, verification.token),{creatorId:account.id});
                 await recordSecurityEvent(account.id,"email_verification_requested");
             }
             return genericAccountMailResponse(res,generic,startedAt);
         } catch (error) {
-            console.error("E-Mail-Verifizierung anfordern Fehler:", error?.message || error);
+            safeLogError("E-Mail-Verifizierung anfordern Fehler:",error);
             return genericAccountMailResponse(res,generic,startedAt);
         }
     }
@@ -11249,7 +12538,7 @@ app.post(
             return res.json({ok:true,verified:true,message:"E-Mail-Adresse bestätigt. Du kannst dich jetzt anmelden."});
         } catch (error) {
             try { await client.query("ROLLBACK"); } catch {}
-            console.error("E-Mail-Verifizierung Fehler:", error?.message || error);
+            safeLogError("E-Mail-Verifizierung Fehler:",error);
             return res.status(500).json({ok:false,error:"Die E-Mail-Adresse konnte nicht bestätigt werden."});
         } finally {
             client.release();
@@ -11275,12 +12564,12 @@ app.post(
             const account = await findCreatorByEmail(email);
             if (account && ["active","pending_email"].includes(account.status)) {
                 const reset = await issueAccountActionToken(account.id,"password_reset",PASSWORD_RESET_TOKEN_TTL_MS);
-                queueAccountMail(passwordResetMailMessage(account, reset.token));
+                await queueAccountMail(passwordResetMailMessage(account, reset.token),{creatorId:account.id});
                 await recordSecurityEvent(account.id,"password_reset_requested");
             }
             return genericAccountMailResponse(res,generic,startedAt);
         } catch (error) {
-            console.error("Passwort-Recovery Anfrage Fehler:", error?.message || error);
+            safeLogError("Passwort-Recovery Anfrage Fehler:",error);
             return genericAccountMailResponse(res,generic,startedAt);
         }
     }
@@ -11304,7 +12593,7 @@ app.post(
         try {
             await client.query("BEGIN");
             const tokenRow = await findUsableAccountActionToken("password_reset",token,client);
-            if (!tokenRow) {
+            if (!tokenRow || !["active","pending_email"].includes(String(tokenRow.status || ""))) {
                 await client.query("ROLLBACK");
                 return res.status(400).json({ok:false,error:"Der Recovery-Link ist ungültig oder abgelaufen."});
             }
@@ -11333,15 +12622,18 @@ app.post(
                 [account.id,nextPassword.hash,nextPassword.salt,nextPassword.kdfVersion]
             );
             await markAccountActionTokenUsed(tokenRow.id,client);
+            await revokeCreatorPendingAuthArtifacts(client,account.id,{keepPasswordResetTokenId:tokenRow.id});
             await client.query(`DELETE FROM creator_account_action_tokens WHERE creator_id=$1 AND purpose='password_reset'`,[account.id]);
             await client.query(`DELETE FROM creator_sessions WHERE creator_id=$1`,[account.id]);
             await client.query("COMMIT");
+            clearCreatorAuthCookies(res);
+            clearSensitiveBrowserState(res);
             await recordSecurityEvent(account.id,"password_reset_completed");
-            if (ACCOUNT_MAIL_CONFIG.enabled) queueAccountMail(passwordResetCompletedMailMessage(account));
-            return res.json({ok:true,password_reset:true,sessions_revoked:true,message:"Passwort geändert. Alle bisherigen Login-Sitzungen wurden beendet."});
+            if (ACCOUNT_MAIL_CONFIG.enabled) await queueAccountMail(passwordResetCompletedMailMessage(account),{creatorId:account.id});
+            return res.json({ok:true,password_reset:true,sessions_revoked:true,pending_auth_revoked:true,message:"Passwort geändert. Alle bisherigen Login-Sitzungen und offenen Login-Challenges wurden beendet."});
         } catch (error) {
             try { await client.query("ROLLBACK"); } catch {}
-            console.error("Passwort-Recovery Abschluss Fehler:", error?.message || error);
+            safeLogError("Passwort-Recovery Abschluss Fehler:",error);
             return res.status(500).json({ok:false,error:"Das Passwort konnte nicht zurückgesetzt werden."});
         } finally {
             client.release();
@@ -11378,10 +12670,11 @@ app.post("/api/creator/billing/checkout",requireCreatorAccount,async(req,res)=>{
         if(access.subscription?.access_active&&access.subscription?.provider==="stripe"&&access.subscription?.configured)return res.status(409).json({ok:false,code:"subscription_exists",error:"Du hast bereits eine verwaltete Subscription. Nutze BILLING VERWALTEN für Upgrade, Downgrade oder Kündigung."});
         let customerId="";const existing=await pool.query(`SELECT provider_customer_id FROM creator_billing_subscriptions WHERE creator_id=$1 LIMIT 1`,[req.creatorAccount.id]);customerId=String(existing.rows[0]?.provider_customer_id||"");
         const client=stripeClient();
-        if(!customerId){const customer=await client.customers.create({email:req.creatorAccount.email||undefined,name:req.creatorAccount.display_name||undefined,metadata:{creator_id:req.creatorAccount.id,cfs_source:"creator_suite"}});customerId=customer.id;await pool.query(`INSERT INTO creator_billing_subscriptions(creator_id,provider,provider_customer_id,plan,status,created_at,updated_at) VALUES($1,'stripe',$2,'free','none',NOW(),NOW()) ON CONFLICT(creator_id) DO UPDATE SET provider='stripe',provider_customer_id=EXCLUDED.provider_customer_id,updated_at=NOW()`,[req.creatorAccount.id,customerId]);}
-        const session=await client.checkout.sessions.create({mode:"subscription",customer:customerId,line_items:[{price:priceId,quantity:1}],success_url:`${APP_BASE_URL}/pages/plans.html?billing=success&session_id={CHECKOUT_SESSION_ID}`,cancel_url:`${APP_BASE_URL}/pages/plans.html?billing=cancel`,client_reference_id:req.creatorAccount.id,allow_promotion_codes:true,metadata:{creator_id:req.creatorAccount.id,cfs_plan:plan},subscription_data:{metadata:{creator_id:req.creatorAccount.id,cfs_plan:plan}}});
+        if(!customerId){const customer=await client.customers.create({email:req.creatorAccount.email||undefined,name:req.creatorAccount.display_name||undefined,metadata:{creator_id:req.creatorAccount.id,cfs_source:"creator_suite"}},{idempotencyKey:`cfs-customer-v1-${req.creatorAccount.id}`});customerId=customer.id;await pool.query(`INSERT INTO creator_billing_subscriptions(creator_id,provider,provider_customer_id,plan,status,created_at,updated_at) VALUES($1,'stripe',$2,'free','none',NOW(),NOW()) ON CONFLICT(creator_id) DO UPDATE SET provider='stripe',provider_customer_id=EXCLUDED.provider_customer_id,updated_at=NOW()`,[req.creatorAccount.id,customerId]);}
+        const checkoutWindow=Math.floor(Date.now()/(10*60*1000));
+        const session=await client.checkout.sessions.create({mode:"subscription",customer:customerId,line_items:[{price:priceId,quantity:1}],success_url:`${APP_BASE_URL}/pages/plans.html?billing=success&session_id={CHECKOUT_SESSION_ID}`,cancel_url:`${APP_BASE_URL}/pages/plans.html?billing=cancel`,client_reference_id:req.creatorAccount.id,allow_promotion_codes:true,metadata:{creator_id:req.creatorAccount.id,cfs_plan:plan},subscription_data:{metadata:{creator_id:req.creatorAccount.id,cfs_plan:plan}}},{idempotencyKey:`cfs-checkout-v1-${req.creatorAccount.id}-${plan}-${checkoutWindow}`});
         return res.json({ok:true,provider:"stripe",plan,url:session.url||"",session_id:session.id});
-    }catch(error){console.error("[billing:checkout]",error?.message||error);return res.status(502).json({ok:false,error:"Checkout konnte nicht erstellt werden."});}
+    }catch(error){safeLogError("billing:checkout",error);return res.status(502).json({ok:false,error:"Checkout konnte nicht erstellt werden."});}
 });
 
 app.post("/api/creator/billing/portal",requireCreatorAccount,async(req,res)=>{
@@ -11392,7 +12685,7 @@ app.post("/api/creator/billing/portal",requireCreatorAccount,async(req,res)=>{
         const customerId=String(row?.provider_customer_id||"");if(!customerId)return res.status(409).json({ok:false,error:"Für diesen Account existiert noch kein Billing-Customer."});
         const session=await stripeClient().billingPortal.sessions.create({customer:customerId,return_url:`${APP_BASE_URL}/pages/plans.html?billing=return`});
         return res.json({ok:true,provider:"stripe",url:session.url||""});
-    }catch(error){console.error("[billing:portal]",error?.message||error);return res.status(502).json({ok:false,error:"Billing Portal konnte nicht geöffnet werden."});}
+    }catch(error){safeLogError("billing:portal",error);return res.status(502).json({ok:false,error:"Billing Portal konnte nicht geöffnet werden."});}
 });
 
 
@@ -11638,7 +12931,7 @@ app.post(
 
             if (ACCOUNT_MAIL_CONFIG.verificationRequired) {
                 const verification = await issueAccountActionToken(creatorId,"verify_email",EMAIL_VERIFICATION_TOKEN_TTL_MS);
-                queueAccountMail(verificationMailMessage(account, verification.token));
+                await queueAccountMail(verificationMailMessage(account, verification.token),{creatorId});
                 await recordSecurityEvent(creatorId,"email_verification_requested");
             } else {
                 await createCreatorSession(
@@ -11682,10 +12975,7 @@ app.post(
         }
         catch (error) {
 
-            console.error(
-                "Creator Registrierung Fehler:",
-                error
-            );
+            safeLogError("Creator Registrierung Fehler:",error);
 
             if (
                 error?.code ===
@@ -11977,10 +13267,7 @@ app.post(
         }
         catch (error) {
 
-            console.error(
-                "Creator Login Fehler:",
-                error
-            );
+            safeLogError("Creator Login Fehler:",error);
 
             return res
                 .status(500)
@@ -12060,7 +13347,7 @@ app.post(
             await recordSecurityEvent(challenge.creator_id, recoveryUsed ? "mfa_recovery_code_used" : "login_success_mfa");
             await queueSuccessfulLoginAlert(challenge.creator_id,authMethod);
             const account = await findCreatorById(challenge.creator_id);
-            if (recoveryUsed && ACCOUNT_MAIL_CONFIG.enabled && account) queueAccountMail(mfaRecoveryUsedMailMessage(account));
+            if (recoveryUsed && ACCOUNT_MAIL_CONFIG.enabled && account) await queueAccountMail(mfaRecoveryUsedMailMessage(account),{creatorId:account.id});
             const access = await creatorAccessProfile(account);
             return res.json({
                 ok:true,
@@ -12074,7 +13361,7 @@ app.post(
             });
         } catch (error) {
             try { await client.query("ROLLBACK"); } catch {}
-            console.error("MFA Login Fehler:", error);
+            safeLogError("MFA Login Fehler:",error);
             return res.status(500).json({ok:false,authenticated:false,error:"Die Zwei-Faktor-Anmeldung konnte nicht abgeschlossen werden."});
         } finally {
             client.release();
@@ -12105,7 +13392,7 @@ app.get(
                 passkeys:rows.map(publicPasskeyRow)
             });
         } catch (error) {
-            console.error("Passkey Status Fehler:",error);
+            safeLogError("Passkey Status Fehler:",error);
             return res.status(500).json({ok:false,error:"Passkeys konnten nicht geladen werden."});
         }
     }
@@ -12147,7 +13434,7 @@ app.post(
             });
             return res.json({ok:true,challenge_id:challenge.id,expires_at:challenge.expiresAt,options});
         } catch (error) {
-            console.error("Passkey Registrierung Start Fehler:",error);
+            safeLogError("Passkey Registrierung Start Fehler:",error);
             return res.status(500).json({ok:false,error:"Passkey-Einrichtung konnte nicht gestartet werden."});
         }
     }
@@ -12209,10 +13496,11 @@ app.post(
                 throw error;
             } finally { client.release(); }
             await recordSecurityEvent(req.creatorAccount.id,"passkey_added");
-            if (ACCOUNT_MAIL_CONFIG.enabled) queueAccountMail(passkeySecurityMailMessage(req.creatorAccount,"added",label));
+            clearAccountElevationCookies(res);
+            if (ACCOUNT_MAIL_CONFIG.enabled) await queueAccountMail(passkeySecurityMailMessage(req.creatorAccount,"added",label),{creatorId:req.creatorAccount.id});
             return res.json({ok:true,verified:true,recovery_codes:recoveryCodes,message:"Passkey hinzugefügt. Andere aktive Sitzungen wurden beendet."});
         } catch (error) {
-            console.error("Passkey Registrierung Verify Fehler:",error);
+            safeLogError("Passkey Registrierung Verify Fehler:",error);
             return res.status(400).json({ok:false,error:"Der Passkey konnte nicht verifiziert werden."});
         }
     }
@@ -12221,6 +13509,7 @@ app.post(
 app.delete(
     "/api/account/passkeys/:passkeyRef",
     requireCreatorAccount,
+    requireCreatorAccountElevation,
     accountPasskeyLimiter,
     async (req,res) => {
         res.set("Cache-Control","no-store");
@@ -12244,10 +13533,11 @@ app.delete(
             } catch (error) { try{await client.query("ROLLBACK");}catch{} throw error; }
             finally { client.release(); }
             await recordSecurityEvent(req.creatorAccount.id,"passkey_removed");
-            if (ACCOUNT_MAIL_CONFIG.enabled) queueAccountMail(passkeySecurityMailMessage(req.creatorAccount,"removed",target.label));
+            clearAccountElevationCookies(res);
+            if (ACCOUNT_MAIL_CONFIG.enabled) await queueAccountMail(passkeySecurityMailMessage(req.creatorAccount,"removed",target.label),{creatorId:req.creatorAccount.id});
             return res.json({ok:true,message:"Passkey entfernt. Andere aktive Sitzungen wurden beendet."});
         } catch (error) {
-            console.error("Passkey Entfernen Fehler:",error);
+            safeLogError("Passkey Entfernen Fehler:",error);
             return res.status(500).json({ok:false,error:"Passkey konnte nicht entfernt werden."});
         }
     }
@@ -12279,7 +13569,7 @@ app.post(
             const challenge=await createPasskeyChallenge({creatorId:challengeRow.creator_id,purpose:"authenticate",challenge:options.challenge,mfaChallengeHashValue:mfaHash});
             return res.json({ok:true,challenge_id:challenge.id,expires_at:challenge.expiresAt,options});
         } catch (error) {
-            console.error("Passkey Login Options Fehler:",error);
+            safeLogError("Passkey Login Options Fehler:",error);
             return res.status(500).json({ok:false,error:"Passkey-Anmeldung konnte nicht gestartet werden."});
         }
     }
@@ -12338,7 +13628,7 @@ app.post(
             const access=await creatorAccessProfile(account);
             return res.json({ok:true,authenticated:true,account:publicCreatorAccount(account),entitlements:access.entitlements,access,modules:publicModuleRegistry(account,access.entitlements),admin:await isCreatorSuiteAdmin(account)});
         } catch (error) {
-            console.error("Passkey Login Verify Fehler:",error);
+            safeLogError("Passkey Login Verify Fehler:",error);
             if (alertCreatorId) await recordSuspiciousMfaFailure(alertCreatorId,"passkey");
             return res.status(401).json({ok:false,authenticated:false,error:"Passkey konnte nicht bestätigt werden."});
         }
@@ -12355,7 +13645,7 @@ app.get(
     async (req, res) => {
         res.set("Cache-Control", "no-store");
         try { return res.json({ok:true, ...(await mfaStatusForCreator(req.creatorAccount.id))}); }
-        catch (error) { console.error("MFA Status Fehler:", error); return res.status(500).json({ok:false,error:"MFA-Status konnte nicht geladen werden."}); }
+        catch (error) { safeLogError("MFA Status Fehler:",error); return res.status(500).json({ok:false,error:"MFA-Status konnte nicht geladen werden."}); }
     }
 );
 
@@ -12376,7 +13666,7 @@ app.post(
                 [req.creatorAccount.id, encryptSecret(secret)]
             );
             return res.json({ok:true,secret,otpauth_uri:otpauthUri({secret,email:req.creatorAccount.email,issuer:"cfs_zockt"}),message:"Secret nur jetzt in deiner Authenticator-App hinterlegen und anschließend mit einem Code bestätigen."});
-        } catch (error) { console.error("MFA Setup Fehler:", error); return res.status(500).json({ok:false,error:"MFA-Einrichtung konnte nicht gestartet werden."}); }
+        } catch (error) { safeLogError("MFA Setup Fehler:",error); return res.status(500).json({ok:false,error:"MFA-Einrichtung konnte nicht gestartet werden."}); }
     }
 );
 
@@ -12400,9 +13690,10 @@ app.post(
             await client.query(`DELETE FROM creator_sessions WHERE creator_id=$1 AND token_hash<>$2`, [req.creatorAccount.id,currentCreatorSessionHash(req)]);
             await client.query("COMMIT");
             await recordSecurityEvent(req.creatorAccount.id,"mfa_enabled");
-            if (ACCOUNT_MAIL_CONFIG.enabled) queueAccountMail(mfaSecurityMailMessage(req.creatorAccount,"enabled"));
+            clearAccountElevationCookies(res);
+            if (ACCOUNT_MAIL_CONFIG.enabled) await queueAccountMail(mfaSecurityMailMessage(req.creatorAccount,"enabled"),{creatorId:req.creatorAccount.id});
             return res.json({ok:true,enabled:true,recovery_codes:recoveryCodes,message:"Zwei-Faktor-Schutz ist aktiv. Speichere die Recovery-Codes jetzt an einem sicheren Ort."});
-        } catch (error) { try{await client.query("ROLLBACK");}catch{} console.error("MFA Aktivierung Fehler:", error); return res.status(500).json({ok:false,error:"MFA konnte nicht aktiviert werden."}); }
+        } catch (error) { try{await client.query("ROLLBACK");}catch{} safeLogError("MFA Aktivierung Fehler:",error); return res.status(500).json({ok:false,error:"MFA konnte nicht aktiviert werden."}); }
         finally { client.release(); }
     }
 );
@@ -12422,8 +13713,9 @@ app.post(
             const recoveryCodes=await replaceRecoveryCodes(client,req.creatorAccount.id);
             await client.query("COMMIT");
             await recordSecurityEvent(req.creatorAccount.id,"mfa_recovery_codes_regenerated");
+            clearAccountElevationCookies(res);
             return res.json({ok:true,recovery_codes:recoveryCodes,message:"Neue Recovery-Codes wurden erstellt. Alle bisherigen Codes sind ungültig."});
-        } catch(error){try{await client.query("ROLLBACK");}catch{} console.error("MFA Recovery Codes Fehler:",error);return res.status(500).json({ok:false,error:"Recovery-Codes konnten nicht erneuert werden."});} finally{client.release();}
+        } catch(error){try{await client.query("ROLLBACK");}catch{} safeLogError("MFA Recovery Codes Fehler:",error);return res.status(500).json({ok:false,error:"Recovery-Codes konnten nicht erneuert werden."});} finally{client.release();}
     }
 );
 
@@ -12448,9 +13740,10 @@ app.post(
             await client.query(`DELETE FROM creator_sessions WHERE creator_id=$1 AND token_hash<>$2`,[req.creatorAccount.id,currentCreatorSessionHash(req)]);
             await client.query("COMMIT");
             await recordSecurityEvent(req.creatorAccount.id,"mfa_disabled");
-            if(ACCOUNT_MAIL_CONFIG.enabled) queueAccountMail(mfaSecurityMailMessage(req.creatorAccount,"disabled"));
+            clearAccountElevationCookies(res);
+            if(ACCOUNT_MAIL_CONFIG.enabled) await queueAccountMail(mfaSecurityMailMessage(req.creatorAccount,"disabled"),{creatorId:req.creatorAccount.id});
             return res.json({ok:true,enabled:false,passkeys_remaining:passkeyCount,message:passkeyCount>0?"Authenticator-App deaktiviert. Passkey-Schutz bleibt aktiv; andere aktive Sitzungen wurden beendet.":"Zwei-Faktor-Schutz wurde deaktiviert. Andere aktive Sitzungen wurden beendet."});
-        }catch(error){try{await client.query("ROLLBACK");}catch{}console.error("MFA Deaktivierung Fehler:",error);return res.status(500).json({ok:false,error:"MFA konnte nicht deaktiviert werden."});}finally{client.release();}
+        }catch(error){try{await client.query("ROLLBACK");}catch{}safeLogError("MFA Deaktivierung Fehler:",error);return res.status(500).json({ok:false,error:"MFA konnte nicht deaktiviert werden."});}finally{client.release();}
     }
 );
 
@@ -12477,6 +13770,7 @@ app.post(
                 req,
                 res
             );
+            clearSensitiveBrowserState(res);
 
 
             return res.json({
@@ -12492,22 +13786,10 @@ app.post(
         }
         catch (error) {
 
-            console.error(
-                "Creator Logout Fehler:",
-                error
-            );
+            safeLogError("Creator Logout Fehler:",error);
 
-            res.clearCookie(
-                CREATOR_SESSION_COOKIE,
-                {
-                    path:
-                        "/"
-                }
-            );
-
-            clearCreatorCsrfCookie(
-                res
-            );
+            clearCreatorAuthCookies(res);
+            clearSensitiveBrowserState(res);
 
 
             return res
@@ -12529,6 +13811,76 @@ app.post(
 
 
 // ============================================================
+// ACCOUNT AUF ANDEREN GERÄTEN ABMELDEN
+//
+// Die aktuelle Session bleibt bestehen. Das ist für den Nutzer
+// sicherer und praktischer als ein Logout-All, wenn nur unbekannte
+// weitere Sitzungen entfernt werden sollen.
+// ============================================================
+
+app.post(
+    "/api/account/logout-others",
+
+    requireCreatorAccount,
+    requireCreatorAccountElevation,
+
+    async (
+        req,
+        res
+    ) => {
+
+        res.set(
+            "Cache-Control",
+            "no-store"
+        );
+
+        try {
+            const currentHash = currentCreatorSessionHash(req);
+            if (!currentHash) {
+                return res.status(401).json({
+                    ok:false,
+                    authenticated:false,
+                    error:"Die aktuelle Sitzung konnte nicht bestätigt werden."
+                });
+            }
+
+            const result = await pool.query(
+                `
+                DELETE FROM creator_sessions
+                WHERE creator_id = $1
+                AND token_hash <> $2
+                `,
+                [
+                    req.creatorAccount.id,
+                    currentHash
+                ]
+            );
+
+            await recordSecurityEvent(
+                req.creatorAccount.id,
+                "logout_others"
+            );
+
+            return res.json({
+                ok:true,
+                authenticated:true,
+                revoked_sessions:Number(result.rowCount || 0),
+                message:"Andere aktive Sitzungen wurden beendet."
+            });
+        }
+        catch (error) {
+            safeLogError("Creator Logout-Others Fehler:",error);
+
+            return res.status(500).json({
+                ok:false,
+                error:"Andere Sitzungen konnten nicht vollständig beendet werden."
+            });
+        }
+    }
+);
+
+
+// ============================================================
 // ACCOUNT AUF ALLEN GERÄTEN ABMELDEN
 // ============================================================
 
@@ -12536,6 +13888,7 @@ app.post(
     "/api/account/logout-all",
 
     requireCreatorAccount,
+    requireCreatorAccountElevation,
 
     async (
         req,
@@ -12565,17 +13918,8 @@ app.post(
                 ]
             );
 
-            res.clearCookie(
-                CREATOR_SESSION_COOKIE,
-                {
-                    path:
-                        "/"
-                }
-            );
-
-            clearCreatorCsrfCookie(
-                res
-            );
+            clearCreatorAuthCookies(res);
+            clearSensitiveBrowserState(res);
 
             return res.json({
 
@@ -12593,10 +13937,7 @@ app.post(
         }
         catch (error) {
 
-            console.error(
-                "Creator Logout-All Fehler:",
-                error
-            );
+            safeLogError("Creator Logout-All Fehler:",error);
 
             return res
                 .status(500)
@@ -12699,10 +14040,7 @@ app.get(
         }
         catch (error) {
 
-            console.error(
-                "Creator Account Me Fehler:",
-                error
-            );
+            safeLogError("Creator Account Me Fehler:",error);
 
             return res
                 .status(500)
@@ -12796,10 +14134,7 @@ app.get(
         }
         catch (error) {
 
-            console.error(
-                "Security Events Laden Fehler:",
-                error
-            );
+            safeLogError("Security Events Laden Fehler:",error);
 
             return res
                 .status(500)
@@ -12831,8 +14166,13 @@ app.get(
         try {
             const currentHash = currentCreatorSessionHash(req);
             const result = await pool.query(
-                `SELECT token_hash,created_at,expires_at,auth_method FROM creator_sessions WHERE creator_id=$1 AND expires_at>NOW() ORDER BY created_at DESC`,
-                [req.creatorAccount.id]
+                `SELECT token_hash,created_at,expires_at,auth_method,last_seen_at,
+                        last_seen_at + ($2::bigint * INTERVAL '1 millisecond') AS idle_expires_at
+                 FROM creator_sessions
+                 WHERE creator_id=$1 AND expires_at>NOW()
+                   AND last_seen_at > NOW() - ($2::bigint * INTERVAL '1 millisecond')
+                 ORDER BY created_at DESC`,
+                [req.creatorAccount.id,CREATOR_SESSION_IDLE_TTL_MS]
             );
             return res.json({
                 ok:true,
@@ -12841,11 +14181,13 @@ app.get(
                     current:row.token_hash === currentHash,
                     created_at:row.created_at,
                     expires_at:row.expires_at,
+                    last_seen_at:row.last_seen_at,
+                    idle_expires_at:row.idle_expires_at,
                     auth_method:String(row.auth_method || "unknown")
                 }))
             });
         } catch (error) {
-            console.error("Creator Sessions Laden Fehler:", error);
+            safeLogError("Creator Sessions Laden Fehler:",error);
             return res.status(500).json({ok:false,error:"Aktive Sitzungen konnten nicht geladen werden."});
         }
     }
@@ -12854,6 +14196,7 @@ app.get(
 app.delete(
     "/api/account/sessions/:sessionRef",
     requireCreatorAccount,
+    requireCreatorAccountElevation,
     async (req, res) => {
         res.set("Cache-Control", "no-store");
         try {
@@ -12864,8 +14207,10 @@ app.delete(
 
             const currentHash = currentCreatorSessionHash(req);
             const result = await pool.query(
-                `SELECT token_hash FROM creator_sessions WHERE creator_id=$1 AND expires_at>NOW()`,
-                [req.creatorAccount.id]
+                `SELECT token_hash FROM creator_sessions
+                 WHERE creator_id=$1 AND expires_at>NOW()
+                   AND last_seen_at > NOW() - ($2::bigint * INTERVAL '1 millisecond')`,
+                [req.creatorAccount.id,CREATOR_SESSION_IDLE_TTL_MS]
             );
             const target = result.rows.find(row => creatorSessionReference(row.token_hash) === requested);
             if (!target) {
@@ -12877,13 +14222,13 @@ app.delete(
 
             const current = target.token_hash === currentHash;
             if (current) {
-                res.clearCookie(CREATOR_SESSION_COOKIE,{path:"/"});
+                clearCreatorSessionCookie(res);
                 clearCreatorCsrfCookie(res);
             }
 
             return res.json({ok:true,revoked:true,current,authenticated:!current});
         } catch (error) {
-            console.error("Creator Session Revoke Fehler:", error);
+            safeLogError("Creator Session Revoke Fehler:",error);
             return res.status(500).json({ok:false,error:"Die Sitzung konnte nicht beendet werden."});
         }
     }
@@ -12903,6 +14248,7 @@ app.delete(
 app.post(
     "/api/account/password",
     requireCreatorAccount,
+    requireCreatorAccountElevation,
     accountPasswordChangeLimiter,
     async (req, res) => {
         res.set("Cache-Control", "no-store");
@@ -12968,23 +14314,27 @@ app.post(
                 `UPDATE creator_accounts SET password_hash=$2,password_salt=$3,password_kdf_version=$4,updated_at=NOW() WHERE id=$1`,
                 [account.id,nextPassword.hash,nextPassword.salt,nextPassword.kdfVersion]
             );
+            await revokeCreatorPendingAuthArtifacts(client,account.id);
             await client.query(`DELETE FROM creator_sessions WHERE creator_id=$1`, [account.id]);
             await client.query("COMMIT");
 
+            clearMfaChallengeCookie(res);
             await recordSecurityEvent(account.id,"password_changed");
             await createCreatorSession(res,account.id,"password_change");
+            if (ACCOUNT_MAIL_CONFIG.enabled) await queueAccountMail(passwordChangedMailMessage(account),{creatorId:account.id});
 
             return res.json({
                 ok:true,
                 authenticated:true,
                 sessions_revoked:true,
-                message:"Passwort geändert. Andere Login-Sitzungen wurden beendet."
+                pending_auth_revoked:true,
+                message:"Passwort geändert. Andere Login-Sitzungen und offene Login-Challenges wurden beendet."
             });
         } catch (error) {
             if (client) {
                 try { await client.query("ROLLBACK"); } catch {}
             }
-            console.error("Creator Passwort ändern Fehler:", error);
+            safeLogError("Creator Passwort ändern Fehler:",error);
             return res.status(500).json({ok:false,error:"Das Passwort konnte nicht geändert werden."});
         } finally {
             client?.release?.();
@@ -13000,6 +14350,7 @@ app.post(
 app.post(
     "/api/account/export",
     requireCreatorAccount,
+    requireCreatorAccountElevation,
     accountExportLimiter,
     async (req, res) => {
         res.set("Cache-Control", "no-store");
@@ -13018,7 +14369,7 @@ app.post(
             await recordSecurityEvent(req.creatorAccount.id,"data_export_requested");
             return res.json({ok:true,export:accountExport});
         } catch (error) {
-            console.error("Creator Datenexport Fehler:", error);
+            safeLogError("Creator Datenexport Fehler:",error);
             return res.status(500).json({ok:false,error:"Der Datenexport konnte nicht erstellt werden."});
         }
     }
@@ -13119,10 +14470,7 @@ app.patch(
         }
         catch (error) {
 
-            console.error(
-                "Creator Profil Update Fehler:",
-                error
-            );
+            safeLogError("Creator Profil Update Fehler:",error);
 
             return res
                 .status(500)
@@ -13165,6 +14513,7 @@ app.delete(
     "/api/account",
 
     requireCreatorAccount,
+    requireCreatorAccountElevation,
 
     accountDeleteLimiter,
 
@@ -13287,13 +14636,7 @@ app.delete(
                     "ROLLBACK"
                 );
 
-                res.clearCookie(
-                    CREATOR_SESSION_COOKIE,
-                    {
-                        path:
-                            "/"
-                    }
-                );
+                clearCreatorSessionCookie(res);
 
                 clearCreatorCsrfCookie(
                     res
@@ -13475,17 +14818,8 @@ app.delete(
             }
 
 
-            res.clearCookie(
-                CREATOR_SESSION_COOKIE,
-                {
-                    path:
-                        "/"
-                }
-            );
-
-            clearCreatorCsrfCookie(
-                res
-            );
+            clearCreatorAuthCookies(res);
+            clearSensitiveBrowserState(res);
 
 
             console.log(
@@ -13537,10 +14871,7 @@ app.delete(
             }
 
 
-            console.error(
-                "Creator Account Delete Fehler:",
-                error
-            );
+            safeLogError("Creator Account Delete Fehler:",error);
 
 
             return res
@@ -13614,10 +14945,7 @@ app.get(
         }
         catch (error) {
 
-            console.error(
-                "Creator Settings Laden Fehler:",
-                error
-            );
+            safeLogError("Creator Settings Laden Fehler:",error);
 
             return res
                 .status(500)
@@ -13727,11 +15055,6 @@ app.put(
         }
         catch (error) {
 
-            console.error(
-                "Creator Settings Speichern Fehler:",
-                error
-            );
-
             return res
                 .status(500)
                 .json({
@@ -13739,9 +15062,7 @@ app.put(
                     ok:
                         false,
 
-                    error:
-                        error.message ||
-                        "Creator-Einstellungen konnten nicht gespeichert werden."
+                    ...clientSafeErrorPayload(req,error,500,"Creator-Einstellungen konnten nicht gespeichert werden.")
 
                 });
 
@@ -13905,10 +15226,7 @@ app.get(
             }
 
 
-            console.error(
-                "Modul State Laden Fehler:",
-                error
-            );
+            safeLogError("Modul State Laden Fehler:",error);
 
 
             return res
@@ -14064,12 +15382,6 @@ app.put(
             }
 
 
-            console.error(
-                "Modul State Speichern Fehler:",
-                error
-            );
-
-
             return res
                 .status(500)
                 .json({
@@ -14077,9 +15389,7 @@ app.put(
                     ok:
                         false,
 
-                    error:
-                        error.message ||
-                        "Modul-Daten konnten nicht gespeichert werden."
+                    ...clientSafeErrorPayload(req,error,500,"Modul-Daten konnten nicht gespeichert werden.")
 
                 });
 
@@ -14139,10 +15449,7 @@ app.get(
         }
         catch (error) {
 
-            console.error(
-                "Widget Studio Liste Fehler:",
-                error
-            );
+            safeLogError("Widget Studio Liste Fehler:",error);
 
             return res.status(500).json({
                 ok: false,
@@ -14172,7 +15479,7 @@ app.get("/api/creator/widget-studio/assets",requireCreatorAccount,async(req,res)
             usage:{count:rows.length,bytes:used}
         });
     }catch(error){
-        console.error("Widget Asset Liste Fehler:",error);
+        safeLogError("Widget Asset Liste Fehler:",error);
         return res.status(500).json({ok:false,error:"Creator-Dateien konnten nicht geladen werden."});
     }
 });
@@ -14180,6 +15487,7 @@ app.get("/api/creator/widget-studio/assets",requireCreatorAccount,async(req,res)
 app.post(
     "/api/creator/widget-studio/assets",
     requireCreatorAccount,
+    creatorAssetUploadLimiter,
     express.raw({type:()=>true,limit:MAX_UPLOAD_BYTES}),
     async(req,res)=>{
         res.set("Cache-Control","no-store");
@@ -14188,25 +15496,48 @@ app.post(
             let rawName=String(req.get("X-CFS-File-Name")||"");
             try{rawName=decodeURIComponent(rawName);}catch{}
             const detected=detectWidgetAsset(content,{filename:rawName,mimeHint:req.get("Content-Type")||""});
-            const usage=(await pool.query(`SELECT COUNT(*)::int AS count,COALESCE(SUM(byte_size),0)::bigint AS bytes FROM creator_widget_assets WHERE creator_id=$1`,[req.creatorAccount.id])).rows[0]||{};
-            if(Number(usage.count||0)>=MAX_ASSET_COUNT)return res.status(403).json({ok:false,error:`Deine Dateibibliothek ist voll (${MAX_ASSET_COUNT} Dateien).`});
-            if(Number(usage.bytes||0)+content.length>MAX_TOTAL_BYTES)return res.status(403).json({ok:false,error:"Deine Dateibibliothek hat ihr Speicherlimit erreicht."});
             const sha256=crypto.createHash("sha256").update(content).digest("hex");
-            const duplicate=(await pool.query(`SELECT * FROM creator_widget_assets WHERE creator_id=$1 AND sha256=$2 LIMIT 1`,[req.creatorAccount.id,sha256])).rows[0];
-            if(duplicate)return res.json({ok:true,duplicate:true,asset:publicWidgetAsset(duplicate),message:"Diese Datei ist bereits in deiner Bibliothek."});
             const token=crypto.randomBytes(24).toString("hex");
             const label=safeWidgetAssetLabel(detected.originalName.replace(/\.[^.]+$/,""),"Creator Datei");
             const metadata={width:detected.width||0,height:detected.height||0,hasAlpha:Boolean(detected.hasAlpha),animated:Boolean(detected.animated)};
-            const result=await pool.query(`
-                INSERT INTO creator_widget_assets(creator_id,original_name,label,media_type,mime_type,file_ext,byte_size,sha256,auto_category,category,metadata,public_token,content,created_at,updated_at)
-                VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$9,$10::jsonb,$11,$12,NOW(),NOW()) RETURNING *
-            `,[req.creatorAccount.id,safeWidgetAssetName(detected.originalName),label,detected.kind,detected.mime,detected.ext,content.length,sha256,detected.autoCategory,JSON.stringify(metadata),token,content]);
-            return res.status(201).json({ok:true,duplicate:false,asset:publicWidgetAsset(result.rows[0])});
+
+            const stored=await withCreatorResourceLock(req.creatorAccount.id,async client=>{
+                // Deduplizierung liegt absichtlich vor der Quotenprüfung: eine bereits
+                // vorhandene Datei verbraucht weder einen neuen Slot noch Speicher.
+                const duplicate=(await client.query(
+                    `SELECT * FROM creator_widget_assets WHERE creator_id=$1 AND sha256=$2 LIMIT 1`,
+                    [req.creatorAccount.id,sha256]
+                )).rows[0];
+                if(duplicate)return{duplicate:true,row:duplicate};
+
+                const usage=(await client.query(
+                    `SELECT COUNT(*)::int AS count,COALESCE(SUM(byte_size),0)::bigint AS bytes FROM creator_widget_assets WHERE creator_id=$1`,
+                    [req.creatorAccount.id]
+                )).rows[0]||{};
+                if(Number(usage.count||0)>=MAX_ASSET_COUNT){
+                    throw creatorResourceLimitError(`Deine Dateibibliothek ist voll (${MAX_ASSET_COUNT} Dateien).`,"asset_count_limit");
+                }
+                if(Number(usage.bytes||0)+content.length>MAX_TOTAL_BYTES){
+                    throw creatorResourceLimitError("Deine Dateibibliothek hat ihr Speicherlimit erreicht.","asset_storage_limit");
+                }
+
+                const result=await client.query(`
+                    INSERT INTO creator_widget_assets(creator_id,original_name,label,media_type,mime_type,file_ext,byte_size,sha256,auto_category,category,metadata,public_token,content,created_at,updated_at)
+                    VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$9,$10::jsonb,$11,$12,NOW(),NOW()) RETURNING *
+                `,[req.creatorAccount.id,safeWidgetAssetName(detected.originalName),label,detected.kind,detected.mime,detected.ext,content.length,sha256,detected.autoCategory,JSON.stringify(metadata),token,content]);
+                return{duplicate:false,row:result.rows[0]};
+            });
+
+            if(stored.duplicate){
+                return res.json({ok:true,duplicate:true,asset:publicWidgetAsset(stored.row),message:"Diese Datei ist bereits in deiner Bibliothek."});
+            }
+            return res.status(201).json({ok:true,duplicate:false,asset:publicWidgetAsset(stored.row)});
         }catch(error){
             const code=String(error?.code||"");
             if(["asset_empty","asset_too_large","asset_unsupported"].includes(code))return res.status(400).json({ok:false,code,error:error.message});
+            if(["asset_count_limit","asset_storage_limit"].includes(code))return res.status(403).json({ok:false,code,error:error.message});
             if(error?.type==="entity.too.large")return res.status(413).json({ok:false,error:"Die Datei ist größer als 20 MB."});
-            console.error("Widget Asset Upload Fehler:",error);
+            safeLogError("Widget Asset Upload Fehler:",error);
             return res.status(500).json({ok:false,error:"Creator-Datei konnte nicht gespeichert werden."});
         }
     }
@@ -14222,8 +15553,76 @@ app.patch("/api/creator/widget-studio/assets/:id",requireCreatorAccount,async(re
         const result=await pool.query(`UPDATE creator_widget_assets SET label=$3,category=$4,updated_at=NOW() WHERE creator_id=$1 AND id=$2 RETURNING *`,[req.creatorAccount.id,current.id,label,category]);
         return res.json({ok:true,asset:publicWidgetAsset(result.rows[0])});
     }catch(error){
-        console.error("Widget Asset Update Fehler:",error);
+        safeLogError("Widget Asset Update Fehler:",error);
         return res.status(500).json({ok:false,error:"Datei konnte nicht aktualisiert werden."});
+    }
+});
+
+app.post("/api/creator/widget-studio/assets/:id/rotate-token",requireCreatorAccount,async(req,res)=>{
+    res.set("Cache-Control","no-store");
+    const assetId=String(req.params.id||"");
+    if(!/^[0-9a-f-]{36}$/i.test(assetId))return res.status(404).json({ok:false,error:"Datei nicht gefunden."});
+    try{
+        const rotated=await withCreatorResourceLock(req.creatorAccount.id,async client=>{
+            const assetResult=await client.query(
+                `SELECT * FROM creator_widget_assets WHERE creator_id=$1 AND id=$2 LIMIT 1 FOR UPDATE`,
+                [req.creatorAccount.id,assetId]
+            );
+            const current=assetResult.rows[0];
+            if(!current){
+                const error=new Error("Datei nicht gefunden.");error.code="asset_missing";error.statusCode=404;throw error;
+            }
+            const oldUrl=`/widget-assets/${String(current.public_token||"")}`;
+            const nextToken=crypto.randomBytes(24).toString("hex");
+            const newUrl=`/widget-assets/${nextToken}`;
+            const widgetResult=await client.query(
+                `SELECT id,draft_config,published_config,status,version
+                 FROM creator_widgets
+                 WHERE creator_id=$1
+                   AND (draft_config::text LIKE $2 OR COALESCE(published_config::text,'') LIKE $2)
+                 FOR UPDATE`,
+                [req.creatorAccount.id,`%${oldUrl}%`]
+            );
+            let migratedWidgets=0,publishedWidgets=0;
+            for(const row of widgetResult.rows){
+                const draftChanged=studioConfigContainsAssetUrl(row.draft_config,oldUrl);
+                const publishedChanged=studioConfigContainsAssetUrl(row.published_config,oldUrl);
+                if(!draftChanged&&!publishedChanged)continue;
+                const draft= draftChanged ? replaceStudioAssetUrl(row.draft_config,oldUrl,newUrl) : row.draft_config;
+                const published= publishedChanged ? replaceStudioAssetUrl(row.published_config,oldUrl,newUrl) : row.published_config;
+                await client.query(
+                    `UPDATE creator_widgets
+                     SET draft_config=$3::jsonb,
+                         published_config=$4::jsonb,
+                         version=version+$5,
+                         updated_at=NOW()
+                     WHERE creator_id=$1 AND id=$2`,
+                    [req.creatorAccount.id,row.id,JSON.stringify(draft||{}),published==null?null:JSON.stringify(published),publishedChanged?1:0]
+                );
+                migratedWidgets+=1;
+                if(publishedChanged)publishedWidgets+=1;
+            }
+            const updated=await client.query(
+                `UPDATE creator_widget_assets SET public_token=$3,updated_at=NOW() WHERE creator_id=$1 AND id=$2 RETURNING *`,
+                [req.creatorAccount.id,current.id,nextToken]
+            );
+            return{row:updated.rows[0],migratedWidgets,publishedWidgets};
+        });
+        await recordSecurityEvent(req.creatorAccount.id,"asset_public_token_rotated");
+        return res.json({
+            ok:true,
+            rotated:true,
+            asset:publicWidgetAsset(rotated.row),
+            migrated_widgets:rotated.migratedWidgets,
+            published_widgets:rotated.publishedWidgets,
+            message:rotated.migratedWidgets
+                ? `Öffentlicher Datei-Link erneuert. ${rotated.migratedWidgets} Widget${rotated.migratedWidgets===1?"":"s"} wurde${rotated.migratedWidgets===1?"":"n"} automatisch aktualisiert.`
+                : "Öffentlicher Datei-Link erneuert. Der alte Link ist nicht mehr gültig."
+        });
+    }catch(error){
+        if(error?.code==="asset_missing")return res.status(404).json({ok:false,error:"Datei nicht gefunden."});
+        safeLogError("Widget Asset Token Rotation Fehler:",error);
+        return res.status(500).json({ok:false,error:"Der öffentliche Datei-Link konnte nicht erneuert werden."});
     }
 });
 
@@ -14237,7 +15636,7 @@ app.delete("/api/creator/widget-studio/assets/:id",requireCreatorAccount,async(r
         await pool.query(`DELETE FROM creator_widget_assets WHERE creator_id=$1 AND id=$2`,[req.creatorAccount.id,current.id]);
         return res.json({ok:true,deleted:true});
     }catch(error){
-        console.error("Widget Asset Löschen Fehler:",error);
+        safeLogError("Widget Asset Löschen Fehler:",error);
         return res.status(500).json({ok:false,error:"Datei konnte nicht gelöscht werden."});
     }
 });
@@ -14253,31 +15652,6 @@ app.post(
 
             const access=await creatorAccessProfile(req.creatorAccount);
             const entitlements=access.entitlements;
-
-            const countResult =
-                await pool.query(
-                    `
-                    SELECT COUNT(*)::int AS count
-                    FROM creator_widgets
-                    WHERE creator_id = $1
-                    `,
-                    [req.creatorAccount.id]
-                );
-
-            const count =
-                Number(countResult.rows[0]?.count || 0);
-
-            if (
-                count >= entitlements.max_widgets
-            ) {
-
-                return res.status(403).json({
-                    ok: false,
-                    error:
-                        `Dein Plan erlaubt maximal ${entitlements.max_widgets} Widgets.`
-                });
-
-            }
 
             const widgetType =
                 String(req.body?.widget_type || "follower_goal");
@@ -14331,46 +15705,25 @@ app.post(
                 );
 
             const result =
-                await pool.query(
-                    `
-                    INSERT INTO creator_widgets (
-                        id,
-                        creator_id,
-                        widget_type,
-                        name,
-                        template_key,
-                        status,
-                        draft_config,
-                        public_token,
-                        version,
-                        created_at,
-                        updated_at
-                    )
-                    VALUES (
-                        $1,
-                        $2,
-                        $3,
-                        $4,
-                        $5,
-                        'draft',
-                        $6::jsonb,
-                        $7,
-                        1,
-                        NOW(),
-                        NOW()
-                    )
-                    RETURNING *
-                    `,
-                    [
-                        id,
-                        req.creatorAccount.id,
-                        widgetType,
-                        name,
-                        templateKey,
-                        JSON.stringify(draftConfig),
-                        publicToken
-                    ]
-                );
+                await withCreatorResourceLock(req.creatorAccount.id,async client=>{
+                    const countResult=await client.query(
+                        `SELECT COUNT(*)::int AS count FROM creator_widgets WHERE creator_id=$1`,
+                        [req.creatorAccount.id]
+                    );
+                    if(Number(countResult.rows[0]?.count||0)>=Number(entitlements.max_widgets||0)){
+                        throw creatorResourceLimitError(`Dein Plan erlaubt maximal ${entitlements.max_widgets} Widgets.`,"widget_limit");
+                    }
+                    return client.query(
+                        `
+                        INSERT INTO creator_widgets (
+                            id,creator_id,widget_type,name,template_key,status,draft_config,public_token,version,created_at,updated_at
+                        )
+                        VALUES ($1,$2,$3,$4,$5,'draft',$6::jsonb,$7,1,NOW(),NOW())
+                        RETURNING *
+                        `,
+                        [id,req.creatorAccount.id,widgetType,name,templateKey,JSON.stringify(draftConfig),publicToken]
+                    );
+                });
 
             const tiktok =
                 await getFollowerWidgetTikTokData(
@@ -14389,10 +15742,9 @@ app.post(
         }
         catch (error) {
 
-            console.error(
-                "Widget Studio Erstellen Fehler:",
-                error
-            );
+            if(error?.code==="widget_limit")return res.status(403).json({ok:false,code:error.code,error:error.message});
+
+            safeLogError("Widget Studio Erstellen Fehler:",error);
 
             return res.status(500).json({
                 ok: false,
@@ -14445,10 +15797,7 @@ app.get(
         }
         catch (error) {
 
-            console.error(
-                "Widget Studio Laden Fehler:",
-                error
-            );
+            safeLogError("Widget Studio Laden Fehler:",error);
 
             return res.status(500).json({
                 ok: false,
@@ -14531,10 +15880,7 @@ app.put(
         }
         catch (error) {
 
-            console.error(
-                "Widget Studio Draft Fehler:",
-                error
-            );
+            safeLogError("Widget Studio Draft Fehler:",error);
 
             return res.status(500).json({
                 ok: false,
@@ -14637,7 +15983,7 @@ app.post(
             );
             return res.json({ok:true,value:next,running,widget:publicStudioWidgetRow(result.rows[0])});
         } catch (error) {
-            console.error("Widget Studio Counter Steuerung Fehler:", error);
+            safeLogError("Widget Studio Counter Steuerung Fehler:",error);
             return res.status(500).json({ok:false,error:"Counter konnte nicht aktualisiert werden."});
         }
     }
@@ -14708,10 +16054,7 @@ app.post(
         }
         catch (error) {
 
-            console.error(
-                "Widget Studio Publish Fehler:",
-                error
-            );
+            safeLogError("Widget Studio Publish Fehler:",error);
 
             return res.status(500).json({
                 ok: false,
@@ -14720,6 +16063,31 @@ app.post(
 
         }
 
+    }
+);
+
+
+app.post(
+    "/api/creator/widget-studio/widgets/:id/rotate-public-token",
+    requireCreatorAccount,
+    async (req,res) => {
+        res.set("Cache-Control","no-store");
+        try {
+            const current=await getStudioWidgetById(req.creatorAccount.id,req.params.id);
+            if(!current)return res.status(404).json({ok:false,error:"Widget nicht gefunden."});
+            const result=await pool.query(
+                `UPDATE creator_widgets
+                 SET public_token=$3,version=version+1,updated_at=NOW()
+                 WHERE creator_id=$1 AND id=$2
+                 RETURNING *`,
+                [req.creatorAccount.id,current.id,createStudioWidgetToken()]
+            );
+            await recordSecurityEvent(req.creatorAccount.id,"public_output_token_rotated");
+            return res.json({ok:true,rotated:true,widget:publicStudioWidgetRow(result.rows[0])});
+        } catch(error) {
+            safeLogError("Widget Output Token Rotation Fehler:",error);
+            return res.status(500).json({ok:false,error:"Widget Output URL konnte nicht erneuert werden."});
+        }
     }
 );
 
@@ -14757,62 +16125,28 @@ app.post(
             const access=await creatorAccessProfile(req.creatorAccount);
             const entitlements=access.entitlements;
 
-            const countResult =
-                await pool.query(
-                    `
-                    SELECT COUNT(*)::int AS count
-                    FROM creator_widgets
-                    WHERE creator_id = $1
-                    `,
-                    [req.creatorAccount.id]
-                );
-
-            if (
-                Number(countResult.rows[0]?.count || 0) >=
-                entitlements.max_widgets
-            ) {
-                return res.status(403).json({
-                    ok: false,
-                    error:
-                        `Dein Plan erlaubt maximal ${entitlements.max_widgets} Widgets.`
-                });
-            }
-
             const id = crypto.randomUUID();
             const publicToken = createStudioWidgetToken();
             const config = sanitizeStudioWidgetConfig(current.draft_config, current.widget_type);
 
             const result =
-                await pool.query(
-                    `
-                    INSERT INTO creator_widgets (
-                        id,
-                        creator_id,
-                        widget_type,
-                        name,
-                        template_key,
-                        status,
-                        draft_config,
-                        public_token,
-                        version,
-                        created_at,
-                        updated_at
-                    )
-                    VALUES (
-                        $1,$2,$3,$4,$5,'draft',$6::jsonb,$7,1,NOW(),NOW()
-                    )
-                    RETURNING *
-                    `,
-                    [
-                        id,
-                        req.creatorAccount.id,
-                        current.widget_type,
-                        studioWidgetName(`${current.name} Kopie`),
-                        current.template_key,
-                        JSON.stringify(config),
-                        publicToken
-                    ]
-                );
+                await withCreatorResourceLock(req.creatorAccount.id,async client=>{
+                    const countResult=await client.query(
+                        `SELECT COUNT(*)::int AS count FROM creator_widgets WHERE creator_id=$1`,
+                        [req.creatorAccount.id]
+                    );
+                    if(Number(countResult.rows[0]?.count||0)>=Number(entitlements.max_widgets||0)){
+                        throw creatorResourceLimitError(`Dein Plan erlaubt maximal ${entitlements.max_widgets} Widgets.`,"widget_limit");
+                    }
+                    return client.query(
+                        `
+                        INSERT INTO creator_widgets (id,creator_id,widget_type,name,template_key,status,draft_config,public_token,version,created_at,updated_at)
+                        VALUES ($1,$2,$3,$4,$5,'draft',$6::jsonb,$7,1,NOW(),NOW())
+                        RETURNING *
+                        `,
+                        [id,req.creatorAccount.id,current.widget_type,studioWidgetName(`${current.name} Kopie`),current.template_key,JSON.stringify(config),publicToken]
+                    );
+                });
 
             return res.status(201).json({
                 ok: true,
@@ -14822,10 +16156,9 @@ app.post(
         }
         catch (error) {
 
-            console.error(
-                "Widget Studio Duplizieren Fehler:",
-                error
-            );
+            if(error?.code==="widget_limit")return res.status(403).json({ok:false,code:error.code,error:error.message});
+
+            safeLogError("Widget Studio Duplizieren Fehler:",error);
 
             return res.status(500).json({
                 ok: false,
@@ -14881,10 +16214,7 @@ app.delete(
         }
         catch (error) {
 
-            console.error(
-                "Widget Studio Löschen Fehler:",
-                error
-            );
+            safeLogError("Widget Studio Löschen Fehler:",error);
 
             return res.status(500).json({
                 ok: false,
@@ -14915,7 +16245,7 @@ app.get(
                 registry: studioWidgetRegistryPublic()
             });
         } catch (error) {
-            console.error("Widget Studio Live State Fehler:", error);
+            safeLogError("Widget Studio Live State Fehler:",error);
             return res.status(500).json({ ok: false, error: "Live-Daten konnten nicht geladen werden." });
         }
     }
@@ -14939,7 +16269,7 @@ app.post(
                 events: await getRecentStudioLiveEvents(req.creatorAccount.id, null, 20)
             });
         } catch (error) {
-            console.error("Widget Studio Simulator Fehler:", error);
+            safeLogError("Widget Studio Simulator Fehler:",error);
             return res.status(400).json({ ok: false, error: error.message || "Simulator-Event fehlgeschlagen." });
         }
     }
@@ -14957,7 +16287,7 @@ app.get(
                 events: await getRecentStudioLiveEvents(req.creatorAccount.id, eventType, req.query?.limit || 20)
             });
         } catch (error) {
-            console.error("Widget Studio Event Queue Fehler:", error);
+            safeLogError("Widget Studio Event Queue Fehler:",error);
             return res.status(500).json({ ok: false, error: "Live-Events konnten nicht geladen werden." });
         }
     }
@@ -14970,19 +16300,19 @@ app.get(
 app.get("/api/creator/widget-studio/live/sessions", requireCreatorAccount, async (req,res)=>{
     res.set("Cache-Control","no-store");
     try { return res.json({ok:true,sessions:await getStudioLiveSessions(req.creatorAccount.id,req.query?.limit||10)}); }
-    catch(error){ console.error("Widget Studio Sessions Fehler:",error); return res.status(500).json({ok:false,error:"LIVE-Historie konnte nicht geladen werden."}); }
+    catch(error){ safeLogError("Widget Studio Sessions Fehler:",error); return res.status(500).json({ok:false,error:"LIVE-Historie konnte nicht geladen werden."}); }
 });
 
 app.get("/api/creator/widget-studio/interactions", requireCreatorAccount, async (req,res)=>{
     res.set("Cache-Control","no-store");
     try { const access=await creatorAccessProfile(req.creatorAccount); return res.json({ok:true,allowed:Boolean(access.entitlements.auto_thanks),required_plan:"creator",rules:await listStudioInteractionRules(req.creatorAccount.id),output:{kind:"launcher_tts",ready:Boolean(access.entitlements.auto_thanks),label:"Launcher TTS / AutoThanks"}}); }
-    catch(error){ console.error("Widget Studio Interaction Regeln Fehler:",error); return res.status(500).json({ok:false,error:"Interaction-Regeln konnten nicht geladen werden."}); }
+    catch(error){ safeLogError("Widget Studio Interaction Regeln Fehler:",error); return res.status(500).json({ok:false,error:"Interaction-Regeln konnten nicht geladen werden."}); }
 });
 
 app.put("/api/creator/widget-studio/interactions/:eventType", requireCreatorAccount, async (req,res)=>{
     res.set("Cache-Control","no-store");
     try { const access=await requireCreatorFeatureAccess(req.creatorAccount,"auto_thanks","creator"); const rule=await saveStudioInteractionRule(req.creatorAccount.id,String(req.params.eventType||""),req.body||{}); return res.json({ok:true,rule,access_source:access.access_source}); }
-    catch(error){ console.error("Widget Studio Interaction Speichern Fehler:",error); return res.status(400).json({ok:false,error:error.message||"Interaction-Regel konnte nicht gespeichert werden."}); }
+    catch(error){ safeLogError("Widget Studio Interaction Speichern Fehler:",error); return res.status(400).json(clientSafeErrorPayload(req,error,400,"Interaction-Regel konnte nicht gespeichert werden.")); }
 });
 
 // ============================================================
@@ -15029,10 +16359,7 @@ app.get(
             });
         }
         catch (error) {
-            console.error(
-                "Launcher Release Center Fehler:",
-                error
-            );
+            safeLogError("Launcher Release Center Fehler:",error);
 
             return res
                 .status(500)
@@ -15045,7 +16372,7 @@ app.get(
 );
 
 
-app.get("/api/admin/creator-suite/beta-center",requireCreatorAccount,requireCreatorAdmin,async(req,res)=>{
+app.get("/api/admin/creator-suite/beta-center",requireCreatorAccount,requireCreatorAdmin,requireCreatorAdminSensitiveRead,async(req,res)=>{
     res.set("Cache-Control","no-store");
     try{
         const [feedbackResult,sessionResult,metricResult]=await Promise.all([
@@ -15055,7 +16382,7 @@ app.get("/api/admin/creator-suite/beta-center",requireCreatorAccount,requireCrea
         ]);
         const metrics=metricResult.rows[0]||{};
         return res.json({ok:true,generated_at:new Date().toISOString(),summary:{active_beta_testers:Number(metrics.active_beta_testers||0),completed_sessions:Number(metrics.completed_sessions||0),tested_creators:Number(metrics.tested_creators||0),open_feedback:Number(metrics.open_feedback||0),open_critical:Number(metrics.open_critical||0),open_high:Number(metrics.open_high||0)},release_candidate:releaseCandidateReadiness(metrics),feedback:feedbackResult.rows.map(row=>({...publicBetaFeedback(row),creator:{display_name:row.creator_display_name||"Creator",email:row.creator_email||""}})),sessions:sessionResult.rows.map(row=>({...publicBetaSession(row),creator:{display_name:row.creator_display_name||"Creator",email:row.creator_email||""}}))});
-    }catch(error){console.error("Beta Center Fehler:",error);return res.status(500).json({ok:false,error:"Beta Center konnte nicht geladen werden."})}
+    }catch(error){safeLogError("Beta Center Fehler:",error);return res.status(500).json({ok:false,error:"Beta Center konnte nicht geladen werden."})}
 });
 async function loadProductionEvidence(){
     const rows=(await pool.query(`SELECT * FROM creator_production_evidence ORDER BY observed_at DESC,created_at DESC LIMIT 500`)).rows;
@@ -15117,7 +16444,7 @@ async function loadReleaseOperationsState(){
     };
 }
 
-app.get("/api/admin/creator-suite/config-doctor",requireCreatorAccount,requireCreatorAdmin,async(req,res)=>{
+app.get("/api/admin/creator-suite/config-doctor",requireCreatorAccount,requireCreatorAdmin,requireCreatorAdminSensitiveRead,async(req,res)=>{
     res.set("Cache-Control","no-store");
     try{
         const report=runtimeDoctor(process.env);
@@ -15130,30 +16457,38 @@ app.get("/api/admin/creator-suite/config-doctor",requireCreatorAccount,requireCr
             runtime:report
         });
     }catch(error){
-        console.error("Config Doctor Fehler:",error);
+        safeLogError("Config Doctor Fehler:",error);
         return res.status(500).json({ok:false,error:"Config Doctor konnte nicht ausgeführt werden."});
     }
 });
 
-app.get("/api/admin/creator-suite/production-readiness",requireCreatorAccount,requireCreatorAdmin,async(req,res)=>{
+app.get("/api/admin/creator-suite/production-readiness",requireCreatorAccount,requireCreatorAdmin,requireCreatorAdminSensitiveRead,async(req,res)=>{
     res.set("Cache-Control","no-store");
     try{
-        const state=await loadProductionReadinessBundle();
+        const [state,mailDelivery,monitoring,incident]=await Promise.all([loadProductionReadinessBundle(),accountMailOutboxStats(),productionMonitorStatus(),getWebsiteIncidentState()]);
+        const activeCounts=monitoring?.active_counts||{};
+        const monitorHealthy=Boolean(monitoring?.configured&&monitoring?.worker_fresh&&Number(activeCounts.critical||0)===0&&Number(activeCounts.warning||0)===0);
+        const launchGate=evaluateLaunchGate(state.evidence.rows,{releaseVersion:PRODUCTION_EVIDENCE_RELEASE_VERSION,billingRequired:BILLING_LIVE_REQUIRED,monitorHealthy,incidentNormal:incident.mode==="normal"});
         return res.json({
             ok:true,generated_at:new Date().toISOString(),release_version:PRODUCTION_EVIDENCE_RELEASE_VERSION,
             readiness:state.readiness,
-            evidence:{kinds:EVIDENCE_KINDS,latest:state.evidence.latest,history:state.evidence.rows.slice(0,100).map(publicProductionEvidence)},
+            launch_gate:launchGate,
+            evidence:{kinds:EVIDENCE_KINDS,manual_kinds:MANUAL_EVIDENCE_KINDS,latest:state.evidence.latest,history:state.evidence.rows.slice(0,100).map(publicProductionEvidence)},
             stripe_testmode:state.stripeTestmode,
             billing:{config:BILLING_CONFIG,subscriptions_by_status:state.billingMetrics,recent_events:state.recentEvents},
+            mail_delivery:mailDelivery,
+            monitoring,
+            incident_mode:incident.mode,
             release_candidate:state.rc
         });
-    }catch(error){console.error("Production Readiness Fehler:",error);return res.status(500).json({ok:false,error:"Production Readiness konnte nicht geladen werden."});}
+    }catch(error){safeLogError("Production Readiness Fehler:",error);return res.status(500).json({ok:false,error:"Production Readiness konnte nicht geladen werden."});}
 });
 
 app.post("/api/admin/creator-suite/production-evidence",requireCreatorAccount,requireCreatorAdmin,async(req,res)=>{
     res.set("Cache-Control","no-store");
     try{
         const item=sanitizeProductionEvidence(req.body||{},{releaseVersion:PRODUCTION_EVIDENCE_RELEASE_VERSION});
+        if(AUTOMATED_EVIDENCE_KIND_SET.has(item.kind))return res.status(400).json({ok:false,error:"Diese Evidence wird ausschließlich durch den verifizierten Production-Drill importiert."});
         if(item.status==="verified"&&!item.reference&&!item.artifact_sha256&&item.notes.length<12){
             return res.status(400).json({ok:false,error:"Verifizierte Evidence braucht Referenz, SHA256 oder eine nachvollziehbare Notiz."});
         }
@@ -15169,13 +16504,13 @@ app.post("/api/admin/creator-suite/production-evidence",requireCreatorAccount,re
     }catch(error){
         const msg=String(error?.message||"");
         if(msg.includes("Evidence")||msg.includes("SHA256"))return res.status(400).json({ok:false,error:msg});
-        console.error("Production Evidence Fehler:",error);
+        safeLogError("Production Evidence Fehler:",error);
         return res.status(500).json({ok:false,error:"Production Evidence konnte nicht gespeichert werden."});
     }
 });
 
 
-app.get("/api/admin/creator-suite/release-operations",requireCreatorAccount,requireCreatorAdmin,async(req,res)=>{
+app.get("/api/admin/creator-suite/release-operations",requireCreatorAccount,requireCreatorAdmin,requireCreatorAdminSensitiveRead,async(req,res)=>{
     res.set("Cache-Control","no-store");
     try{
         const state=await loadReleaseOperationsState();
@@ -15188,7 +16523,7 @@ app.get("/api/admin/creator-suite/release-operations",requireCreatorAccount,requ
             go_no_go:state.assessment,
             decisions:state.decisions
         });
-    }catch(error){console.error("Release Operations Fehler:",error);return res.status(500).json({ok:false,error:"Release Operations konnten nicht geladen werden."});}
+    }catch(error){safeLogError("Release Operations Fehler:",error);return res.status(500).json({ok:false,error:"Release Operations konnten nicht geladen werden."});}
 });
 
 app.post("/api/admin/creator-suite/release-acceptance",requireCreatorAccount,requireCreatorAdmin,async(req,res)=>{
@@ -15204,7 +16539,7 @@ app.post("/api/admin/creator-suite/release-acceptance",requireCreatorAccount,req
     }catch(error){
         const msg=String(error?.message||"");
         if(msg.includes("Acceptance")||msg.includes("Protokoll"))return res.status(400).json({ok:false,error:msg});
-        console.error("Release Acceptance Fehler:",error);return res.status(500).json({ok:false,error:"Release Acceptance konnte nicht gespeichert werden."});
+        safeLogError("Release Acceptance Fehler:",error);return res.status(500).json({ok:false,error:"Release Acceptance konnte nicht gespeichert werden."});
     }
 });
 
@@ -15217,7 +16552,7 @@ app.post("/api/admin/creator-suite/release-cohorts",requireCreatorAccount,requir
             VALUES($1,$2,$3,$4,$5,$6,$7,NOW(),NOW()) RETURNING *
         `,[item.release_version,item.name,item.stage,item.target_testers,item.status,item.notes,req.creatorAccount.id]);
         return res.status(201).json({ok:true,cohort:result.rows[0]});
-    }catch(error){console.error("Release Cohort Fehler:",error);return res.status(500).json({ok:false,error:"Release Cohort konnte nicht erstellt werden."});}
+    }catch(error){safeLogError("Release Cohort Fehler:",error);return res.status(500).json({ok:false,error:"Release Cohort konnte nicht erstellt werden."});}
 });
 
 app.put("/api/admin/creator-suite/release-cohorts/:id",requireCreatorAccount,requireCreatorAdmin,async(req,res)=>{
@@ -15272,11 +16607,11 @@ app.post("/api/admin/creator-suite/release-decisions",requireCreatorAccount,requ
     }catch(error){
         const msg=String(error?.message||"");
         if(msg.includes("Entscheidung")||msg.includes("GO ist blockiert"))return res.status(400).json({ok:false,error:msg});
-        console.error("Go/No-Go Decision Fehler:",error);return res.status(500).json({ok:false,error:"Go/No-Go Entscheidung konnte nicht gespeichert werden."});
+        safeLogError("Go/No-Go Decision Fehler:",error);return res.status(500).json({ok:false,error:"Go/No-Go Entscheidung konnte nicht gespeichert werden."});
     }
 });
 
-app.get("/api/admin/creator-suite/billing-center",requireCreatorAccount,requireCreatorAdmin,async(req,res)=>{
+app.get("/api/admin/creator-suite/billing-center",requireCreatorAccount,requireCreatorAdmin,requireCreatorAdminSensitiveRead,async(req,res)=>{
     res.set("Cache-Control","no-store");
     try{
         const subscriptions=(await pool.query(`SELECT b.creator_id,b.provider,b.plan,b.status,b.current_period_end,b.grace_ends_at,b.cancel_at_period_end,b.last_invoice_status,b.updated_at,c.display_name,c.email FROM creator_billing_subscriptions b JOIN creator_accounts c ON c.id=b.creator_id ORDER BY b.updated_at DESC LIMIT 250`)).rows.map(row=>({...publicBillingSubscription(row),creator_id:row.creator_id,creator:{display_name:row.display_name||"Creator",email:row.email||""},updated_at:row.updated_at||null}));
@@ -15301,6 +16636,7 @@ app.get(
     async(req,res)=>{
         res.set("Cache-Control","no-store");
         try {
+            const sensitiveDetailsUnlocked=creatorAdminSensitiveDetailsUnlocked(req);
             const result=await pool.query(`
                 WITH widget_counts AS (
                     SELECT creator_id,
@@ -15352,7 +16688,7 @@ app.get(
             const creators=result.rows.map(row=>{
                 const readiness=creatorReadiness(row,now);
                 return{
-                    id:row.id,email:row.email,display_name:row.display_name,
+                    id:row.id,email:sensitiveDetailsUnlocked?row.email:"",display_name:row.display_name,
                     plan:normalizePlan(row.plan),status:row.status,created_at:row.created_at,updated_at:row.updated_at,
                     tiktok:{
                         connected:Boolean(row.tiktok_connected),display_name:row.tiktok_display_name||"",avatar_url:row.avatar_url||"",
@@ -15360,14 +16696,14 @@ app.get(
                         sync:readiness.sync
                     },
                     launcher:{
-                        status:row.bridge_status||"",client_version:row.client_version||"",machine_name:row.machine_name||"",
+                        status:row.bridge_status||"",client_version:row.client_version||"",machine_name:sensitiveDetailsUnlocked?(row.machine_name||""):"",
                         last_seen_at:row.bridge_last_seen_at||null,last_connected_at:row.bridge_last_connected_at||null,
                         connection:readiness.bridge
                     },
                     widgets:{total:Number(row.widgets_total||0),live:Number(row.widgets_live||0)},
                     scenes:{total:Number(row.scenes_total||0),live:Number(row.scenes_live||0)},
                     live:{connected:Boolean(row.live_connected),provider:row.live_provider||"none",last_event_at:row.last_event_at||null,updated_at:row.live_updated_at||null},
-                    beta:{status:row.beta_status||"none",notes:row.beta_notes||"",created_at:row.beta_created_at||null,updated_at:row.beta_updated_at||null},
+                    beta:{status:row.beta_status||"none",notes:sensitiveDetailsUnlocked?(row.beta_notes||""):"",created_at:row.beta_created_at||null,updated_at:row.beta_updated_at||null},
                     readiness:{score:readiness.score,checks:readiness.checks}
                 };
             });
@@ -15375,6 +16711,7 @@ app.get(
             return res.json({
                 ok:true,
                 generated_at:new Date().toISOString(),
+                privacy:{sensitive_details_unlocked:sensitiveDetailsUnlocked,redacted_fields:sensitiveDetailsUnlocked?[]:["creator.email","launcher.machine_name","beta.notes"]},
                 summary:{
                     creators:creators.length,
                     tiktok_connected:creators.filter(c=>c.tiktok.connected).length,
@@ -15386,7 +16723,7 @@ app.get(
                 creators
             });
         }catch(error){
-            console.error("Creator Admin Overview Fehler:",error);
+            safeLogError("Creator Admin Overview Fehler:",error);
             return res.status(500).json({ok:false,error:"Creator Übersicht konnte nicht geladen werden."});
         }
     }
@@ -15415,7 +16752,7 @@ app.put(
             `,[creatorId,status,notes]);
             return res.json({ok:true,beta:result.rows[0]});
         }catch(error){
-            console.error("Beta Status Fehler:",error);
+            safeLogError("Beta Status Fehler:",error);
             return res.status(500).json({ok:false,error:"Beta-Status konnte nicht gespeichert werden."});
         }
     }
@@ -15448,18 +16785,20 @@ app.get("/api/creator/games/rules",requireCreatorAccount,async(req,res)=>{
     try{
         const access=await requireCreatorFeatureAccess(req.creatorAccount,"games","creator");
         return res.json({ok:true,rules:await listCreatorGameRules(req.creatorAccount.id),recent_hits:await recentCreatorGameRuleHits(req.creatorAccount.id,25),limits:{max_rules:Number(access.entitlements.max_game_rules||0)}});
-    }catch(error){return res.status(error?.code==="creator_feature_locked"?403:500).json({ok:false,error:error.message||"Game-Regeln konnten nicht geladen werden."})}
+    }catch(error){return res.status(error?.code==="creator_feature_locked"?403:500).json(clientSafeErrorPayload(req,error,error?.code==="creator_feature_locked"?403:500,"Game-Regeln konnten nicht geladen werden."))}
 });
 app.post("/api/creator/games/rules",requireCreatorAccount,async(req,res)=>{
     try{
         const access=await requireCreatorFeatureAccess(req.creatorAccount,"games","creator");
-        const count=await pool.query(`SELECT COUNT(*)::int AS count FROM creator_game_rules WHERE creator_id=$1`,[req.creatorAccount.id]);
         const max=Number(access.entitlements.max_game_rules||0);
-        if(Number(count.rows[0]?.count||0)>=max)return res.status(403).json({ok:false,error:`Dein Zugriff erlaubt maximal ${max} Game-Regeln.`});
         const clean=sanitizeGameRule(req.body||{});
-        const result=await pool.query(`INSERT INTO creator_game_rules(creator_id,label,enabled,event_type,team,points,amount_mode,min_amount,gift_name,gift_id,created_at,updated_at) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,NOW(),NOW()) RETURNING *`,[req.creatorAccount.id,clean.label,clean.enabled,clean.event_type,clean.team,clean.points,clean.amount_mode,clean.min_amount,clean.gift_name,clean.gift_id]);
+        const result=await withCreatorResourceLock(req.creatorAccount.id,async client=>{
+            const count=await client.query(`SELECT COUNT(*)::int AS count FROM creator_game_rules WHERE creator_id=$1`,[req.creatorAccount.id]);
+            if(Number(count.rows[0]?.count||0)>=max)throw creatorResourceLimitError(`Dein Zugriff erlaubt maximal ${max} Game-Regeln.`,"game_rule_limit");
+            return client.query(`INSERT INTO creator_game_rules(creator_id,label,enabled,event_type,team,points,amount_mode,min_amount,gift_name,gift_id,created_at,updated_at) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,NOW(),NOW()) RETURNING *`,[req.creatorAccount.id,clean.label,clean.enabled,clean.event_type,clean.team,clean.points,clean.amount_mode,clean.min_amount,clean.gift_name,clean.gift_id]);
+        });
         return res.status(201).json({ok:true,rule:publicGameRule(result.rows[0])});
-    }catch(error){return res.status(error?.code==="creator_feature_locked"?403:500).json({ok:false,error:error.message||"Game-Regel konnte nicht erstellt werden."})}
+    }catch(error){const status=error?.code==="creator_feature_locked"||error?.code==="game_rule_limit"?403:500;return res.status(status).json(clientSafeErrorPayload(req,error,status,"Game-Regel konnte nicht erstellt werden.",{includeCode:true}))}
 });
 app.put("/api/creator/games/rules/:id",requireCreatorAccount,async(req,res)=>{
     try{
@@ -15468,7 +16807,7 @@ app.put("/api/creator/games/rules/:id",requireCreatorAccount,async(req,res)=>{
         const result=await pool.query(`UPDATE creator_game_rules SET label=$3,enabled=$4,event_type=$5,team=$6,points=$7,amount_mode=$8,min_amount=$9,gift_name=$10,gift_id=$11,updated_at=NOW() WHERE creator_id=$1 AND id=$2 RETURNING *`,[req.creatorAccount.id,req.params.id,clean.label,clean.enabled,clean.event_type,clean.team,clean.points,clean.amount_mode,clean.min_amount,clean.gift_name,clean.gift_id]);
         if(!result.rows[0])return res.status(404).json({ok:false,error:"Game-Regel nicht gefunden."});
         return res.json({ok:true,rule:publicGameRule(result.rows[0])});
-    }catch(error){return res.status(error?.code==="creator_feature_locked"?403:500).json({ok:false,error:error.message||"Game-Regel konnte nicht gespeichert werden."})}
+    }catch(error){return res.status(error?.code==="creator_feature_locked"?403:500).json(clientSafeErrorPayload(req,error,error?.code==="creator_feature_locked"?403:500,"Game-Regel konnte nicht gespeichert werden."))}
 });
 app.delete("/api/creator/games/rules/:id",requireCreatorAccount,async(req,res)=>{
     try{
@@ -15476,19 +16815,39 @@ app.delete("/api/creator/games/rules/:id",requireCreatorAccount,async(req,res)=>
         const result=await pool.query(`DELETE FROM creator_game_rules WHERE creator_id=$1 AND id=$2 RETURNING id`,[req.creatorAccount.id,req.params.id]);
         if(!result.rows[0])return res.status(404).json({ok:false,error:"Game-Regel nicht gefunden."});
         return res.json({ok:true});
-    }catch(error){return res.status(error?.code==="creator_feature_locked"?403:500).json({ok:false,error:error.message||"Game-Regel konnte nicht gelöscht werden."})}
+    }catch(error){return res.status(error?.code==="creator_feature_locked"?403:500).json(clientSafeErrorPayload(req,error,error?.code==="creator_feature_locked"?403:500,"Game-Regel konnte nicht gelöscht werden."))}
 });
 
 app.get("/api/creator/games/runtime",requireCreatorAccount,async(req,res)=>{
     res.set("Cache-Control","no-store");
     try{const access=await requireCreatorFeatureAccess(req.creatorAccount,"games","creator");return res.json({ok:true,profile:await getCreatorGameProfile(req.creatorAccount.id),runtime:await getCreatorGameRuntimePublic(req.creatorAccount.id,{ensure:true}),access_source:access.access_source})}
-    catch(error){return res.status(error?.code==="creator_feature_locked"?403:500).json({ok:false,error:error.message||"Game Runtime konnte nicht geladen werden."})}
+    catch(error){return res.status(error?.code==="creator_feature_locked"?403:500).json(clientSafeErrorPayload(req,error,error?.code==="creator_feature_locked"?403:500,"Game Runtime konnte nicht geladen werden."))}
 });
-app.post("/api/creator/games/runtime/start",requireCreatorAccount,async(req,res)=>{try{await requireCreatorFeatureAccess(req.creatorAccount,"games","creator");return res.json({ok:true,runtime:await startCreatorGameRuntime(req.creatorAccount.id)})}catch(error){return res.status(error?.code==="creator_feature_locked"?403:400).json({ok:false,error:error.message||"Game konnte nicht gestartet werden."})}});
-app.post("/api/creator/games/runtime/stop",requireCreatorAccount,async(req,res)=>{try{await requireCreatorFeatureAccess(req.creatorAccount,"games","creator");return res.json({ok:true,runtime:await stopCreatorGameRuntime(req.creatorAccount.id)})}catch(error){return res.status(error?.code==="creator_feature_locked"?403:400).json({ok:false,error:error.message||"Game konnte nicht gestoppt werden."})}});
-app.post("/api/creator/games/runtime/reset",requireCreatorAccount,async(req,res)=>{try{await requireCreatorFeatureAccess(req.creatorAccount,"games","creator");return res.json({ok:true,runtime:await resetCreatorGameRuntime(req.creatorAccount.id)})}catch(error){return res.status(error?.code==="creator_feature_locked"?403:400).json({ok:false,error:error.message||"Game konnte nicht zurückgesetzt werden."})}});
-app.post("/api/creator/games/runtime/score",requireCreatorAccount,async(req,res)=>{try{await requireCreatorFeatureAccess(req.creatorAccount,"games","creator");return res.json({ok:true,runtime:await scoreCreatorGameRuntime(req.creatorAccount.id,req.body||{})})}catch(error){return res.status(error?.code==="creator_feature_locked"?403:error?.code==="game_not_running"?409:400).json({ok:false,error:error.message||"Game Score konnte nicht geändert werden."})}});
-app.get("/api/games/runtime/:token",studioPublicReadLimiter,async(req,res)=>{
+app.post("/api/creator/games/runtime/start",requireCreatorAccount,async(req,res)=>{try{await requireCreatorFeatureAccess(req.creatorAccount,"games","creator");return res.json({ok:true,runtime:await startCreatorGameRuntime(req.creatorAccount.id)})}catch(error){return res.status(error?.code==="creator_feature_locked"?403:400).json(clientSafeErrorPayload(req,error,error?.code==="creator_feature_locked"?403:400,"Game konnte nicht gestartet werden."))}});
+app.post("/api/creator/games/runtime/stop",requireCreatorAccount,async(req,res)=>{try{await requireCreatorFeatureAccess(req.creatorAccount,"games","creator");return res.json({ok:true,runtime:await stopCreatorGameRuntime(req.creatorAccount.id)})}catch(error){return res.status(error?.code==="creator_feature_locked"?403:400).json(clientSafeErrorPayload(req,error,error?.code==="creator_feature_locked"?403:400,"Game konnte nicht gestoppt werden."))}});
+app.post("/api/creator/games/runtime/reset",requireCreatorAccount,async(req,res)=>{try{await requireCreatorFeatureAccess(req.creatorAccount,"games","creator");return res.json({ok:true,runtime:await resetCreatorGameRuntime(req.creatorAccount.id)})}catch(error){return res.status(error?.code==="creator_feature_locked"?403:400).json(clientSafeErrorPayload(req,error,error?.code==="creator_feature_locked"?403:400,"Game konnte nicht zurückgesetzt werden."))}});
+app.post("/api/creator/games/runtime/score",requireCreatorAccount,async(req,res)=>{try{await requireCreatorFeatureAccess(req.creatorAccount,"games","creator");return res.json({ok:true,runtime:await scoreCreatorGameRuntime(req.creatorAccount.id,req.body||{})})}catch(error){return res.status(error?.code==="creator_feature_locked"?403:error?.code==="game_not_running"?409:400).json(clientSafeErrorPayload(req,error,error?.code==="creator_feature_locked"?403:error?.code==="game_not_running"?409:400,"Game Score konnte nicht geändert werden."))}});
+app.post("/api/creator/games/runtime/rotate-public-token",requireCreatorAccount,async(req,res)=>{
+    res.set("Cache-Control","no-store");
+    try{
+        await requireCreatorFeatureAccess(req.creatorAccount,"games","creator");
+        const current=await getCreatorGameRuntimeRow(req.creatorAccount.id,{ensure:true});
+        if(!current)return res.status(404).json({ok:false,error:"Game Runtime nicht gefunden."});
+        const result=await pool.query(
+            `UPDATE creator_game_runtime
+             SET public_token=$2,version=version+1,updated_at=NOW()
+             WHERE creator_id=$1
+             RETURNING *`,
+            [req.creatorAccount.id,gamePublicToken()]
+        );
+        await recordSecurityEvent(req.creatorAccount.id,"public_output_token_rotated");
+        return res.json({ok:true,rotated:true,runtime:publicGameRuntime(result.rows[0],APP_BASE_URL)});
+    }catch(error){
+        return res.status(error?.code==="creator_feature_locked"?403:500).json(clientSafeErrorPayload(req,error,error?.code==="creator_feature_locked"?403:500,"Game Output URL konnte nicht erneuert werden."));
+    }
+});
+
+app.get("/api/games/runtime/:token",publicRuntimeIpLimiter,studioPublicReadLimiter,async(req,res)=>{
     res.set("Cache-Control","no-store");
     try{const payload=await getPublicGameRuntimeByToken(req.params.token);if(!payload)return res.status(404).json({ok:false,error:"Game Runtime nicht gefunden."});return res.json({ok:true,...payload,server_time:new Date().toISOString()})}
     catch(error){return res.status(500).json({ok:false,error:"Game Runtime konnte nicht geladen werden."})}
@@ -15500,26 +16859,27 @@ app.get("/api/games/runtime/:token",studioPublicReadLimiter,async(req,res)=>{
 app.get("/api/creator/cut-studio/projects",requireCreatorAccount,async(req,res)=>{
     res.set("Cache-Control","no-store");
     try{const access=await requireCreatorFeatureAccess(req.creatorAccount,"cut_studio","creator");return res.json({ok:true,projects:await listCutProjects(req.creatorAccount.id),formats:Object.values(CUT_FORMATS),limits:{max_projects:Number(access.entitlements.max_cut_projects||0),max_clips_per_project:Number(access.entitlements.max_cut_clips_per_project||0)}})}
-    catch(error){return res.status(error?.code==="creator_feature_locked"?403:500).json({ok:false,error:error.message||"Cut Studio Projekte konnten nicht geladen werden."})}
+    catch(error){return res.status(error?.code==="creator_feature_locked"?403:500).json(clientSafeErrorPayload(req,error,error?.code==="creator_feature_locked"?403:500,"Cut Studio Projekte konnten nicht geladen werden."))}
 });
 app.post("/api/creator/cut-studio/projects",requireCreatorAccount,async(req,res)=>{
     try{
         const access=await requireCreatorFeatureAccess(req.creatorAccount,"cut_studio","creator");
-        const count=await pool.query(`SELECT COUNT(*)::int AS count FROM creator_cut_projects WHERE creator_id=$1`,[req.creatorAccount.id]);
-        if(Number(count.rows[0]?.count||0)>=Number(access.entitlements.max_cut_projects||0))return res.status(403).json({ok:false,error:`Dein Zugriff erlaubt maximal ${Number(access.entitlements.max_cut_projects||0)} Cut-Studio Projekte.`});
         const clean=sanitizeCutProject(req.body||{});
-        const result=await pool.query(`INSERT INTO creator_cut_projects(creator_id,title,status,format,notes,source_name,export_preset,created_at,updated_at) VALUES($1,$2,$3,$4,$5,$6,$7::jsonb,NOW(),NOW()) RETURNING *`,[req.creatorAccount.id,clean.title,clean.status,clean.format,clean.notes,clean.source_name,JSON.stringify(clean.export_preset)]);
+        const result=await createCutProjectWithLimit(req.creatorAccount.id,clean,Number(access.entitlements.max_cut_projects||0));
         return res.status(201).json({ok:true,project:publicCutProject(result.rows[0],0)});
-    }catch(error){return res.status(error?.code==="creator_feature_locked"?403:500).json({ok:false,error:error.message||"Cut-Projekt konnte nicht erstellt werden."})}
+    }catch(error){
+        const status=error?.code==="creator_feature_locked"||error?.code==="cut_project_limit"?403:500;
+        return res.status(status).json(clientSafeErrorPayload(req,error,status,"Cut-Projekt konnte nicht erstellt werden.",{includeCode:true}));
+    }
 });
 app.get("/api/creator/cut-studio/projects/:id/audition-runtime",requireCreatorAccount,async(req,res)=>{
     res.set("Cache-Control","no-store");
     try{await requireCreatorFeatureAccess(req.creatorAccount,"cut_studio","creator");const owned=await getCutProject(req.creatorAccount.id,req.params.id);if(!owned)return res.status(404).json({ok:false,error:"Cut-Projekt nicht gefunden."});return res.json({ok:true,runtime:await getCutAuditionRuntime(req.creatorAccount.id,req.params.id),server_time:new Date().toISOString()})}
-    catch(error){return res.status(error?.code==="creator_feature_locked"?403:500).json({ok:false,error:error.message||"Audition Clock konnte nicht geladen werden."})}
+    catch(error){return res.status(error?.code==="creator_feature_locked"?403:500).json(clientSafeErrorPayload(req,error,error?.code==="creator_feature_locked"?403:500,"Audition Clock konnte nicht geladen werden."))}
 });
 app.get("/api/creator/cut-studio/projects/:id",requireCreatorAccount,async(req,res)=>{
     try{await requireCreatorFeatureAccess(req.creatorAccount,"cut_studio","creator");const data=await getCutProject(req.creatorAccount.id,req.params.id);if(!data)return res.status(404).json({ok:false,error:"Cut-Projekt nicht gefunden."});return res.json({ok:true,...data})}
-    catch(error){return res.status(error?.code==="creator_feature_locked"?403:500).json({ok:false,error:error.message||"Cut-Projekt konnte nicht geladen werden."})}
+    catch(error){return res.status(error?.code==="creator_feature_locked"?403:500).json(clientSafeErrorPayload(req,error,error?.code==="creator_feature_locked"?403:500,"Cut-Projekt konnte nicht geladen werden."))}
 });
 app.put("/api/creator/cut-studio/projects/:id",requireCreatorAccount,async(req,res)=>{
     try{
@@ -15528,24 +16888,22 @@ app.put("/api/creator/cut-studio/projects/:id",requireCreatorAccount,async(req,r
         if(!result.rows[0])return res.status(404).json({ok:false,error:"Cut-Projekt nicht gefunden."});
         const count=await pool.query(`SELECT COUNT(*)::int AS count FROM creator_cut_clips WHERE project_id=$1`,[req.params.id]);
         return res.json({ok:true,project:publicCutProject(result.rows[0],count.rows[0]?.count||0)});
-    }catch(error){return res.status(error?.code==="creator_feature_locked"?403:500).json({ok:false,error:error.message||"Cut-Projekt konnte nicht gespeichert werden."})}
+    }catch(error){return res.status(error?.code==="creator_feature_locked"?403:500).json(clientSafeErrorPayload(req,error,error?.code==="creator_feature_locked"?403:500,"Cut-Projekt konnte nicht gespeichert werden."))}
 });
 app.delete("/api/creator/cut-studio/projects/:id",requireCreatorAccount,async(req,res)=>{
     try{await requireCreatorFeatureAccess(req.creatorAccount,"cut_studio","creator");const result=await pool.query(`DELETE FROM creator_cut_projects WHERE creator_id=$1 AND id=$2 RETURNING id`,[req.creatorAccount.id,req.params.id]);if(!result.rows[0])return res.status(404).json({ok:false,error:"Cut-Projekt nicht gefunden."});return res.json({ok:true})}
-    catch(error){return res.status(error?.code==="creator_feature_locked"?403:500).json({ok:false,error:error.message||"Cut-Projekt konnte nicht gelöscht werden."})}
+    catch(error){return res.status(error?.code==="creator_feature_locked"?403:500).json(clientSafeErrorPayload(req,error,error?.code==="creator_feature_locked"?403:500,"Cut-Projekt konnte nicht gelöscht werden."))}
 });
 app.post("/api/creator/cut-studio/projects/:id/clips",requireCreatorAccount,async(req,res)=>{
     try{
-        const access=await requireCreatorFeatureAccess(req.creatorAccount,"cut_studio","creator");const project=await getCutProject(req.creatorAccount.id,req.params.id);
-        if(!project)return res.status(404).json({ok:false,error:"Cut-Projekt nicht gefunden."});
-        if(project.clips.length>=Number(access.entitlements.max_cut_clips_per_project||0))return res.status(403).json({ok:false,error:`Dieses Projekt erlaubt maximal ${Number(access.entitlements.max_cut_clips_per_project||0)} Clips.`});
+        const access=await requireCreatorFeatureAccess(req.creatorAccount,"cut_studio","creator");
         const requested=sanitizeCutClip(req.body||{});
-        const nextOrder=await pool.query(`SELECT COALESCE(MAX(sort_order),-1)+1 AS next_order FROM creator_cut_clips WHERE creator_id=$1 AND project_id=$2`,[req.creatorAccount.id,req.params.id]);
-        const clean={...requested,sort_order:Number(nextOrder.rows[0]?.next_order||0)};
-        const result=await pool.query(`INSERT INTO creator_cut_clips(project_id,creator_id,label,in_ms,out_ms,caption,selected,sort_order,caption_enabled,caption_position,caption_size,caption_style,audio_gain_db,audio_fade_in_ms,audio_fade_out_ms,keyframe_enabled,keyframe_zoom_start,keyframe_zoom_end,keyframe_pan_x_start,keyframe_pan_x_end,keyframe_pan_y_start,keyframe_pan_y_end,keyframe_easing,visual_keyframes,created_at,updated_at) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24::jsonb,NOW(),NOW()) RETURNING *`,[req.params.id,req.creatorAccount.id,clean.label,clean.in_ms,clean.out_ms,clean.caption,clean.selected,clean.sort_order,clean.caption_enabled,clean.caption_position,clean.caption_size,clean.caption_style,clean.audio_gain_db,clean.audio_fade_in_ms,clean.audio_fade_out_ms,clean.keyframe_enabled,clean.keyframe_zoom_start,clean.keyframe_zoom_end,clean.keyframe_pan_x_start,clean.keyframe_pan_x_end,clean.keyframe_pan_y_start,clean.keyframe_pan_y_end,clean.keyframe_easing,JSON.stringify(clean.visual_keyframes||[])]);
-        await pool.query(`UPDATE creator_cut_projects SET updated_at=NOW() WHERE creator_id=$1 AND id=$2`,[req.creatorAccount.id,req.params.id]);
+        const result=await createCutClipWithLimit(req.creatorAccount.id,req.params.id,requested,Number(access.entitlements.max_cut_clips_per_project||0));
         return res.status(201).json({ok:true,clip:publicCutClip(result.rows[0])});
-    }catch(error){return res.status(error?.code==="creator_feature_locked"?403:500).json({ok:false,error:error.message||"Clip konnte nicht hinzugefügt werden."})}
+    }catch(error){
+        const status=error?.code==="creator_feature_locked"||error?.code==="cut_clip_limit"?403:error?.code==="cut_project_missing"?404:500;
+        return res.status(status).json(clientSafeErrorPayload(req,error,status,"Clip konnte nicht hinzugefügt werden.",{includeCode:true}));
+    }
 });
 app.put("/api/creator/cut-studio/projects/:projectId/clips/order",requireCreatorAccount,async(req,res)=>{
     try{
@@ -15568,7 +16926,7 @@ app.put("/api/creator/cut-studio/projects/:projectId/clips/order",requireCreator
         const data=await getCutProject(req.creatorAccount.id,req.params.projectId);
         return res.json({ok:true,clips:data?.clips||[]});
     }catch(error){
-        return res.status(error?.code==="creator_feature_locked"?403:500).json({ok:false,error:error.message||"Timeline konnte nicht gespeichert werden."});
+        return res.status(error?.code==="creator_feature_locked"?403:500).json(clientSafeErrorPayload(req,error,error?.code==="creator_feature_locked"?403:500,"Timeline konnte nicht gespeichert werden."));
     }
 });
 
@@ -15579,11 +16937,11 @@ app.put("/api/creator/cut-studio/projects/:projectId/clips/:clipId",requireCreat
         if(!result.rows[0])return res.status(404).json({ok:false,error:"Clip nicht gefunden."});
         await pool.query(`UPDATE creator_cut_projects SET updated_at=NOW() WHERE creator_id=$1 AND id=$2`,[req.creatorAccount.id,req.params.projectId]);
         return res.json({ok:true,clip:publicCutClip(result.rows[0])});
-    }catch(error){return res.status(error?.code==="creator_feature_locked"?403:500).json({ok:false,error:error.message||"Clip konnte nicht gespeichert werden."})}
+    }catch(error){return res.status(error?.code==="creator_feature_locked"?403:500).json(clientSafeErrorPayload(req,error,error?.code==="creator_feature_locked"?403:500,"Clip konnte nicht gespeichert werden."))}
 });
 app.delete("/api/creator/cut-studio/projects/:projectId/clips/:clipId",requireCreatorAccount,async(req,res)=>{
     try{await requireCreatorFeatureAccess(req.creatorAccount,"cut_studio","creator");const result=await pool.query(`DELETE FROM creator_cut_clips WHERE creator_id=$1 AND project_id=$2 AND id=$3 RETURNING id`,[req.creatorAccount.id,req.params.projectId,req.params.clipId]);if(!result.rows[0])return res.status(404).json({ok:false,error:"Clip nicht gefunden."});await pool.query(`UPDATE creator_cut_projects SET updated_at=NOW() WHERE creator_id=$1 AND id=$2`,[req.creatorAccount.id,req.params.projectId]);return res.json({ok:true})}
-    catch(error){return res.status(error?.code==="creator_feature_locked"?403:500).json({ok:false,error:error.message||"Clip konnte nicht gelöscht werden."})}
+    catch(error){return res.status(error?.code==="creator_feature_locked"?403:500).json(clientSafeErrorPayload(req,error,error?.code==="creator_feature_locked"?403:500,"Clip konnte nicht gelöscht werden."))}
 });
 
 
@@ -15615,13 +16973,13 @@ app.get("/api/creator/stream-studio",requireCreatorAccount,async(req,res)=>{
             multistream:{max_destinations:multistreamLimit,mode:"launcher_local",cloud_relay:false,credentials:"launcher_local_only"},
             engine:{capture:"launcher_local",cloud_media:false,stream_keys:"launcher_only",multistream:"launcher_local",protocol:2}
         });
-    }catch(error){console.error("Stream Studio Laden Fehler:",error);return res.status(500).json({ok:false,error:"Stream Studio konnte nicht geladen werden."});}
+    }catch(error){safeLogError("Stream Studio Laden Fehler:",error);return res.status(500).json({ok:false,error:"Stream Studio konnte nicht geladen werden."});}
 });
 
 app.get("/api/creator/stream-studio/runtime",requireCreatorAccount,async(req,res)=>{
     res.set("Cache-Control","no-store");
     try{return res.json({ok:true,runtime:await getCreatorStreamStudioRuntime(req.creatorAccount.id)});}
-    catch(error){console.error("Stream Studio Runtime Fehler:",error);return res.status(500).json({ok:false,error:"Stream Runtime konnte nicht geladen werden."});}
+    catch(error){safeLogError("Stream Studio Runtime Fehler:",error);return res.status(500).json({ok:false,error:"Stream Runtime konnte nicht geladen werden."});}
 });
 
 app.put("/api/creator/stream-studio",requireCreatorAccount,async(req,res)=>{
@@ -15645,7 +17003,7 @@ app.put("/api/creator/stream-studio",requireCreatorAccount,async(req,res)=>{
         const nextSettings={...(current.settings||{}),stream_studio:config};
         const saved=await saveCreatorSettings(creatorId,nextSettings);
         return res.json({ok:true,config,settings:saved.settings,multistream:{max_destinations:multistreamLimit,mode:"launcher_local",credentials:"launcher_local_only"},updated_at:saved.updated_at});
-    }catch(error){console.error("Stream Studio Speichern Fehler:",error);return res.status(500).json({ok:false,error:"Stream Studio Einstellungen konnten nicht gespeichert werden."});}
+    }catch(error){safeLogError("Stream Studio Speichern Fehler:",error);return res.status(500).json({ok:false,error:"Stream Studio Einstellungen konnten nicht gespeichert werden."});}
 });
 
 app.get(
@@ -15670,7 +17028,7 @@ app.get(
                         canvas:widget.published_config?.canvas||{width:600,height:120}
                     }))
             });
-        }catch(error){console.error("Scene Liste Fehler:",error);return res.status(500).json({ok:false,error:"Scenes konnten nicht geladen werden."})}
+        }catch(error){safeLogError("Scene Liste Fehler:",error);return res.status(500).json({ok:false,error:"Scenes konnten nicht geladen werden."})}
     }
 );
 
@@ -15680,16 +17038,24 @@ app.post(
     async(req,res)=>{
         try{
             const access=await creatorAccessProfile(req.creatorAccount);
-            const countResult=await pool.query(`SELECT COUNT(*)::int AS count FROM creator_widget_scenes WHERE creator_id=$1`,[req.creatorAccount.id]);
-            if(Number(countResult.rows[0]?.count||0)>=Number(access.entitlements.max_scenes||0))return res.status(403).json({...accessDeniedPayload(access,"max_scenes",access.plan==="free"?"creator":"pro"),error:`Dein Zugriff erlaubt maximal ${Number(access.entitlements.max_scenes||0)} Scenes.`});
+            const maxScenes=Number(access.entitlements.max_scenes||0);
             const name=studioText(req.body?.name,120,"Neue Scene");
             const config=sanitizeSceneConfig(req.body?.config||{profile:req.body?.profile||"tiktok_vertical",canvas:{background:"transparent",safe_area:true},items:[]});
-            const result=await pool.query(
-                `INSERT INTO creator_widget_scenes (id,creator_id,name,status,draft_config,public_token) VALUES($1,$2,$3,'draft',$4::jsonb,$5) RETURNING *`,
-                [crypto.randomUUID(),req.creatorAccount.id,name,JSON.stringify(config),scenePublicToken()]
-            );
+            const result=await withCreatorResourceLock(req.creatorAccount.id,async client=>{
+                const countResult=await client.query(`SELECT COUNT(*)::int AS count FROM creator_widget_scenes WHERE creator_id=$1`,[req.creatorAccount.id]);
+                if(Number(countResult.rows[0]?.count||0)>=maxScenes){
+                    throw creatorResourceLimitError(`Dein Zugriff erlaubt maximal ${maxScenes} Scenes.`,"scene_limit");
+                }
+                return client.query(
+                    `INSERT INTO creator_widget_scenes (id,creator_id,name,status,draft_config,public_token) VALUES($1,$2,$3,'draft',$4::jsonb,$5) RETURNING *`,
+                    [crypto.randomUUID(),req.creatorAccount.id,name,JSON.stringify(config),scenePublicToken()]
+                );
+            });
             return res.status(201).json({ok:true,scene:publicSceneRow(result.rows[0],APP_BASE_URL)});
-        }catch(error){console.error("Scene Create Fehler:",error);return res.status(500).json({ok:false,error:"Scene konnte nicht erstellt werden."})}
+        }catch(error){
+            if(error?.code==="scene_limit")return res.status(403).json({...accessDeniedPayload(await creatorAccessProfile(req.creatorAccount),"max_scenes",req.creatorAccount.plan==="free"?"creator":"pro"),code:error.code,error:error.message});
+            safeLogError("Scene Create Fehler:",error);return res.status(500).json({ok:false,error:"Scene konnte nicht erstellt werden."});
+        }
     }
 );
 
@@ -15710,7 +17076,7 @@ app.put(
                 [req.creatorAccount.id,req.params.id,name,JSON.stringify(config)]
             );
             return res.json({ok:true,scene:publicSceneRow(result.rows[0],APP_BASE_URL)});
-        }catch(error){console.error("Scene Save Fehler:",error);return res.status(500).json({ok:false,error:"Scene konnte nicht gespeichert werden."})}
+        }catch(error){safeLogError("Scene Save Fehler:",error);return res.status(500).json({ok:false,error:"Scene konnte nicht gespeichert werden."})}
     }
 );
 
@@ -15731,9 +17097,34 @@ app.post(
                 [req.creatorAccount.id,req.params.id]
             );
             return res.json({ok:true,scene:publicSceneRow(result.rows[0],APP_BASE_URL)});
-        }catch(error){console.error("Scene Publish Fehler:",error);return res.status(500).json({ok:false,error:"Scene konnte nicht veröffentlicht werden."})}
+        }catch(error){safeLogError("Scene Publish Fehler:",error);return res.status(500).json({ok:false,error:"Scene konnte nicht veröffentlicht werden."})}
     }
 );
+
+app.post(
+    "/api/creator/widget-studio/scenes/:id/rotate-public-token",
+    requireCreatorAccount,
+    async(req,res)=>{
+        res.set("Cache-Control","no-store");
+        try{
+            const existing=await getCreatorSceneRow(req.creatorAccount.id,req.params.id);
+            if(!existing)return res.status(404).json({ok:false,error:"Scene nicht gefunden."});
+            const result=await pool.query(
+                `UPDATE creator_widget_scenes
+                 SET public_token=$3,version=version+1,updated_at=NOW()
+                 WHERE creator_id=$1 AND id=$2
+                 RETURNING *`,
+                [req.creatorAccount.id,existing.id,scenePublicToken()]
+            );
+            await recordSecurityEvent(req.creatorAccount.id,"public_output_token_rotated");
+            return res.json({ok:true,rotated:true,scene:publicSceneRow(result.rows[0],APP_BASE_URL)});
+        }catch(error){
+            safeLogError("Scene Output Token Rotation Fehler:",error);
+            return res.status(500).json({ok:false,error:"Scene Output URL konnte nicht erneuert werden."});
+        }
+    }
+);
+
 
 app.delete(
     "/api/creator/widget-studio/scenes/:id",
@@ -15743,12 +17134,13 @@ app.delete(
             const result=await pool.query(`DELETE FROM creator_widget_scenes WHERE creator_id=$1 AND id=$2 RETURNING id`,[req.creatorAccount.id,req.params.id]);
             if(!result.rows[0])return res.status(404).json({ok:false,error:"Scene nicht gefunden."});
             return res.json({ok:true});
-        }catch(error){console.error("Scene Delete Fehler:",error);return res.status(500).json({ok:false,error:"Scene konnte nicht gelöscht werden."})}
+        }catch(error){safeLogError("Scene Delete Fehler:",error);return res.status(500).json({ok:false,error:"Scene konnte nicht gelöscht werden."})}
     }
 );
 
 app.get(
     "/api/widgets/scene/:token",
+    publicRuntimeIpLimiter,
     studioPublicReadLimiter,
     async(req,res)=>{
         res.set("Cache-Control","no-store");
@@ -15756,7 +17148,7 @@ app.get(
             const token=studioText(req.params.token,160,""),row=await getPublicSceneRow(token);
             if(!row)return res.status(404).json({ok:false,error:"Scene nicht gefunden."});
             return res.json({ok:true,...(await hydratePublicScene(row)),server_time:new Date().toISOString()});
-        }catch(error){console.error("Public Scene Fehler:",error);return res.status(500).json({ok:false,error:"Scene konnte nicht geladen werden."})}
+        }catch(error){safeLogError("Public Scene Fehler:",error);return res.status(500).json({ok:false,error:"Scene konnte nicht geladen werden."})}
     }
 );
 
@@ -15769,11 +17161,12 @@ app.post(
         try {
             const link=await createLauncherDeviceLink({
                 machine_name:req.body?.machine_name,
-                client_version:req.body?.client_version
+                client_version:req.body?.client_version,
+                credential_delivery:req.body?.credential_delivery
             });
             return res.status(201).json({ok:true,...link});
         } catch (error) {
-            console.error("Launcher Device Link Start Fehler:",error);
+            safeLogError("Launcher Device Link Start Fehler:",error);
             return res.status(500).json({ok:false,error:"Launcher-Verknüpfung konnte nicht gestartet werden."});
         }
     }
@@ -15803,11 +17196,25 @@ app.post(
             }
 
             if(link.status==="approved"||link.status==="consumed"){
+                let consumedAt=link.consumed_at || null;
                 if(link.status==="approved"){
-                    await pool.query(
-                        `UPDATE creator_launcher_device_links SET status='consumed',consumed_at=NOW(),updated_at=NOW() WHERE id=$1 AND status='approved'`,
+                    const consumed=await pool.query(
+                        `UPDATE creator_launcher_device_links SET status='consumed',consumed_at=NOW(),updated_at=NOW() WHERE id=$1 AND status='approved' RETURNING consumed_at`,
                         [link.id]
                     );
+                    consumedAt=consumed.rows[0]?.consumed_at || consumedAt;
+                }
+                let bridgeToken="";
+                if(shouldDeliverPollCredential({
+                    credentialDelivery:link.credential_delivery,
+                    status:"consumed",
+                    expiresAt:link.expires_at
+                })){
+                    bridgeToken=deriveBridgeToken(link.id,req.body?.device_secret);
+                    if(!bridgeToken||!safeEqualText(hashValue(bridgeToken),String(link.bridge_token_hash||""))){
+                        safeLogError("Launcher Device Link Credential Fehler:",new Error("derived_bridge_token_mismatch"));
+                        return res.status(401).json({ok:false,error:"Geräte-Zugangsdaten konnten nicht bestätigt werden."});
+                    }
                 }
                 const creator=link.creator_id?await studioCreatorIdentity(link.creator_id):null;
                 return res.json({
@@ -15815,6 +17222,9 @@ app.post(
                     status:"approved",
                     approved:true,
                     bridge_id:link.bridge_id || null,
+                    ...(bridgeToken?{bridge_token:bridgeToken}:{}),
+                    credential_delivery:normalizeCredentialDelivery(link.credential_delivery),
+                    consumed_at:consumedAt,
                     creator,
                     poll_after_ms:LAUNCHER_DEVICE_POLL_AFTER_MS
                 });
@@ -15828,7 +17238,7 @@ app.post(
                 poll_after_ms:LAUNCHER_DEVICE_POLL_AFTER_MS
             });
         } catch (error) {
-            console.error("Launcher Device Link Poll Fehler:",error);
+            safeLogError("Launcher Device Link Poll Fehler:",error);
             return res.status(500).json({ok:false,error:"Verknüpfungsstatus konnte nicht geprüft werden."});
         }
     }
@@ -15837,10 +17247,13 @@ app.post(
 app.get(
     "/api/creator/launcher/device-link/:code",
     requireCreatorAccount,
+    launcherDeviceCodeInspectLimiter,
     async (req,res) => {
         res.set("Cache-Control","no-store");
         try {
-            const link=await inspectLauncherDeviceLink(req.params.code);
+            const code=normalizeDeviceCode(req.params.code);
+            if(!code)return res.status(404).json({ok:false,error:"Geräte-Code nicht gefunden."});
+            const link=await inspectLauncherDeviceLink(code);
             if(!link)return res.status(404).json({ok:false,error:"Geräte-Code nicht gefunden."});
             return res.json({ok:true,device_link:link});
         } catch (error) {
@@ -15852,12 +17265,15 @@ app.get(
 app.post(
     "/api/creator/launcher/device-link/confirm",
     requireCreatorAccount,
+    launcherDeviceConfirmLimiter,
     async (req,res) => {
         res.set("Cache-Control","no-store");
         try {
+            const userCode=launcherDeviceCodeFromRequest(req);
+            if(!userCode)return res.status(400).json({ok:false,error:"Bitte einen gültigen Geräte-Code eingeben."});
             const confirmed=await approveLauncherDeviceLink(
                 req.creatorAccount.id,
-                launcherDeviceCodeFromRequest(req)
+                userCode
             );
             return res.json({
                 ok:true,
@@ -15868,7 +17284,8 @@ app.post(
             });
         } catch (error) {
             const status = ["device_code_invalid","device_code_expired","device_code_used","device_limit_reached"].includes(error?.code) ? 400 : 500;
-            return res.status(status).json({ok:false,error:error?.message || "Launcher konnte nicht bestätigt werden."});
+            if(status>=500)safeLogError("Launcher Device Link Confirm Fehler:",error);
+            return res.status(status).json(clientSafeErrorPayload(req,error,status,"Launcher konnte nicht bestätigt werden."));
         }
     }
 );
@@ -15917,7 +17334,7 @@ app.get("/api/creator/cut-studio/jobs",requireCreatorAccount,async(req,res)=>{
     try{
         const access=await requireCreatorFeatureAccess(req.creatorAccount,"cut_studio","creator");
         return res.json({ok:true,jobs:await listCutExportJobs(req.creatorAccount.id,75),limits:{max_pending_jobs:Number(access.entitlements.max_pending_cut_jobs||0)}});
-    }catch(error){return res.status(error?.code==="creator_feature_locked"?403:500).json({ok:false,error:error.message||"Cut-Export-Jobs konnten nicht geladen werden."})}
+    }catch(error){return res.status(error?.code==="creator_feature_locked"?403:500).json(clientSafeErrorPayload(req,error,error?.code==="creator_feature_locked"?403:500,"Cut-Export-Jobs konnten nicht geladen werden."))}
 });
 app.post("/api/creator/cut-studio/projects/:id/export-jobs",requireCreatorAccount,async(req,res)=>{
     try{
@@ -15925,7 +17342,7 @@ app.post("/api/creator/cut-studio/projects/:id/export-jobs",requireCreatorAccoun
         return res.status(201).json({ok:true,job:await createCutExportJob(req.creatorAccount.id,req.params.id,access)});
     }catch(error){
         const status=error?.code==="creator_feature_locked"||error?.code==="cut_job_limit"?403:["cut_project_missing","cut_job_empty"].includes(error?.code)?400:500;
-        return res.status(status).json({ok:false,error:error.message||"Cut-Export-Job konnte nicht erstellt werden."});
+        return res.status(status).json(clientSafeErrorPayload(req,error,status,"Cut-Export-Job konnte nicht erstellt werden."));
     }
 });
 app.post("/api/creator/cut-studio/projects/:id/audition-jobs",requireCreatorAccount,async(req,res)=>{
@@ -15934,7 +17351,7 @@ app.post("/api/creator/cut-studio/projects/:id/audition-jobs",requireCreatorAcco
         return res.status(201).json({ok:true,job:await createCutAuditionJob(req.creatorAccount.id,req.params.id,req.body||{})});
     }catch(error){
         const status=error?.code==="creator_feature_locked"?403:error?.code==="cut_project_missing"?404:["cut_audition_track","cut_audition_handoff","cut_audition_loop"].includes(error?.code)?400:error?.code==="cut_audition_busy"?409:500;
-        return res.status(status).json({ok:false,error:error.message||"Timeline-Vorschau konnte nicht angefordert werden."});
+        return res.status(status).json(clientSafeErrorPayload(req,error,status,"Timeline-Vorschau konnte nicht angefordert werden."));
     }
 });
 app.get("/api/creator/cut-studio/projects/:id/audition-inspector/:jobId",requireCreatorAccount,async(req,res)=>{
@@ -15945,7 +17362,7 @@ app.get("/api/creator/cut-studio/projects/:id/audition-inspector/:jobId",require
         const row=result.rows[0];if(!row)return res.status(404).json({ok:false,error:"Zero-Cross-Analyse nicht gefunden."});
         const clean=row.result&&typeof row.result==="object"?sanitizeCutJobResult(row.result):{};
         return res.json({ok:true,inspector:{job_id:String(row.id),status:String(row.status||"queued"),inspection:clean.zero_cross||null,error:String(row.error_message||""),requested_at:row.requested_at||null,completed_at:row.completed_at||null}});
-    }catch(error){const status=error?.code==="creator_feature_locked"?403:500;return res.status(status).json({ok:false,error:error.message||"Zero-Cross-Analyse konnte nicht geladen werden."})}
+    }catch(error){const status=error?.code==="creator_feature_locked"?403:500;return res.status(status).json(clientSafeErrorPayload(req,error,status,"Zero-Cross-Analyse konnte nicht geladen werden."))}
 });
 app.post("/api/creator/cut-studio/jobs/:id/cancel",requireCreatorAccount,async(req,res)=>{
     try{
@@ -15953,7 +17370,7 @@ app.post("/api/creator/cut-studio/jobs/:id/cancel",requireCreatorAccount,async(r
         return res.json({ok:true,job:await transitionCutExportJob(req.creatorAccount.id,req.params.id,"canceled")});
     }catch(error){
         const status=error?.code==="creator_feature_locked"?403:error?.code==="cut_job_missing"?404:409;
-        return res.status(status).json({ok:false,error:error.message||"Cut-Export-Job konnte nicht abgebrochen werden."});
+        return res.status(status).json(clientSafeErrorPayload(req,error,status,"Cut-Export-Job konnte nicht abgebrochen werden."));
     }
 });
 
@@ -16003,39 +17420,39 @@ app.get("/api/bridge/games/rules",widgetBridgeHeartbeatLimiter,requireStudioBrid
     try{
         const access=await requireCreatorFeatureAccess(req.studioBridge.creator_id,"games","creator");
         return res.json({ok:true,rules:await listCreatorGameRules(req.studioBridge.creator_id),recent_hits:await recentCreatorGameRuleHits(req.studioBridge.creator_id,15),limits:{max_rules:Number(access.entitlements.max_game_rules||0)}});
-    }catch(error){return res.status(error?.code==="creator_feature_locked"?403:500).json({ok:false,error:error.message||"Game-Regeln konnten nicht geladen werden."})}
+    }catch(error){return res.status(error?.code==="creator_feature_locked"?403:500).json(clientSafeErrorPayload(req,error,error?.code==="creator_feature_locked"?403:500,"Game-Regeln konnten nicht geladen werden."))}
 });
-app.get("/api/bridge/games/runtime",widgetBridgeHeartbeatLimiter,requireStudioBridge,async(req,res)=>{try{await requireCreatorFeatureAccess(req.studioBridge.creator_id,"games","creator");return res.json({ok:true,runtime:await getCreatorGameRuntimePublic(req.studioBridge.creator_id,{ensure:true}),profile:await getCreatorGameProfile(req.studioBridge.creator_id)})}catch(error){return res.status(error?.code==="creator_feature_locked"?403:500).json({ok:false,error:error.message||"Game Runtime konnte nicht geladen werden."})}});
-app.post("/api/bridge/games/runtime/start",widgetBridgeHeartbeatLimiter,requireStudioBridge,async(req,res)=>{try{await requireCreatorFeatureAccess(req.studioBridge.creator_id,"games","creator");return res.json({ok:true,runtime:await startCreatorGameRuntime(req.studioBridge.creator_id)})}catch(error){return res.status(error?.code==="creator_feature_locked"?403:400).json({ok:false,error:error.message||"Game konnte nicht gestartet werden."})}});
-app.post("/api/bridge/games/runtime/stop",widgetBridgeHeartbeatLimiter,requireStudioBridge,async(req,res)=>{try{await requireCreatorFeatureAccess(req.studioBridge.creator_id,"games","creator");return res.json({ok:true,runtime:await stopCreatorGameRuntime(req.studioBridge.creator_id)})}catch(error){return res.status(error?.code==="creator_feature_locked"?403:400).json({ok:false,error:error.message||"Game konnte nicht gestoppt werden."})}});
-app.post("/api/bridge/games/runtime/reset",widgetBridgeHeartbeatLimiter,requireStudioBridge,async(req,res)=>{try{await requireCreatorFeatureAccess(req.studioBridge.creator_id,"games","creator");return res.json({ok:true,runtime:await resetCreatorGameRuntime(req.studioBridge.creator_id)})}catch(error){return res.status(error?.code==="creator_feature_locked"?403:400).json({ok:false,error:error.message||"Game konnte nicht zurückgesetzt werden."})}});
-app.post("/api/bridge/games/runtime/score",widgetBridgeHeartbeatLimiter,requireStudioBridge,async(req,res)=>{try{await requireCreatorFeatureAccess(req.studioBridge.creator_id,"games","creator");return res.json({ok:true,runtime:await scoreCreatorGameRuntime(req.studioBridge.creator_id,req.body||{})})}catch(error){return res.status(error?.code==="creator_feature_locked"?403:error?.code==="game_not_running"?409:400).json({ok:false,error:error.message||"Game Score konnte nicht geändert werden."})}});
+app.get("/api/bridge/games/runtime",widgetBridgeHeartbeatLimiter,requireStudioBridge,async(req,res)=>{try{await requireCreatorFeatureAccess(req.studioBridge.creator_id,"games","creator");return res.json({ok:true,runtime:await getCreatorGameRuntimePublic(req.studioBridge.creator_id,{ensure:true}),profile:await getCreatorGameProfile(req.studioBridge.creator_id)})}catch(error){return res.status(error?.code==="creator_feature_locked"?403:500).json(clientSafeErrorPayload(req,error,error?.code==="creator_feature_locked"?403:500,"Game Runtime konnte nicht geladen werden."))}});
+app.post("/api/bridge/games/runtime/start",widgetBridgeHeartbeatLimiter,requireStudioBridge,async(req,res)=>{try{await requireCreatorFeatureAccess(req.studioBridge.creator_id,"games","creator");return res.json({ok:true,runtime:await startCreatorGameRuntime(req.studioBridge.creator_id)})}catch(error){return res.status(error?.code==="creator_feature_locked"?403:400).json(clientSafeErrorPayload(req,error,error?.code==="creator_feature_locked"?403:400,"Game konnte nicht gestartet werden."))}});
+app.post("/api/bridge/games/runtime/stop",widgetBridgeHeartbeatLimiter,requireStudioBridge,async(req,res)=>{try{await requireCreatorFeatureAccess(req.studioBridge.creator_id,"games","creator");return res.json({ok:true,runtime:await stopCreatorGameRuntime(req.studioBridge.creator_id)})}catch(error){return res.status(error?.code==="creator_feature_locked"?403:400).json(clientSafeErrorPayload(req,error,error?.code==="creator_feature_locked"?403:400,"Game konnte nicht gestoppt werden."))}});
+app.post("/api/bridge/games/runtime/reset",widgetBridgeHeartbeatLimiter,requireStudioBridge,async(req,res)=>{try{await requireCreatorFeatureAccess(req.studioBridge.creator_id,"games","creator");return res.json({ok:true,runtime:await resetCreatorGameRuntime(req.studioBridge.creator_id)})}catch(error){return res.status(error?.code==="creator_feature_locked"?403:400).json(clientSafeErrorPayload(req,error,error?.code==="creator_feature_locked"?403:400,"Game konnte nicht zurückgesetzt werden."))}});
+app.post("/api/bridge/games/runtime/score",widgetBridgeHeartbeatLimiter,requireStudioBridge,async(req,res)=>{try{await requireCreatorFeatureAccess(req.studioBridge.creator_id,"games","creator");return res.json({ok:true,runtime:await scoreCreatorGameRuntime(req.studioBridge.creator_id,req.body||{})})}catch(error){return res.status(error?.code==="creator_feature_locked"?403:error?.code==="game_not_running"?409:400).json(clientSafeErrorPayload(req,error,error?.code==="creator_feature_locked"?403:error?.code==="game_not_running"?409:400,"Game Score konnte nicht geändert werden."))}});
 app.post("/api/bridge/cut-studio/audition-runtime",widgetBridgeEventLimiter,requireStudioBridge,async(req,res)=>{
     try{await requireCreatorFeatureAccess(req.studioBridge.creator_id,"cut_studio","creator");const runtime=await updateCutAuditionRuntime(req.studioBridge.creator_id,req.studioBridge.id,req.body||{});return res.json({ok:true,runtime})}
-    catch(error){return res.status(error?.code==="creator_feature_locked"?403:error?.code==="cut_project_missing"?404:400).json({ok:false,error:error.message||"Audition Clock konnte nicht aktualisiert werden."})}
+    catch(error){return res.status(error?.code==="creator_feature_locked"?403:error?.code==="cut_project_missing"?404:400).json(clientSafeErrorPayload(req,error,error?.code==="creator_feature_locked"?403:error?.code==="cut_project_missing"?404:400,"Audition Clock konnte nicht aktualisiert werden."))}
 });
 app.get("/api/bridge/cut-studio/jobs",widgetBridgeHeartbeatLimiter,requireStudioBridge,async(req,res)=>{
     res.set("Cache-Control","no-store");
     try{
         const access=await requireCreatorFeatureAccess(req.studioBridge.creator_id,"cut_studio","creator");
         return res.json({ok:true,jobs:await listCutExportJobs(req.studioBridge.creator_id,50,{includeAudition:true}),limits:{max_pending_jobs:Number(access.entitlements.max_pending_cut_jobs||0)}});
-    }catch(error){return res.status(error?.code==="creator_feature_locked"?403:500).json({ok:false,error:error.message||"Cut-Export-Jobs konnten nicht geladen werden."})}
+    }catch(error){return res.status(error?.code==="creator_feature_locked"?403:500).json(clientSafeErrorPayload(req,error,error?.code==="creator_feature_locked"?403:500,"Cut-Export-Jobs konnten nicht geladen werden."))}
 });
 app.post("/api/bridge/cut-studio/jobs/:id/claim",widgetBridgeEventLimiter,requireStudioBridge,async(req,res)=>{
     try{await requireCreatorFeatureAccess(req.studioBridge.creator_id,"cut_studio","creator");return res.json({ok:true,job:await transitionCutExportJob(req.studioBridge.creator_id,req.params.id,"claimed",{bridgeId:req.studioBridge.id})})}
-    catch(error){return res.status(error?.code==="creator_feature_locked"?403:error?.code==="cut_job_missing"?404:409).json({ok:false,error:error.message||"Cut-Job konnte nicht reserviert werden."})}
+    catch(error){return res.status(error?.code==="creator_feature_locked"?403:error?.code==="cut_job_missing"?404:409).json(clientSafeErrorPayload(req,error,error?.code==="creator_feature_locked"?403:error?.code==="cut_job_missing"?404:409,"Cut-Job konnte nicht reserviert werden."))}
 });
 app.post("/api/bridge/cut-studio/jobs/:id/processing",widgetBridgeEventLimiter,requireStudioBridge,async(req,res)=>{
     try{await requireCreatorFeatureAccess(req.studioBridge.creator_id,"cut_studio","creator");return res.json({ok:true,job:await transitionCutExportJob(req.studioBridge.creator_id,req.params.id,"processing",{bridgeId:req.studioBridge.id})})}
-    catch(error){return res.status(error?.code==="creator_feature_locked"?403:error?.code==="cut_job_missing"?404:409).json({ok:false,error:error.message||"Cut-Job konnte nicht gestartet werden."})}
+    catch(error){return res.status(error?.code==="creator_feature_locked"?403:error?.code==="cut_job_missing"?404:409).json(clientSafeErrorPayload(req,error,error?.code==="creator_feature_locked"?403:error?.code==="cut_job_missing"?404:409,"Cut-Job konnte nicht gestartet werden."))}
 });
 app.post("/api/bridge/cut-studio/jobs/:id/complete",widgetBridgeEventLimiter,requireStudioBridge,async(req,res)=>{
     try{await requireCreatorFeatureAccess(req.studioBridge.creator_id,"cut_studio","creator");return res.json({ok:true,job:await transitionCutExportJob(req.studioBridge.creator_id,req.params.id,"completed",{bridgeId:req.studioBridge.id,result:req.body?.result||{}})})}
-    catch(error){return res.status(error?.code==="creator_feature_locked"?403:error?.code==="cut_job_missing"?404:409).json({ok:false,error:error.message||"Cut-Job konnte nicht abgeschlossen werden."})}
+    catch(error){return res.status(error?.code==="creator_feature_locked"?403:error?.code==="cut_job_missing"?404:409).json(clientSafeErrorPayload(req,error,error?.code==="creator_feature_locked"?403:error?.code==="cut_job_missing"?404:409,"Cut-Job konnte nicht abgeschlossen werden."))}
 });
 app.post("/api/bridge/cut-studio/jobs/:id/fail",widgetBridgeEventLimiter,requireStudioBridge,async(req,res)=>{
     try{await requireCreatorFeatureAccess(req.studioBridge.creator_id,"cut_studio","creator");return res.json({ok:true,job:await transitionCutExportJob(req.studioBridge.creator_id,req.params.id,"failed",{bridgeId:req.studioBridge.id,errorMessage:req.body?.error_message||"Media Engine Fehler"})})}
-    catch(error){return res.status(error?.code==="creator_feature_locked"?403:error?.code==="cut_job_missing"?404:409).json({ok:false,error:error.message||"Cut-Job konnte nicht als fehlgeschlagen markiert werden."})}
+    catch(error){return res.status(error?.code==="creator_feature_locked"?403:error?.code==="cut_job_missing"?404:409).json(clientSafeErrorPayload(req,error,error?.code==="creator_feature_locked"?403:error?.code==="cut_job_missing"?404:409,"Cut-Job konnte nicht als fehlgeschlagen markiert werden."))}
 });
 
 app.post("/api/bridge/cut-studio/jobs/:id/retry",widgetBridgeEventLimiter,requireStudioBridge,async(req,res)=>{
@@ -16048,21 +17465,22 @@ app.post("/api/bridge/cut-studio/jobs/:id/retry",widgetBridgeEventLimiter,requir
         return res.json({ok:true,job});
     }catch(error){
         const status=error?.code==="creator_feature_locked"?403:error?.code==="cut_job_missing"?404:409;
-        return res.status(status).json({ok:false,error:error.message||"Cut-Job konnte nicht erneut eingereiht werden."});
+        return res.status(status).json(clientSafeErrorPayload(req,error,status,"Cut-Job konnte nicht erneut eingereiht werden."));
     }
 });
 
-app.get("/api/bridge/cut-studio/projects",widgetBridgeHeartbeatLimiter,requireStudioBridge,async(req,res)=>{try{const access=await requireCreatorFeatureAccess(req.studioBridge.creator_id,"cut_studio","creator");return res.json({ok:true,projects:await listCutProjects(req.studioBridge.creator_id),limits:{max_projects:Number(access.entitlements.max_cut_projects||0),max_clips_per_project:Number(access.entitlements.max_cut_clips_per_project||0)}})}catch(error){return res.status(error?.code==="creator_feature_locked"?403:500).json({ok:false,error:error.message||"Cut Studio Projekte konnten nicht geladen werden."})}});
+app.get("/api/bridge/cut-studio/projects",widgetBridgeHeartbeatLimiter,requireStudioBridge,async(req,res)=>{try{const access=await requireCreatorFeatureAccess(req.studioBridge.creator_id,"cut_studio","creator");return res.json({ok:true,projects:await listCutProjects(req.studioBridge.creator_id),limits:{max_projects:Number(access.entitlements.max_cut_projects||0),max_clips_per_project:Number(access.entitlements.max_cut_clips_per_project||0)}})}catch(error){return res.status(error?.code==="creator_feature_locked"?403:500).json(clientSafeErrorPayload(req,error,error?.code==="creator_feature_locked"?403:500,"Cut Studio Projekte konnten nicht geladen werden."))}});
 
 app.post("/api/bridge/cut-studio/projects",widgetBridgeEventLimiter,requireStudioBridge,async(req,res)=>{
     try{
         const creatorId=req.studioBridge.creator_id,access=await requireCreatorFeatureAccess(creatorId,"cut_studio","creator");
-        const count=await pool.query(`SELECT COUNT(*)::int AS count FROM creator_cut_projects WHERE creator_id=$1`,[creatorId]);
-        if(Number(count.rows[0]?.count||0)>=Number(access.entitlements.max_cut_projects||0))return res.status(403).json({ok:false,error:`Dein Zugriff erlaubt maximal ${Number(access.entitlements.max_cut_projects||0)} Cut-Studio Projekte.`});
         const clean=sanitizeCutProject(req.body||{});
-        const result=await pool.query(`INSERT INTO creator_cut_projects(creator_id,title,status,format,notes,source_name,export_preset,created_at,updated_at) VALUES($1,$2,$3,$4,$5,$6,$7::jsonb,NOW(),NOW()) RETURNING *`,[creatorId,clean.title,clean.status,clean.format,clean.notes,clean.source_name,JSON.stringify(clean.export_preset)]);
+        const result=await createCutProjectWithLimit(creatorId,clean,Number(access.entitlements.max_cut_projects||0));
         return res.status(201).json({ok:true,project:publicCutProject(result.rows[0],0)});
-    }catch(error){return res.status(error?.code==="creator_feature_locked"?403:500).json({ok:false,error:error.message||"Cut-Projekt konnte über den Launcher nicht erstellt werden."})}
+    }catch(error){
+        const status=error?.code==="creator_feature_locked"||error?.code==="cut_project_limit"?403:500;
+        return res.status(status).json(clientSafeErrorPayload(req,error,status,"Cut-Projekt konnte über den Launcher nicht erstellt werden.",{includeCode:true}));
+    }
 });
 
 app.put("/api/bridge/cut-studio/projects/:id",widgetBridgeEventLimiter,requireStudioBridge,async(req,res)=>{
@@ -16072,19 +17490,19 @@ app.put("/api/bridge/cut-studio/projects/:id",widgetBridgeEventLimiter,requireSt
         if(!result.rows[0])return res.status(404).json({ok:false,error:"Cut-Projekt nicht gefunden."});
         const count=await pool.query(`SELECT COUNT(*)::int AS count FROM creator_cut_clips WHERE project_id=$1`,[req.params.id]);
         return res.json({ok:true,project:publicCutProject(result.rows[0],count.rows[0]?.count||0)});
-    }catch(error){return res.status(error?.code==="creator_feature_locked"?403:500).json({ok:false,error:error.message||"Cut-Projekt konnte über den Launcher nicht gespeichert werden."})}
+    }catch(error){return res.status(error?.code==="creator_feature_locked"?403:500).json(clientSafeErrorPayload(req,error,error?.code==="creator_feature_locked"?403:500,"Cut-Projekt konnte über den Launcher nicht gespeichert werden."))}
 });
 
 app.post("/api/bridge/cut-studio/projects/:id/clips",widgetBridgeEventLimiter,requireStudioBridge,async(req,res)=>{
     try{
-        const creatorId=req.studioBridge.creator_id,access=await requireCreatorFeatureAccess(creatorId,"cut_studio","creator"),project=await getCutProject(creatorId,req.params.id);
-        if(!project)return res.status(404).json({ok:false,error:"Cut-Projekt nicht gefunden."});
-        if(project.clips.length>=Number(access.entitlements.max_cut_clips_per_project||0))return res.status(403).json({ok:false,error:`Dieses Projekt erlaubt maximal ${Number(access.entitlements.max_cut_clips_per_project||0)} Clips.`});
-        const requested=sanitizeCutClip(req.body||{}),nextOrder=await pool.query(`SELECT COALESCE(MAX(sort_order),-1)+1 AS next_order FROM creator_cut_clips WHERE creator_id=$1 AND project_id=$2`,[creatorId,req.params.id]),clean={...requested,sort_order:Number(nextOrder.rows[0]?.next_order||0)};
-        const result=await pool.query(`INSERT INTO creator_cut_clips(project_id,creator_id,label,in_ms,out_ms,caption,selected,sort_order,caption_enabled,caption_position,caption_size,caption_style,audio_gain_db,audio_fade_in_ms,audio_fade_out_ms,keyframe_enabled,keyframe_zoom_start,keyframe_zoom_end,keyframe_pan_x_start,keyframe_pan_x_end,keyframe_pan_y_start,keyframe_pan_y_end,keyframe_easing,visual_keyframes,created_at,updated_at) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24::jsonb,NOW(),NOW()) RETURNING *`,[req.params.id,creatorId,clean.label,clean.in_ms,clean.out_ms,clean.caption,clean.selected,clean.sort_order,clean.caption_enabled,clean.caption_position,clean.caption_size,clean.caption_style,clean.audio_gain_db,clean.audio_fade_in_ms,clean.audio_fade_out_ms,clean.keyframe_enabled,clean.keyframe_zoom_start,clean.keyframe_zoom_end,clean.keyframe_pan_x_start,clean.keyframe_pan_x_end,clean.keyframe_pan_y_start,clean.keyframe_pan_y_end,clean.keyframe_easing,JSON.stringify(clean.visual_keyframes||[])]);
-        await pool.query(`UPDATE creator_cut_projects SET updated_at=NOW() WHERE creator_id=$1 AND id=$2`,[creatorId,req.params.id]);
+        const creatorId=req.studioBridge.creator_id,access=await requireCreatorFeatureAccess(creatorId,"cut_studio","creator");
+        const requested=sanitizeCutClip(req.body||{});
+        const result=await createCutClipWithLimit(creatorId,req.params.id,requested,Number(access.entitlements.max_cut_clips_per_project||0));
         return res.status(201).json({ok:true,clip:publicCutClip(result.rows[0])});
-    }catch(error){return res.status(error?.code==="creator_feature_locked"?403:500).json({ok:false,error:error.message||"Clip konnte über den Launcher nicht erstellt werden."})}
+    }catch(error){
+        const status=error?.code==="creator_feature_locked"||error?.code==="cut_clip_limit"?403:error?.code==="cut_project_missing"?404:500;
+        return res.status(status).json(clientSafeErrorPayload(req,error,status,"Clip konnte über den Launcher nicht erstellt werden.",{includeCode:true}));
+    }
 });
 
 app.get(
@@ -16232,7 +17650,7 @@ app.post(
                 widget:publicStudioWidgetRow(result.rows[0])
             });
         } catch (error) {
-            console.error("Widget Studio Bridge Control Fehler:", error);
+            safeLogError("Widget Studio Bridge Control Fehler:",error);
             return res.status(500).json({ok:false,error:"Widget konnte über den Launcher nicht gesteuert werden."});
         }
     }
@@ -16270,7 +17688,7 @@ app.get(
                 live: await getStudioLiveState(req.creatorAccount.id)
             });
         } catch (error) {
-            console.error("Widget Studio Bridge Status Fehler:", error);
+            safeLogError("Widget Studio Bridge Status Fehler:",error);
             return res.status(500).json({ ok:false, error:"Bridge-Status konnte nicht geladen werden." });
         }
     }
@@ -16293,7 +17711,7 @@ app.post(
                 warning: "Dieser Bridge-Schlüssel wird nur einmal vollständig angezeigt."
             });
         } catch (error) {
-            console.error("Widget Studio Bridge Key Fehler:", error);
+            safeLogError("Widget Studio Bridge Key Fehler:",error);
             return res.status(500).json({ ok:false, error:"Bridge-Schlüssel konnte nicht erstellt werden." });
         }
     }
@@ -16309,7 +17727,7 @@ app.delete(
             if (!revoked) return res.status(404).json({ ok:false, error:"Aktiver Bridge-Schlüssel nicht gefunden." });
             return res.json({ ok:true, revoked:true });
         } catch (error) {
-            console.error("Widget Studio Bridge Revoke Fehler:", error);
+            safeLogError("Widget Studio Bridge Revoke Fehler:",error);
             return res.status(500).json({ ok:false, error:"Bridge-Schlüssel konnte nicht widerrufen werden." });
         }
     }
@@ -16362,7 +17780,7 @@ app.get(
                 [req.studioBridge.creator_id]
             );
             return res.json({ok:true,scenes:result.rows.map(row=>publicSceneRow(row,APP_BASE_URL)),server_time:new Date().toISOString()});
-        }catch(error){console.error("Bridge Scene Liste Fehler:",error);return res.status(500).json({ok:false,error:"Scene Liste konnte nicht geladen werden."})}
+        }catch(error){safeLogError("Bridge Scene Liste Fehler:",error);return res.status(500).json({ok:false,error:"Scene Liste konnte nicht geladen werden."})}
     }
 );
 
@@ -16395,7 +17813,7 @@ app.get(
                 engine:{capture:"launcher_local",stream_keys:"launcher_only",multistream:"launcher_local",scene_graph:"hybrid_offscreen",protocol:4},
                 server_time:new Date().toISOString()
             });
-        }catch(error){console.error("Bridge Stream Studio Fehler:",error);return res.status(500).json({ok:false,error:"Stream Studio Konfiguration konnte nicht geladen werden."});}
+        }catch(error){safeLogError("Bridge Stream Studio Fehler:",error);return res.status(500).json({ok:false,error:"Stream Studio Konfiguration konnte nicht geladen werden."});}
     }
 );
 
@@ -16457,7 +17875,7 @@ app.post(
                 protocol: 1
             });
         } catch (error) {
-            console.error("Widget Studio Bridge Heartbeat Fehler:", error);
+            safeLogError("Widget Studio Bridge Heartbeat Fehler:",error);
             return res.status(400).json({ ok:false, error:error.message || "Heartbeat fehlgeschlagen." });
         }
     }
@@ -16610,8 +18028,8 @@ app.post(
                 server_time:new Date().toISOString()
             });
         }catch(error){
-            console.error("Widget Studio Bridge Session Resume Fehler:",error);
-            return res.status(error?.code==="creator_feature_locked"?403:400).json({ok:false,allowed:false,error:error.message||"LIVE Session konnte nicht fortgesetzt werden."});
+            const status=error?.code==="creator_feature_locked"?403:400;
+            return res.status(status).json(clientSafeErrorPayload(req,error,status,"LIVE Session konnte nicht fortgesetzt werden.",{extra:{allowed:false}}));
         }
     }
 );
@@ -16635,7 +18053,7 @@ app.post(
             await pool.query(`UPDATE creator_live_state SET bridge_heartbeat_at=NOW() WHERE creator_id=$1`, [creatorId]);
             return res.json({ ok:true, live, session_id:live.session_id });
         } catch (error) {
-            console.error("Widget Studio Bridge Session Start Fehler:", error);
+            safeLogError("Widget Studio Bridge Session Start Fehler:",error);
             return res.status(error?.code==="creator_feature_locked"?403:400).json({ ok:false, error:error.message || "LIVE-Session konnte nicht gestartet werden." });
         }
     }
@@ -16657,7 +18075,7 @@ app.post(
             );
             return res.json({ ok:true, live });
         } catch (error) {
-            console.error("Widget Studio Bridge Session End Fehler:", error);
+            safeLogError("Widget Studio Bridge Session End Fehler:",error);
             return res.status(400).json({ ok:false, error:error.message || "LIVE-Session konnte nicht beendet werden." });
         }
     }
@@ -16693,7 +18111,7 @@ app.post(
                 bridge:await getStudioBridgeStatus(creatorId)
             });
         } catch (error) {
-            console.error("Widget Studio Bridge Event Fehler:", error);
+            safeLogError("Widget Studio Bridge Event Fehler:",error);
             return res.status(error?.code==="creator_feature_locked"?403:400).json({ ok:false, error:error.message || "Bridge-Events konnten nicht verarbeitet werden." });
         }
     }
@@ -16702,7 +18120,7 @@ app.post(
 app.get("/api/bridge/widget-studio/stream-bot", widgetBridgeEventLimiter, requireStudioBridge, async (req,res)=>{
     res.set("Cache-Control","no-store");
     try{return res.json({ok:true,stream_bot:await getStreamBotConfig(req.studioBridge.creator_id)});}
-    catch(error){console.error("Stream Bot Settings Fehler:",error);return res.status(500).json({ok:false,error:"Stream-Bot-Einstellungen konnten nicht geladen werden."});}
+    catch(error){safeLogError("Stream Bot Settings Fehler:",error);return res.status(500).json({ok:false,error:"Stream-Bot-Einstellungen konnten nicht geladen werden."});}
 });
 
 app.post("/api/bridge/widget-studio/stream-bot", widgetBridgeEventLimiter, requireStudioBridge, async (req,res)=>{
@@ -16712,8 +18130,8 @@ app.post("/api/bridge/widget-studio/stream-bot", widgetBridgeEventLimiter, requi
         const streamBot=await saveStreamBotConfig(req.studioBridge.creator_id,req.body?.stream_bot||req.body||{});
         return res.json({ok:true,stream_bot:streamBot});
     }catch(error){
-        console.error("Stream Bot Settings Save Fehler:",error);
-        return res.status(error?.code==="creator_feature_locked"?403:400).json({ok:false,error:error.message||"Stream-Bot-Einstellungen konnten nicht gespeichert werden."});
+        safeLogError("Stream Bot Settings Save Fehler:",error);
+        return res.status(error?.code==="creator_feature_locked"?403:400).json(clientSafeErrorPayload(req,error,error?.code==="creator_feature_locked"?403:400,"Stream-Bot-Einstellungen konnten nicht gespeichert werden."));
     }
 });
 
@@ -16778,7 +18196,7 @@ app.get("/api/bridge/widget-studio/actions", widgetBridgeEventLimiter, requireSt
             server_time:new Date().toISOString()
         });
     } catch(error){
-        console.error("Widget Studio Bridge Actions Fehler:",error);
+        safeLogError("Widget Studio Bridge Actions Fehler:",error);
         return res.status(500).json({ok:false,error:"Launcher-Aktionen konnten nicht geladen werden."});
     }
 });
@@ -16805,7 +18223,7 @@ app.post("/api/bridge/widget-studio/actions/ack", widgetBridgeEventLimiter, requ
         );
         return res.json({ok:true,acked:result.rowCount});
     } catch(error){
-        console.error("Widget Studio Bridge Action ACK Fehler:",error);
+        safeLogError("Widget Studio Bridge Action ACK Fehler:",error);
         return res.status(400).json({ok:false,error:"Launcher-Aktionen konnten nicht bestätigt werden."});
     }
 });
@@ -16845,7 +18263,7 @@ app.post("/api/bridge/widget-studio/actions/nack", widgetBridgeEventLimiter, req
         const expired=result.rows.filter(row=>row.status==="expired").length;
         return res.json({ok:true,nacked:result.rowCount,retry_scheduled:retry,expired});
     } catch(error){
-        console.error("Widget Studio Bridge Action NACK Fehler:",error);
+        safeLogError("Widget Studio Bridge Action NACK Fehler:",error);
         return res.status(400).json({ok:false,error:"Launcher-Aktion konnte nicht als fehlgeschlagen markiert werden."});
     }
 });
@@ -16854,21 +18272,29 @@ app.post("/api/bridge/widget-studio/actions/nack", widgetBridgeEventLimiter, req
 // WIDGET STUDIO · ÖFFENTLICHE CREATOR-ASSETS
 // ============================================================
 
-app.get("/widget-assets/:publicToken",widgetReadLimiter,async(req,res)=>{
+app.get("/widget-assets/:publicToken",publicRuntimeIpLimiter,widgetReadLimiter,async(req,res)=>{
     const token=String(req.params.publicToken||"");
     if(!/^[a-f0-9]{48}$/i.test(token))return res.status(404).end();
     try{
-        const result=await pool.query(`SELECT mime_type,content,sha256 FROM creator_widget_assets WHERE public_token=$1 LIMIT 1`,[token]);
+        const result=await pool.query(`
+            SELECT a.mime_type,a.content,a.sha256
+            FROM creator_widget_assets a
+            JOIN creator_accounts c ON c.id=a.creator_id
+            WHERE a.public_token=$1 AND c.status='active'
+            LIMIT 1
+        `,[token]);
         const row=result.rows[0];
         if(!row)return res.status(404).end();
         res.set("Content-Type",String(row.mime_type||"application/octet-stream"));
-        res.set("Cache-Control","public, max-age=31536000, immutable");
+        res.set("Cache-Control","private, max-age=300, must-revalidate");
+        res.set("CDN-Cache-Control","no-store");
+        res.set("Surrogate-Control","no-store");
         res.set("ETag",`"${String(row.sha256||"")}"`);
         res.set("Content-Disposition","inline");
         res.set("X-Content-Type-Options","nosniff");
         return res.send(row.content);
     }catch(error){
-        console.error("Widget Asset Public Fehler:",error);
+        safeLogError("Widget Asset Public Fehler:",error);
         return res.status(500).end();
     }
 });
@@ -16879,6 +18305,7 @@ app.get("/widget-assets/:publicToken",widgetReadLimiter,async(req,res)=>{
 
 app.get(
     "/api/widgets/studio/:publicToken",
+    publicRuntimeIpLimiter,
     widgetReadLimiter,
     async (req, res) => {
 
@@ -16985,10 +18412,7 @@ app.get(
         }
         catch (error) {
 
-            console.error(
-                "Widget Studio Public Fehler:",
-                error
-            );
+            safeLogError("Widget Studio Public Fehler:",error);
 
             return res.status(500).json({
                 ok: false,
@@ -17064,10 +18488,7 @@ app.get(
         }
         catch (error) {
 
-            console.error(
-                "Follower Widget Laden Fehler:",
-                error
-            );
+            safeLogError("Follower Widget Laden Fehler:",error);
 
             return res
                 .status(500)
@@ -17146,10 +18567,7 @@ app.put(
         }
         catch (error) {
 
-            console.error(
-                "Follower Widget Speichern Fehler:",
-                error
-            );
+            safeLogError("Follower Widget Speichern Fehler:",error);
 
             return res
                 .status(500)
@@ -17213,10 +18631,7 @@ app.post(
         }
         catch (error) {
 
-            console.error(
-                "Follower Widget Schlüssel Fehler:",
-                error
-            );
+            safeLogError("Follower Widget Schlüssel Fehler:",error);
 
             return res
                 .status(500)
@@ -17340,10 +18755,7 @@ app.get(
         }
         catch (error) {
 
-            console.error(
-                "Öffentliches Follower Widget Fehler:",
-                error
-            );
+            safeLogError("Öffentliches Follower Widget Fehler:",error);
 
             return res
                 .status(500)
@@ -17790,6 +19202,10 @@ app.get(
     "/api/public/status",
     async (req, res) => {
         res.set("Cache-Control", "no-store");
+        if (isShuttingDown) {
+            res.setHeader("Retry-After","30");
+            return res.status(503).json({ok:false,status:"maintenance",message:"Dienst wird kontrolliert neu gestartet."});
+        }
         try {
             await pool.query("SELECT 1");
             const incident=await getWebsiteIncidentState();
@@ -17801,9 +19217,47 @@ app.get(
                 incident_started_at:incident.started_at||null
             });
         } catch (error) {
-            console.error("Public Status Check Error:", error);
+            safeLogError("public-status", error);
             return res.status(503).json({ok:false,status:"degraded",message:"Systemstatus derzeit nicht vollständig verfügbar."});
         }
+    }
+);
+
+
+// ============================================================
+// PUBLIC AUTH / WEBAUTHN READINESS
+//
+// Nur absichtlich öffentliche WebAuthn-/MFA-Metadaten. Keine Account-,
+// Credential-, Challenge- oder Recovery-Daten. Der Produktions-Drill kann
+// damit RP-ID und Origin des tatsächlich deployten Servers verifizieren.
+// ============================================================
+
+app.get(
+    "/api/public/auth-readiness",
+    (req, res) => {
+        res.set("Cache-Control", "no-store");
+        res.set("Pragma", "no-cache");
+        res.set("Expires", "0");
+        return res.json({
+            schema:1,
+            ok:true,
+            canonical_origin:APP_CANONICAL_ORIGIN,
+            secure_context_required:NODE_ENV !== "development",
+            passkeys:{
+                available:true,
+                rp_id:PASSKEY_RP_ID,
+                expected_origins:[...PASSKEY_EXPECTED_ORIGINS],
+                user_verification:"required",
+                challenge_ttl_seconds:Math.floor(PASSKEY_CHALLENGE_TTL_MS / 1000),
+                max_per_account:PASSKEY_MAX_PER_ACCOUNT
+            },
+            mfa:{
+                totp:true,
+                recovery_codes:true,
+                passkey_login:true,
+                account_step_up:true
+            }
+        });
     }
 );
 
@@ -17824,12 +19278,37 @@ app.get(
             "no-store"
         );
 
+        if (isShuttingDown) {
+            res.setHeader("Retry-After","30");
+            return res.status(503).json({ok:false,status:"shutting_down"});
+        }
 
         try {
 
             await pool.query(
                 "SELECT 1"
             );
+
+            const schemaResult = await pool.query(
+                `SELECT schema_version
+                 FROM creator_database_schema_state
+                 WHERE slot = $1
+                 LIMIT 1`,
+                [DATABASE_SCHEMA_SLOT]
+            );
+            const observedSchemaVersion = Number(schemaResult.rows?.[0]?.schema_version || 0);
+
+            if (observedSchemaVersion !== DATABASE_SCHEMA_VERSION) {
+                res.setHeader("Retry-After", "15");
+                return res.status(503).json({
+                    ok:false,
+                    service:APP_NAME,
+                    version:BACKEND_VERSION,
+                    status:"schema_mismatch",
+                    database:"connected",
+                    schema_version:observedSchemaVersion
+                });
+            }
 
 
             return res.json({
@@ -17847,15 +19326,18 @@ app.get(
                     "online",
 
                 database:
-                    "connected"
+                    "connected",
+
+                schema_version:
+                    DATABASE_SCHEMA_VERSION
 
             });
 
         }
         catch (error) {
 
-            console.error(
-                "Health Check Error:",
+            safeLogError(
+                "health-check",
                 error
             );
 
@@ -17923,7 +19405,7 @@ app.get(
             const connection=await getConnection(req.creatorAccount.id);
             return res.json({ok:true,...publicTikTokConnection(connection)});
         } catch (error) {
-            console.error("Creator TikTok Status Fehler:",error);
+            safeLogError("Creator TikTok Status Fehler:",error);
             return res.status(500).json({ok:false,connected:false,error:"TikTok Status konnte nicht geladen werden."});
         }
     }
@@ -17938,7 +19420,7 @@ app.get(
         try {
             return await beginTikTokOAuth(res,req.creatorAccount.id);
         } catch (error) {
-            console.error("Creator TikTok Login Fehler:",error);
+            safeLogError("Creator TikTok Login Fehler:",error);
             return res.status(500).send(renderPage("TikTok Verbindung",`<p class="error">TikTok Login konnte nicht gestartet werden.</p>`));
         }
     }
@@ -17964,6 +19446,7 @@ app.post(
 app.post(
     "/api/creator/tiktok/disconnect",
     requireCreatorAccount,
+    requireCreatorAccountElevation,
     async(req,res)=>{
         res.set("Cache-Control","no-store");
         try {
@@ -17982,7 +19465,7 @@ app.post(
             await recordSecurityEvent(creatorId,"tiktok_disconnected");
             return res.json({ok:true,connected:false});
         } catch (error) {
-            console.error("Creator TikTok Disconnect Fehler:",error);
+            safeLogError("Creator TikTok Disconnect Fehler:",error);
             return res.status(500).json({ok:false,error:"TikTok-Verbindung konnte nicht getrennt werden."});
         }
     }
@@ -18099,10 +19582,7 @@ app.get(
         }
         catch (error) {
 
-            console.error(
-                "TikTok Status Error:",
-                error
-            );
+            safeLogError("TikTok Status Error:",error);
 
 
             return res
@@ -18382,6 +19862,9 @@ async function beginTikTokOAuth(
             sameSite:
                 "lax",
 
+            priority:
+                "high",
+
             maxAge:
                 OAUTH_TTL_MS,
 
@@ -18560,10 +20043,7 @@ app.get(
         }
         catch (error) {
 
-            console.error(
-                "TikTok Login Error:",
-                error
-            );
+            safeLogError("TikTok Login Error:",error);
 
 
             return res
@@ -18675,10 +20155,7 @@ app.post(
         }
         catch (error) {
 
-            console.error(
-                "TikTok Login Start Error:",
-                error
-            );
+            safeLogError("TikTok Login Start Error:",error);
 
 
             return res
@@ -18892,8 +20369,11 @@ app.get(
             res.clearCookie(
                 TIKTOK_STATE_COOKIE,
                 {
-                    path:
-                        "/auth/tiktok"
+                    httpOnly:true,
+                    secure:NODE_ENV !== "development",
+                    sameSite:"lax",
+                    priority:"high",
+                    path:"/auth/tiktok"
                 }
             );
 
@@ -19595,10 +21075,7 @@ app.post(
         }
         catch (error) {
 
-            console.error(
-                "TikTok Reset Fehler:",
-                error
-            );
+            safeLogError("TikTok Reset Fehler:",error);
 
 
             return res
@@ -19743,10 +21220,7 @@ app.post(
         }
         catch (error) {
 
-            console.error(
-                "Disconnect Error:",
-                error
-            );
+            safeLogError("Disconnect Error:",error);
 
 
             return res
@@ -19776,6 +21250,7 @@ async function fetchTikTok(
     options = {}
 ) {
 
+    const target = assertOutboundHttpsUrl(url,{allowedHosts:["open.tiktokapis.com"],label:"TikTok API URL"});
     const controller =
         new AbortController();
 
@@ -19794,10 +21269,15 @@ async function fetchTikTok(
     try {
 
         return await fetch(
-            url,
+            target.href,
             {
 
                 ...options,
+
+                // TikTok API-Aufrufe dürfen nicht still zu einem anderen Host
+                // weitergeleitet werden. Das verhindert Redirect-Leaks von Tokens.
+                redirect:
+                    "error",
 
                 signal:
                     controller.signal
@@ -19867,7 +21347,7 @@ async function safeJson(
 ) {
 
     const text =
-        await response.text();
+        await readResponseTextBounded(response,1024*1024);
 
 
     if (
@@ -20245,7 +21725,7 @@ function cleanDiagnosticText(
         300
 ) {
 
-    return String(
+    return redactSensitiveText(
         value ??
         ""
     )
@@ -20951,7 +22431,7 @@ app.post(
             }
             return res.status(204).end();
         }catch(error){
-            console.error("CSP Report Telemetrie Fehler:",error?.message||error);
+            safeLogError("CSP Report Telemetrie Fehler:",error);
             return res.status(204).end();
         }
     }
@@ -21004,7 +22484,7 @@ app.get(
                 }))
             });
         }catch(error){
-            console.error("Admin CSP Reports Fehler:",error);
+            safeLogError("Admin CSP Reports Fehler:",error);
             return res.status(500).json({ok:false,error:"CSP-Telemetrie konnte nicht geladen werden.",reference:_req?.requestId||null});
         }
     }
@@ -21018,6 +22498,8 @@ app.get(
 const PUBLIC_SUPPORT_CATEGORIES = new Set(["security","account","privacy","technical","other"]);
 const PUBLIC_SUPPORT_PRIORITIES = new Set(["normal","high","critical"]);
 const PUBLIC_SUPPORT_STATUSES = new Set(["new","reviewing","resolved","rejected"]);
+const PUBLIC_SUPPORT_CONTACT_RETENTION_DAYS = 30;
+const PUBLIC_SUPPORT_RESOLVED_RETENTION_DAYS = 90;
 
 function publicSupportText(value,maxLength,fallback="") {
     const text=String(value??"")
@@ -21154,7 +22636,7 @@ app.post(
                 message:"Danke. Deine Meldung wurde privat gespeichert und ist nicht öffentlich sichtbar."
             });
         }catch(error){
-            console.error("Public Support Report Fehler:",error);
+            safeLogError("Public Support Report Fehler:",error);
             return res.status(500).json({ok:false,error:"Die Meldung konnte nicht gespeichert werden."});
         }
     }
@@ -21164,9 +22646,11 @@ app.get(
     "/api/admin/creator-suite/support-reports",
     requireCreatorAccount,
     requireCreatorAdmin,
+    requireCreatorAdminSensitiveRead,
     async(req,res)=>{
         res.set("Cache-Control","no-store");
         try{
+            await cleanupOldSupportReports();
             const requestedStatus=String(req.query?.status||"new").trim();
             const requestedCategory=String(req.query?.category||"all").trim();
             const query=publicSupportText(req.query?.q,100,"");
@@ -21203,6 +22687,10 @@ app.get(
             const summary=summaryResult.rows[0]||{};
             return res.json({
                 ok:true,
+                retention:{
+                    contact_email_days:PUBLIC_SUPPORT_CONTACT_RETENTION_DAYS,
+                    resolved_report_days:PUBLIC_SUPPORT_RESOLVED_RETENTION_DAYS
+                },
                 summary:{
                     total:Number(summary.total||0),
                     new:Number(summary.new||0),
@@ -21214,7 +22702,7 @@ app.get(
                 reports:reportsResult.rows.map(publicSupportReportRow)
             });
         }catch(error){
-            console.error("Admin Support Reports Fehler:",error);
+            safeLogError("Admin Support Reports Fehler:",error);
             return res.status(500).json({ok:false,error:"Support-Meldungen konnten nicht geladen werden."});
         }
     }
@@ -21240,8 +22728,32 @@ app.put(
             if(!result.rows[0])return res.status(404).json({ok:false,error:"Support-Meldung nicht gefunden."});
             return res.json({ok:true,report:publicSupportReportRow(result.rows[0])});
         }catch(error){
-            console.error("Admin Support Report Update Fehler:",error);
+            safeLogError("Admin Support Report Update Fehler:",error);
             return res.status(500).json({ok:false,error:"Support-Meldung konnte nicht aktualisiert werden."});
+        }
+    }
+);
+
+
+app.delete(
+    "/api/admin/creator-suite/support-reports/:id",
+    requireCreatorAccount,
+    requireCreatorAdmin,
+    requireTrustedPublicWrite,
+    async(req,res)=>{
+        res.set("Cache-Control","no-store");
+        try{
+            const id=String(req.params.id||"");
+            const current=await pool.query(`SELECT status FROM public_support_reports WHERE id=$1 LIMIT 1`,[id]);
+            if(!current.rows[0])return res.status(404).json({ok:false,error:"Support-Meldung nicht gefunden."});
+            if(!["resolved","rejected"].includes(String(current.rows[0].status||""))){
+                return res.status(409).json({ok:false,error:"Offene Support-Meldungen müssen vor dem endgültigen Löschen erledigt oder abgewiesen werden."});
+            }
+            await pool.query(`DELETE FROM public_support_reports WHERE id=$1`,[id]);
+            return res.json({ok:true,purged:true});
+        }catch(error){
+            safeLogError("Admin Support Report Purge Fehler:",error);
+            return res.status(500).json({ok:false,error:"Support-Meldung konnte nicht sicher gelöscht werden."});
         }
     }
 );
@@ -21362,7 +22874,7 @@ app.get(
         try{
             return res.json({ok:true,summary:await publicReviewSummary(PUBLIC_REVIEW_CAMPAIGN)});
         }catch(error){
-            console.error("Public Reviews lesen Fehler:",error);
+            safeLogError("Public Reviews lesen Fehler:",error);
             return res.status(500).json({ok:false,error:"Rezensionen konnten nicht geladen werden."});
         }
     }
@@ -21458,7 +22970,7 @@ app.post(
                 summary:await publicReviewSummary(PUBLIC_REVIEW_CAMPAIGN)
             });
         }catch(error){
-            console.error("Public Review speichern Fehler:",error);
+            safeLogError("Public Review speichern Fehler:",error);
             return res.status(500).json({ok:false,error:"Rezension konnte nicht gespeichert werden."});
         }
     }
@@ -21513,7 +23025,7 @@ app.get(
                 reviews:rowsResult.rows.map(item=>publicReviewRow(item,{includeStatus:true}))
             });
         }catch(error){
-            console.error("Admin Public Reviews Fehler:",error);
+            safeLogError("Admin Public Reviews Fehler:",error);
             return res.status(500).json({ok:false,error:"Rezensionen konnten nicht geladen werden."});
         }
     }
@@ -21543,7 +23055,7 @@ app.put(
                 summary:await publicReviewSummary(PUBLIC_REVIEW_CAMPAIGN)
             });
         }catch(error){
-            console.error("Admin Public Review Update Fehler:",error);
+            safeLogError("Admin Public Review Update Fehler:",error);
             return res.status(500).json({ok:false,error:"Rezension konnte nicht moderiert werden."});
         }
     }
@@ -21695,6 +23207,9 @@ app.use(
                 "html"
             ],
 
+            dotfiles:
+                "deny",
+
             etag:
                 true,
 
@@ -21778,6 +23293,22 @@ app.use((req,res)=>{
 
 
 // ============================================================
+// REQUEST BODY ERROR BOUNDARY · SECURITY PASS R50
+// ============================================================
+
+function requestBodyFailure(error) {
+    const type=String(error?.type||"");
+    const status=Number(error?.status||error?.statusCode||0);
+    if(type==="entity.too.large"||type==="parameters.too.many"||status===413){
+        return {status:413,message:"Der Request-Body ist zu groß."};
+    }
+    if(type==="entity.parse.failed"||type==="encoding.unsupported"||(error instanceof SyntaxError&&status===400)){
+        return {status:400,message:"Der Request-Body ist ungültig."};
+    }
+    return null;
+}
+
+// ============================================================
 // SERVER ERROR HANDLER
 // ============================================================
 
@@ -21789,12 +23320,6 @@ app.use(
         next
     ) => {
 
-        console.error(
-            "Unbehandelter Serverfehler:",
-            error
-        );
-
-
         if (
             res.headersSent
         ) {
@@ -21804,6 +23329,22 @@ app.use(
             );
 
         }
+
+        const bodyFailure=requestBodyFailure(error);
+        if(bodyFailure){
+            res.setHeader("Cache-Control","no-store");
+            res.setHeader("CDN-Cache-Control","no-store");
+            res.setHeader("Surrogate-Control","no-store");
+            if(req.path.startsWith("/api/")||req.path.startsWith("/auth/")){
+                return res.status(bodyFailure.status).json({ok:false,error:bodyFailure.message});
+            }
+            return res.status(bodyFailure.status).type("text/plain; charset=utf-8").send(bodyFailure.message);
+        }
+
+        safeLogError(
+            `unhandled:${req?.requestId||"no-request-id"}`,
+            error
+        );
 
 
         if (
@@ -21856,10 +23397,35 @@ async function startServer() {
         validateConfiguration();
 
 
-        await initDatabase();
+        let bootstrapWaitLogged = false;
+        await withDatabaseBootstrapLock(
+            pool,
+            () => initDatabase(),
+            {
+                onWait: elapsed => {
+                    if (!bootstrapWaitLogged && elapsed >= 1000) {
+                        bootstrapWaitLogged = true;
+                        console.warn("Warte auf exklusiven Datenbank-Schema-Bootstrap einer anderen Instanz.");
+                    }
+                }
+            }
+        );
+        startAccountMailOutboxWorker();
+        startProductionMonitorWorker();
 
 
-        app.listen(
+        httpServer = http.createServer(
+            {
+                maxHeaderSize: HTTP_MAX_HEADER_SIZE,
+                headersTimeout: HTTP_HEADERS_TIMEOUT_MS,
+                requestTimeout: HTTP_REQUEST_TIMEOUT_MS,
+                keepAliveTimeout: HTTP_KEEP_ALIVE_TIMEOUT_MS
+            },
+            app
+        );
+        httpServer.maxRequestsPerSocket = HTTP_MAX_REQUESTS_PER_SOCKET;
+
+        httpServer.listen(
             PORT,
             () => {
 
@@ -22028,8 +23594,8 @@ async function startServer() {
     }
     catch (error) {
 
-        console.error(
-            "Backend konnte nicht gestartet werden:",
+        safeLogError(
+            "startup",
             error
         );
 
@@ -22042,5 +23608,49 @@ async function startServer() {
 
 }
 
+
+async function gracefulShutdown(reason, error = null) {
+    if (isShuttingDown) return;
+    isShuttingDown = true;
+
+    if (error) {
+        safeLogError(`fatal:${reason}`, error);
+        await Promise.race([
+            sendDirectProductionMonitorAlert({status:"open",alertKey:"process.fatal",severity:"critical",title:"Backend-Prozess beendet sich nach fatalem Fehler",summary:`Fataler Runtime-Pfad: ${String(reason||"runtime").slice(0,80)}.`}),
+            new Promise(resolve=>setTimeout(resolve,3500))
+        ]).catch(()=>{});
+    }
+    else console.warn(`Shutdown gestartet: ${String(reason || "signal")}`);
+
+    const forceExit = setTimeout(() => {
+        console.error("Shutdown-Zeitlimit erreicht. Prozess wird beendet.");
+        process.exit(error ? 1 : 0);
+    }, SHUTDOWN_GRACE_MS);
+    forceExit.unref?.();
+
+    try {
+        if (httpServer) {
+            httpServer.closeIdleConnections?.();
+            await new Promise(resolve => httpServer.close(() => resolve()));
+        }
+        await stopProductionMonitorWorker();
+        await stopAccountMailOutboxWorker();
+        await pool.end();
+        clearTimeout(forceExit);
+        process.exit(error ? 1 : 0);
+    } catch (shutdownError) {
+        safeLogError("shutdown", shutdownError);
+        clearTimeout(forceExit);
+        process.exit(1);
+    }
+}
+
+process.once("SIGTERM", () => { void gracefulShutdown("SIGTERM"); });
+process.once("SIGINT", () => { void gracefulShutdown("SIGINT"); });
+process.once("uncaughtException", error => { void gracefulShutdown("uncaughtException", error); });
+process.once("unhandledRejection", reason => {
+    const error = reason instanceof Error ? reason : new Error(String(reason || "Unhandled rejection"));
+    void gracefulShutdown("unhandledRejection", error);
+});
 
 startServer();
