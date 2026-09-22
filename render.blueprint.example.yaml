@@ -5,7 +5,6 @@
 # - Do not manage the same Render service from multiple Blueprints.
 # - Production deploys stay manual/gated (`autoDeployTrigger: "off"`).
 # - `package-lock.json` must exist before this build can pass because the build uses `npm ci`.
-
 services:
   - type: web
     name: cfs-zockt-backend
@@ -47,7 +46,6 @@ services:
         value: cstaudy/CFS-TikTok-Backend
       - key: CFS_ALLOW_LEGACY_VERIFICATION_FLAGS
         value: "false"
-
       # Existing / external credentials. Render prompts on initial Blueprint creation.
       - key: DATABASE_URL
         sync: false
@@ -61,7 +59,6 @@ services:
         sync: false
       - key: CFS_ADMIN_EMAILS
         sync: false
-
       # Independent security secrets. Generate once and keep stable.
       - key: CFS_TOKEN_ENCRYPTION_KEY
         generateValue: true
@@ -75,9 +72,10 @@ services:
         generateValue: true
       - key: CFS_ADMIN_ELEVATION_SECRET
         generateValue: true
+      - key: CFS_ACCOUNT_ELEVATION_SECRET
+        generateValue: true
       - key: CFS_ADMIN_AUDIT_HMAC_SECRET
         generateValue: true
-
       # Optional billing values: add in Render only when Stripe billing is actually enabled.
       # CFS_STRIPE_SECRET_KEY
       # CFS_STRIPE_WEBHOOK_SECRET
