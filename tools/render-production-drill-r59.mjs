@@ -32,6 +32,8 @@ function read(rel){return fs.readFileSync(path.join(root,rel),'utf8')}
 function safeDetail(error){return String(error?.message||error||'unbekannter Fehler').replace(/postgres(?:ql)?:\/\/[^\s]+/gi,'postgresql://[redacted]').slice(0,300)}
 function headerContains(res,name,needle){return String(res.headers.get(name)||'').toLowerCase().includes(String(needle).toLowerCase())}
 async function request(url,options={}){const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),10_000);try{return await fetch(url,{redirect:'manual',...options,signal:controller.signal,headers:{'user-agent':'cfs-zockt-render-drill/1.0',...(options.headers||{})}})}finally{clearTimeout(timer)}}
+function transientRequestError(error){const code=String(error?.code||error?.cause?.code||'').toUpperCase();const name=String(error?.name||'');const message=String(error?.message||'').toLowerCase();return name==='AbortError'||['ETIMEDOUT','ECONNRESET','ECONNREFUSED','EAI_AGAIN','UND_ERR_CONNECT_TIMEOUT','UND_ERR_HEADERS_TIMEOUT','UND_ERR_SOCKET'].includes(code)||message.includes('operation was aborted')||message.includes('fetch failed')||message.includes('timed out')||message.includes('timeout')}
+async function requestWithRetry(url,options={},attempts=3){let lastError=null;for(let attempt=1;attempt<=attempts;attempt++){try{return {res:await request(url,options),attempt,lastError}}catch(error){lastError=error;if(attempt>=attempts||!transientRequestError(error))throw error;await new Promise(resolve=>setTimeout(resolve,250*attempt));}}throw lastError}
 // ---------- Static repository / Blueprint readiness ----------
 add('static','package_lock','Backend lockfile exists',exists('package-lock.json'),'package-lock.json');
 add('static','start_command','npm start launches server.js',packageJson.scripts?.start==='node server.js',String(packageJson.scripts?.start||'missing'));
@@ -90,8 +92,9 @@ if(live){
     add('live','http_redirect_origin','HTTP redirect targets canonical origin',loc.startsWith(expectedOrigin),loc||'Location missing');
   }catch(error){add('live','http_redirect','HTTP permanently redirects to HTTPS',false,safeDetail(error));}
   try{
-    const res=await request(`${expectedOrigin}/`,{redirect:'follow'});
-    add('live','root_https','Production root responds over HTTPS',res.ok,`HTTP ${res.status}`);
+    const {res,attempt,lastError}=await requestWithRetry(`${expectedOrigin}/`,{redirect:'follow'},3);
+    const retryDetail=attempt>1?` · recovered on attempt ${attempt}/3 after ${safeDetail(lastError)}`:'';
+    add('live','root_https','Production root responds over HTTPS',res.ok,`HTTP ${res.status}${retryDetail}`);
     add('live','canonical_final','Final root origin is canonical',new URL(res.url).origin===expectedOrigin,res.url);
     add('live','hsts','HSTS header present',Boolean(res.headers.get('strict-transport-security')),res.headers.get('strict-transport-security')||'missing');
     add('live','csp','CSP header present',Boolean(res.headers.get('content-security-policy')),'content-security-policy');
@@ -100,7 +103,7 @@ if(live){
     add('live','permissions','Permissions-Policy present',Boolean(res.headers.get('permissions-policy')),'permissions-policy');
     add('live','powered_by','X-Powered-By absent',!res.headers.get('x-powered-by'),res.headers.get('x-powered-by')||'absent');
     add('live','request_id','X-Request-ID present',Boolean(res.headers.get('x-request-id')),res.headers.get('x-request-id')?'present':'missing');
-  }catch(error){add('live','root_https','Production root responds over HTTPS',false,safeDetail(error));}
+  }catch(error){add('live','root_https','Production root responds over HTTPS',false,`failed after 3 attempts: ${safeDetail(error)}`);}
   try{
     const res=await request(`${expectedOrigin}/api/health`,{redirect:'error'});
     let body={};try{body=await res.json()}catch{}
