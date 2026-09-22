@@ -9,13 +9,14 @@ const require=createRequire(import.meta.url);
 const {runtimeDoctor}=require('../lib/config-doctor.js');
 const {databaseRuntimeSecurity}=require('../lib/database-runtime-security.js');
 const {DATABASE_SCHEMA_VERSION}=require('../lib/database-schema-contract.js');
-
 const args=process.argv.slice(2);
 function value(name,fallback=''){const i=args.indexOf(name);return i>=0?(args[i+1]||fallback):fallback}
 const positional=args.find((arg,i)=>!arg.startsWith('--')&&(i===0||!['--target','--out'].includes(args[i-1])))||'.';
 const root=path.resolve(positional);
 const live=args.includes('--live');
 const strictEnv=args.includes('--strict-env');
+const externalOnly=args.includes('--external-only');
+if(strictEnv&&externalOnly)throw new Error('--strict-env und --external-only dürfen nicht kombiniert werden.');
 const targetRaw=value('--target',process.env.CFS_PRODUCTION_URL||process.env.APP_BASE_URL||'https://cfs-zockt.de');
 const outFile=path.resolve(root,value('--out','reports/render-production-drill-r59.json'));
 const canonical=new URL(targetRaw);
@@ -31,7 +32,6 @@ function read(rel){return fs.readFileSync(path.join(root,rel),'utf8')}
 function safeDetail(error){return String(error?.message||error||'unbekannter Fehler').replace(/postgres(?:ql)?:\/\/[^\s]+/gi,'postgresql://[redacted]').slice(0,300)}
 function headerContains(res,name,needle){return String(res.headers.get(name)||'').toLowerCase().includes(String(needle).toLowerCase())}
 async function request(url,options={}){const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),10_000);try{return await fetch(url,{redirect:'manual',...options,signal:controller.signal,headers:{'user-agent':'cfs-zockt-render-drill/1.0',...(options.headers||{})}})}finally{clearTimeout(timer)}}
-
 // ---------- Static repository / Blueprint readiness ----------
 add('static','package_lock','Backend lockfile exists',exists('package-lock.json'),'package-lock.json');
 add('static','start_command','npm start launches server.js',packageJson.scripts?.start==='node server.js',String(packageJson.scripts?.start||'missing'));
@@ -53,10 +53,9 @@ if(exists('render.blueprint.example.yaml')){
   add('static','generated_secrets','Independent security secrets are generated',generated.every(name=>new RegExp(`key:\\s*${name}[\\s\\S]{0,80}generateValue:\\s*true`).test(y)),`${generated.length} secrets`);
   add('static','no_plaintext_secrets','Blueprint contains no obvious plaintext production credential',!/(sk_live_|rk_live_|whsec_[A-Za-z0-9_-]{12,}|postgres(?:ql)?:\/\/[^\s]+@|BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY)/.test(y));
 }
-
 // ---------- Runtime environment readiness ----------
 const runtimeSignal=['DATABASE_URL','TIKTOK_CLIENT_KEY','TIKTOK_CLIENT_SECRET','CFS_LAUNCHER_API_KEY','CFS_TOKEN_ENCRYPTION_KEY'].some(name=>String(process.env[name]||'').trim());
-if(runtimeSignal||strictEnv){
+if(!externalOnly&&(runtimeSignal||strictEnv)){
   const doctor=runtimeDoctor(process.env);
   add('runtime','config_doctor','Production environment passes runtime doctor',doctor.ready,doctor.blocking.length?doctor.blocking.join(', '):`${doctor.passed}/${doctor.total}`);
   if(process.env.DATABASE_URL){
@@ -66,10 +65,10 @@ if(runtimeSignal||strictEnv){
     }catch(error){add('runtime','database_transport','Database transport policy accepted',false,safeDetail(error));}
   }else add('runtime','database_transport','Database transport policy accepted',false,'DATABASE_URL missing');
 }else{
-  add('runtime','config_doctor','Production environment supplied to drill',null,'not evaluated; run on Render with --strict-env',false);
-  add('runtime','database_transport','Database transport policy supplied to drill',null,'not evaluated; run on Render with --strict-env',false);
+  const reason=externalOnly?'skipped by --external-only; Render-internal secrets are intentionally not required':'not evaluated; run on Render with --strict-env';
+  add('runtime','config_doctor','Production environment supplied to drill',null,reason,false);
+  add('runtime','database_transport','Database transport policy supplied to drill',null,reason,false);
 }
-
 // ---------- Live deployment verification ----------
 if(live){
   let dnsOk=false;
@@ -80,7 +79,6 @@ if(live){
     if(['EAI_AGAIN','ETIMEOUT','ECONNREFUSED'].includes(code)){externalBlocked=true;blocked('live','dns','Canonical DNS verification blocked by test environment',`${code}: ${safeDetail(error)}`);}
     else add('live','dns','Canonical DNS resolves',false,`${code||'DNS'}: ${safeDetail(error)}`);
   }
-
   if(externalBlocked){
     blocked('live','external_suite','External HTTP/TLS suite not executed','DNS resolver in this test environment is temporarily unavailable; rerun from Render or another external network.');
   }else{
@@ -90,7 +88,6 @@ if(live){
     add('live','http_redirect','HTTP permanently redirects to HTTPS',res.status===301||res.status===308,`HTTP ${res.status}`);
     add('live','http_redirect_origin','HTTP redirect targets canonical origin',loc.startsWith(expectedOrigin),loc||'Location missing');
   }catch(error){add('live','http_redirect','HTTP permanently redirects to HTTPS',false,safeDetail(error));}
-
   try{
     const res=await request(`${expectedOrigin}/`,{redirect:'follow'});
     add('live','root_https','Production root responds over HTTPS',res.ok,`HTTP ${res.status}`);
@@ -103,7 +100,6 @@ if(live){
     add('live','powered_by','X-Powered-By absent',!res.headers.get('x-powered-by'),res.headers.get('x-powered-by')||'absent');
     add('live','request_id','X-Request-ID present',Boolean(res.headers.get('x-request-id')),res.headers.get('x-request-id')?'present':'missing');
   }catch(error){add('live','root_https','Production root responds over HTTPS',false,safeDetail(error));}
-
   try{
     const res=await request(`${expectedOrigin}/api/health`,{redirect:'error'});
     let body={};try{body=await res.json()}catch{}
@@ -114,24 +110,20 @@ if(live){
     add('live','health_no_store','Health response is no-store',headerContains(res,'cache-control','no-store'),res.headers.get('cache-control')||'missing');
     add('live','health_no_cookie','Health response sets no cookies',!res.headers.get('set-cookie'),res.headers.get('set-cookie')?'unexpected Set-Cookie':'none');
   }catch(error){add('live','health_http','Render health endpoint returns 200',false,safeDetail(error));}
-
   try{
     const res=await request(`${expectedOrigin}/api/public/status`,{redirect:'error'});
     let body={};try{body=await res.json()}catch{}
-    add('live','public_status','Public status endpoint healthy',res.status===200&&body?.ok===true,['online','degraded'].includes(String(body?.status||'')),`HTTP ${res.status} · ${body?.status||'unknown'}`);
+    add('live','public_status','Public status endpoint healthy',res.status===200&&body?.ok===true&&['online','degraded'].includes(String(body?.status||'')),`HTTP ${res.status} · ${body?.status||'unknown'}`);
     add('live','public_status_no_store','Public status is no-store',headerContains(res,'cache-control','no-store'),res.headers.get('cache-control')||'missing');
   }catch(error){add('live','public_status','Public status endpoint healthy',false,safeDetail(error));}
-
   for(const probe of ['/.env','/.git/config','/package.json']){
     try{const res=await request(`${expectedOrigin}${probe}`,{redirect:'error'});add('live',`private_${probe.replace(/\W+/g,'_')}`,`${probe} is not publicly exposed`,[403,404].includes(res.status),`HTTP ${res.status}`);}
     catch(error){add('live',`private_${probe.replace(/\W+/g,'_')}`,`${probe} is not publicly exposed`,false,safeDetail(error));}
   }
-
   try{
     const res=await request(`${expectedOrigin}/api/account/login`,{method:'POST',headers:{'content-type':'application/json'},body:'{'});
     add('live','malformed_json','Malformed JSON is rejected as client error',res.status===400,`HTTP ${res.status}`);
   }catch(error){add('live','malformed_json','Malformed JSON is rejected as client error',false,safeDetail(error));}
-
   await new Promise(resolve=>{
     const socket=tls.connect({host:expectedHost,port:443,servername:expectedHost,rejectUnauthorized:true,timeout:10_000},()=>{
       const cert=socket.getPeerCertificate();const validTo=cert?.valid_to?new Date(cert.valid_to):null;
@@ -146,13 +138,12 @@ if(live){
 }else{
   add('live','external_verification','Live Render/DNS/TLS verification requested',null,'skipped; run with --live after deployment',false);
 }
-
 const blockingFails=checks.filter(c=>c.blocking&&c.ok===false);
 const staticRuntimeFails=blockingFails.filter(c=>c.scope!=='live');
 const liveFails=blockingFails.filter(c=>c.scope==='live');
 const blockedChecks=checks.filter(c=>c.blocked);
 const status=staticRuntimeFails.length?'NO_GO':live?(blockedChecks.length?'EXTERNAL_BLOCKED':liveFails.length?'LIVE_FAIL':'LIVE_PASS'):'STATIC_READY';
-const report={schema:1,generated_at:new Date().toISOString(),status,target:expectedOrigin,live_requested:live,strict_env:strictEnv,render_git_commit:String(process.env.RENDER_GIT_COMMIT||'').trim(),render_service_id:String(process.env.RENDER_SERVICE_ID||'').trim(),summary:{passed:checks.filter(c=>c.ok===true).length,failed:blockingFails.length,skipped:checks.filter(c=>c.status==='SKIP').length,blocked:blockedChecks.length,static_runtime_failed:staticRuntimeFails.length,live_failed:liveFails.length},checks};
+const report={schema:1,generated_at:new Date().toISOString(),status,target:expectedOrigin,live_requested:live,strict_env:strictEnv,external_only:externalOnly,render_git_commit:String(process.env.RENDER_GIT_COMMIT||'').trim(),render_service_id:String(process.env.RENDER_SERVICE_ID||'').trim(),summary:{passed:checks.filter(c=>c.ok===true).length,failed:blockingFails.length,skipped:checks.filter(c=>c.status==='SKIP').length,blocked:blockedChecks.length,static_runtime_failed:staticRuntimeFails.length,live_failed:liveFails.length},checks};
 fs.mkdirSync(path.dirname(outFile),{recursive:true});fs.writeFileSync(outFile,JSON.stringify(report,null,2));
 for(const c of checks)console.log(`${c.status.padEnd(4)}  [${c.scope}] ${c.label}${c.detail?` · ${c.detail}`:''}`);
 console.log(`\nRender Production Drill: ${status}`);
