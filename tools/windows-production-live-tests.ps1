@@ -1,6 +1,5 @@
 ﻿[CmdletBinding()]
 param(
-    [ValidateSet('MENU','R59','R60','R61','R62','R63','R64','R65','R66','R67','CHECK')]
     [string]$Round = 'MENU',
     [string]$RepoUrl = 'https://github.com/cstaudy/cfs-zockt-Website.git',
     [switch]$NoUpdate
@@ -96,4 +95,30 @@ function R67([string]$root){
     Write-Host 'Der lokale Schritt behauptet bewusst noch keinen LIVE_LAUNCH_PASS.'
 }
 function Check([string]$root){foreach($n in 59..67){$s="security$n`:check";Invoke-NpmCommand "R$n statisches Gate" @('run',$s)};Ok 'R59-R67 statische Gates vollständig.'}
-try{foreach($cmd in @('git','node','npm.cmd')){if(-not(Has $cmd)){throw "Benötigtes Programm fehlt: $cmd"}};$root=[string](FindRoot);$root=[string](UpdateRoot $root);Set-Location -LiteralPath $root;Harvest $root;SyncIn $root;Section 'CFS ZOCKT Production LIVE Tests R59-R67';Write-Host "Repo: $root";Write-Host "Node: $(& node --version)";Invoke-NpmCommand 'npm ci' @('ci');if($Round-eq'MENU'){ShowEvidence;Write-Host '';Write-Host 'R59 Render | R60 Recovery | R61 Mail | R62 Passkey/MFA | R63 Windows | R64 2h OBS/LIVE | R65 Monitoring | R66 Stripe LIVE | R67 Launch Gate | CHECK';$Round=(Read-Host 'Welche Runde starten?').Trim().ToUpperInvariant()};switch($Round){'R59'{R59 $root};'R60'{R60 $root};'R61'{R61 $root};'R62'{R62 $root};'R63'{R63 $root};'R64'{R64 $root};'R65'{R65 $root};'R66'{R66 $root};'R67'{R67 $root};'CHECK'{Check $root};default{throw "Unbekannte Runde: $Round"}};Harvest $root;ShowEvidence;exit 0}catch{Write-Host '';Write-Host 'BLOCKED / FAIL';Write-Host $_.Exception.Message;exit 10}finally{RestoreEnv}
+function ResolveRound([string]$value){
+    $valid=@('R59','R60','R61','R62','R63','R64','R65','R66','R67','CHECK')
+    $numberMap=@{
+        '1'='R59'; '2'='R60'; '3'='R61'; '4'='R62'; '5'='R63'
+        '6'='R64'; '7'='R65'; '8'='R66'; '9'='R67'; '10'='CHECK'
+    }
+    $candidate=if($null-eq$value){''}else{$value.Trim().ToUpperInvariant()}
+    if($candidate -and $candidate -ne 'MENU'){
+        if($numberMap.ContainsKey($candidate)){return [string]$numberMap[$candidate]}
+        if($valid -contains $candidate){return [string]$candidate}
+        throw "Unbekannte Runde: $value. Erlaubt: R59-R67 oder CHECK."
+    }
+    while($true){
+        Write-Host ''
+        Write-Host '1 R59 Render        | 2 R60 Recovery     | 3 R61 Mail'
+        Write-Host '4 R62 Passkey/MFA   | 5 R63 Windows      | 6 R64 2h OBS/LIVE'
+        Write-Host '7 R65 Monitoring    | 8 R66 Stripe LIVE  | 9 R67 Launch Gate'
+        Write-Host '10 CHECK (alle statischen Gates)'
+        $raw=Read-Host 'Welche Runde starten? [ENTER = CHECK]'
+        $candidate=if($null-eq$raw){''}else{$raw.Trim().ToUpperInvariant()}
+        if([string]::IsNullOrWhiteSpace($candidate)){return 'CHECK'}
+        if($numberMap.ContainsKey($candidate)){return [string]$numberMap[$candidate]}
+        if($valid -contains $candidate){return [string]$candidate}
+        Warn "Ungültige Auswahl '$raw'. Bitte R59-R67, CHECK oder 1-10 eingeben."
+    }
+}
+try{foreach($cmd in @('git','node','npm.cmd')){if(-not(Has $cmd)){throw "Benötigtes Programm fehlt: $cmd"}};$root=[string](FindRoot);$root=[string](UpdateRoot $root);Set-Location -LiteralPath $root;Harvest $root;SyncIn $root;Section 'CFS ZOCKT Production LIVE Tests R59-R67';Write-Host "Repo: $root";Write-Host "Node: $(& node --version)";Invoke-NpmCommand 'npm ci' @('ci');if($Round-eq'MENU'){ShowEvidence};$Round=[string](ResolveRound $Round);Info "Ausgewählt: $Round";switch($Round){'R59'{R59 $root};'R60'{R60 $root};'R61'{R61 $root};'R62'{R62 $root};'R63'{R63 $root};'R64'{R64 $root};'R65'{R65 $root};'R66'{R66 $root};'R67'{R67 $root};'CHECK'{Check $root};default{throw "Unbekannte Runde: $Round"}};Harvest $root;ShowEvidence;exit 0}catch{Write-Host '';Write-Host 'BLOCKED / FAIL';Write-Host $_.Exception.Message;exit 10}finally{RestoreEnv}
