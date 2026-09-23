@@ -28,12 +28,30 @@ function FindRoot(){foreach($p in @((Split-Path -Parent $PSScriptRoot),(Get-Loca
 function UpdateRoot([string]$p){if($NoUpdate -or -not(Test-Path (Join-Path $p '.git'))){return [string]$p};Push-Location $p;try{$dirty=@(& git status --porcelain);if($dirty.Count-eq 0){& git pull --ff-only | Out-Host;if($LASTEXITCODE-ne 0){throw 'git pull fehlgeschlagen.'};return [string]$p}else{Warn 'Checkout hat lokale Änderungen; verwende für die Tests einen frischen GitHub-Checkout.'}}finally{Pop-Location};return [string](FreshClone)}
 function SetEnv([string]$n,[string]$v){if(-not$script:OriginalEnv.ContainsKey($n)){$script:OriginalEnv[$n]=[Environment]::GetEnvironmentVariable($n,'Process')};[Environment]::SetEnvironmentVariable($n,$v,'Process')}
 function RestoreEnv(){foreach($n in $script:OriginalEnv.Keys){[Environment]::SetEnvironmentVariable($n,$script:OriginalEnv[$n],'Process')}}
-function Secret([string]$n,[string]$prompt){$v=[Environment]::GetEnvironmentVariable($n,'Process');if(-not[string]::IsNullOrWhiteSpace($v)){Info "$n bereits lokal gesetzt; Wert wird nicht angezeigt.";return $v};$s=Read-Host $prompt -AsSecureString;$ptr=[Runtime.InteropServices.Marshal]::SecureStringToBSTR($s);try{return[Runtime.InteropServices.Marshal]::PtrToStringBSTR($ptr)}finally{[Runtime.InteropServices.Marshal]::ZeroFreeBSTR($ptr)}}
-function TextValue([string]$n,[string]$prompt,[string]$default=''){$v=[Environment]::GetEnvironmentVariable($n,'Process');if(-not[string]::IsNullOrWhiteSpace($v)){return $v};$label=$prompt;if($default){$label="$prompt [$default]"};$r=Read-Host $label;if([string]::IsNullOrWhiteSpace($r)){return $default};return $r}
+function Secret([string]$n,[string]$prompt){$v=[Environment]::GetEnvironmentVariable($n,'Process');if(-not[string]::IsNullOrWhiteSpace($v)){Info "$n bereits lokal gesetzt; Wert wird nicht angezeigt.";return $v};$s=Read-Host "$prompt [SKIP = diesen Test überspringen]" -AsSecureString;$ptr=[Runtime.InteropServices.Marshal]::SecureStringToBSTR($s);try{$plain=[Runtime.InteropServices.Marshal]::PtrToStringBSTR($ptr);if($plain -ceq 'SKIP'){throw "Test vom Benutzer übersprungen: $n fehlt."};return $plain}finally{[Runtime.InteropServices.Marshal]::ZeroFreeBSTR($ptr)}}
+function TextValue([string]$n,[string]$prompt,[string]$default=''){$v=[Environment]::GetEnvironmentVariable($n,'Process');if(-not[string]::IsNullOrWhiteSpace($v)){return $v};$label="$prompt [SKIP = diesen Test überspringen]";if($default){$label="$prompt [$default; SKIP = überspringen]"};$r=Read-Host $label;if($r -ceq 'SKIP'){throw "Test vom Benutzer übersprungen: $n fehlt."};if([string]::IsNullOrWhiteSpace($r)){return $default};return $r}
 function NeedPass([string]$prompt){$r=Read-Host "$prompt - tippe exakt PASS";return $r -ceq 'PASS'}
 function PassText([string]$prompt){if(NeedPass $prompt){return 'true'};return 'false'}
 function Invoke-NpmCommand([string]$title,[string[]]$npmArgs){Section $title;$npmCmd=(Get-Command 'npm.cmd' -CommandType Application -ErrorAction Stop).Source;& $npmCmd @npmArgs;if($LASTEXITCODE-ne 0){throw "$title fehlgeschlagen (ExitCode=$LASTEXITCODE)"};Ok $title}
 function NodeStep([string]$title,[string[]]$nodeArgs){Section $title;& node @nodeArgs;if($LASTEXITCODE-ne 0){throw "$title fehlgeschlagen (ExitCode=$LASTEXITCODE)"};Ok $title}
+
+function EnsurePostgresClientTools(){
+    $needed=@('pg_dump.exe','pg_restore.exe','psql.exe')
+    $missing=@($needed|Where-Object{-not(Has $_)})
+    if($missing.Count -eq 0){Ok 'PostgreSQL Clienttools im PATH gefunden.';return}
+    $roots=@('C:\Program Files\PostgreSQL','C:\Program Files (x86)\PostgreSQL')
+    $bins=@()
+    foreach($base in $roots){
+        if(Test-Path -LiteralPath $base){
+            $bins+=@(Get-ChildItem -LiteralPath $base -Directory -ErrorAction SilentlyContinue | ForEach-Object {Join-Path $_.FullName 'bin'} | Where-Object {Test-Path -LiteralPath (Join-Path $_ 'pg_dump.exe')})
+        }
+    }
+    $bin=$bins|Sort-Object -Descending|Select-Object -First 1
+    if($null-ne$bin){$env:Path="$bin;$env:Path";Info "PostgreSQL Clienttools automatisch gefunden: $bin"}
+    $missing=@($needed|Where-Object{-not(Has $_)})
+    if($missing.Count -gt 0){throw ('R60 Voraussetzung fehlt: PostgreSQL Clienttools nicht gefunden: '+($missing -join ', ')+'. Installiere PostgreSQL Client Tools und starte ALL erneut.')}
+    Ok 'PostgreSQL Clienttools bereit.'
+}
 function EvidenceDest([string]$rel){return Join-Path $script:EvidenceStore ($rel -replace '[\\/]','__')}
 function SyncIn([string]$root){New-Item -ItemType Directory -Force -Path $script:EvidenceStore|Out-Null;foreach($rel in $script:EvidenceFiles){$src=EvidenceDest $rel;$dst=Join-Path $root $rel;if(Test-Path $src){New-Item -ItemType Directory -Force -Path (Split-Path -Parent $dst)|Out-Null;Copy-Item $src $dst -Force}}}
 function Harvest([string]$root){New-Item -ItemType Directory -Force -Path $script:EvidenceStore|Out-Null;foreach($rel in $script:EvidenceFiles){$f=Join-Path $root $rel;if(Test-Path $f){Copy-Item $f (EvidenceDest $rel) -Force}}
@@ -41,7 +59,7 @@ function Harvest([string]$root){New-Item -ItemType Directory -Force -Path $scrip
 }
 function ShowEvidence(){Section 'Gesammelte Production-Evidence';foreach($rel in $script:EvidenceFiles){$f=EvidenceDest $rel;if(Test-Path $f){try{$j=Get-Content $f -Raw|ConvertFrom-Json;Write-Host ("PASS/FOUND  {0,-56} {1}" -f $rel,[string]$j.status)}catch{Write-Host ("FOUND       {0}" -f $rel)}}else{Write-Host ("OPEN        {0}" -f $rel)}};Write-Host "Evidence Store: $script:EvidenceStore"}
 function R59([string]$root){Invoke-NpmCommand 'R59 Security Gate' @('run','security59:check');Invoke-NpmCommand 'R59 echter Production LIVE Drill' @('run','render:drill','--','--external-only','--live','--target','https://cfs-zockt.de');Harvest $root;Ok 'R59 LIVE_PASS'}
-function R60([string]$root){SetEnv 'DATABASE_URL' (Secret 'DATABASE_URL' 'Production DATABASE_URL');SetEnv 'CFS_RESTORE_TARGET_URL' (Secret 'CFS_RESTORE_TARGET_URL' 'DATABASE_URL der separaten LEEREN Recovery-DB');SetEnv 'CFS_BACKUP_ENCRYPTION_KEY' (Secret 'CFS_BACKUP_ENCRYPTION_KEY' 'Production CFS_BACKUP_ENCRYPTION_KEY');Section 'R60 Backup / Restore LIVE';& powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $root 'tools\windows-recovery-drill-r60.ps1') -NoUpdate;if($LASTEXITCODE-ne 0){throw "R60 BLOCKED/FAIL ($LASTEXITCODE)"};Harvest $root;Ok 'R60 LIVE_RESTORE_PASS'}
+function R60([string]$root){EnsurePostgresClientTools;SetEnv 'DATABASE_URL' (Secret 'DATABASE_URL' 'Production DATABASE_URL');SetEnv 'CFS_RESTORE_TARGET_URL' (Secret 'CFS_RESTORE_TARGET_URL' 'DATABASE_URL der separaten LEEREN Recovery-DB');SetEnv 'CFS_BACKUP_ENCRYPTION_KEY' (Secret 'CFS_BACKUP_ENCRYPTION_KEY' 'Production CFS_BACKUP_ENCRYPTION_KEY');Section 'R60 Backup / Restore LIVE';& powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $root 'tools\windows-recovery-drill-r60.ps1') -NoUpdate;if($LASTEXITCODE-ne 0){throw "R60 BLOCKED/FAIL ($LASTEXITCODE)"};Harvest $root;Ok 'R60 LIVE_RESTORE_PASS'}
 function R61([string]$root){SetEnv 'CFS_ACCOUNT_MAIL_MODE' 'webhook';SetEnv 'CFS_ACCOUNT_MAIL_WEBHOOK_URL' (TextValue 'CFS_ACCOUNT_MAIL_WEBHOOK_URL' 'Production Mail-Webhook HTTPS URL');SetEnv 'CFS_ACCOUNT_MAIL_WEBHOOK_SECRET' (Secret 'CFS_ACCOUNT_MAIL_WEBHOOK_SECRET' 'Production Mail-Webhook Secret');$to=TextValue 'CFS_MAIL_DRILL_RECIPIENT' 'Test-Postfach E-Mail';Invoke-NpmCommand 'R61 Security Gate' @('run','security61:check');NodeStep 'R61 Testmails senden' @('tools/account-mail-production-drill-r61.mjs','.','--prepare','--to',$to);Section 'R61 Inbox';Write-Host 'Öffne das Testpostfach. Es müssen drei R61-Mails angekommen sein.';$a=Read-Host 'Code aus email_verification';$b=Read-Host 'Code aus password_reset';$c=Read-Host 'Code aus security_alert';NodeStep 'R61 Inbox verifizieren' @('tools/account-mail-production-drill-r61.mjs','.','--verify','--codes',"$a,$b,$c");Harvest $root}
 function R62([string]$root){SetEnv 'DATABASE_URL' (Secret 'DATABASE_URL' 'Production DATABASE_URL');SetEnv 'CFS_ACCOUNT_ELEVATION_SECRET' (Secret 'CFS_ACCOUNT_ELEVATION_SECRET' 'Production CFS_ACCOUNT_ELEVATION_SECRET');SetEnv 'APP_BASE_URL' 'https://cfs-zockt.de';$email=TextValue 'CFS_AUTH_DRILL_EMAIL' 'Production Testkonto E-Mail';Invoke-NpmCommand 'R62 Security Gate' @('run','security62:check');NodeStep 'R62 vorbereiten' @('tools/account-auth-production-drill-r62.mjs','.','--prepare','--email',$email,'--target','https://cfs-zockt.de');Start-Process 'https://cfs-zockt.de';Section 'R62 echter Browser-Test';Write-Host 'Führe die 7 Schritte aus, die der R62-Runner gerade ausgegeben hat. PostgreSQL wird sie anschließend unabhängig prüfen.';[void](Read-Host 'Drücke ENTER erst wenn alle echten Browser-Schritte abgeschlossen sind');NodeStep 'R62 Production Events verifizieren' @('tools/account-auth-production-drill-r62.mjs','.','--verify','--target','https://cfs-zockt.de');Harvest $root}
 function R63([string]$root){Invoke-NpmCommand 'R63 Security Gate' @('run','security63:check');$artifact=TextValue 'CFS_WINDOWS_DRILL_ARTIFACT' 'Pfad zur signierten Release-EXE/Setup-Datei';$thumb=TextValue 'CFS_WINDOWS_SIGNER_THUMBPRINT' 'Erwarteter Code-Signing Zertifikat-Thumbprint';Section 'R63 reale Windows-Schritte';Write-Host 'Führe Clean Install, Launcher-Start, echten Device-Link und Updater-E2E mit diesem Release durch.';SetEnv 'CFS_WINDOWS_CLEAN_INSTALL_VERIFIED' (PassText 'Clean Install auf diesem Windows erfolgreich');SetEnv 'CFS_WINDOWS_LAUNCH_VERIFIED' (PassText 'Installierter Launcher startet erfolgreich');SetEnv 'CFS_WINDOWS_DEVICE_LINK_VERIFIED' (PassText 'Echter Device-Link gegen Production funktioniert');SetEnv 'CFS_WINDOWS_UPDATER_VERIFIED' (PassText 'Updater-E2E für signierten Release funktioniert');NodeStep 'R63 Windows/Signing/Hardware Drill' @('launcher/tools/windows-production-drill-r63.mjs','launcher','--artifact',$artifact,'--signer-thumbprint',$thumb);Harvest $root}
@@ -115,15 +133,21 @@ function InvokeAllStep([string]$name,[scriptblock]$action,[hashtable]$results){
         return $true
     }catch{
         $message=$_.Exception.Message
-        $results[$name]=@{status='BLOCKED/FAIL';detail=$message}
-        Warn "$name BLOCKED/FAIL: $message"
+        $line=$_.InvocationInfo.ScriptLineNumber
+        $scriptName=$_.InvocationInfo.ScriptName
+        $where=''
+        if(-not[string]::IsNullOrWhiteSpace([string]$scriptName) -and $line){$where="$scriptName`:$line"}
+        elseif($line){$where="Zeile $line"}
+        $detail=if($where){"$message [$where]"}else{$message}
+        $results[$name]=@{status='BLOCKED/FAIL';detail=$detail}
+        Warn "$name BLOCKED/FAIL: $detail"
         return $false
     }
 }
 function RunAll([string]$root){
     $results=@{}
     Section 'ALL - kompletter Production LIVE Test R59-R67'
-    Write-Host 'Dieser Lauf arbeitet R59-R66 nacheinander ab und hält nur bei echten externen/manuellen Nachweisen an.'
+    Write-Host 'Dieser Lauf arbeitet R59-R66 nacheinander ab und hält nur bei echten externen/manuellen Nachweisen an.'`n    Write-Host 'Wenn eine externe Voraussetzung noch fehlt, bei der Eingabe SKIP tippen; ALL fährt dann mit dem nächsten unabhängigen Test fort.'
     Write-Host 'Ein fehlgeschlagener unabhängiger Test verhindert nicht, dass die übrigen Runden geprüft werden.'
     Write-Host 'R67 wird nur vorbereitet, wenn R59-R66 erfolgreich waren.'
     Write-Host 'Der finale R67 --strict-env / LIVE_LAUNCH_PASS bleibt bewusst in der Render Production Shell.'

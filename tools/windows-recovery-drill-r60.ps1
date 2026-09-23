@@ -82,7 +82,7 @@ function Get-SecurePlainText {
 }
 function Set-TempEnv { param([string]$Name,[string]$Value) if(-not $script:OriginalEnv.ContainsKey($Name)){$script:OriginalEnv[$Name]=[Environment]::GetEnvironmentVariable($Name,'Process')}; [Environment]::SetEnvironmentVariable($Name,$Value,'Process') }
 function Restore-TempEnv { foreach($name in $script:OriginalEnv.Keys){[Environment]::SetEnvironmentVariable($name,$script:OriginalEnv[$name],'Process')} }
-function Invoke-NpmStep { param([string]$Title,[string[]]$Arguments) Write-Section $Title; & npm @Arguments; if($LASTEXITCODE -ne 0){throw "$Title fehlgeschlagen. ExitCode=$LASTEXITCODE"}; Write-Ok "$Title erfolgreich." }
+function Invoke-NpmStep { param([string]$Title,[string[]]$NpmArguments) Write-Section $Title; $npmCmd=(Get-Command 'npm.cmd' -CommandType Application -ErrorAction Stop).Source; & $npmCmd @NpmArguments; if($LASTEXITCODE -ne 0){throw "$Title fehlgeschlagen. ExitCode=$LASTEXITCODE"}; Write-Ok "$Title erfolgreich." }
 function Show-Evidence {
     param([string]$Root)
     $file=Join-Path $Root 'reports\database-recovery-drill-evidence.json'
@@ -105,8 +105,8 @@ function Show-Evidence {
 
 try {
     Write-Section 'CFS ZOCKT - automatischer Windows Database Recovery Drill R60'
-    foreach($cmd in @('git','node','npm')){if(-not(Test-CommandExists $cmd)){throw "Benötigtes Programm fehlt: $cmd"}}
-    $ProjectRoot=Select-ProjectRoot; Update-CheckoutIfSafe $ProjectRoot; if($script:ProjectRoot){$ProjectRoot=$script:ProjectRoot}; Set-Location $ProjectRoot
+    foreach($cmd in @('git','node','npm.cmd')){if(-not(Test-CommandExists $cmd)){throw "Benötigtes Programm fehlt: $cmd"}}
+    $ProjectRoot=Select-ProjectRoot; Update-CheckoutIfSafe $ProjectRoot; if($script:ProjectRoot){$ProjectRoot=$script:ProjectRoot}; Set-Location -LiteralPath $ProjectRoot
     Write-Section 'Verwendeter Projektstand'; Write-Host "Pfad:       $ProjectRoot"; Write-Host "Node:       $(& node --version)"; $commit=& git rev-parse HEAD 2>$null; if($LASTEXITCODE -eq 0){Write-Host "Git commit: $commit"}
     Add-PostgresClientTools
     Invoke-NpmStep 'npm ci' @('ci')
@@ -127,7 +127,8 @@ try {
     Set-TempEnv 'CFS_RESTORE_CONFIRM' 'RESTORE_TO_EMPTY_DATABASE'
 
     Write-Section 'R60 echter Backup-/Restore-Drill'
-    & npm run recovery:drill -- --live
+    $npmCmd=(Get-Command 'npm.cmd' -CommandType Application -ErrorAction Stop).Source
+    & $npmCmd run recovery:drill -- --live
     $code=$LASTEXITCODE
     $evidence=Show-Evidence $ProjectRoot
     if($code -eq 0 -and $null -ne $evidence -and $evidence.status -eq 'LIVE_RESTORE_PASS'){
@@ -135,5 +136,5 @@ try {
     }
     throw "R60 hat keinen LIVE_RESTORE_PASS erzeugt. ExitCode=$code"
 }
-catch { Write-Host ''; Write-Host 'AUTOMATISCHER RECOVERY DRILL ABGEBROCHEN'; Write-Host $_.Exception.Message; exit 10 }
+catch { Write-Host ''; Write-Host 'AUTOMATISCHER RECOVERY DRILL ABGEBROCHEN'; Write-Host $_.Exception.Message; if($_.InvocationInfo.ScriptLineNumber){Write-Host ("Fehlerort: {0}:{1}" -f $_.InvocationInfo.ScriptName,$_.InvocationInfo.ScriptLineNumber)}; exit 10 }
 finally { Restore-TempEnv }
