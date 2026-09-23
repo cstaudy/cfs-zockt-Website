@@ -89,7 +89,21 @@ function run(command, args, { env = runtimeEnv, cwd = ROOT, allow = [0], title =
   return code;
 }
 
-function npm(args, options = {}) { return run(NPM, args, options); }
+function npm(args, options = {}) {
+  if (!IS_WIN) return run(NPM, args, options);
+
+  const safeArgs = args.map((value) => {
+    const arg = String(value);
+    if (!/^[A-Za-z0-9_:@./=\-]+$/.test(arg)) {
+      throw new Error(`Unsicheres npm-Argument fuer Windows-Shell abgelehnt: ${arg}`);
+    }
+    return arg;
+  });
+
+  const comspec = process.env.ComSpec || 'cmd.exe';
+  const commandLine = ['npm.cmd', ...safeArgs].join(' ');
+  return run(comspec, ['/d', '/s', '/c', commandLine], options);
+}
 function node(args, options = {}) { return run(process.execPath, args, options); }
 
 async function ask(prompt, { allowSkip = false, defaultValue = '' } = {}) {
