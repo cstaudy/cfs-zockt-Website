@@ -1,0 +1,18 @@
+CFS Zockt Professional UI Refresh
+
+ERSETZEN:
+public/pages/account.html
+public/assets/img/logo-header.png
+public/assets/img/brand/cfs-zockt-logo.png
+public/assets/img/app-icon.png
+public/assets/img/apple-touch-icon.png
+public/assets/img/favicon.ico
+public/assets/img/social-preview.jpg
+
+NEU:
+public/assets/css/account-professional.css
+public/assets/js/account-tabs.js
+public/assets/img/brand/cfs-zockt-mark.png
+
+HINWEIS:
+Bestehende Backend- und page-account.js-Logik bleibt unverändert.
