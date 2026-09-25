@@ -1,0 +1,82 @@
+{
+  "ok": true,
+  "generated_at": "2026-09-25T17:07:38.640Z",
+  "status": "EDITORIAL_SIMPLIFICATION_V36_PASS",
+  "checks_passed": 16,
+  "checks_total": 16,
+  "live_evidence": false,
+  "browser_evidence": false,
+  "metrics": {
+    "section_count": 9,
+    "article_count": 10,
+    "h2_count": 7,
+    "word_count": 775
+  },
+  "note": "Local/static editorial-density verification only. Deep product detail remains on dedicated pages; no production/browser PASS is implied.",
+  "checks": [
+    {
+      "name": "v24 remains the global OS activation",
+      "ok": true
+    },
+    {
+      "name": "homepage is editorially reduced",
+      "ok": true
+    },
+    {
+      "name": "homepage is explicitly about the project and personal plan",
+      "ok": true
+    },
+    {
+      "name": "homepage keeps the recognizable community-first identity",
+      "ok": true
+    },
+    {
+      "name": "homepage explains the offer in four clear areas",
+      "ok": true
+    },
+    {
+      "name": "homepage keeps a simple three-step start path",
+      "ok": true
+    },
+    {
+      "name": "community has a dedicated late-page home",
+      "ok": true
+    },
+    {
+      "name": "trust remains compact and concrete",
+      "ok": true
+    },
+    {
+      "name": "deep details are delegated to dedicated pages",
+      "ok": true
+    },
+    {
+      "name": "Creator Suite and Roadmap retain the detail removed from home",
+      "ok": true
+    },
+    {
+      "name": "runtime truth remains visible",
+      "ok": true
+    },
+    {
+      "name": "home navigation prioritizes plan, offer and community",
+      "ok": true
+    },
+    {
+      "name": "detailed navigation is visually demoted on home only",
+      "ok": true
+    },
+    {
+      "name": "hero uses brand identity rather than setup-photo concept",
+      "ok": true
+    },
+    {
+      "name": "homepage avoids fake scale and certainty claims",
+      "ok": true
+    },
+    {
+      "name": "v36 stays inside the consolidated component stylesheet",
+      "ok": true
+    }
+  ]
+}

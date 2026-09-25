@@ -1,0 +1,60 @@
+{
+  "ok": true,
+  "generated_at": "2026-09-25T17:08:40.095Z",
+  "mode": "full",
+  "groups_passed": 9,
+  "groups_total": 9,
+  "widget_cut_files": 24,
+  "status": "LOCAL_PRODUCT_ACCEPTANCE_PASS",
+  "live_evidence": false,
+  "historical_evidence": false,
+  "note": "Local/static acceptance only; Windows hardware, browser/live, OBS soak, monitoring, Stripe LIVE and R62-R67 evidence remain external.",
+  "groups": [
+    {
+      "label": "Launcher full QA",
+      "ok": true,
+      "elapsed_ms": 23923
+    },
+    {
+      "label": "Widget/Cut Suite 24/24",
+      "ok": true,
+      "elapsed_ms": 1138
+    },
+    {
+      "label": "Stream Studio full suite",
+      "ok": true,
+      "elapsed_ms": 5100
+    },
+    {
+      "label": "Security continuity 45-58",
+      "ok": true,
+      "elapsed_ms": 1147
+    },
+    {
+      "label": "Windows production harness",
+      "ok": true,
+      "elapsed_ms": 33
+    },
+    {
+      "label": "Deploy Automation v27",
+      "ok": true,
+      "elapsed_ms": 32
+    },
+    {
+      "label": "Release Candidate v25",
+      "ok": true,
+      "elapsed_ms": 790
+    },
+    {
+      "label": "Post-Deploy local",
+      "ok": true,
+      "elapsed_ms": 34
+    },
+    {
+      "label": "Finalization Readiness v31",
+      "ok": true,
+      "elapsed_ms": 41
+    }
+  ],
+  "evidence_label": "v36 editorial simplification regression run"
+}
