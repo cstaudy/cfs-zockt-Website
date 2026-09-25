@@ -1,0 +1,267 @@
+{
+  "release": "v25",
+  "based_on_design": "v24 Creator OS Redesign",
+  "root": "/mnt/data/cfs_zockt_working_current",
+  "ok": true,
+  "passed": 49,
+  "total": 49,
+  "checks": [
+    {
+      "name": "required file public/assets/css/cfs-theme-v3.css",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "required file public/assets/css/cfs-onboarding-v4.css",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "required file public/assets/css/cfs-ui-v18.css",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "required file public/assets/js/cfs-shell-v3.js",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "required file public/assets/js/cfs-onboarding-v4.js",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "required file public/assets/js/cfs-ui-v18.js",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "required file public/assets/img/brand/cfs-zockt-mark-original.png",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "required file public/assets/img/brand/cfs-zockt-wordmark-transparent.png",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "required file tools/postdeploy-ui-acceptance-v21.mjs",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "required file tools/account-auth-production-progress-r62-v23.mjs",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "no extra v24 runtime public/assets/css/cfs-v24.css",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "no extra v24 runtime public/assets/js/cfs-v24.js",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "no extra v24 runtime public/assets/css/cfs-creator-os-v24.css",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "no extra v24 runtime public/assets/js/cfs-creator-os-v24.js",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "v24 class installed on html",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "v24 class installed on body",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "v24 global design block present",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "v24 component design block present",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "v24 keeps consolidated v18 JS runtime",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "v24 keeps consolidated v18 CSS runtime",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "dark creator OS base",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "flat creator sidebar",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "public editorial hero",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "dashboard working surface",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "creator suite matrix",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "plans matrix",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "support routing matrix",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "security center",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "mobile app toolbar",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "theme CSS brace balance",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "UI CSS brace balance",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "v24 changed-files secret literal scan",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "shell syntax",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "UI bundle syntax",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "homepage",
+      "ok": true,
+      "detail": "13/13 homepage Pass 21.3.3 checks passed."
+    },
+    {
+      "name": "creator shell",
+      "ok": true,
+      "detail": "Creator Shell Pass 21.3.7: 93/93 PASS"
+    },
+    {
+      "name": "dashboard",
+      "ok": true,
+      "detail": "Dashboard Pass 21.3.8: 14/14 PASS"
+    },
+    {
+      "name": "creator tools",
+      "ok": true,
+      "detail": "Creator Tools Pass 21.3.9: 35/35 PASS"
+    },
+    {
+      "name": "management",
+      "ok": true,
+      "detail": "Creator Management Pass 21.3.10: 25/25 PASS"
+    },
+    {
+      "name": "accessibility responsive",
+      "ok": true,
+      "detail": "Website Accessibility/Responsive Pass 21.3.12: 22/22 PASS"
+    },
+    {
+      "name": "visual polish",
+      "ok": true,
+      "detail": "Website Visual Polish Pass 21.3.13: 19/19 PASS"
+    },
+    {
+      "name": "website acceptance",
+      "ok": true,
+      "detail": "Website Acceptance Pass 21.3.14: 34/34 PASS"
+    },
+    {
+      "name": "website security",
+      "ok": true,
+      "detail": "Website Security Pass OK · 39 HTML-Dateien geprüft."
+    },
+    {
+      "name": "MFA security",
+      "ok": true,
+      "detail": "{\"ok\":true,\"checks\":\"49/49\"}"
+    },
+    {
+      "name": "passkey security",
+      "ok": true,
+      "detail": "Passkey Security: 75/75"
+    },
+    {
+      "name": "postdeploy local",
+      "ok": true,
+      "detail": "Post-Deploy UI Acceptance v21: 30/30 PASS"
+    },
+    {
+      "name": "GitHub readiness",
+      "ok": true,
+      "detail": "GitHub repository readiness Pass 21: 30/30"
+    },
+    {
+      "name": "deployment readiness",
+      "ok": true,
+      "detail": "22/22 production deployment readiness checks passed."
+    },
+    {
+      "name": "predeploy doctor",
+      "ok": true,
+      "detail": "Pre-Deploy Doctor R68: PREDEPLOY_READY (29/29)"
+    }
+  ],
+  "manifest": {
+    "public/assets/css/cfs-theme-v3.css": "3dbe121dc35957a1dd07c42365c97e19e93a7d1a069b16b25f4e6bf71855c0e3",
+    "public/assets/css/cfs-onboarding-v4.css": "9107eeaa57124ff51a2a9ad7e21b4ed8043076c9d6c2cfcdfdae411040b85111",
+    "public/assets/css/cfs-ui-v18.css": "5c32d6f474ce4c63758e0fa045b8f04cacd2a81f1cba28e6a76775617b046607",
+    "public/assets/js/cfs-shell-v3.js": "2cc4a64b14833c71d8f0a4cc4e348f51df9f499c400b068247c74b0915024b56",
+    "public/assets/js/cfs-onboarding-v4.js": "5f362d58a9fd14771c2e3093337af873b6fc7873b148c12454fe850613581f1a",
+    "public/assets/js/cfs-ui-v18.js": "f6e5165a06cfc2e30f1b8669cbd21231cf46d4094cf2d3851dbb4d6cf231bf90",
+    "public/assets/img/brand/cfs-zockt-mark-original.png": "a927d423e4b25585a1d9ee864d21d598d243750ae48939f07eaa851995ca6b27",
+    "public/assets/img/brand/cfs-zockt-wordmark-transparent.png": "c4fa499a9ba66a12527480d9b9f662a577d7fd23e24f4ee9a3c81a9d9371f7fb",
+    "tools/postdeploy-ui-acceptance-v21.mjs": "157dfb10025e986caef4a7fcfa4598668d872e6bbe39a362e1e9d3d7e6858249",
+    "tools/account-auth-production-progress-r62-v23.mjs": "32abe4c872df955ad499790119520a7cb141c9aac1bc28f7ea1c9e5c5fcf8a92"
+  }
+}
