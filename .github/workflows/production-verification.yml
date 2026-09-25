@@ -69,10 +69,21 @@ jobs:
           APP_BASE_URL: ${{ vars.CFS_PRODUCTION_URL }}
         run: npm run production:external-gate
 
+      - name: Creator OS UI acceptance
+        if: ${{ inputs.mode == 'canary' }}
+        env:
+          CFS_PRODUCTION_URL: ${{ vars.CFS_PRODUCTION_URL }}
+        run: |
+          mkdir -p reports
+          node tools/postdeploy-ui-acceptance-v21.mjs             "$CFS_PRODUCTION_URL"             --json > reports/postdeploy-ui-v21.json
+          cat reports/postdeploy-ui-v21.json
+
       - name: Upload verification evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: production-${{ inputs.mode }}-evidence
           if-no-files-found: ignore
-          path: reports/production-${{ inputs.mode }}-evidence.json
+          path: |
+            reports/production-${{ inputs.mode }}-evidence.json
+            reports/postdeploy-ui-v21.json

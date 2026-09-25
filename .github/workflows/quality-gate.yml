@@ -29,6 +29,20 @@ jobs:
         with:
           node-version: "22"
 
+      - name: Backend dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Deploy automation v27
+        run: npm run deploy27:check
+
+      - name: Current release candidate seal
+        run: npm run release25:verify
+
+      - name: Write RC25 evidence
+        run: |
+          mkdir -p reports
+          node tools/release-candidate-v25.mjs . --json > reports/release-candidate-v25.json
+
       - name: GitHub repository readiness
         run: npm run github21:check
 
@@ -50,11 +64,14 @@ jobs:
       - name: Generate GitHub bootstrap plan
         run: node tools/github-bootstrap-plan-v41.mjs .
 
-      - name: Upload bootstrap plan
+      - name: Upload repository verification evidence
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: github-bootstrap-plan-${{ github.sha }}
+          name: github-release-verification-${{ github.sha }}
+          if-no-files-found: ignore
           path: |
+            reports/release-candidate-v25.json
             reports/github-bootstrap-plan.json
             reports/github-bootstrap-plan.md
 

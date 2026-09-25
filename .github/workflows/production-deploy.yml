@@ -40,6 +40,12 @@ jobs:
       - name: Backend syntax
         run: npm run check
 
+      - name: Deploy automation v27
+        run: npm run deploy27:check
+
+      - name: Current release candidate seal
+        run: npm run release25:verify
+
       - name: Launcher release policy tests
         run: node tools/launcher-release-policy-test.mjs
 
@@ -139,10 +145,39 @@ jobs:
           APP_BASE_URL: ${{ vars.CFS_PRODUCTION_URL }}
         run: npm run production:external-gate
 
+      - name: Post-deploy Creator OS UI acceptance
+        timeout-minutes: 6
+        env:
+          CFS_PRODUCTION_URL: ${{ vars.CFS_PRODUCTION_URL }}
+        run: |
+          mkdir -p reports
+          ATTEMPTS=12
+          for ATTEMPT in $(seq 1 "$ATTEMPTS"); do
+            echo "Post-deploy UI attempt ${ATTEMPT}/${ATTEMPTS}..."
+
+            if node tools/postdeploy-ui-acceptance-v21.mjs               "$CFS_PRODUCTION_URL"               --json > reports/postdeploy-ui-v21.json; then
+              cat reports/postdeploy-ui-v21.json
+              echo "Creator OS UI acceptance passed."
+              exit 0
+            fi
+
+            cat reports/postdeploy-ui-v21.json || true
+
+            if [ "$ATTEMPT" -lt "$ATTEMPTS" ]; then
+              echo "Expected UI bundle not fully visible yet. Retrying in 10 seconds..."
+              sleep 10
+            fi
+          done
+
+          echo "Creator OS UI acceptance did not pass within the retry window."
+          exit 1
+
       - name: Upload production canary evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: production-canary-evidence
           if-no-files-found: ignore
-          path: reports/production-canary-evidence.json
+          path: |
+            reports/production-canary-evidence.json
+            reports/postdeploy-ui-v21.json
