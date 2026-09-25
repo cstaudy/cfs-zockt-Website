@@ -158,7 +158,10 @@
     "security67:check": "node tools/launch-production-gate-pass67-test.mjs .",
     "predeploy:doctor": "node tools/predeploy-production-doctor-r68.mjs .",
     "security68:check": "node tools/predeploy-migration-safety-pass68-test.mjs .",
-    "predeploy:gate": "npm run predeploy:doctor && npm run release:preflight"
+    "predeploy:gate": "npm run predeploy:doctor && npm run release:preflight",
+    "postdeploy21:ui": "node tools/postdeploy-ui-acceptance-v21.mjs https://cfs-zockt.de",
+    "postdeploy21:ui:local": "node tools/postdeploy-ui-acceptance-v21.mjs --local-root .",
+    "release22:verify": "node tools/release-candidate-v22.mjs ."
   },
   "engines": {
     "node": ">=22"

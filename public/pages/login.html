@@ -87,7 +87,7 @@
       </form>
       <div id="loginMsg" class="notice hidden" role="status" aria-live="polite"></div>
       <div class="auth-entry-links"><a href="/pages/forgot-password.html">PASSWORT VERGESSEN?</a><a href="/pages/verify-email.html">E-MAIL BESTÄTIGEN</a><a href="/pages/support.html">SUPPORT</a></div>
-      <div class="auth-entry-note">Bei fehlgeschlagenen Logins wird nicht offengelegt, ob eine bestimmte E-Mail-Adresse registriert ist. Anmeldung und Recovery sind serverseitig begrenzt. Browser-Schreibzugriffe werden zusätzlich mit Origin- und CSRF-Prüfungen geschützt.</div>
+      <div class="auth-entry-note">Bei fehlgeschlagenen Logins wird nicht offengelegt, ob eine bestimmte E-Mail-Adresse registriert ist. Anmeldung und Recovery sind serverseitig begrenzt; zusätzlich schützt ein persistenter kontoweiter Fehlversuchs-Throttle vor wiederholten Passwortversuchen. Browser-Schreibzugriffe werden mit Origin- und CSRF-Prüfungen geschützt.</div>
     </article>
 
     <article class="auth-entry-panel auth-entry-panel-featured" id="registerPanel">

@@ -1,0 +1,140 @@
+{
+  "release": "v22",
+  "root": "/mnt/data/cfs_zockt_working_current",
+  "ok": true,
+  "passed": 24,
+  "total": 24,
+  "checks": [
+    {
+      "name": "required file public/assets/css/cfs-theme-v3.css",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "required file public/assets/css/cfs-onboarding-v4.css",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "required file public/assets/css/cfs-ui-v18.css",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "required file public/assets/js/cfs-shell-v3.js",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "required file public/assets/js/cfs-onboarding-v4.js",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "required file public/assets/js/cfs-ui-v18.js",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "required file public/assets/img/brand/cfs-zockt-mark-original.png",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "required file public/assets/img/brand/cfs-zockt-wordmark-transparent.png",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "required file tools/postdeploy-ui-acceptance-v21.mjs",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "shell references cfs-ui-v18.css",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "shell references cfs-ui-v18.js",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "shell has no retired split runtime names",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "retired split runtime files absent",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "obvious secret literal scan",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "postdeploy local",
+      "ok": true,
+      "detail": "Post-Deploy UI Acceptance v21: 26/26 PASS"
+    },
+    {
+      "name": "website acceptance",
+      "ok": true,
+      "detail": "Website Acceptance Pass 21.3.14: 34/34 PASS"
+    },
+    {
+      "name": "accessibility responsive",
+      "ok": true,
+      "detail": "Website Accessibility/Responsive Pass 21.3.12: 22/22 PASS"
+    },
+    {
+      "name": "visual polish",
+      "ok": true,
+      "detail": "Website Visual Polish Pass 21.3.13: 19/19 PASS"
+    },
+    {
+      "name": "website security",
+      "ok": true,
+      "detail": "Website Security Pass OK · 39 HTML-Dateien geprüft."
+    },
+    {
+      "name": "MFA security",
+      "ok": true,
+      "detail": "{\"ok\":true,\"checks\":\"49/49\"}"
+    },
+    {
+      "name": "passkey security",
+      "ok": true,
+      "detail": "Passkey Security: 75/75"
+    },
+    {
+      "name": "GitHub readiness",
+      "ok": true,
+      "detail": "GitHub repository readiness Pass 21: 30/30"
+    },
+    {
+      "name": "deployment readiness",
+      "ok": true,
+      "detail": "22/22 production deployment readiness checks passed."
+    },
+    {
+      "name": "predeploy doctor",
+      "ok": true,
+      "detail": "Pre-Deploy Doctor R68: PREDEPLOY_READY (29/29)"
+    }
+  ],
+  "manifest": {
+    "public/assets/css/cfs-theme-v3.css": "4500df254d55037eaf574b916200ccb7f6d18a4e54a47afde989f846b48d90f6",
+    "public/assets/css/cfs-onboarding-v4.css": "9107eeaa57124ff51a2a9ad7e21b4ed8043076c9d6c2cfcdfdae411040b85111",
+    "public/assets/css/cfs-ui-v18.css": "96e27b799f343b8d11b9490bd060f25ef1ae1d74fbf77ce5dc800fd80ff60aba",
+    "public/assets/js/cfs-shell-v3.js": "3ba65c8ff253a56068170d8ac05712f57338d9e1efeed089e3b68f8d4474881f",
+    "public/assets/js/cfs-onboarding-v4.js": "5f362d58a9fd14771c2e3093337af873b6fc7873b148c12454fe850613581f1a",
+    "public/assets/js/cfs-ui-v18.js": "f6e5165a06cfc2e30f1b8669cbd21231cf46d4094cf2d3851dbb4d6cf231bf90",
+    "public/assets/img/brand/cfs-zockt-mark-original.png": "a927d423e4b25585a1d9ee864d21d598d243750ae48939f07eaa851995ca6b27",
+    "public/assets/img/brand/cfs-zockt-wordmark-transparent.png": "c4fa499a9ba66a12527480d9b9f662a577d7fd23e24f4ee9a3c81a9d9371f7fb",
+    "tools/postdeploy-ui-acceptance-v21.mjs": "cb90da2e2dd848cfe6fb9907282b0a180e546ca979e42c54902075f27bb3a636"
+  }
+}
