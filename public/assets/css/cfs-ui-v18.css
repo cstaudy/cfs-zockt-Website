@@ -4770,7 +4770,7 @@ body.cfs-os-v24 .cfs-dashboard-v9-focus{
 }
 body.cfs-os-v24 .cfs-dashboard-v9-card,
 body.cfs-os-v24 .cfs-dashboard-v9-card.primary{
-  min-height:190px;
+  min-height:172px;
   border:0;
   border-radius:0;
   background:#080d13;
@@ -4819,7 +4819,7 @@ body.cfs-os-v24 .cfs-dashboard-v9-quick{
   background:#1b2733;
 }
 body.cfs-os-v24 .cfs-dashboard-v9-quick a{
-  min-height:82px;
+  min-height:76px;
   border:0;
   border-radius:0;
   background:#080d13;
@@ -4855,7 +4855,7 @@ body.cfs-os-v24 .cfs-dashboard-v9-results{
   background:#1b2834;
 }
 body.cfs-os-v24 .cfs-dashboard-v9-tool{
-  min-height:144px;
+  min-height:132px;
   border:0;
   border-radius:0;
   background:#080d13;
@@ -5052,6 +5052,53 @@ body.cfs-os-v24 .product-capability-grid>*{
   box-shadow:none!important;
 }
 
+/* Stream Studio: keep broadcast density without microtext */
+body.cfs-os-v24.stream-studio-page .stream-studio-kicker{font-size:8px}
+body.cfs-os-v24.stream-studio-page .stream-studio-hero p{color:#8fa1b1;font-size:12.5px}
+body.cfs-os-v24.stream-studio-page .stream-status-strip span,
+body.cfs-os-v24.stream-studio-page .stream-section-head span,
+body.cfs-os-v24.stream-studio-page .stream-panel-head span{font-size:7.5px}
+body.cfs-os-v24.stream-studio-page .stream-status-strip strong{font-size:11px}
+body.cfs-os-v24.stream-studio-page .stream-status-strip small{font-size:7.5px}
+body.cfs-os-v24.stream-studio-page .stream-panel-head strong{font-size:9px}
+body.cfs-os-v24.stream-studio-page .stream-panel-head a,
+body.cfs-os-v24.stream-studio-page .stream-section-tools a{font-size:7.5px}
+body.cfs-os-v24.stream-studio-page .stream-panel-note,
+body.cfs-os-v24.stream-studio-page .stream-section-head small,
+body.cfs-os-v24.stream-studio-page .stream-engine-note,
+body.cfs-os-v24.stream-studio-page .stream-session-note{font-size:7.5px}
+body.cfs-os-v24.stream-studio-page .stream-scene strong{font-size:8.5px}
+body.cfs-os-v24.stream-studio-page .stream-scene small{font-size:7px}
+body.cfs-os-v24.stream-studio-page .stream-scene b{font-size:6.5px}
+body.cfs-os-v24.stream-studio-page .stream-monitor-head span{font-size:7.5px}
+body.cfs-os-v24.stream-studio-page .stream-monitor-head strong{font-size:8px}
+body.cfs-os-v24.stream-studio-page .stream-monitor-empty{font-size:8px}
+body.cfs-os-v24.stream-studio-page .stream-take-bar label>span,
+body.cfs-os-v24.stream-studio-page .stream-output-grid label>span{font-size:7px}
+body.cfs-os-v24.stream-studio-page .stream-take-bar select,
+body.cfs-os-v24.stream-studio-page .stream-take-bar input,
+body.cfs-os-v24.stream-studio-page .stream-output-grid select,
+body.cfs-os-v24.stream-studio-page .stream-output-grid input{font-size:8.5px}
+body.cfs-os-v24.stream-studio-page .stream-take-button{font-size:8.5px}
+body.cfs-os-v24.stream-studio-page .stream-source-tabs button{font-size:7px}
+body.cfs-os-v24.stream-studio-page .stream-source-search input{font-size:8.5px}
+body.cfs-os-v24.stream-studio-page .stream-source-card strong{font-size:8.5px}
+body.cfs-os-v24.stream-studio-page .stream-source-card small{font-size:7px}
+body.cfs-os-v24.stream-studio-page .stream-source-badge{font-size:6.5px}
+body.cfs-os-v24.stream-studio-page .stream-source-card-actions button,
+body.cfs-os-v24.stream-studio-page .stream-source-card-actions a{font-size:6.8px}
+body.cfs-os-v24.stream-studio-page .stream-capture-grid strong{font-size:8px}
+body.cfs-os-v24.stream-studio-page .stream-capture-grid small{font-size:7px}
+body.cfs-os-v24.stream-studio-page .stream-mixer strong{font-size:7px}
+body.cfs-os-v24.stream-studio-page .stream-mixer small{font-size:6.8px}
+body.cfs-os-v24.stream-studio-page .stream-session-summary span,
+body.cfs-os-v24.stream-studio-page .stream-session-summary small{font-size:6.8px}
+body.cfs-os-v24.stream-studio-page .stream-session-summary strong{font-size:9px}
+body.cfs-os-v24.stream-studio-page .stream-session-target strong{font-size:8px}
+body.cfs-os-v24.stream-studio-page .stream-session-target small,
+body.cfs-os-v24.stream-studio-page .stream-session-target b,
+body.cfs-os-v24.stream-studio-page .stream-session-target>span{font-size:6.8px}
+
 /* Mobile app toolbar */
 @media(max-width:760px){
   body.cfs-os-v24 .cfs-mobile-dock{
@@ -5079,6 +5126,23 @@ body.cfs-os-v24 .product-capability-grid>*{
     border:0;
     background:transparent;
   }
+  body.cfs-os-v24 .cfs-mobile-dock a,
+  body.cfs-os-v24 .cfs-mobile-dock button{font-size:7.5px}
+  body.cfs-os-v24 .cfs-guide-launcher{
+    width:48px!important;
+    height:48px!important;
+    padding:5px!important;
+    border-radius:50%!important;
+  }
+  body.cfs-os-v24 .cfs-guide-launcher-copy{display:none!important}
+
+  body.cfs-os-v24 .ws-shell,
+  body.cfs-os-v24 .ws-shell>*{
+    min-width:0;
+    max-width:100%;
+  }
+  body.cfs-os-v24 .ws-dashboard-head-actions,
+  body.cfs-os-v24 .ws-dashboard-head-actions .btn{min-width:0}
 
   body.cfs-os-v24 .cfs-dashboard-v9-quick,
   body.cfs-os-v24 .cfs-dashboard-v9-results,
@@ -5090,4 +5154,135 @@ body.cfs-os-v24 .product-capability-grid>*{
     grid-template-columns:1fr;
   }
 }
+
+
+/* v35 welcome & clarity refinement: one shared contract, no new UI layer */
+body.cfs-os-v24 .cfs-welcome-contract-wrap{padding:22px 0}
+body.cfs-os-v24 .cfs-welcome-contract{
+  position:relative;
+  overflow:hidden;
+  margin:20px auto;
+  padding:22px;
+  border:1px solid #263746;
+  border-radius:14px;
+  background:linear-gradient(145deg,rgba(10,18,27,.96),rgba(5,10,16,.98));
+  box-shadow:0 18px 52px rgba(0,0,0,.2);
+}
+body.cfs-os-v24 .cfs-welcome-contract:before{
+  content:"";
+  position:absolute;
+  inset:0 auto auto 0;
+  width:170px;
+  height:2px;
+  background:linear-gradient(90deg,#19d7ff,rgba(25,215,255,0));
+}
+body.cfs-os-v24 .cfs-welcome-contract-head{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(280px,.85fr);gap:28px;align-items:end}
+body.cfs-os-v24 .cfs-welcome-contract-head span{display:block;margin-bottom:7px;color:#36dfff;font-size:10px;font-weight:900;letter-spacing:.14em}
+body.cfs-os-v24 .cfs-welcome-contract-head h2{margin:0;color:#f2f7fb;font-size:clamp(22px,3vw,36px);line-height:1.04;letter-spacing:-.025em}
+body.cfs-os-v24 .cfs-welcome-contract-head p{margin:0;color:#9aabba;font-size:14px;line-height:1.65}
+body.cfs-os-v24 .cfs-welcome-contract-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;margin-top:20px;border:1px solid #223442;border-radius:11px;overflow:hidden;background:#223442}
+body.cfs-os-v24 .cfs-welcome-contract-grid article{min-width:0;padding:16px;background:#08111a}
+body.cfs-os-v24 .cfs-welcome-contract-grid article span{display:block;color:#35d8ff;font-size:9px;font-weight:900;letter-spacing:.12em}
+body.cfs-os-v24 .cfs-welcome-contract-grid article strong{display:block;margin-top:8px;color:#e7f0f7;font-size:15px;line-height:1.25}
+body.cfs-os-v24 .cfs-welcome-contract-grid article p{margin:8px 0 0;color:#8798a8;font-size:12px;line-height:1.55}
+body.cfs-os-v24 .cfs-welcome-contract-actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-top:16px}
+body.cfs-os-v24 .cfs-welcome-contract-actions .brand-text-link{margin-left:auto;color:#8ab9d0;font-size:11px;font-weight:800;text-decoration:none}
+body.cfs-os-v24 .cfs-welcome-contract-actions .brand-text-link:hover{color:#d8f5ff}
+body.cfs-os-v24 .cfs-welcome-contract-compact{margin-top:18px;margin-bottom:22px}
+body.cfs-os-v24 .cfs-welcome-contract-dashboard{margin-top:0}
+body.cfs-os-v24 .cfs-welcome-contract-dashboard .cfs-welcome-contract-head h2{font-size:clamp(20px,2.2vw,30px)}
+body.cfs-os-v24 .cfs-welcome-contract-support,
+body.cfs-os-v24 .cfs-welcome-contract-launcher{margin-top:18px}
+@media(max-width:980px){
+  body.cfs-os-v24 .cfs-welcome-contract-head{grid-template-columns:1fr;gap:10px;align-items:start}
+  body.cfs-os-v24 .cfs-welcome-contract-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:620px){
+  body.cfs-os-v24 .cfs-welcome-contract{margin:14px auto;padding:16px;border-radius:11px}
+  body.cfs-os-v24 .cfs-welcome-contract-head p{font-size:13px}
+  body.cfs-os-v24 .cfs-welcome-contract-grid{grid-template-columns:1fr}
+  body.cfs-os-v24 .cfs-welcome-contract-grid article{padding:14px}
+  body.cfs-os-v24 .cfs-welcome-contract-actions{display:grid;grid-template-columns:1fr}
+  body.cfs-os-v24 .cfs-welcome-contract-actions .btn{width:100%}
+  body.cfs-os-v24 .cfs-welcome-contract-actions .brand-text-link{margin-left:0;padding:5px 0}
+}
+
 /* ===== END CREATOR OS REDESIGN V24 ===== */
+
+/* v36 editorial simplification — integrated into the existing v18 component runtime. */
+.public-home .home-story,
+.public-home .home-offer,
+.public-home .home-start,
+.public-home .home-trust-compact,
+.public-home .home-community{padding-block:clamp(54px,7vw,92px)}
+.public-home .home-story-grid{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(320px,.95fr);gap:clamp(34px,5vw,72px);align-items:start}
+.public-home .home-story-copy{max-width:760px}
+.public-home .home-story-copy h2{max-width:16ch;margin:.5rem 0 1.1rem}
+.public-home .home-story-copy p{max-width:68ch;color:var(--muted);line-height:1.75}
+.public-home .home-story-values{display:grid;border:1px solid var(--line);background:rgba(7,15,26,.58);border-radius:16px;overflow:hidden}
+.public-home .home-story-values article{padding:22px 24px;display:grid;grid-template-columns:42px 1fr;gap:4px 12px;border-bottom:1px solid var(--line)}
+.public-home .home-story-values article:last-child{border-bottom:0}
+.public-home .home-story-values span{grid-row:1/3;color:var(--accent);font:700 .76rem/1 var(--font-mono,monospace);letter-spacing:.14em;padding-top:4px}
+.public-home .home-story-values strong{font-size:1rem}
+.public-home .home-story-values p{margin:.35rem 0 0;color:var(--muted);line-height:1.55}
+.public-home .home-heading-tight{align-items:end;margin-bottom:28px}
+.public-home .home-heading-tight h2{max-width:19ch}
+.public-home .home-heading-tight>p{max-width:52ch}
+.public-home .home-offer-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));border:1px solid var(--line);border-radius:16px;overflow:hidden;background:rgba(7,15,26,.52)}
+.public-home .home-offer-grid article{position:relative;padding:26px 28px;min-height:188px;border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+.public-home .home-offer-grid article:nth-child(2n){border-right:0}
+.public-home .home-offer-grid article:nth-last-child(-n+2){border-bottom:0}
+.public-home .home-offer-grid b{display:block;margin-bottom:18px;color:var(--accent);font-size:.72rem;letter-spacing:.16em}
+.public-home .home-offer-grid strong{display:block;font-size:1.15rem;margin-bottom:8px}
+.public-home .home-offer-grid p{color:var(--muted);line-height:1.6;margin:0 0 16px;max-width:48ch}
+.public-home .home-offer-grid a{font-weight:700;font-size:.84rem}
+.public-home .home-offer-note{display:flex;gap:18px;align-items:flex-start;margin-top:18px;padding:18px 20px;border-top:1px solid var(--line);color:var(--muted)}
+.public-home .home-offer-note strong{white-space:nowrap;color:var(--text)}
+.public-home .home-start-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border:1px solid var(--line);border-radius:16px;overflow:hidden;background:rgba(7,15,26,.48)}
+.public-home .home-start-grid article{padding:24px;border-right:1px solid var(--line)}
+.public-home .home-start-grid article:last-child{border-right:0}
+.public-home .home-start-grid b{display:block;color:var(--accent);font-size:.76rem;letter-spacing:.16em;margin-bottom:14px}
+.public-home .home-start-grid strong{display:block;margin-bottom:8px}
+.public-home .home-start-grid p{margin:0;color:var(--muted);line-height:1.6}
+.public-home .home-trust-links{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border:1px solid var(--line);border-radius:16px;overflow:hidden;margin-top:28px}
+.public-home .home-trust-links a{padding:22px 24px;border-right:1px solid var(--line);background:rgba(7,15,26,.5)}
+.public-home .home-trust-links a:last-child{border-right:0}
+.public-home .home-trust-links span{display:block;color:var(--accent);font-size:.7rem;font-weight:800;letter-spacing:.16em;margin-bottom:10px}
+.public-home .home-trust-links strong{display:block;margin-bottom:7px}
+.public-home .home-trust-links small{display:block;color:var(--muted);line-height:1.5}
+.public-home .home-detail-links{display:flex;flex-wrap:wrap;gap:14px 24px;margin-top:18px;font-size:.86rem;font-weight:700}
+.public-home .home-anchor{position:relative;display:block;top:-96px;visibility:hidden;width:0;height:0;pointer-events:none}
+.public-home .home-final-simple{padding-top:24px}
+@media(min-width:1081px){
+  .public-nav a[href="/pages/creator-suite.html#widget-studio"],
+  .public-nav a[href="/pages/creator-suite.html#games"],
+  .public-nav a[href="/pages/creator-suite.html#launcher"]{display:none}
+}
+@media(max-width:900px){
+  .public-home .home-story-grid{grid-template-columns:1fr}
+  .public-home .home-offer-grid{grid-template-columns:1fr}
+  .public-home .home-offer-grid article{border-right:0;border-bottom:1px solid var(--line)}
+  .public-home .home-offer-grid article:last-child{border-bottom:0}
+  .public-home .home-start-grid,.public-home .home-trust-links{grid-template-columns:1fr}
+  .public-home .home-start-grid article,.public-home .home-trust-links a{border-right:0;border-bottom:1px solid var(--line)}
+  .public-home .home-start-grid article:last-child,.public-home .home-trust-links a:last-child{border-bottom:0}
+}
+@media(max-width:620px){
+  .public-home .home-story,.public-home .home-offer,.public-home .home-start,.public-home .home-trust-compact,.public-home .home-community{padding-block:44px}
+  .public-home .home-story-values article,.public-home .home-offer-grid article{padding:20px}
+  .public-home .home-offer-note{display:block}
+  .public-home .home-offer-note strong{display:block;margin-bottom:6px;white-space:normal}
+}
+@media(max-width:1080px){
+  .public-home .public-nav a[href="/pages/creator-suite.html#widget-studio"],
+  .public-home .public-nav a[href="/pages/creator-suite.html#games"],
+  .public-home .public-nav a[href="/pages/creator-suite.html#launcher"],
+  .public-home .public-nav a[href="/pages/plans.html"],
+  .public-home .public-nav a[href="/pages/roadmap.html"],
+  .public-home .public-nav a[href="/pages/support.html"]{display:none}
+}
+@media(min-width:1081px){
+  .public-home .public-nav a[href="/pages/plans.html"],
+  .public-home .public-nav a[href="/pages/roadmap.html"],
+  .public-home .public-nav a[href="/pages/support.html"]{display:none}
+}
