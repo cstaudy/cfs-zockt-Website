@@ -1,53 +1,70 @@
-# CFS Zockt – Professional UI Refresh
+# cfs_zockt – Full Website UI v3
 
-Dieses Paket ist als **Drop-in-Patch mit Projektstruktur** vorbereitet.
+Dieses Paket wurde direkt auf Basis deiner hochgeladenen Projektversion `cfs-zockt-Website-main(8).zip` erstellt.
 
-## Dateien direkt in GitHub übernehmen
+## Ziel
+Die komplette Website bekommt ein einheitliches Erscheinungsbild – nicht nur der Account:
 
-Lade die Dateien aus diesem ZIP **mit exakt diesen Pfaden** in dein Repository `cstaudy/cfs-zockt-Website`.
+- öffentliches Hauptmenü
+- Startseite
+- Creator-Suite Marketingseiten
+- Login / Registrierung / Recovery / Verifizierung
+- Dashboard
+- Account
+- Einstellungen / Setup / Integrationen / TikTok / Launcher
+- interne Creator-Module
+- Footer
+- mobile Navigation
 
-### Ersetzen
-- `public/pages/account.html`
-- `public/assets/img/logo-header.png`
-- `public/assets/img/brand/cfs-zockt-logo.png`
-- `public/assets/img/app-icon.png`
-- `public/assets/img/apple-touch-icon.png`
-- `public/assets/img/favicon.ico`
-- `public/assets/img/social-preview.jpg`
+## Branding
 
-### Neu hinzufügen
-- `public/assets/css/account-professional.css`
-- `public/assets/js/account-tabs.js`
-- `public/assets/img/brand/cfs-zockt-mark.png`
+### Original-Logo
+`public/assets/img/brand/cfs-zockt-mark-original.png`
 
-## Was sich ändert
+Das ist dein hochgeladenes Logo **unverändert**. Es wird per CSS kreisförmig und mit Screen-Blending auf dem dunkelblauen Hintergrund eingebunden. Dadurch wirkt der dunkle Bildhintergrund auf der Website nicht wie ein quadratischer Kasten.
 
-### Account-Seite
-Die Account-Seite wird in vier klare Bereiche gegliedert:
-1. Übersicht
-2. Sicherheit
-3. Sitzungen
-4. Erweitert
+### Markenname
+Header und Footer verwenden konsequent:
 
-Alle vorhandenen IDs, die `page-account.js` benötigt, bleiben erhalten. Dadurch bleiben Profil, Passkeys, TOTP, Sessions, Export, TikTok-Trennung und Account-Löschung weiterhin mit dem bestehenden Backend verbunden.
+`cfs_zockt`
 
-### Logos websiteweit
-Die bereits im Projekt verwendeten Standard-Logo-/Icon-Pfade werden ersetzt:
-- öffentliche Website: `brand/cfs-zockt-logo.png`
-- Creator-Suite-Menü: `logo-header.png`
-- PWA/App: `app-icon.png`
-- Apple Touch Icon: `apple-touch-icon.png`
-- Browser-Favicon: `favicon.ico`
-- Social/OG Preview: `social-preview.jpg`
+- `cfs_` weiß
+- `zockt` dunkel-/elektrischblau
+- darunter klein `CREATOR SUITE`
 
-Dadurch greifen die bestehenden HTML-Seiten auf das neue Branding zu, ohne dass du jede Seite einzeln umbauen musst.
+## Neue zentrale Dateien
 
-## Danach
-1. Dateien committen.
-2. Render deployen.
-3. Browser mit `Strg + F5` neu laden.
-4. `https://cfs-zockt.de/pages/account.html` prüfen.
-5. Startseite und zwei bis drei Creator-Seiten prüfen, damit Logo-Skalierung und Navigation passen.
+- `public/assets/css/cfs-theme-v3.css`
+- `public/assets/js/cfs-shell-v3.js`
+- `public/assets/img/brand/cfs-zockt-mark-original.png`
+- `public/assets/img/brand/cfs-zockt-wordmark-transparent.png`
 
-## Wichtig
-`page-account.js` wurde absichtlich nicht ersetzt. Das Paket ändert die Darstellung und Struktur, nicht die bestehende Account-Logik.
+## Geänderte HTML-Dateien
+Alle normalen Website-Seiten unter `public/` und `public/pages/` wurden nur um das globale Theme und die globale Shell erweitert. Die bestehenden IDs, Formulare und Seitenskripte bleiben erhalten.
+
+Nicht angefasst wurden absichtlich Runtime-/Embed-Flächen wie Widgets, Games-Runtime oder TikTok-Callback, damit OBS-/Overlay-Ausgaben keine Website-Navigation bekommen.
+
+## Creator Navigation
+Auf den normalen Creator-Seiten wird eine klare linke Navigation ergänzt. Große Arbeitsflächen wie Stream Studio, Widget Studio, Creator Editor, Scene Studio und Cut Studio bleiben absichtlich full-width und erhalten nur das gemeinsame Branding/Theme.
+
+Auf der Account-Seite steuert die linke Navigation direkt:
+- Übersicht
+- Sicherheit
+- Sitzungen
+- Erweitert
+
+Die vorhandene `account-tabs.js` / `page-account.js` Logik bleibt bestehen.
+
+## GitHub
+ZIP-Inhalt mit exakt derselben Ordnerstruktur in dein Repository kopieren und vorhandene HTML-Dateien ersetzen.
+
+Danach:
+1. Commit / Push
+2. Render Deploy
+3. Browser: `Strg + F5`
+4. Startseite, Login, Dashboard und Account prüfen
+
+## Technische Prüfung
+- `cfs-shell-v3.js`: `node --check`
+- alle gepatchten HTML-Seiten enthalten Theme + Shell genau einmal
+- bestehende Runtime-/Embed-Seiten wurden nicht global umgebaut
