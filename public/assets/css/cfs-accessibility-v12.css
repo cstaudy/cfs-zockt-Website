@@ -1,0 +1,156 @@
+
+/* =========================================================
+   cfs_zockt · Accessibility & Keyboard Polish v12
+   ========================================================= */
+
+.cfs-skip-link{
+  position:fixed;
+  left:14px;
+  top:calc(10px + env(safe-area-inset-top,0px));
+  z-index:2200;
+  min-height:42px;
+  display:flex;
+  align-items:center;
+  padding:8px 12px;
+  border:2px solid #69d3ff;
+  border-radius:10px;
+  color:#fff;
+  background:#03131f;
+  box-shadow:0 12px 34px rgba(0,0,0,.45);
+  font-size:10px;
+  font-weight:1000;
+  text-decoration:none;
+  transform:translateY(-140%);
+  transition:transform .14s ease;
+}
+
+.cfs-skip-link:focus{
+  transform:translateY(0);
+}
+
+.cfs-sr-only{
+  position:absolute!important;
+  width:1px!important;
+  height:1px!important;
+  padding:0!important;
+  margin:-1px!important;
+  overflow:hidden!important;
+  clip:rect(0,0,0,0)!important;
+  white-space:nowrap!important;
+  border:0!important;
+}
+
+body.cfs-ui-v3 :focus{
+  outline:none;
+}
+
+body.cfs-ui-v3 :focus-visible{
+  outline:3px solid #62cfff;
+  outline-offset:3px;
+  box-shadow:0 0 0 2px rgba(3,15,25,.88);
+}
+
+body.cfs-ui-v3 input:focus-visible,
+body.cfs-ui-v3 textarea:focus-visible,
+body.cfs-ui-v3 select:focus-visible{
+  outline:2px solid #62cfff;
+  outline-offset:2px;
+}
+
+body.cfs-ui-v3 .cfs-nav-v8-group>summary:focus-visible,
+body.cfs-ui-v3 summary:focus-visible{
+  border-radius:9px;
+}
+
+.cfs-keyboard-hint{
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  margin-left:7px;
+  color:#597b93;
+  font-size:7px;
+  font-weight:800;
+}
+
+.cfs-keyboard-hint kbd{
+  min-width:20px;
+  min-height:20px;
+  display:inline-grid;
+  place-items:center;
+  padding:2px 5px;
+  border:1px solid #2a536e;
+  border-bottom-color:#3c6e8d;
+  border-radius:6px;
+  color:#90b7cf;
+  background:#071522;
+  box-shadow:0 1px 0 #244a62;
+  font:inherit;
+  font-size:7px;
+}
+
+.cfs-a11y-live{
+  position:fixed;
+  width:1px;
+  height:1px;
+  overflow:hidden;
+  clip:rect(0,0,0,0);
+  white-space:nowrap;
+}
+
+.cfs-focus-trapped{
+  overscroll-behavior:contain;
+}
+
+.cfs-nav-v8-menu a:focus-visible,
+.cfs-global-sidebar a:focus-visible,
+.cfs-mobile-dock a:focus-visible,
+.cfs-mobile-dock button:focus-visible{
+  position:relative;
+  z-index:2;
+}
+
+.cfs-form-status[aria-busy="true"]{
+  opacity:.82;
+}
+
+@media(prefers-contrast:more){
+  body.cfs-ui-v3{
+    --cfs-a11y-border:#3e78a1;
+  }
+
+  body.cfs-ui-v3 .card,
+  body.cfs-ui-v3 .panel,
+  body.cfs-ui-v3 .section,
+  body.cfs-ui-v3 .cfs-dashboard-v9-card,
+  body.cfs-ui-v3 .cfs-help-strip,
+  body.cfs-ui-v3 .cfs-empty-state{
+    border-color:var(--cfs-a11y-border)!important;
+  }
+
+  body.cfs-ui-v3 .muted,
+  body.cfs-ui-v3 small,
+  body.cfs-ui-v3 .sub,
+  body.cfs-ui-v3 .hint{
+    color:#9cb3c6!important;
+  }
+}
+
+@media(prefers-reduced-motion:reduce){
+  html{
+    scroll-behavior:auto!important;
+  }
+
+  *,
+  *::before,
+  *::after{
+    animation-duration:.001ms!important;
+    animation-iteration-count:1!important;
+    transition-duration:.001ms!important;
+    scroll-behavior:auto!important;
+  }
+
+  .cfs-guide-panel,
+  .cfs-help-drawer-panel{
+    animation:none!important;
+  }
+}

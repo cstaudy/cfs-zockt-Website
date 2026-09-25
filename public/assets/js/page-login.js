@@ -28,6 +28,14 @@
       message($("loginMsg"), "Passwort wurde geändert. Du kannst dich jetzt mit dem neuen Passwort anmelden.");
       history.replaceState(null, "", location.pathname + location.hash);
     }
+    if (params.get("verified") === "1") {
+      try {
+        const verifiedEmail = sessionStorage.getItem("cfs_pending_verification_email") || "";
+        if (verifiedEmail && $("loginEmail")) $("loginEmail").value = verifiedEmail;
+      } catch {}
+      message($("loginMsg"), "E-Mail bestätigt. Du kannst dich jetzt anmelden und direkt mit deinem Creator-Setup weitermachen.");
+      history.replaceState(null, "", location.pathname + location.hash);
+    }
     const source = String(new URLSearchParams(location.search).get("source") || "").trim().toLowerCase();
     if (source === "tiktok") {
       const context = document.querySelector("[data-login-source-context]");
@@ -59,6 +67,7 @@
       }
       catch (error) {
         if (error?.data?.code === "email_verification_required") {
+          try { sessionStorage.setItem("cfs_pending_verification_email", normalizeEmail($("loginEmail").value)); } catch {}
           message($("loginMsg"),"Bitte bestätige zuerst deine E-Mail-Adresse. Über „E-Mail bestätigen“ kannst du einen neuen Link anfordern.",true);
         } else {
           message($("loginMsg"),"Anmeldung fehlgeschlagen. Bitte E-Mail und Passwort prüfen.",true);
@@ -104,9 +113,12 @@
         const body={display_name:$("displayName").value.trim(),email:$("regEmail").value,password:$("regPassword").value};
         const result = await CFS.json("/api/account/register",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
         if (result?.verification_required) {
-          message($("regMsg"),"Konto angelegt. Bitte bestätige jetzt den Link aus der E-Mail, bevor du dich anmeldest.");
-          form.reset();
-          updateRules();
+          try {
+            sessionStorage.setItem("cfs_pending_verification_email", body.email);
+            sessionStorage.setItem("cfs_pending_creator_name", body.display_name);
+          } catch {}
+          message($("regMsg"),"Konto angelegt. Wir öffnen jetzt die E-Mail-Bestätigung.");
+          location.replace("/pages/verify-email.html?source=register");
         } else {
           location.replace("/pages/dashboard.html");
         }

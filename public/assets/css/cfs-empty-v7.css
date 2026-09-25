@@ -1,0 +1,253 @@
+
+/* =========================================================
+   cfs_zockt · Empty States & First-Use v7
+   Clear first actions for not-yet-configured areas.
+   ========================================================= */
+
+.cfs-empty-state{
+  width:100%;
+  display:grid;
+  gap:14px;
+  padding:20px;
+  border:1px solid #174c72;
+  border-radius:16px;
+  background:
+    radial-gradient(circle at 92% 8%,rgba(28,141,230,.12),transparent 28%),
+    linear-gradient(145deg,rgba(6,24,40,.94),rgba(3,12,21,.97));
+  box-shadow:0 18px 50px rgba(0,33,64,.13);
+}
+
+.cfs-empty-state.compact{
+  padding:15px;
+  border-radius:13px;
+  box-shadow:none;
+}
+
+.cfs-empty-state.positive{
+  border-color:#1b6048;
+  background:linear-gradient(145deg,rgba(6,38,29,.55),rgba(3,17,22,.92));
+}
+
+.cfs-empty-state-head{
+  display:flex;
+  align-items:flex-start;
+  gap:12px;
+}
+
+.cfs-empty-state-icon{
+  width:42px;
+  height:42px;
+  display:grid;
+  place-items:center;
+  flex:0 0 auto;
+  border:1px solid #1f6b9b;
+  border-radius:13px;
+  color:#5fd2ff;
+  background:#07243c;
+  font-size:17px;
+  font-weight:1000;
+}
+
+.cfs-empty-state.positive .cfs-empty-state-icon{
+  color:#5ce5a2;
+  border-color:#1d704f;
+  background:#073124;
+}
+
+.cfs-empty-state-copy{
+  min-width:0;
+  flex:1;
+}
+
+.cfs-empty-state-kicker{
+  display:block;
+  color:#5dc6f7;
+  font-size:8px;
+  font-weight:1000;
+  letter-spacing:.12em;
+}
+
+.cfs-empty-state.positive .cfs-empty-state-kicker{
+  color:#66dca4;
+}
+
+.cfs-empty-state h3,
+.cfs-empty-state strong.cfs-empty-title{
+  display:block;
+  margin:5px 0 5px;
+  color:#f5faff;
+  font-size:16px;
+  line-height:1.2;
+  letter-spacing:-.25px;
+}
+
+.cfs-empty-state p{
+  margin:0;
+  color:#7f9bb1;
+  font-size:9px;
+  line-height:1.55;
+}
+
+.cfs-empty-steps{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:8px;
+}
+
+.cfs-empty-step{
+  min-height:76px;
+  padding:10px;
+  border:1px solid #123a58;
+  border-radius:11px;
+  background:#04121e;
+}
+
+.cfs-empty-step b{
+  width:24px;
+  height:24px;
+  display:grid;
+  place-items:center;
+  margin-bottom:7px;
+  border-radius:8px;
+  color:#69d1ff;
+  background:#07243d;
+  font-size:8px;
+}
+
+.cfs-empty-step strong{
+  display:block;
+  color:#dcecf8;
+  font-size:9px;
+}
+
+.cfs-empty-step span{
+  display:block;
+  margin-top:3px;
+  color:#667f94;
+  font-size:7px;
+  line-height:1.4;
+}
+
+.cfs-empty-actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:7px;
+}
+
+.cfs-empty-action{
+  min-height:34px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding:7px 10px;
+  border:1px solid #1d587f;
+  border-radius:10px;
+  color:#a5dbfb;
+  background:#061725;
+  text-decoration:none;
+  font:inherit;
+  font-size:8px;
+  font-weight:1000;
+  cursor:pointer;
+}
+
+.cfs-empty-action:hover{
+  color:#fff;
+  border-color:#269ee6;
+  background:#08253d;
+}
+
+.cfs-empty-action.primary{
+  color:#fff;
+  border-color:#248ed3;
+  background:linear-gradient(135deg,#0b518c,#07375f);
+}
+
+.cfs-empty-action:disabled{
+  opacity:.5;
+  cursor:not-allowed;
+}
+
+.cfs-first-use-note{
+  margin-top:10px;
+  padding:9px 10px;
+  border:1px solid #19445f;
+  border-radius:10px;
+  color:#6e8ca2;
+  background:rgba(4,18,30,.7);
+  font-size:8px;
+  line-height:1.5;
+}
+
+.cfs-first-use-note strong{
+  color:#9fc4dd;
+}
+
+.cfs-success-confirmation{
+  position:relative;
+  border-color:#1c704f!important;
+  background:linear-gradient(135deg,rgba(7,52,38,.52),rgba(4,20,25,.86))!important;
+  color:#9de1bd!important;
+}
+
+.cfs-success-confirmation:before{
+  content:"✓";
+  display:inline-grid;
+  place-items:center;
+  width:18px;
+  height:18px;
+  margin-right:7px;
+  border-radius:50%;
+  color:#062016;
+  background:#4bdd98;
+  font-size:9px;
+  font-weight:1000;
+  vertical-align:middle;
+}
+
+.cfs-first-use-inline{
+  margin-top:10px;
+}
+
+.cfs-first-use-inline .cfs-empty-state{
+  margin:0;
+}
+
+#wsEmpty.cfs-v7-upgraded{
+  display:block;
+}
+
+#wsEmpty.cfs-v7-upgraded .cfs-empty-state{
+  max-width:none;
+}
+
+#deviceGrid .cfs-empty-state{
+  grid-column:1/-1;
+}
+
+#passkeyList .cfs-empty-state,
+#sessionList .cfs-empty-state{
+  margin-top:0;
+}
+
+#securityEventList > .cfs-empty-state{
+  list-style:none;
+}
+
+@media(max-width:760px){
+  .cfs-empty-steps{
+    grid-template-columns:1fr;
+  }
+
+  .cfs-empty-state{
+    padding:16px;
+  }
+
+  .cfs-empty-actions{
+    flex-direction:column;
+  }
+
+  .cfs-empty-action{
+    width:100%;
+  }
+}

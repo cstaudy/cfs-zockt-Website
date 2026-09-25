@@ -194,12 +194,192 @@
     document.body.classList.add("cfs-sidebar-ready");
   }
 
+
+  function installGuideAssets() {
+    if (!document.querySelector('link[data-cfs-guide-v5]')) {
+      const link = document.createElement("link");
+      link.rel = "stylesheet";
+      link.href = "/assets/css/cfs-guide-v5.css";
+      link.dataset.cfsGuideV5 = "1";
+      document.head.appendChild(link);
+    }
+
+    if (!document.querySelector('script[data-cfs-guide-v5]')) {
+      const script = document.createElement("script");
+      script.src = "/assets/js/cfs-guide-v5.js";
+      script.defer = true;
+      script.dataset.cfsGuideV5 = "1";
+      document.head.appendChild(script);
+    }
+  }
+
+
+  function installHelpAssets() {
+    if (!document.querySelector('link[data-cfs-help-v6]')) {
+      const link = document.createElement("link");
+      link.rel = "stylesheet";
+      link.href = "/assets/css/cfs-help-v6.css";
+      link.dataset.cfsHelpV6 = "1";
+      document.head.appendChild(link);
+    }
+
+    if (!document.querySelector('script[data-cfs-help-v6]')) {
+      const script = document.createElement("script");
+      script.src = "/assets/js/cfs-help-v6.js";
+      script.defer = true;
+      script.dataset.cfsHelpV6 = "1";
+      document.head.appendChild(script);
+    }
+  }
+
+
+  function installEmptyStateAssets() {
+    if (!document.querySelector('link[data-cfs-empty-v7]')) {
+      const link = document.createElement("link");
+      link.rel = "stylesheet";
+      link.href = "/assets/css/cfs-empty-v7.css";
+      link.dataset.cfsEmptyV7 = "1";
+      document.head.appendChild(link);
+    }
+
+    if (!document.querySelector('script[data-cfs-empty-v7]')) {
+      const script = document.createElement("script");
+      script.src = "/assets/js/cfs-empty-v7.js";
+      script.defer = true;
+      script.dataset.cfsEmptyV7 = "1";
+      document.head.appendChild(script);
+    }
+  }
+
+
+  function installNavigationAssets() {
+    if (!document.querySelector('link[data-cfs-nav-v8]')) {
+      const link = document.createElement("link");
+      link.rel = "stylesheet";
+      link.href = "/assets/css/cfs-nav-v8.css";
+      link.dataset.cfsNavV8 = "1";
+      document.head.appendChild(link);
+    }
+
+    if (!document.querySelector('script[data-cfs-nav-v8]')) {
+      const script = document.createElement("script");
+      script.src = "/assets/js/cfs-nav-v8.js";
+      script.defer = true;
+      script.dataset.cfsNavV8 = "1";
+      document.head.appendChild(script);
+    }
+  }
+
+
+  function installDashboardPriorityAssets() {
+    if (!document.querySelector('link[data-cfs-dashboard-v9]')) {
+      const link = document.createElement("link");
+      link.rel = "stylesheet";
+      link.href = "/assets/css/cfs-dashboard-v9.css";
+      link.dataset.cfsDashboardV9 = "1";
+      document.head.appendChild(link);
+    }
+
+    if (!document.querySelector('script[data-cfs-dashboard-v9]')) {
+      const script = document.createElement("script");
+      script.src = "/assets/js/cfs-dashboard-v9.js";
+      script.defer = true;
+      script.dataset.cfsDashboardV9 = "1";
+      document.head.appendChild(script);
+    }
+  }
+
+
+  function installFormConsistencyAssets() {
+    if (!document.querySelector('link[data-cfs-forms-v10]')) {
+      const link = document.createElement("link");
+      link.rel = "stylesheet";
+      link.href = "/assets/css/cfs-forms-v10.css";
+      link.dataset.cfsFormsV10 = "1";
+      document.head.appendChild(link);
+    }
+
+    if (!document.querySelector('script[data-cfs-forms-v10]')) {
+      const script = document.createElement("script");
+      script.src = "/assets/js/cfs-forms-v10.js";
+      script.defer = true;
+      script.dataset.cfsFormsV10 = "1";
+      document.head.appendChild(script);
+    }
+  }
+
+
+  function installMobileUxAssets() {
+    if (!document.querySelector('link[data-cfs-mobile-v11]')) {
+      const link = document.createElement("link");
+      link.rel = "stylesheet";
+      link.href = "/assets/css/cfs-mobile-v11.css";
+      link.dataset.cfsMobileV11 = "1";
+      document.head.appendChild(link);
+    }
+
+    if (!document.querySelector('script[data-cfs-mobile-v11]')) {
+      const script = document.createElement("script");
+      script.src = "/assets/js/cfs-mobile-v11.js";
+      script.defer = true;
+      script.dataset.cfsMobileV11 = "1";
+      document.head.appendChild(script);
+    }
+  }
+
+
+  function installAccessibilityAssets() {
+    if (!document.querySelector('link[data-cfs-accessibility-v12]')) {
+      const link = document.createElement("link");
+      link.rel = "stylesheet";
+      link.href = "/assets/css/cfs-accessibility-v12.css";
+      link.dataset.cfsAccessibilityV12 = "1";
+      document.head.appendChild(link);
+    }
+
+    if (!document.querySelector('script[data-cfs-accessibility-v12]')) {
+      const script = document.createElement("script");
+      script.src = "/assets/js/cfs-accessibility-v12.js";
+      script.defer = true;
+      script.dataset.cfsAccessibilityV12 = "1";
+      document.head.appendChild(script);
+    }
+  }
+
+
+  function installPublicLandingAssets() {
+    if (!document.querySelector('link[data-cfs-home-v13]')) {
+      const link = document.createElement("link");
+      link.rel = "stylesheet";
+      link.href = "/assets/css/cfs-home-v13.css";
+      link.dataset.cfsHomeV13 = "1";
+      document.head.appendChild(link);
+    }
+
+    if (!document.querySelector('script[data-cfs-home-v13]')) {
+      const script = document.createElement("script");
+      script.src = "/assets/js/cfs-home-v13.js";
+      script.defer = true;
+      script.dataset.cfsHomeV13 = "1";
+      document.head.appendChild(script);
+    }
+  }
+
   function init() {
     document.documentElement.classList.add("cfs-ui-v3");
     document.body.classList.add("cfs-ui-v3");
     upgradeHeaderBrands();
     markActiveTopNavigation();
     injectCreatorSidebar();
+    installGuideAssets();
+    installHelpAssets();
+    installEmptyStateAssets();
+    installNavigationAssets();
+    installDashboardPriorityAssets();
+    installFormConsistencyAssets();
+    installMobileUxAssets();
+    installAccessibilityAssets();
+    installPublicLandingAssets();
   }
 
   if (document.readyState === "loading") {

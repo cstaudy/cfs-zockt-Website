@@ -23,6 +23,11 @@
     let sentOnce = false;
     let cooldownTimer = null;
 
+    try {
+      const pendingEmail = sessionStorage.getItem("cfs_pending_verification_email") || "";
+      if (pendingEmail && emailInput && !emailInput.value) emailInput.value = pendingEmail;
+    } catch {}
+
     const cooldownUntil = () => {
       try {
         return Number(sessionStorage.getItem(COOLDOWN_KEY) || 0) || 0;
@@ -97,7 +102,7 @@
 
     const params = new URLSearchParams(String(location.hash || "").replace(/^#/, ""));
     const token = String(params.get("token") || "").trim();
-    history.replaceState(null, "", location.pathname);
+    history.replaceState(null,"",location.pathname);
 
     try {
       const status = await CFS.json("/api/account/mail/status");
@@ -126,6 +131,8 @@
           body: JSON.stringify({ token })
         });
         show(output, result?.message || "E-Mail-Adresse wurde bestätigt.");
+        try { sessionStorage.setItem("cfs_recently_verified", "1"); } catch {}
+        window.CFSOnboardingV4?.showVerifiedAction?.();
       } catch (error) {
         show(output, error?.message || "Der Bestätigungslink ist ungültig oder abgelaufen.", true);
       }
@@ -169,9 +176,9 @@
         sentOnce = true;
         show(
           resendMessage,
-          "Anfrage erfolgreich. Wenn die Adresse zu einem Konto gehört, ist ein neuer Bestätigungslink unterwegs. Prüfe bitte auch den Spam-Ordner."
+          "Anfrage erfolgreich. Wenn die Adresse zu einem Konto gehört, ist ein neuer Bestätigungslink unterwegs. Prüfe bitte Posteingang und Spam-Ordner."
         );
-        resendForm.reset();
+        try { sessionStorage.setItem("cfs_pending_verification_email", String(emailInput.value || "").trim().toLowerCase()); } catch {}
         startCooldown();
       } catch (error) {
         show(resendMessage, error?.message || "Ein neuer Bestätigungslink konnte nicht angefordert werden.", true);

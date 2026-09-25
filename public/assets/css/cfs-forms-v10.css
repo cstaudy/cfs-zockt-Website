@@ -1,0 +1,336 @@
+
+/* =========================================================
+   cfs_zockt · Form & Action Consistency v10
+   ========================================================= */
+
+.cfs-form-v10{
+  --cfs-field-border:#264f73;
+  --cfs-field-border-hover:#39739d;
+  --cfs-field-focus:#28a8ef;
+  --cfs-field-error:#df6576;
+  --cfs-field-ok:#46d898;
+}
+
+.cfs-form-v10 .field,
+.cfs-form-v10 label:has(> input),
+.cfs-form-v10 label:has(> select),
+.cfs-form-v10 label:has(> textarea){
+  position:relative;
+}
+
+.cfs-form-v10 .field>label,
+.cfs-form-v10 label>span:first-child{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  min-height:17px;
+  color:#93adc1;
+  font-size:8px;
+  font-weight:1000;
+  letter-spacing:.08em;
+}
+
+.cfs-form-required{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:16px;
+  padding:2px 5px;
+  border:1px solid #4d6170;
+  border-radius:999px;
+  color:#9bb1c0;
+  background:#07131e;
+  font-size:6px;
+  font-weight:1000;
+  letter-spacing:.08em;
+}
+
+.cfs-form-optional{
+  color:#55748b;
+  font-size:7px;
+  font-weight:800;
+  letter-spacing:0;
+  text-transform:none;
+}
+
+.cfs-form-v10 input:not([type="checkbox"]):not([type="radio"]),
+.cfs-form-v10 textarea,
+.cfs-form-v10 select{
+  min-height:46px;
+  border-color:var(--cfs-field-border);
+  border-radius:11px;
+  background:linear-gradient(180deg,#06111d,#040d16);
+  transition:border-color .15s ease,box-shadow .15s ease,background .15s ease;
+}
+
+.cfs-form-v10 textarea{
+  min-height:126px;
+  line-height:1.55;
+}
+
+.cfs-form-v10 input:not([type="checkbox"]):not([type="radio"]):hover,
+.cfs-form-v10 textarea:hover,
+.cfs-form-v10 select:hover{
+  border-color:var(--cfs-field-border-hover);
+}
+
+.cfs-form-v10 input:not([type="checkbox"]):not([type="radio"]):focus,
+.cfs-form-v10 textarea:focus,
+.cfs-form-v10 select:focus{
+  border-color:var(--cfs-field-focus);
+  background:#061522;
+  box-shadow:0 0 0 3px rgba(40,168,239,.11);
+}
+
+.cfs-form-v10 input[aria-invalid="true"],
+.cfs-form-v10 textarea[aria-invalid="true"],
+.cfs-form-v10 select[aria-invalid="true"]{
+  border-color:var(--cfs-field-error)!important;
+  box-shadow:0 0 0 3px rgba(223,101,118,.1)!important;
+}
+
+.cfs-form-v10 input[disabled],
+.cfs-form-v10 textarea[disabled],
+.cfs-form-v10 select[disabled],
+.cfs-form-v10 input[readonly],
+.cfs-form-v10 textarea[readonly]{
+  color:#748c9f;
+  background:#071019;
+  border-color:#1d3a50;
+}
+
+.cfs-field-meta{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:10px;
+  min-height:15px;
+  margin-top:1px;
+}
+
+.cfs-field-hint{
+  color:#58768c;
+  font-size:7px;
+  line-height:1.45;
+}
+
+.cfs-field-counter{
+  margin-left:auto;
+  flex:0 0 auto;
+  color:#55758d;
+  font-size:7px;
+  font-variant-numeric:tabular-nums;
+}
+
+.cfs-field-counter.near-limit{
+  color:#e3b968;
+}
+
+.cfs-field-counter.at-limit{
+  color:#ec7e8c;
+}
+
+.cfs-field-error{
+  margin-top:3px;
+  color:#f09aa7;
+  font-size:8px;
+  font-weight:850;
+  line-height:1.45;
+}
+
+.cfs-field-error[hidden]{
+  display:none!important;
+}
+
+.cfs-password-shell{
+  position:relative;
+}
+
+.cfs-password-shell>input{
+  padding-right:78px!important;
+}
+
+.cfs-password-toggle{
+  position:absolute;
+  right:7px;
+  top:50%;
+  min-height:31px;
+  padding:0 8px;
+  transform:translateY(-50%);
+  border:1px solid #214b69;
+  border-radius:8px;
+  color:#82afd0;
+  background:#071725;
+  font:inherit;
+  font-size:7px;
+  font-weight:1000;
+  cursor:pointer;
+}
+
+.cfs-password-toggle:hover{
+  color:#fff;
+  border-color:#2e8ec6;
+  background:#0a2236;
+}
+
+.cfs-form-actions-v10,
+.cfs-form-v10 .submit-row,
+.cfs-form-v10 .support-form-actions,
+.cfs-form-v10 .card-actions,
+.cfs-form-v10 .actions{
+  display:flex;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:9px;
+}
+
+.cfs-form-v10 .btn,
+.cfs-form-v10 button.btn{
+  min-height:42px;
+  border-radius:10px;
+}
+
+.cfs-form-v10 .btn.primary{
+  border-color:#2d9ee2;
+  background:linear-gradient(135deg,#0b5797,#087ed1);
+  box-shadow:0 10px 24px rgba(8,126,209,.18);
+}
+
+.cfs-form-v10 .btn.ghost{
+  color:#8fabc1;
+  border-color:#234a67;
+  background:#06131e;
+}
+
+.cfs-form-v10 .danger-button,
+.cfs-form-v10 .btn.danger,
+.cfs-form-v10 button[data-cfs-danger="true"]{
+  color:#ffd3d8;
+  border-color:#82404a;
+  background:linear-gradient(135deg,#35141b,#271017);
+  box-shadow:none;
+}
+
+.cfs-form-v10 .danger-button:hover:not([disabled]),
+.cfs-form-v10 .btn.danger:hover:not([disabled]),
+.cfs-form-v10 button[data-cfs-danger="true"]:hover:not([disabled]){
+  color:#fff;
+  border-color:#c55869;
+  background:#461821;
+}
+
+.cfs-form-v10 .danger-form{
+  padding:14px;
+  border:1px solid rgba(136,59,70,.45);
+  border-radius:13px;
+  background:rgba(56,17,23,.13);
+}
+
+.cfs-form-v10 .danger-form:before{
+  content:"GEFAHRENBEREICH";
+  display:block;
+  grid-column:1/-1;
+  margin-bottom:3px;
+  color:#d77987;
+  font-size:7px;
+  font-weight:1000;
+  letter-spacing:.13em;
+}
+
+.cfs-form-status{
+  display:flex;
+  align-items:flex-start;
+  gap:8px;
+  min-height:38px;
+}
+
+.cfs-form-status:before{
+  content:"i";
+  width:21px;
+  height:21px;
+  display:grid;
+  place-items:center;
+  flex:0 0 auto;
+  border-radius:7px;
+  color:#8bcff5;
+  background:#0a263b;
+  font-size:8px;
+  font-weight:1000;
+}
+
+.cfs-form-status.cfs-status-success:before{
+  content:"✓";
+  color:#062117;
+  background:#51dc99;
+}
+
+.cfs-form-status.cfs-status-error:before{
+  content:"!";
+  color:#2a080e;
+  background:#e97888;
+}
+
+.cfs-form-status.cfs-status-warning:before{
+  content:"!";
+  color:#2a1b03;
+  background:#e1bd69;
+}
+
+.cfs-form-v10 .small-status{
+  min-height:18px;
+  display:inline-flex;
+  align-items:center;
+  color:#64839a;
+  font-size:8px;
+}
+
+.cfs-form-submit-note{
+  width:100%;
+  color:#55758d;
+  font-size:7px;
+  line-height:1.45;
+}
+
+.cfs-form-v10 select{
+  cursor:pointer;
+}
+
+.cfs-form-v10 input[type="checkbox"],
+.cfs-form-v10 input[type="radio"]{
+  accent-color:#1497e6;
+}
+
+.cfs-form-v10 .form-grid{
+  gap:15px;
+}
+
+.cfs-form-v10 form[data-cfs-form-enhanced="1"]{
+  scroll-margin-top:110px;
+}
+
+@media(max-width:620px){
+  .cfs-form-v10 .submit-row,
+  .cfs-form-v10 .support-form-actions,
+  .cfs-form-v10 .card-actions,
+  .cfs-form-v10 .actions{
+    align-items:stretch;
+    flex-direction:column;
+  }
+
+  .cfs-form-v10 .submit-row .btn,
+  .cfs-form-v10 .support-form-actions .btn,
+  .cfs-form-v10 .card-actions .btn,
+  .cfs-form-v10 .actions .btn,
+  .cfs-form-v10 form button[type="submit"].btn{
+    width:100%;
+    justify-content:center;
+  }
+
+  .cfs-form-v10 .small-status{
+    width:100%;
+  }
+
+  .cfs-password-shell>input{
+    padding-right:70px!important;
+  }
+}

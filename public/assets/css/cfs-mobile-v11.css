@@ -1,0 +1,322 @@
+
+/* =========================================================
+   cfs_zockt · Mobile UX & Touch Polish v11
+   ========================================================= */
+
+:root{
+  --cfs-safe-bottom:env(safe-area-inset-bottom,0px);
+  --cfs-safe-top:env(safe-area-inset-top,0px);
+}
+
+.cfs-mobile-only{
+  display:none!important;
+}
+
+@media(max-width:760px){
+  html{
+    scroll-padding-top:88px;
+  }
+
+  body{
+    overscroll-behavior-y:none;
+  }
+
+  body.cfs-mobile-dock-ready{
+    padding-bottom:calc(78px + var(--cfs-safe-bottom));
+  }
+
+  body.cfs-ui-v3 .btn,
+  body.cfs-ui-v3 button,
+  body.cfs-ui-v3 input[type="button"],
+  body.cfs-ui-v3 input[type="submit"],
+  body.cfs-ui-v3 .cfs-nav-v8-back,
+  body.cfs-ui-v3 .cfs-help-mini,
+  body.cfs-ui-v3 .cfs-empty-action,
+  body.cfs-ui-v3 .cfs-dashboard-v9-action{
+    min-height:44px;
+  }
+
+  body.cfs-ui-v3 input:not([type="checkbox"]):not([type="radio"]),
+  body.cfs-ui-v3 textarea,
+  body.cfs-ui-v3 select{
+    font-size:16px!important;
+  }
+
+  body.cfs-ui-v3 .wrap,
+  body.cfs-ui-v3 main,
+  body.cfs-ui-v3 .creator-main{
+    max-width:100%;
+  }
+
+  .cfs-mobile-only{
+    display:flex!important;
+  }
+
+  /* Creator bottom navigation */
+  .cfs-mobile-dock{
+    position:fixed;
+    left:8px;
+    right:8px;
+    bottom:calc(8px + var(--cfs-safe-bottom));
+    z-index:1180;
+    display:grid;
+    grid-template-columns:repeat(5,minmax(0,1fr));
+    gap:3px;
+    min-height:60px;
+    padding:5px;
+    border:1px solid rgba(32,100,145,.68);
+    border-radius:17px;
+    background:rgba(3,13,23,.96);
+    box-shadow:0 18px 54px rgba(0,0,0,.5),0 0 24px rgba(24,137,215,.1);
+    backdrop-filter:blur(18px);
+  }
+
+  .cfs-mobile-dock a,
+  .cfs-mobile-dock button{
+    min-width:0;
+    min-height:48px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:3px;
+    padding:4px 2px;
+    border:1px solid transparent;
+    border-radius:11px;
+    color:#6f8ca3;
+    background:transparent;
+    text-decoration:none;
+    font:inherit;
+    font-size:7px;
+    font-weight:950;
+    cursor:pointer;
+  }
+
+  .cfs-mobile-dock a:hover,
+  .cfs-mobile-dock button:hover,
+  .cfs-mobile-dock a.active,
+  .cfs-mobile-dock a[aria-current="page"]{
+    color:#fff;
+    border-color:#1c5f8d;
+    background:#061d30;
+  }
+
+  .cfs-mobile-dock-icon{
+    min-height:18px;
+    display:grid;
+    place-items:center;
+    color:#5ecbfc;
+    font-size:15px;
+    line-height:1;
+  }
+
+  .cfs-mobile-dock a.active .cfs-mobile-dock-icon,
+  .cfs-mobile-dock a[aria-current="page"] .cfs-mobile-dock-icon{
+    color:#7addff;
+    filter:drop-shadow(0 0 8px rgba(53,190,255,.28));
+  }
+
+  /* Mobile overflow rails instead of compressed chips/tabs */
+  .cfs-mobile-rail,
+  .tabs,
+  .chip-row,
+  .filter-row,
+  .toolbar,
+  .cfs-guide-suggestions,
+  .creator-toolbar,
+  .widget-toolbar,
+  .stream-toolbar{
+    max-width:100%;
+    overflow-x:auto;
+    overscroll-behavior-x:contain;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+  }
+
+  .cfs-mobile-rail::-webkit-scrollbar,
+  .tabs::-webkit-scrollbar,
+  .chip-row::-webkit-scrollbar,
+  .filter-row::-webkit-scrollbar,
+  .toolbar::-webkit-scrollbar,
+  .cfs-guide-suggestions::-webkit-scrollbar,
+  .creator-toolbar::-webkit-scrollbar,
+  .widget-toolbar::-webkit-scrollbar,
+  .stream-toolbar::-webkit-scrollbar{
+    display:none;
+  }
+
+  /* Prevent tiny two-column forms/cards on narrow screens */
+  .form-grid,
+  .two-col,
+  .two-column,
+  .grid-2,
+  .settings-grid,
+  .account-grid,
+  .creator-grid{
+    grid-template-columns:1fr!important;
+  }
+
+  .cfs-dashboard-v9-focus,
+  .cfs-dashboard-v9-results,
+  .cfs-dashboard-v9-quick,
+  .cfs-onboarding-steps{
+    grid-template-columns:1fr!important;
+  }
+
+  /* Safer mobile dialogs / drawers */
+  .cfs-guide-panel{
+    bottom:calc(78px + var(--cfs-safe-bottom))!important;
+    max-height:calc(100dvh - 100px - var(--cfs-safe-top) - var(--cfs-safe-bottom))!important;
+  }
+
+  .cfs-guide-launcher{
+    bottom:calc(82px + var(--cfs-safe-bottom))!important;
+    right:12px!important;
+  }
+
+  .cfs-help-drawer{
+    align-items:end;
+    padding-top:var(--cfs-safe-top);
+  }
+
+  .cfs-help-drawer-panel{
+    max-height:calc(88dvh - var(--cfs-safe-top));
+    padding-bottom:var(--cfs-safe-bottom);
+  }
+
+  /* Sticky mobile action for the active form */
+  .cfs-mobile-form-action{
+    position:sticky;
+    bottom:calc(76px + var(--cfs-safe-bottom));
+    z-index:70;
+    display:flex;
+    gap:7px;
+    margin-top:12px;
+    padding:8px;
+    border:1px solid rgba(31,91,132,.64);
+    border-radius:12px;
+    background:rgba(4,15,25,.92);
+    box-shadow:0 12px 32px rgba(0,0,0,.28);
+    backdrop-filter:blur(12px);
+  }
+
+  .cfs-mobile-form-action .btn,
+  .cfs-mobile-form-action button{
+    flex:1 1 auto;
+    width:auto!important;
+  }
+
+  /* Workspace hint for large desktop-first tools */
+  .cfs-mobile-workspace-note{
+    display:flex;
+    align-items:flex-start;
+    gap:9px;
+    margin:10px 0 12px;
+    padding:10px 11px;
+    border:1px solid #1a557b;
+    border-radius:11px;
+    color:#7898b0;
+    background:#051725;
+    font-size:8px;
+    line-height:1.5;
+  }
+
+  .cfs-mobile-workspace-note:before{
+    content:"↔";
+    width:25px;
+    height:25px;
+    display:grid;
+    place-items:center;
+    flex:0 0 auto;
+    border-radius:8px;
+    color:#63ccfb;
+    background:#082640;
+    font-size:11px;
+    font-weight:1000;
+  }
+
+  /* Make wide workspaces horizontally usable without breaking desktop layout */
+  .cfs-specialized-workspace main,
+  .cfs-specialized-workspace .workspace,
+  .cfs-specialized-workspace .editor-workspace,
+  .cfs-specialized-workspace .studio-workspace{
+    min-width:0;
+  }
+
+  .cfs-specialized-workspace .workspace-scroll,
+  .cfs-specialized-workspace .timeline,
+  .cfs-specialized-workspace .scene-canvas-wrap,
+  .cfs-specialized-workspace .stream-canvas-wrap{
+    max-width:100%;
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+  }
+
+  /* Header / navigation */
+  body.cfs-ui-v3 .site-header,
+  body.cfs-ui-v3 .creator-header{
+    padding-top:var(--cfs-safe-top);
+  }
+
+  body.cfs-ui-v3 .brand{
+    min-width:0;
+  }
+
+  body.cfs-ui-v3 .brand-name{
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+
+  /* Cards should not spill horizontally */
+  .card,
+  .panel,
+  .section,
+  .creator-card,
+  .management-summary-card{
+    min-width:0;
+    max-width:100%;
+  }
+
+  pre,
+  code,
+  .code-block{
+    max-width:100%;
+    overflow-x:auto;
+  }
+
+  /* Tap feedback */
+  a,
+  button,
+  summary{
+    -webkit-tap-highlight-color:rgba(55,168,232,.14);
+  }
+}
+
+@media(max-width:420px){
+  .cfs-mobile-dock{
+    left:5px;
+    right:5px;
+    bottom:calc(5px + var(--cfs-safe-bottom));
+  }
+
+  .cfs-mobile-dock a,
+  .cfs-mobile-dock button{
+    font-size:6.5px;
+  }
+
+  .cfs-mobile-dock-icon{
+    font-size:14px;
+  }
+
+  .cfs-guide-launcher-copy{
+    display:none!important;
+  }
+
+  .cfs-guide-launcher{
+    width:48px!important;
+    height:48px!important;
+    padding:5px!important;
+    border-radius:50%!important;
+  }
+}
