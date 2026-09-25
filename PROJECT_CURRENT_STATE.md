@@ -4,6 +4,48 @@
 **Backend: 3.12.0**  
 **Launcher: 0.42.0**
 
+## Statusupdate 25.09.2026 – maßgeblich vor historischen Pass-Notizen
+
+- aktueller öffentlicher Editorial-/Homepage-Stand: **v36 Editorial Simplification** auf der bestehenden **v24 Creator OS** / v33-v35 UX-Basis
+- Startseite bewusst von 17 auf **9 Sections**, 41 auf **10 Content-Artikel** und ca. 1388 auf **775 Wörter** reduziert
+- neue Hauptlinie: **Was ist cfs_zockt? · Mein Plan · Was ich anbiete · Wie du startest · Community & Vertrauen**
+- technische Detailtiefe wurde nicht gelöscht, sondern auf Creator Suite, Roadmap, Pläne, Security und Support zurückgeführt
+- `npm run editorial36:check` ist **16/16 PASS**; Projektregression **57/57 PASS**; voller Product-Acceptance-Lauf **9/9 PASS**
+- kein neuer UI-Layer: `cfs-os-v24` bleibt globale Aktivierung; v36 liegt in `public/index.html` und `public/assets/css/cfs-ui-v18.css`
+- frischer Chromium-Screenshot konnte in der Sandbox nicht zuverlässig abgeschlossen werden; daher **kein neuer v36 Browser-PASS**
+- aktueller Einstiegs-/Vertrauensstand: **v35 Welcome & Clarity** auf der bestehenden **v24 Creator OS** / **v34 Brand Coherence** Basis
+- v35 macht vor Registrierung, Upgrade und Device-Link klar, was ein Schritt tatsächlich auslöst und was ausdrücklich **nicht** automatisch passiert
+- gemeinsame Leitlinie: **Du bist willkommen · du entscheidest · nichts versteckt · Kontrolle bleibt nachvollziehbar**
+- Homepage, Login, Dashboard, Plans, Support sowie Web-/Native-Launcher verwenden dafür denselben Welcome-/Clarity-Baustein
+- Registrierung bleibt FREE und ohne automatische Zahlung; Integrationen werden nicht allein durch Registrierung verbunden; Anmeldung bzw. Device-Link starten keinen Stream automatisch
+- `npm run welcome35:check` ist **15/15 PASS**; voller Product-Acceptance-Lauf **9/9 PASS**; `npm run project:check` **57/57 PASS**
+- kein neuer UI-Layer: `cfs-os-v24` bleibt globale Aktivierung; die gemeinsame Komponente liegt in den bestehenden konsolidierten CSS-Dateien
+- ein frischer v35-Headless-Chromium-Lauf terminierte in dieser Sandbox erneut nicht sauber; daher **kein neuer Browser-PASS**
+- aktueller Marken-/UX-Refinementstand: **v34 Brand Coherence** auf der bestehenden Designbasis **v24 Creator OS Redesign**; v33 Visual Polish bleibt enthalten
+- v34 ordnet die Produktidentität bewusst als **Community zuerst · ehrlicher Status · Sicherheit als Produktbestandteil**
+- Homepage, Login, Dashboard, Creator Suite, Security, Support, Web-Launcher und nativer Launcher verwenden jetzt dieselbe CFS-Sprache und dieselben Vertrauensprinzipien
+- kein neuer UI-Layer: globale Aktivierung bleibt `cfs-os-v24`; Logo, Wortmarke, Schrift, IDs/Form-Handler und Backend-Verträge bleiben unverändert
+- `npm run brand34:check` ist **17/17 PASS**; `npm run project:check` ist nach den Änderungen **57/57 PASS**
+- Product Acceptance bleibt **v32 `LOCAL_PRODUCT_ACCEPTANCE_PASS`** und wurde nach v34 erneut **9/9 PASS** ausgeführt
+- frische v34-Browser-Evidence wird nicht behauptet: Headless Chromium terminierte in der Sandbox nicht sauber; die gespeicherte v33-Render-Evidence bleibt die letzte Browser-Evidence
+- aktueller Designstand: **v24 Creator OS Redesign**, visuell verfeinert und lokal gerendert in **v33 Visual Polish**
+- v33 ändert keinen UI-Layer und keine Design-Aktivierung; `cfs-os-v24` bleibt die globale Designbasis
+- `npm run visual33:check` ist **15/15 PASS**
+- lokaler Chromium-Layout-Smoke: **18/18 Viewport-Szenarien** (9 Kernseiten × 390/1440 px) ohne horizontales Overflow
+- Mobile Creator-Navigation ist bereinigt: App-Dock ersetzt auf <=760 px die zusätzliche Sidebar; der CFS Guide öffnet dort beim ersten Dashboard-Besuch nicht mehr automatisch
+- Security wurde als ruhigere Matrix nachgeschärft; Stream-Studio-Microcopy lesbarer gemacht; Widget-Studio-390px-Overflow behoben
+- Website Acceptance **34/34 PASS**, Accessibility/Responsive **22/22 PASS**, Visual Polish **19/19 PASS**
+- Product Acceptance bleibt **v32 `LOCAL_PRODUCT_ACCEPTANCE_PASS`**; voller Lauf nach den Runtime-Anpassungen **9/9 PASS**, Quick **7/7 PASS**
+- `npm run project:check` bleibt aus v32 **57/57 PASS**; Security Continuity 45-58 bleibt **47/47 PASS**
+- Finalization Readiness bleibt **v31 / READY_FOR_LIVE_FINALIZATION**; R62-R67-Harnesses bleiben lokal/statisch grün
+- aktueller Release-Seal: **v25 `RC25_READY`**; aktuelle Deploy-Automation: **v27**
+- aktueller Operations-/Production-Evidence-Runner: **v30** (`npm run evidence30:check`, externer Lauf über `npm run evidence30:run -- --branch <VERIFIED_TARGET_BRANCH> --expected-sha <CURRENT_COMMIT_SHA>`)
+- Root- und Launcher-`package-lock.json` sind vorhanden; `npm run lockfiles:check` ist grün; ältere Abschnitte mit fehlenden Lockfiles sind historische Momentaufnahmen
+- `npm run deployment:doctor` ist aktuell `GO`; echte Production-Environment-Werte wurden dabei nicht ausgewertet
+- bis zur vollständigen Freigabe bleiben reale Außenwelt-Gates: verifizierter GitHub/Render/Production-Lauf, echte Geräte-/Browserabnahme sowie R62-R67
+- der externe Edge-/DNS-/TLS-Nachweis bleibt aus der isolierten Prüfumgebung offen
+- maßgeblicher aktueller Operationsstatus steht in `handoff/CURRENT-HANDOFF.md`
+
 ## Priorität
 
 Aktuell haben **Website-Sicherheit, Transparenz und Überzeugungskraft** Vorrang vor zusätzlichen Feature-Blöcken. Bestehende Funktionen sollen stabilisiert und verständlich präsentiert werden, bevor neue große Baustellen geöffnet werden.
@@ -155,14 +197,12 @@ Die kleine kumulative Regression bleibt aktiv. Zusätzlich wurden in Pass 11 die
 
 ## Nächste sinnvolle Reihenfolge
 
-1. DNS/Custom-Domain für `cfs-zockt.de` öffentlich auflösbar machen bzw. prüfen
-2. danach `npm run edge:check` gegen die echte HTTPS-Domain ausführen und Redirect/TLS/HSTS/CSP/Header real verifizieren
-3. Root- und Launcher-`package-lock.json` in einer vertrauenswürdigen npm-Umgebung erzeugen, prüfen und Deployments auf `npm ci` umstellen
-4. alle erforderlichen Production-Secrets setzen und Staging/Production fail-closed starten
-5. Mail-Relay real testen, falls Verification/Recovery produktiv aktiviert werden sollen
-6. Passkey/WebAuthn mit echtem Browser + Plattform-/externem Authenticator auf der realen HTTPS-Domain testen, falls Passkeys produktiv freigeschaltet werden
-7. reale Windows-/Installer-/Hardware-/LIVE-Prüfungen entsprechend Release-Scope durchführen
-8. finaler Freeze und Production-Go/No-Go
+1. Im echten Git-Repository Remote, Zielbranch und HEAD-SHA prüfen; keinen Branch raten.
+2. `npm run evidence30:run -- --branch <VERIFIED_TARGET_BRANCH> --expected-sha <CURRENT_COMMIT_SHA>` aus einer netzwerkfähigen, autorisierten Umgebung ausführen.
+3. Nur bei realem `PRODUCTION_EVIDENCE_PASS` GitHub Quality Gate, Production Deployment Gate, Canary, External Security und Creator-OS Postdeploy gemeinsam als nachgewiesen behandeln.
+4. Danach reale Desktop-/Mobile-Abnahme des v24 Creator OS durchführen.
+5. R62 mit Passkey-Step-up, TOTP-Login, TOTP-Step-up, genau einem Recovery-Code-Step-up und Entfernen des temporären Passkeys abschließen; nur `LIVE_AUTH_PASS` zählt.
+6. Anschließend R63 Windows Launcher, R64 2h OBS/LIVE-Soak, R65 Monitoring/Alerting, R66 Stripe LIVE und R67 Final Gate durchführen.
 
 
 ## Account & Privacy Lifecycle Pass (15.09.2026)
