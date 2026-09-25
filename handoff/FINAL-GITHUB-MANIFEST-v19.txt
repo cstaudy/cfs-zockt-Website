@@ -1,0 +1,58 @@
+cfs_zockt – FINAL GITHUB MANIFEST v19
+
+Basis: ursprünglich hochgeladenes Projekt
+Ziel: konsolidierter UI-Stand v18 + GitHub/Deploy-Handoff v19
+
+NEUE REPO-DATEIEN: 8
+NEW      public/assets/css/cfs-onboarding-v4.css  sha256=9107eeaa57124ff51a2a9ad7e21b4ed8043076c9d6c2cfcdfdae411040b85111
+NEW      public/assets/css/cfs-theme-v3.css  sha256=4500df254d55037eaf574b916200ccb7f6d18a4e54a47afde989f846b48d90f6
+NEW      public/assets/css/cfs-ui-v18.css  sha256=96e27b799f343b8d11b9490bd060f25ef1ae1d74fbf77ce5dc800fd80ff60aba
+NEW      public/assets/img/brand/cfs-zockt-mark-original.png  sha256=a927d423e4b25585a1d9ee864d21d598d243750ae48939f07eaa851995ca6b27
+NEW      public/assets/img/brand/cfs-zockt-wordmark-transparent.png  sha256=c4fa499a9ba66a12527480d9b9f662a577d7fd23e24f4ee9a3c81a9d9371f7fb
+NEW      public/assets/js/cfs-onboarding-v4.js  sha256=5f362d58a9fd14771c2e3093337af873b6fc7873b148c12454fe850613581f1a
+NEW      public/assets/js/cfs-shell-v3.js  sha256=3ba65c8ff253a56068170d8ac05712f57338d9e1efeed089e3b68f8d4474881f
+NEW      public/assets/js/cfs-ui-v18.js  sha256=f6e5165a06cfc2e30f1b8669cbd21231cf46d4094cf2d3851dbb4d6cf231bf90
+
+GEÄNDERTE REPO-DATEIEN: 35
+MODIFIED public/assets/js/page-login.js  sha256=9226106d01aa9c7a9f4a10c3e712d3ca1a8d474774c7ec208043b37b8a68d716
+MODIFIED public/assets/js/page-verify-email.js  sha256=f80128e6b8fb901e3d97f8b768c34ca45dfead02a2c04ab294166ab4e65a74f3
+MODIFIED public/index.html  sha256=4471cd9a63fde6d7aaef1cb03e93a7391f24d3c4cced4a6561d71c7b40c6361c
+MODIFIED public/pages/account.html  sha256=72a249460707cad248ba46a8b95d5aa954c9f907468d7c0ae83797ddc6b7739b
+MODIFIED public/pages/admin-creators.html  sha256=7cf9452910cc4c6e4284aff9de7117e0f2ea353eff781666770abe8194185d51
+MODIFIED public/pages/audio-studio.html  sha256=98d4dfc2a4ca172a504f7cba3670e3c675f513dcb126e313cbf70612718fe45d
+MODIFIED public/pages/creator-suite.html  sha256=6e5ca255f8a4c03880c3d6f7b7b6994a6c1c6f3445f10c4e00917675636fbb82
+MODIFIED public/pages/cut-studio.html  sha256=f1a5103f1423bfc0df32fd52e16021dd94832a9a7ab8077fa99819199b6da4e4
+MODIFIED public/pages/dashboard.html  sha256=6b55a31973a4dd1940f85db9b8952a1da8101abad04c0ed0a1bfefc06a4a5bfd
+MODIFIED public/pages/datenschutz.html  sha256=df5821d8384070da448842778396e47249dbbeb4d73b8a7824f9fe336dab6b4a
+MODIFIED public/pages/editor.html  sha256=ea06939ec3ee436a3fdede860ade6ff00ef0d06d4d426df60fc2f8bca3ead27a
+MODIFIED public/pages/error.html  sha256=5cd0b6d85c09fce834bb97b34fb641aa4c39c4a047f04085d0f5bf18fc6e0018
+MODIFIED public/pages/forgot-password.html  sha256=c20aa4961e268f11206acf66bc69829686351f3c22e067af58e1278596ee744d
+MODIFIED public/pages/games.html  sha256=8db1dc1bb2e14077bcd4268efc3bbb75e502dfdbf07e8de760b5850da806a96a
+MODIFIED public/pages/impressum.html  sha256=0adfc3ce6487bd0a1926a62250cea1c3d77514c95040097eb5c3aa2f0700db37
+MODIFIED public/pages/integrations.html  sha256=58a1f984fa967b74b1f3621e67ce99c9cf88252b84625518ea2044f8f137a73f
+MODIFIED public/pages/launcher-connect.html  sha256=f2f8a61bd61fc0a6e9438ed82f182dd372d8df3d81f135a5d4566b91c112bbb8
+MODIFIED public/pages/launcher.html  sha256=f87d7d85cd0dbba6e22b1b77c93ccba810d3fdd981ade02e85512002b40fd196
+MODIFIED public/pages/login.html  sha256=e3b915de9f986f1a63296b41db5c7c63fb03073c5d7c5e6a59f83295cf4fb6e8
+MODIFIED public/pages/nexus.html  sha256=aa4b8de2087ebce5335903bfb4758be23813f8ab9ae86e75a2dbff03b9f57fca
+MODIFIED public/pages/not-found.html  sha256=47c005d8400e8cd8699043ebbd2671a066f97f667aaaec03b40f4926168761cd
+MODIFIED public/pages/nutzungsbedingungen.html  sha256=16dde2c4b1f938544c6f84354b64b3b8360eb7004595478b6fc4593b49387692
+MODIFIED public/pages/plans.html  sha256=d8665f0ec2781538647b32e76b902d891a11360effab0ce555ad276e2c041151
+MODIFIED public/pages/reset-password.html  sha256=c0b39723d5002441f426b084f7980c143397d59700d22812604bf32ec5840f54
+MODIFIED public/pages/roadmap.html  sha256=fcb1b01cbc8c03cefedd473ad8c9556ecb4819b8abfce1628e323d5fee1d79ad
+MODIFIED public/pages/scene-studio.html  sha256=f7b1b67db2686564421528df666aa9bd4e6d356a8f0aaec25a930a8783f3b035
+MODIFIED public/pages/security.html  sha256=108e4b5fdb162f27504856550db2071553f2d892d3eddaf2eb43e76b18bfc554
+MODIFIED public/pages/settings.html  sha256=c6ac7735c475ca4a38bff7904bd7c480ff86a08a3dbe8c7a3d036217164cfd53
+MODIFIED public/pages/setup.html  sha256=ab527e5dc54ff6bdffff031fd5b8e5ff9f6a5500067c60610b379b2cd63e31fe
+MODIFIED public/pages/stream-studio.html  sha256=d866a8a7fff39d074fe1bdd0267aaa45c09fd2424c7ce352248f52da3ca44066
+MODIFIED public/pages/support.html  sha256=5b0ad18ff0c36804950e40e597aec30922d6ddd122e96cda7d3bf2ad353c121d
+MODIFIED public/pages/system-check.html  sha256=cdf20ec3323291a5e2896ad0acc268059be112cb2ec31250db481ae05a972c9e
+MODIFIED public/pages/tiktok.html  sha256=3a46476c49239ebe5b28059fc7e0c023be6a406e2fff9f88fce11115f63c777f
+MODIFIED public/pages/verify-email.html  sha256=cb377e14a839f3f1fdd44b6ec6c9be30a571b9fb8c28b5563eca441328164fc7
+MODIFIED public/pages/widget-studio.html  sha256=7a435f37f04c1ebb0e58fed779b9e653b30d844d7a3d2bfbfaaa48cc5502ed0a
+
+GESAMT: 43 Dateien
+
+Hinweis:
+- Dieser Patch ist für die ursprüngliche hochgeladene Projektbasis gedacht.
+- Wenn ältere Einzelupdates v5-v17 bereits manuell eingebaut wurden, müssen deren alte Split-Runtime-Dateien entfernt werden.
+- Beim direkten Einbau dieses finalen Patches in die ursprüngliche Basis sind keine zusätzlichen Löschungen notwendig.

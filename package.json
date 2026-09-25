@@ -161,7 +161,10 @@
     "predeploy:gate": "npm run predeploy:doctor && npm run release:preflight",
     "postdeploy21:ui": "node tools/postdeploy-ui-acceptance-v21.mjs https://cfs-zockt.de",
     "postdeploy21:ui:local": "node tools/postdeploy-ui-acceptance-v21.mjs --local-root .",
-    "release22:verify": "node tools/release-candidate-v22.mjs ."
+    "release22:verify": "node tools/release-candidate-v22.mjs .",
+    "auth:drill:progress": "node tools/account-auth-production-progress-r62-v23.mjs .",
+    "release25:verify": "node tools/release-candidate-v25.mjs .",
+    "deploy27:check": "node tools/deploy-automation-v27-test.mjs ."
   },
   "engines": {
     "node": ">=22"

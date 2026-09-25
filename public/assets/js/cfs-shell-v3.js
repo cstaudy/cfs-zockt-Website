@@ -214,8 +214,8 @@
   }
 
   function init() {
-    document.documentElement.classList.add("cfs-ui-v3");
-    document.body.classList.add("cfs-ui-v3");
+    document.documentElement.classList.add("cfs-ui-v3", "cfs-os-v24");
+    document.body.classList.add("cfs-ui-v3", "cfs-os-v24");
     upgradeHeaderBrands();
     markActiveTopNavigation();
     injectCreatorSidebar();

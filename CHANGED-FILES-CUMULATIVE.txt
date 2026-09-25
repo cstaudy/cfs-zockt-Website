@@ -1,12 +1,40 @@
-cfs_zockt – KUMULATIVER ARBEITSSTAND v13
+cfs_zockt – KUMULATIVER ARBEITSSTAND v27
 
-v3 bis v13 kumuliert
+Design: v24 Creator OS Redesign
+Release: v25 RC25_READY
+Deploy Automation: v27
 
+.github/workflows/production-deploy.yml
+.github/workflows/production-verification.yml
+.github/workflows/quality-gate.yml
+CHANGED-FILES-CUMULATIVE.txt
+DEPLOY_AUTOMATION_V27.md
+POSTDEPLOY_UI_ACCEPTANCE_V21.md
+R62_PROGRESS_V23.md
+RELEASE-MANIFEST-v22.json
+RELEASE-MANIFEST-v25.json
+RELEASE_CANDIDATE_V22.md
+RELEASE_CANDIDATE_V25.md
 handoff/CURRENT-HANDOFF.md
+handoff/FINAL-GITHUB-MANIFEST-v19.txt
+handoff/GITHUB-DEPLOY-v19.md
 handoff/HANDOFF-v10.md
 handoff/HANDOFF-v11.md
 handoff/HANDOFF-v12.md
 handoff/HANDOFF-v13.md
+handoff/HANDOFF-v14.md
+handoff/HANDOFF-v15.md
+handoff/HANDOFF-v16.md
+handoff/HANDOFF-v17.md
+handoff/HANDOFF-v18.md
+handoff/HANDOFF-v20.md
+handoff/HANDOFF-v21.md
+handoff/HANDOFF-v22.md
+handoff/HANDOFF-v23.md
+handoff/HANDOFF-v24.md
+handoff/HANDOFF-v25.md
+handoff/HANDOFF-v26.md
+handoff/HANDOFF-v27.md
 handoff/HANDOFF-v4.md
 handoff/HANDOFF-v5.md
 handoff/HANDOFF-v6.md
@@ -17,35 +45,34 @@ handoff/VALIDATION-v10.md
 handoff/VALIDATION-v11.md
 handoff/VALIDATION-v12.md
 handoff/VALIDATION-v13.md
+handoff/VALIDATION-v14.md
+handoff/VALIDATION-v15.md
+handoff/VALIDATION-v16.md
+handoff/VALIDATION-v17.md
+handoff/VALIDATION-v18.md
+handoff/VALIDATION-v19.md
+handoff/VALIDATION-v20.md
+handoff/VALIDATION-v21.md
+handoff/VALIDATION-v22.md
+handoff/VALIDATION-v23.md
+handoff/VALIDATION-v24.md
+handoff/VALIDATION-v25.md
+handoff/VALIDATION-v26.md
+handoff/VALIDATION-v27.md
 handoff/VALIDATION-v5.md
 handoff/VALIDATION-v6.md
 handoff/VALIDATION-v7.md
 handoff/VALIDATION-v8.md
 handoff/VALIDATION-v9.md
-public/assets/css/cfs-accessibility-v12.css
-public/assets/css/cfs-dashboard-v9.css
-public/assets/css/cfs-empty-v7.css
-public/assets/css/cfs-forms-v10.css
-public/assets/css/cfs-guide-v5.css
-public/assets/css/cfs-help-v6.css
-public/assets/css/cfs-home-v13.css
-public/assets/css/cfs-mobile-v11.css
-public/assets/css/cfs-nav-v8.css
+package.json
 public/assets/css/cfs-onboarding-v4.css
 public/assets/css/cfs-theme-v3.css
+public/assets/css/cfs-ui-v18.css
 public/assets/img/brand/cfs-zockt-mark-original.png
 public/assets/img/brand/cfs-zockt-wordmark-transparent.png
-public/assets/js/cfs-accessibility-v12.js
-public/assets/js/cfs-dashboard-v9.js
-public/assets/js/cfs-empty-v7.js
-public/assets/js/cfs-forms-v10.js
-public/assets/js/cfs-guide-v5.js
-public/assets/js/cfs-help-v6.js
-public/assets/js/cfs-home-v13.js
-public/assets/js/cfs-mobile-v11.js
-public/assets/js/cfs-nav-v8.js
 public/assets/js/cfs-onboarding-v4.js
 public/assets/js/cfs-shell-v3.js
+public/assets/js/cfs-ui-v18.js
 public/assets/js/page-login.js
 public/assets/js/page-verify-email.js
 public/index.html
@@ -81,3 +108,8 @@ public/pages/system-check.html
 public/pages/tiktok.html
 public/pages/verify-email.html
 public/pages/widget-studio.html
+tools/account-auth-production-progress-r62-v23.mjs
+tools/deploy-automation-v27-test.mjs
+tools/postdeploy-ui-acceptance-v21.mjs
+tools/release-candidate-v22.mjs
+tools/release-candidate-v25.mjs

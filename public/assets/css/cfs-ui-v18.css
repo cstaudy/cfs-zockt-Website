@@ -4668,3 +4668,426 @@ body.public-plans-page.cfs-plans-v15 .marketing-hero{
 }
 
 /* ===== END CONSOLIDATED LAYER CFS-SECURITY-V17 ===== */
+
+/* ===== BEGIN CREATOR OS REDESIGN V24 =====
+   Component redesign in the existing consolidated v18 bundle.
+   ========================================================= */
+
+/* Home: connected workflow console */
+body.cfs-os-v24 .cfs-home-v13-stage{
+  position:relative;
+  width:min(100%,520px);
+  padding:12px;
+  border-color:#253445;
+  border-radius:14px;
+  background:#070b10;
+  box-shadow:0 30px 80px rgba(0,0,0,.28);
+}
+body.cfs-os-v24 .cfs-home-v13-stage:before{
+  content:"";
+  position:absolute;
+  inset:0 0 auto;
+  height:1px;
+  background:linear-gradient(90deg,transparent,#248bff 28%,#47bfff 50%,transparent 82%);
+  opacity:.8;
+}
+body.cfs-os-v24 .cfs-home-v13-stage-head{padding:5px 5px 14px}
+body.cfs-os-v24 .cfs-home-v13-preview-note{
+  border-color:#2a3948;
+  color:#718292;
+  background:#0b1117;
+}
+body.cfs-os-v24 .cfs-home-v13-workflow{
+  display:grid;
+  gap:1px;
+  overflow:hidden;
+  border:1px solid #1d2a37;
+  border-radius:10px;
+  background:#1d2a37;
+}
+body.cfs-os-v24 .cfs-home-v13-workflow article,
+body.cfs-os-v24 .cfs-home-v13-workflow article.primary{
+  min-height:68px;
+  border:0;
+  border-radius:0;
+  background:#080d13;
+}
+body.cfs-os-v24 .cfs-home-v13-workflow article.primary{background:#0a121b}
+body.cfs-os-v24 .cfs-home-v13-step{
+  border-radius:7px;
+  color:#65b9ff;
+  background:#101b26;
+}
+body.cfs-os-v24 .cfs-home-v13-workflow-badge{
+  border:0;
+  color:#67dba5;
+  background:transparent;
+}
+
+body.cfs-os-v24 .cfs-home-v13-entry{
+  padding:0 0 54px;
+  background:transparent;
+}
+body.cfs-os-v24 .cfs-home-v13-entry-inner{
+  gap:1px;
+  overflow:hidden;
+  border:1px solid #1b2733;
+  border-radius:12px;
+  background:#1b2733;
+  transform:translateY(-20px);
+}
+body.cfs-os-v24 .cfs-home-v13-entry-card,
+body.cfs-os-v24 .cfs-home-v13-entry-card:first-child{
+  min-height:146px;
+  border:0;
+  border-radius:0;
+  background:#080d13;
+  box-shadow:none;
+}
+body.cfs-os-v24 .cfs-home-v13-entry-card:first-child{background:#0a1119}
+body.cfs-os-v24 .cfs-home-v13-entry-card b{
+  border-radius:6px;
+  color:#74beff;
+  background:#101923;
+}
+body.cfs-os-v24 .cfs-home-v13-entry-actions{
+  margin:-8px auto 0;
+  padding:14px 0 0;
+  border:0;
+  border-radius:0;
+  border-top:1px solid #17222d;
+  background:transparent;
+}
+
+/* Dashboard: working surface */
+body.cfs-os-v24 .cfs-dashboard-v9-focus{
+  gap:1px;
+  overflow:hidden;
+  margin-bottom:22px;
+  border:1px solid #1b2835;
+  border-radius:12px;
+  background:#1b2835;
+}
+body.cfs-os-v24 .cfs-dashboard-v9-card,
+body.cfs-os-v24 .cfs-dashboard-v9-card.primary{
+  min-height:190px;
+  border:0;
+  border-radius:0;
+  background:#080d13;
+  box-shadow:none;
+}
+body.cfs-os-v24 .cfs-dashboard-v9-card.primary{background:#0a1119}
+body.cfs-os-v24 .cfs-dashboard-v9-kicker{color:#61adf4}
+body.cfs-os-v24 .cfs-dashboard-v9-action{
+  border-color:#293b4c;
+  border-radius:7px;
+  color:#a5b9ca;
+  background:#0a1118;
+}
+body.cfs-os-v24 .cfs-dashboard-v9-action.primary{
+  border-color:#1677ff;
+  color:#fff;
+  background:#1677ff;
+}
+body.cfs-os-v24 .cfs-dashboard-v9-recent{
+  gap:1px;
+  overflow:hidden;
+  border:1px solid #1b2733;
+  border-radius:8px;
+  background:#1b2733;
+}
+body.cfs-os-v24 .cfs-dashboard-v9-recent-item{
+  min-height:55px;
+  border:0;
+  border-radius:0;
+  background:#070c12;
+}
+body.cfs-os-v24 .cfs-dashboard-v9-recent-item:hover{
+  border-color:transparent;
+  background:#0b131c;
+}
+body.cfs-os-v24 .cfs-dashboard-v9-recent-icon{
+  border-radius:6px;
+  color:#71baff;
+  background:#111b25;
+}
+body.cfs-os-v24 .cfs-dashboard-v9-quick{
+  gap:1px;
+  overflow:hidden;
+  border:1px solid #1b2733;
+  border-radius:10px;
+  background:#1b2733;
+}
+body.cfs-os-v24 .cfs-dashboard-v9-quick a{
+  min-height:82px;
+  border:0;
+  border-radius:0;
+  background:#080d13;
+}
+body.cfs-os-v24 .cfs-dashboard-v9-quick a:hover{
+  border-color:transparent;
+  background:#0b121a;
+  transform:none;
+}
+body.cfs-os-v24 .cfs-dashboard-v9-quick i{
+  border-radius:6px;
+  color:#6cb7fb;
+  background:#101923;
+}
+body.cfs-os-v24 .cfs-dashboard-v9-finder{
+  padding:20px 0 0;
+  border:0;
+  border-top:1px solid #192531;
+  border-radius:0;
+  background:transparent;
+}
+body.cfs-os-v24 .cfs-dashboard-v9-search input,
+body.cfs-os-v24 .cfs-dashboard-v9-filter{
+  border-color:#263747;
+  border-radius:8px;
+  background:#070b10;
+}
+body.cfs-os-v24 .cfs-dashboard-v9-results{
+  gap:1px;
+  overflow:hidden;
+  border:1px solid #1b2834;
+  border-radius:10px;
+  background:#1b2834;
+}
+body.cfs-os-v24 .cfs-dashboard-v9-tool{
+  min-height:144px;
+  border:0;
+  border-radius:0;
+  background:#080d13;
+}
+
+/* Creator Suite */
+body.cfs-os-v24 .cfs-suite-v14-navigator{
+  border-color:#1c2935;
+  border-radius:12px;
+  background:#070b10;
+  background-image:none;
+  box-shadow:none;
+}
+body.cfs-os-v24 .cfs-suite-v14-goals{
+  gap:1px;
+  overflow:hidden;
+  border:1px solid #1c2935;
+  border-radius:10px;
+  background:#1c2935;
+}
+body.cfs-os-v24 .cfs-suite-v14-goal,
+body.cfs-os-v24 .cfs-suite-v14-goal.featured{
+  border:0;
+  border-radius:0;
+  background:#080d13;
+}
+body.cfs-os-v24 .cfs-suite-v14-goal.featured{background:#0a121b}
+body.cfs-os-v24 .cfs-suite-v14-goal-icon{
+  border-radius:6px;
+  color:#70baff;
+  background:#111b25;
+}
+body.cfs-os-v24 .cfs-suite-v14-plan-guide{
+  gap:1px;
+  overflow:hidden;
+  border:1px solid #1c2935;
+  border-radius:10px;
+  background:#1c2935;
+}
+body.cfs-os-v24 .cfs-suite-v14-plan-card{
+  border:0;
+  border-radius:0;
+  background:#080d13;
+}
+
+/* Plans */
+body.cfs-os-v24 .cfs-plans-v15-live{
+  border-color:#1d2a37;
+  border-radius:12px;
+  background:#070b10;
+  background-image:none;
+  box-shadow:none;
+}
+body.cfs-os-v24 .cfs-plans-v15-live-grid{
+  gap:1px;
+  overflow:hidden;
+  border:1px solid #1c2935;
+  border-radius:9px;
+  background:#1c2935;
+}
+body.cfs-os-v24 .cfs-plans-v15-live-card,
+body.cfs-os-v24 .cfs-plans-v15-live-card.primary{
+  border:0;
+  border-radius:0;
+  background:#080d13;
+}
+body.cfs-os-v24 .cfs-plan-card-v15,
+body.cfs-os-v24 .product-plan-grid>article{
+  border-color:#1b2835!important;
+  border-radius:10px!important;
+  background:#080d13!important;
+  background-image:none!important;
+  box-shadow:none!important;
+}
+
+/* Support */
+body.cfs-os-v24 .cfs-support-v16-triage{
+  border-color:#1c2935;
+  border-radius:12px;
+  background:#070b10;
+  background-image:none;
+  box-shadow:none;
+}
+body.cfs-os-v24 .cfs-support-v16-grid{
+  gap:1px;
+  overflow:hidden;
+  border:1px solid #1c2935;
+  border-radius:10px;
+  background:#1c2935;
+}
+body.cfs-os-v24 .cfs-support-v16-choice{
+  min-height:158px;
+  border:0;
+  border-radius:0;
+  background:#080d13;
+}
+body.cfs-os-v24 .cfs-support-v16-choice:hover{
+  border-color:transparent;
+  background:#0b121a;
+}
+body.cfs-os-v24 .cfs-support-v16-choice i{
+  border-radius:6px;
+  color:#72baff;
+  background:#111b25;
+}
+body.cfs-os-v24 .cfs-support-v16-choice-actions a,
+body.cfs-os-v24 .cfs-support-v16-choice-actions button{
+  border-color:#293b4b;
+  border-radius:7px;
+  background:#0a1118;
+}
+body.cfs-os-v24 .cfs-support-v16-choice-actions .primary{
+  border-color:#1677ff;
+  background:#1677ff;
+}
+
+/* Security center */
+body.cfs-os-v24 .cfs-security-v17-overview{
+  border-color:#1c2935;
+  border-radius:12px;
+  background:#070b10;
+  background-image:none;
+  box-shadow:none;
+}
+body.cfs-os-v24 .cfs-security-v17-score{
+  border-color:#263646;
+  border-radius:8px;
+  background:#080d13;
+}
+body.cfs-os-v24 .cfs-security-v17-grid{
+  gap:1px;
+  overflow:hidden;
+  border:1px solid #1c2935;
+  border-radius:9px;
+  background:#1c2935;
+}
+body.cfs-os-v24 .cfs-security-v17-step,
+body.cfs-os-v24 .cfs-security-v17-step.done,
+body.cfs-os-v24 .cfs-security-v17-step.current{
+  border:0;
+  border-radius:0;
+  background:#080d13;
+  background-image:none;
+}
+body.cfs-os-v24 .cfs-security-v17-step.current{box-shadow:inset 2px 0 #258cff}
+body.cfs-os-v24 .cfs-security-v17-step.done{box-shadow:inset 2px 0 #3fc987}
+body.cfs-os-v24 .cfs-security-v17-step-number{
+  border-radius:6px;
+  background:#111b25;
+}
+body.cfs-os-v24 .cfs-security-v17-step.done .cfs-security-v17-step-number{
+  color:#07140e;
+  background:#55d99a;
+}
+body.cfs-os-v24 .cfs-security-v17-next{border-top-color:#1a2632}
+
+/* Account groups */
+body.cfs-os-v24.account-professional .account-status-grid{
+  gap:1px;
+  overflow:hidden;
+  border:1px solid #1b2733;
+  border-radius:10px;
+  background:#1b2733;
+}
+body.cfs-os-v24.account-professional .account-status-card{
+  border:0;
+  border-radius:0;
+}
+body.cfs-os-v24.account-professional .account-card-icon,
+body.cfs-os-v24.account-professional .account-status-icon{
+  border:0;
+  border-radius:6px;
+  color:#72baff;
+  background:#111b25;
+}
+
+/* Public product grids */
+body.cfs-os-v24 .marketing-status-grid,
+body.cfs-os-v24 .marketing-mode-grid,
+body.cfs-os-v24 .product-capability-grid{
+  gap:1px;
+  overflow:hidden;
+  border:1px solid #1b2733;
+  border-radius:10px;
+  background:#1b2733;
+}
+body.cfs-os-v24 .marketing-status-grid>*,
+body.cfs-os-v24 .marketing-mode-grid>*,
+body.cfs-os-v24 .product-capability-grid>*{
+  border:0!important;
+  border-radius:0!important;
+  background:#080d13!important;
+  background-image:none!important;
+  box-shadow:none!important;
+}
+
+/* Mobile app toolbar */
+@media(max-width:760px){
+  body.cfs-os-v24 .cfs-mobile-dock{
+    gap:0;
+    left:10px;
+    right:10px;
+    bottom:10px;
+    padding:5px;
+    border:1px solid #263545;
+    border-radius:12px;
+    background:rgba(5,8,12,.96);
+    box-shadow:0 18px 50px rgba(0,0,0,.42);
+  }
+  body.cfs-os-v24 .cfs-mobile-dock a,
+  body.cfs-os-v24 .cfs-mobile-dock button{
+    border:0;
+    border-radius:7px;
+    background:transparent;
+  }
+  body.cfs-os-v24 .cfs-mobile-dock a.active,
+  body.cfs-os-v24 .cfs-mobile-dock a[aria-current="page"]{
+    background:#101923;
+  }
+  body.cfs-os-v24 .cfs-mobile-dock-icon{
+    border:0;
+    background:transparent;
+  }
+
+  body.cfs-os-v24 .cfs-dashboard-v9-quick,
+  body.cfs-os-v24 .cfs-dashboard-v9-results,
+  body.cfs-os-v24 .cfs-home-v13-entry-inner,
+  body.cfs-os-v24 .cfs-suite-v14-goals,
+  body.cfs-os-v24 .cfs-plans-v15-live-grid,
+  body.cfs-os-v24 .cfs-support-v16-grid,
+  body.cfs-os-v24 .cfs-security-v17-grid{
+    grid-template-columns:1fr;
+  }
+}
+/* ===== END CREATOR OS REDESIGN V24 ===== */

@@ -5,22 +5,22 @@
    ========================================================= */
 
 :root{
-  --cfs-v3-bg:#020812;
-  --cfs-v3-bg-deep:#01050c;
-  --cfs-v3-panel:#061523;
-  --cfs-v3-panel-2:#081a2b;
-  --cfs-v3-line:#173e61;
-  --cfs-v3-line-soft:#102b45;
+  --cfs-v3-bg:#05070a;
+  --cfs-v3-bg-deep:#020305;
+  --cfs-v3-panel:#080d13;
+  --cfs-v3-panel-2:#0b1119;
+  --cfs-v3-line:#233142;
+  --cfs-v3-line-soft:#1a2633;
   --cfs-v3-text:#f7faff;
-  --cfs-v3-muted:#8aa3ba;
-  --cfs-v3-blue:#126ff1;
-  --cfs-v3-blue-2:#148cff;
-  --cfs-v3-cyan:#28cfff;
+  --cfs-v3-muted:#8493a3;
+  --cfs-v3-blue:#1677ff;
+  --cfs-v3-blue-2:#168cff;
+  --cfs-v3-cyan:#48bfff;
   --cfs-v3-green:#3dde92;
   --cfs-v3-yellow:#ffc75c;
   --cfs-v3-red:#ff7589;
-  --cfs-v3-radius:16px;
-  --cfs-v3-shadow:0 22px 64px rgba(0,38,82,.18);
+  --cfs-v3-radius:12px;
+  --cfs-v3-shadow:0 18px 48px rgba(0,0,0,.22);
 }
 
 html.cfs-ui-v3{background:var(--cfs-v3-bg-deep)}
@@ -467,4 +467,364 @@ body.cfs-ui-v3.cfs-specialized-workspace main{margin-left:0!important}
   .cfs-hero-brand{gap:12px;margin-top:46px}
   .cfs-hero-brand .cfs-brand-mark{width:92px;height:92px}
   .cfs-hero-brand .cfs-brand-copy strong{font-size:30px}
+}
+
+/* ===== v24 CREATOR OS REDESIGN =====
+   Logo + typography stay untouched.
+   Visual language changes from card-heavy marketing to a calmer Creator OS.
+   ========================================================= */
+
+html.cfs-os-v24{background:#020305}
+
+body.cfs-os-v24{
+  --cfs-os-bg:#05070a;
+  --cfs-os-surface:#080d13;
+  --cfs-os-surface-2:#0b1119;
+  --cfs-os-line:#1b2734;
+  --cfs-os-line-strong:#29394b;
+  --cfs-os-text:#f4f7fb;
+  --cfs-os-muted:#7d8b9a;
+  --cfs-os-blue:#1677ff;
+  --cfs-os-blue-bright:#2b91ff;
+  --cfs-os-cyan:#56c7ff;
+  --cfs-os-green:#55d99a;
+  --cfs-os-radius:10px;
+  background:
+    radial-gradient(circle at 72% -18%,rgba(22,119,255,.10),transparent 35%),
+    linear-gradient(180deg,#05070a 0%,#040609 52%,#020305 100%);
+  color:var(--cfs-os-text);
+}
+
+body.cfs-os-v24:before{
+  content:"";
+  position:fixed;
+  inset:0;
+  z-index:-1;
+  pointer-events:none;
+  background-image:
+    linear-gradient(rgba(99,137,172,.025) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(99,137,172,.025) 1px,transparent 1px);
+  background-size:48px 48px;
+  mask-image:linear-gradient(to bottom,rgba(0,0,0,.72),transparent 70%);
+}
+
+body.cfs-os-v24 .container{width:min(1320px,calc(100% - 48px))}
+
+/* Header */
+body.cfs-os-v24 .site-header{
+  min-height:64px;
+  border-bottom:1px solid #151e28;
+  background:rgba(4,7,11,.95);
+  box-shadow:none;
+  backdrop-filter:blur(18px);
+}
+body.cfs-os-v24 .header-inner{min-height:64px;gap:24px}
+body.cfs-os-v24 .nav{gap:2px}
+
+body.cfs-os-v24 .nav a,
+body.cfs-os-v24 .nav button,
+body.cfs-os-v24 .creator-nav-more>summary{
+  min-height:34px;
+  padding:0 10px;
+  border:0;
+  border-radius:7px;
+  color:#8493a2;
+  background:transparent;
+  font-size:9px;
+  letter-spacing:.035em;
+}
+
+body.cfs-os-v24 .nav a:hover,
+body.cfs-os-v24 .nav a.active,
+body.cfs-os-v24 .nav a[aria-current="page"],
+body.cfs-os-v24 .nav button:hover,
+body.cfs-os-v24 .creator-nav-more>summary:hover{
+  color:#f5f8fb;
+  border-color:transparent;
+  background:#0b1118;
+}
+
+body.cfs-os-v24 .nav a.active:after,
+body.cfs-os-v24 .nav a[aria-current="page"]:after{
+  left:10px;right:10px;bottom:-1px;
+  height:1px;
+  background:#258cff;
+  box-shadow:none;
+}
+
+body.cfs-os-v24 .nav .cta,
+body.cfs-os-v24 .creator-logout{
+  border:1px solid #31465c!important;
+  border-radius:7px!important;
+  color:#edf5fd!important;
+  background:#0c141d!important;
+  box-shadow:none!important;
+}
+
+/* Controls */
+body.cfs-os-v24 .btn{
+  min-height:42px;
+  padding-inline:16px;
+  border:1px solid #2a3949;
+  border-radius:8px;
+  color:#d9e4ee;
+  background:#0a1017;
+  box-shadow:none;
+}
+body.cfs-os-v24 .btn:hover{
+  border-color:#3d5871;
+  background:#0d151e;
+  transform:translateY(-1px);
+}
+body.cfs-os-v24 .btn.primary{
+  border-color:#1677ff;
+  color:#fff;
+  background:#1677ff;
+  box-shadow:none;
+}
+body.cfs-os-v24 .btn.primary:hover{
+  border-color:#3193ff;
+  background:#2387ff;
+  filter:none;
+}
+body.cfs-os-v24 input,
+body.cfs-os-v24 textarea,
+body.cfs-os-v24 select{
+  border-color:#263646;
+  border-radius:8px;
+  background:#060a0f;
+}
+body.cfs-os-v24 input:focus,
+body.cfs-os-v24 textarea:focus,
+body.cfs-os-v24 select:focus{
+  border-color:#287fc5;
+  box-shadow:0 0 0 3px rgba(22,119,255,.09);
+}
+
+/* Flat surfaces */
+body.cfs-os-v24 .card,
+body.cfs-os-v24 .panel,
+body.cfs-os-v24 .management-summary-card,
+body.cfs-os-v24 .management-overview-card,
+body.cfs-os-v24 .creator-tool-entry,
+body.cfs-os-v24 .internal-status-shell,
+body.cfs-os-v24 .beginner-status-item,
+body.cfs-os-v24 .beginner-system-summary,
+body.cfs-os-v24 .creator-next-step,
+body.cfs-os-v24 .creator-journey,
+body.cfs-os-v24 .management-hub,
+body.cfs-os-v24 .account-card,
+body.cfs-os-v24 .account-status-card,
+body.cfs-os-v24 .account-section-intro{
+  border-color:var(--cfs-os-line);
+  border-radius:var(--cfs-os-radius);
+  background:var(--cfs-os-surface);
+  background-image:none;
+  box-shadow:none;
+}
+
+/* Public landing */
+body.cfs-os-v24.public-home .brand-hero{
+  min-height:650px;
+  padding:92px 0 72px;
+  border-bottom:1px solid #141e29;
+  background:transparent;
+}
+body.cfs-os-v24.public-home .brand-hero-grid{
+  grid-template-columns:minmax(0,1.1fr) minmax(420px,.9fr);
+  gap:clamp(48px,7vw,96px);
+  align-items:center;
+}
+body.cfs-os-v24.public-home .brand-hero-copy{max-width:780px}
+body.cfs-os-v24.public-home .brand-hero-copy h1{
+  max-width:820px;
+  font-size:clamp(54px,6.2vw,94px);
+  line-height:.88;
+  letter-spacing:-.064em;
+}
+body.cfs-os-v24.public-home .brand-hero-copy h1 span{color:#2084ff}
+body.cfs-os-v24.public-home .brand-hero-lead{
+  max-width:660px;
+  color:#8997a5;
+  font-size:clamp(15px,1.35vw,18px);
+}
+body.cfs-os-v24.public-home .brand-hero-stage{
+  min-height:450px;
+  border:1px solid #202e3d;
+  border-radius:16px;
+  background:#070b10;
+  box-shadow:none;
+}
+body.cfs-os-v24 .brand-section,
+body.cfs-os-v24 .marketing-section{
+  padding-block:78px;
+  background:transparent;
+}
+body.cfs-os-v24 .marketing-section-alt{
+  border-block:1px solid #141e28;
+  background:#05080c;
+}
+
+body.cfs-os-v24 .brand-community-grid article,
+body.cfs-os-v24 .brand-preview-card,
+body.cfs-os-v24 .brand-proof-grid article,
+body.cfs-os-v24 .auth-entry-trust article,
+body.cfs-os-v24 .auth-after-grid article,
+body.cfs-os-v24 .marketing-hero-card,
+body.cfs-os-v24 .marketing-mode-card,
+body.cfs-os-v24 .marketing-state,
+body.cfs-os-v24 .product-capability-grid article{
+  border-color:var(--cfs-os-line);
+  border-radius:10px;
+  background:#080d13;
+  background-image:none;
+  box-shadow:none;
+}
+body.cfs-os-v24 .brand-community-grid article:hover,
+body.cfs-os-v24 .brand-preview-card:hover{
+  border-color:#31465a;
+  transform:translateY(-1px);
+}
+body.cfs-os-v24 .public-footer,
+body.cfs-os-v24 .brand-footer{
+  border-top:1px solid #151e27;
+  background:#020406;
+}
+
+/* Creator shell */
+body.cfs-os-v24.creator-workspace{
+  background:
+    radial-gradient(circle at 72% -12%,rgba(22,119,255,.075),transparent 31%),
+    linear-gradient(180deg,#05070a,#030507 62%,#020305);
+}
+body.cfs-os-v24.creator-workspace main.container{padding-top:22px}
+
+body.cfs-os-v24 .cfs-global-sidebar{
+  top:64px;
+  width:194px;
+  height:calc(100vh - 64px);
+  padding:26px 10px 22px;
+  border-right:1px solid #151f29;
+  background:rgba(4,7,11,.96);
+  backdrop-filter:blur(16px);
+}
+body.cfs-os-v24 .cfs-sidebar-label{
+  margin:0 10px 18px;
+  color:#5f6e7c;
+  font-size:7.5px;
+  letter-spacing:.16em;
+}
+body.cfs-os-v24 .cfs-sidebar-link{
+  position:relative;
+  min-height:39px;
+  gap:8px;
+  margin:2px 0;
+  padding:0 10px;
+  border:0;
+  border-radius:6px;
+  color:#748393;
+  font-size:9.5px;
+}
+body.cfs-os-v24 .cfs-sidebar-link:hover{
+  color:#e5edf5;
+  border-color:transparent;
+  background:#0a1017;
+}
+body.cfs-os-v24 .cfs-sidebar-link.active{
+  color:#fff;
+  border-color:transparent;
+  background:#0b121a;
+  box-shadow:none;
+}
+body.cfs-os-v24 .cfs-sidebar-link.active:before{
+  content:"";
+  position:absolute;
+  left:-10px;top:9px;bottom:9px;
+  width:2px;
+  border-radius:2px;
+  background:#258cff;
+}
+body.cfs-os-v24 .cfs-sidebar-icon{
+  width:23px;height:23px;
+  border:0;
+  border-radius:5px;
+  color:#6e8294;
+  background:transparent;
+}
+body.cfs-os-v24 .cfs-sidebar-link.active .cfs-sidebar-icon{color:#65b9ff}
+body.cfs-os-v24 .cfs-sidebar-divider{margin:17px 10px;background:#17212c}
+
+@media(min-width:981px){
+  body.cfs-os-v24.cfs-sidebar-ready main.container,
+  body.cfs-os-v24.cfs-sidebar-ready main.account-shell{
+    width:min(1320px,calc(100% - 226px - 44px));
+    margin-left:214px;
+  }
+  body.cfs-os-v24.cfs-sidebar-ready .footer{margin-left:194px}
+}
+
+body.cfs-os-v24.creator-workspace .beginner-hero,
+body.cfs-os-v24.creator-workspace .page-hero,
+body.cfs-os-v24.account-professional .account-hero{
+  padding-top:44px;
+  padding-bottom:28px;
+  border-bottom:1px solid #17212b;
+}
+body.cfs-os-v24.creator-workspace .beginner-hero h1,
+body.cfs-os-v24.creator-workspace .page-hero h1,
+body.cfs-os-v24.account-professional .account-hero h1{
+  letter-spacing:-.045em;
+}
+
+body.cfs-os-v24.account-professional .account-card,
+body.cfs-os-v24.account-professional .account-status-card,
+body.cfs-os-v24.account-professional .account-section-intro{
+  border-color:#1b2733;
+  border-radius:10px;
+  background:#080d13;
+}
+
+/* Specialized studios */
+body.cfs-os-v24 .ws-page,
+body.cfs-os-v24 .stream-studio-shell{background:transparent}
+body.cfs-os-v24 .ws-panel,
+body.cfs-os-v24 .ws-dashboard-card,
+body.cfs-os-v24 .stream-panel,
+body.cfs-os-v24 .stream-monitor,
+body.cfs-os-v24 .stream-workspace-toolbar,
+body.cfs-os-v24 .cfs-studio-hub{
+  border-color:#1c2936!important;
+  border-radius:9px!important;
+  background:#080d13!important;
+  background-image:none!important;
+  box-shadow:none!important;
+}
+
+@media(max-width:980px){
+  body.cfs-os-v24 .cfs-global-sidebar{
+    top:64px;width:100%;height:auto;
+    padding:7px 16px;
+    border-right:0;
+    border-bottom:1px solid #17212b;
+    background:rgba(4,7,11,.97);
+  }
+  body.cfs-os-v24 .cfs-sidebar-link.active:before{
+    left:10px;right:10px;top:auto;bottom:-7px;
+    width:auto;height:1px;
+  }
+  body.cfs-os-v24.cfs-sidebar-ready main.container,
+  body.cfs-os-v24.cfs-sidebar-ready main.account-shell{
+    width:min(1320px,calc(100% - 32px));
+    margin-inline:auto;
+  }
+  body.cfs-os-v24.public-home .brand-hero-grid{grid-template-columns:1fr}
+}
+
+@media(max-width:760px){
+  body.cfs-os-v24 .container{width:min(100% - 28px,1320px)}
+  body.cfs-os-v24.public-home .brand-hero{padding-top:58px}
+  body.cfs-os-v24.public-home .brand-hero-copy h1{
+    font-size:clamp(46px,15vw,66px);
+    letter-spacing:-.055em;
+  }
 }

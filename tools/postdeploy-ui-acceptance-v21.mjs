@@ -73,7 +73,9 @@ async function read(pathname, accept = '*/*') {
     redirect: 'follow',
     headers: {
       accept,
-      'user-agent': 'cfs-zockt-postdeploy-ui-v21/1.0'
+      'cache-control': 'no-cache',
+      pragma: 'no-cache',
+      'user-agent': 'cfs-zockt-postdeploy-ui-v21/1.1'
     },
     signal: AbortSignal.timeout(timeoutMs)
   });
@@ -107,6 +109,7 @@ for (const pathname of pages) {
 let shell = '';
 let uiJs = '';
 let uiCss = '';
+let themeCss = '';
 
 await safe('shell asset', async () => {
   const res = await read(assets.shell, 'application/javascript');
@@ -114,6 +117,7 @@ await safe('shell asset', async () => {
   add('global shell reachable', res.status === 200, `status=${res.status}`);
   add('shell loads consolidated CSS', has(shell, '/assets/css/cfs-ui-v18.css'));
   add('shell loads consolidated JS', has(shell, '/assets/js/cfs-ui-v18.js'));
+  add('shell enables Creator OS v24', has(shell, 'cfs-os-v24'));
   add('shell does not load retired split assets', !retired.some(name => has(shell, name)));
 });
 
@@ -140,6 +144,9 @@ await safe('consolidated CSS', async () => {
   uiCss = res.text;
   add('consolidated CSS reachable', res.status === 200, `status=${res.status}`);
   add('CSS identifies v18 consolidated bundle', has(uiCss, 'Consolidated UI Bundle v18'));
+  add('CSS contains Creator OS v24 component layer',
+    has(uiCss, 'BEGIN CREATOR OS REDESIGN V24') &&
+    has(uiCss, 'body.cfs-os-v24 .cfs-dashboard-v9-focus'));
 
   const expectedMarkers = [
     '.cfs-home-v13-stage',
@@ -155,7 +162,13 @@ await safe('consolidated CSS', async () => {
 
 await safe('theme asset', async () => {
   const res = await read(assets.theme, 'text/css');
+  themeCss = res.text;
   add('global v3 theme reachable', res.status === 200, `status=${res.status}`);
+  add('theme contains Creator OS v24 global layer',
+    has(themeCss, 'v24 CREATOR OS REDESIGN') &&
+    has(themeCss, 'body.cfs-os-v24'));
+  add('theme contains v24 creator sidebar',
+    has(themeCss, 'body.cfs-os-v24 .cfs-global-sidebar'));
 });
 
 if (!localRoot) {

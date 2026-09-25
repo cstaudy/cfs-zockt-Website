@@ -1,29 +1,37 @@
 # CURRENT HANDOFF – cfs_zockt
 
-Aktueller Stand: **v13 Public Landing & First-10-Seconds Polish**
+Aktueller Stand: **v27 GitHub CI + Post-Deploy Automation**
 
-## Enthalten
-v3 bis v13.
+## Design
+v24 Creator OS Redesign
 
-## Aktueller Produktzustand
-Die öffentliche Startseite kommuniziert den Einstieg jetzt schneller:
-- Account erstellen
-- erstes Widget bauen und testen
-- Stream/TikTok/Launcher später nach Bedarf ergänzen
+## Release Seal
+v25 `RC25_READY`
 
-Die Hero-Grafik zeigt einen Beispiel-Workflow statt nur dekorativer Markenfläche.
-Beispieldaten werden ausdrücklich nicht als Live-Daten dargestellt.
-Technische Versionsinformationen bleiben vorhanden, stehen aber nicht mehr direkt im ersten Produktkontakt.
+## Deploy-Artefakte
+v27 aktualisiert die GitHub-Actions-Workflows und den Live-UI-Check für den v24 Stand.
 
-## Nächster geplanter Produktstand
-**v14 Creator Suite Product Page Polish**
+## Lokal
+- `npm run deploy27:check`
+- `npm run release25:verify`
+- `npm run postdeploy21:ui:local`
 
-## Production-Readiness separat
-R59-R61 Evidence vorhanden.
-R62 noch nicht abgeschlossen.
-R63-R66 offen.
-R67 danach.
+## Nach echtem Push
+Der bestehende GitHub Quality Gate prüft RC25 automatisch.
 
-## Neuer Chat
-Den letzten kumulativen ZIP hochladen und sagen:
-`Bitte ab CURRENT-HANDOFF weiterarbeiten.`
+## Beim Production Deploy
+Der bestehende Production Deployment Gate:
+1. validiert RC25
+2. triggert Render, sofern Deploy Hook konfiguriert ist
+3. wartet auf Canary
+4. prüft External Security
+5. prüft den tatsächlich ausgelieferten Creator-OS-v24-Stand
+6. lädt Evidence hoch
+
+## Noch offen
+- echter GitHub Push
+- echter Render Deploy
+- reale Desktop/Mobile-Abnahme
+- R62 Restschritte
+- R63-R66
+- R67 danach
