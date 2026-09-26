@@ -202,7 +202,7 @@
     "node": ">=22"
   },
   "dependencies": {
-    "express": "5.1.0",
+    "express": "5.2.1",
     "pg": "8.16.0",
     "stripe": "22.6.1",
     "@simplewebauthn/server": "14.0.2"
