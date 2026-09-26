@@ -22,6 +22,7 @@ const { basePlanEntitlements, resolveCreatorEntitlements, minimumPlanForTemplate
 const { releaseCandidateReadiness } = require("./lib/release-candidate-readiness");
 const { sanitizeGameProfile, sanitizeScoreAction, initialGameState, gamePublicToken, publicGameRuntime, gameSceneSource } = require("./lib/creator-games");
 const { CUT_FORMATS, sanitizeCutProject, sanitizeCutClip, publicCutProject, publicCutClip } = require("./lib/creator-cut-studio");
+const { profileId: cutGameProfileId, upsertAnalyzedReference } = require("./lib/cut-reference-learning");
 const { sanitizeGameRule, gameRuleMatches, gameRulePoints, publicGameRule, publicGameRuleHit } = require("./lib/creator-game-rules");
 const { buildCutJobManifest, sanitizeCutJobResult, publicCutJob, canTransitionCutJob } = require("./lib/creator-cut-jobs");
 const { profileSyncStatus, bridgeConnectionStatus, creatorReadiness } = require("./lib/creator-admin-health");
@@ -68,6 +69,11 @@ const APP_NAME =
 
 const BACKEND_VERSION =
     "3.12.0";
+
+const RENDER_GIT_COMMIT = String(process.env.RENDER_GIT_COMMIT || "").trim().toLowerCase();
+const RELEASE_COMMIT_SHA256 = /^[a-f0-9]{40}(?:[a-f0-9]{24})?$/.test(RENDER_GIT_COMMIT)
+    ? crypto.createHash("sha256").update(RENDER_GIT_COMMIT).digest("hex")
+    : "";
 
 
 const HTTP_MAX_HEADER_SIZE = 16 * 1024;
@@ -418,6 +424,44 @@ const ACCESS_TOKEN_SAFETY_WINDOW_MS =
 
 const TIKTOK_TIMEOUT_MS =
     15000;
+
+// Öffentliche Community-Kennzahlen werden ausschließlich serverseitig
+// geladen. Browser erhalten weder TikTok-Tokens noch Provider-Details.
+const PUBLIC_TIKTOK_PROFILE_URL =
+    "https://www.tiktok.com/@cfs_zockt";
+
+const PUBLIC_DISCORD_INVITE_CODE =
+    String(process.env.CFS_PUBLIC_DISCORD_INVITE_CODE || "3bfAkcJTp")
+        .trim()
+        .replace(/[^A-Za-z0-9_-]/g, "")
+        .slice(0, 64);
+
+const PUBLIC_DISCORD_INVITE_URL =
+    `https://discord.gg/${PUBLIC_DISCORD_INVITE_CODE}`;
+
+const PUBLIC_COMMUNITY_STATS_CACHE_TTL_MS =
+    Math.max(5 * 60 * 1000, Math.min(60 * 60 * 1000, Number(process.env.CFS_PUBLIC_COMMUNITY_STATS_CACHE_TTL_MS || 15 * 60 * 1000)));
+
+const PUBLIC_COMMUNITY_STATS_PROVIDER_TIMEOUT_MS =
+    7 * 1000;
+
+const PUBLIC_GAME_ACTIVITY_MODULE_KEY =
+    "community_game_activity";
+
+const PUBLIC_GAME_ACTIVITY_WINDOW_DAYS =
+    14;
+
+const PUBLIC_GAME_ACTIVITY_RETENTION_DAYS =
+    30;
+
+const PUBLIC_GAME_ACTIVITY_MAX_EVENTS =
+    300;
+
+let publicCommunityStatsCache = {
+    payload: null,
+    expires_at: 0,
+    in_flight: null
+};
 
 
 // ============================================================
@@ -8368,8 +8412,12 @@ app.put("/api/admin/creator-suite/incident-state",async(req,res)=>{
         const publicMessage=incidentPublicMessage(req.body?.public_message);
         const revokeSessions=Boolean(req.body?.revoke_other_sessions);
         const revokeLauncherAccess=Boolean(req.body?.revoke_launcher_access);
+        const confirmation=String(req.body?.confirmation||"").trim();
         if(mode==="security_lockdown"&&!publicMessage){
             return res.status(400).json({ok:false,error:"Für den Security Lockdown ist eine kurze öffentliche Meldung erforderlich."});
+        }
+        if(mode==="security_lockdown"&&confirmation!=="SECURITY LOCKDOWN"){
+            return res.status(400).json({ok:false,code:"incident_confirmation_required",error:"Security Lockdown muss ausdrücklich bestätigt werden."});
         }
 
         let currentHash="";
@@ -16068,6 +16116,32 @@ app.post(
 
 
 app.post(
+    "/api/creator/widget-studio/widgets/:id/restore-published",
+    requireCreatorAccount,
+    async (req,res) => {
+        res.set("Cache-Control","no-store");
+        try {
+            const current=await getStudioWidgetById(req.creatorAccount.id,req.params.id);
+            if(!current)return res.status(404).json({ok:false,error:"Widget nicht gefunden."});
+            if(!current.published_config)return res.status(409).json({ok:false,code:"no_published_version",error:"Für dieses Widget gibt es noch keine veröffentlichte Version."});
+            const restored=sanitizeStudioWidgetConfig(current.published_config,current.widget_type);
+            const result=await pool.query(
+                `UPDATE creator_widgets
+                 SET draft_config=$3::jsonb,version=version+1,updated_at=NOW()
+                 WHERE creator_id=$1 AND id=$2
+                 RETURNING *`,
+                [req.creatorAccount.id,current.id,JSON.stringify(restored)]
+            );
+            return res.json({ok:true,restored:true,widget:publicStudioWidgetRow(result.rows[0])});
+        } catch(error) {
+            safeLogError("Widget Restore Published Fehler:",error);
+            return res.status(500).json({ok:false,error:"Die letzte veröffentlichte Widget-Version konnte nicht wiederhergestellt werden."});
+        }
+    }
+);
+
+
+app.post(
     "/api/creator/widget-studio/widgets/:id/rotate-public-token",
     requireCreatorAccount,
     async (req,res) => {
@@ -17102,6 +17176,32 @@ app.post(
 );
 
 app.post(
+    "/api/creator/widget-studio/scenes/:id/restore-published",
+    requireCreatorAccount,
+    async(req,res)=>{
+        res.set("Cache-Control","no-store");
+        try{
+            const current=await getCreatorSceneRow(req.creatorAccount.id,req.params.id);
+            if(!current)return res.status(404).json({ok:false,error:"Scene nicht gefunden."});
+            if(!current.published_config)return res.status(409).json({ok:false,code:"no_published_version",error:"Für diese Scene gibt es noch keine veröffentlichte Version."});
+            const restored=sanitizeSceneConfig(current.published_config);
+            const access=await creatorAccessProfile(req.creatorAccount);
+            const ownership=validateSceneOwnership(restored,await getCreatorSceneSources(req.creatorAccount.id,{includeGame:Boolean(access.entitlements.games)}));
+            if(!ownership.ok)return res.status(409).json({ok:false,code:"published_dependencies_missing",error:"Die veröffentlichte Scene kann nicht wiederhergestellt werden, weil benötigte Widgets nicht mehr verfügbar sind.",scene_errors:ownership.errors});
+            const result=await pool.query(
+                `UPDATE creator_widget_scenes SET draft_config=$3::jsonb,updated_at=NOW() WHERE creator_id=$1 AND id=$2 RETURNING *`,
+                [req.creatorAccount.id,current.id,JSON.stringify(restored)]
+            );
+            return res.json({ok:true,restored:true,scene:publicSceneRow(result.rows[0],APP_BASE_URL)});
+        }catch(error){
+            safeLogError("Scene Restore Published Fehler:",error);
+            return res.status(500).json({ok:false,error:"Die letzte veröffentlichte Scene-Version konnte nicht wiederhergestellt werden."});
+        }
+    }
+);
+
+
+app.post(
     "/api/creator/widget-studio/scenes/:id/rotate-public-token",
     requireCreatorAccount,
     async(req,res)=>{
@@ -17427,6 +17527,23 @@ app.post("/api/bridge/games/runtime/start",widgetBridgeHeartbeatLimiter,requireS
 app.post("/api/bridge/games/runtime/stop",widgetBridgeHeartbeatLimiter,requireStudioBridge,async(req,res)=>{try{await requireCreatorFeatureAccess(req.studioBridge.creator_id,"games","creator");return res.json({ok:true,runtime:await stopCreatorGameRuntime(req.studioBridge.creator_id)})}catch(error){return res.status(error?.code==="creator_feature_locked"?403:400).json(clientSafeErrorPayload(req,error,error?.code==="creator_feature_locked"?403:400,"Game konnte nicht gestoppt werden."))}});
 app.post("/api/bridge/games/runtime/reset",widgetBridgeHeartbeatLimiter,requireStudioBridge,async(req,res)=>{try{await requireCreatorFeatureAccess(req.studioBridge.creator_id,"games","creator");return res.json({ok:true,runtime:await resetCreatorGameRuntime(req.studioBridge.creator_id)})}catch(error){return res.status(error?.code==="creator_feature_locked"?403:400).json(clientSafeErrorPayload(req,error,error?.code==="creator_feature_locked"?403:400,"Game konnte nicht zurückgesetzt werden."))}});
 app.post("/api/bridge/games/runtime/score",widgetBridgeHeartbeatLimiter,requireStudioBridge,async(req,res)=>{try{await requireCreatorFeatureAccess(req.studioBridge.creator_id,"games","creator");return res.json({ok:true,runtime:await scoreCreatorGameRuntime(req.studioBridge.creator_id,req.body||{})})}catch(error){return res.status(error?.code==="creator_feature_locked"?403:error?.code==="game_not_running"?409:400).json(clientSafeErrorPayload(req,error,error?.code==="creator_feature_locked"?403:error?.code==="game_not_running"?409:400,"Game Score konnte nicht geändert werden."))}});
+app.post("/api/bridge/community/game-activity",widgetBridgeEventLimiter,requireStudioBridge,async(req,res)=>{
+    try {
+        const result=await recordCreatorGameActivity(req.studioBridge.creator_id,req.body||{});
+        return res.status(result.duplicate?200:201).json({ok:true,...result});
+    } catch (error) {
+        const status=error?.code==="game_activity_invalid"?400:500;
+        return res.status(status).json(clientSafeErrorPayload(req,error,status,"Game-Aktivität konnte nicht gespeichert werden."));
+    }
+});
+app.delete("/api/bridge/community/game-activity",widgetBridgeEventLimiter,requireStudioBridge,async(req,res)=>{
+    try {
+        const result=await clearCreatorGameActivity(req.studioBridge.creator_id);
+        return res.json({ok:true,...result});
+    } catch (error) {
+        return res.status(500).json(clientSafeErrorPayload(req,error,500,"Game-Aktivität konnte nicht gelöscht werden."));
+    }
+});
 app.post("/api/bridge/cut-studio/audition-runtime",widgetBridgeEventLimiter,requireStudioBridge,async(req,res)=>{
     try{await requireCreatorFeatureAccess(req.studioBridge.creator_id,"cut_studio","creator");const runtime=await updateCutAuditionRuntime(req.studioBridge.creator_id,req.studioBridge.id,req.body||{});return res.json({ok:true,runtime})}
     catch(error){return res.status(error?.code==="creator_feature_locked"?403:error?.code==="cut_project_missing"?404:400).json(clientSafeErrorPayload(req,error,error?.code==="creator_feature_locked"?403:error?.code==="cut_project_missing"?404:400,"Audition Clock konnte nicht aktualisiert werden."))}
@@ -17491,6 +17608,19 @@ app.put("/api/bridge/cut-studio/projects/:id",widgetBridgeEventLimiter,requireSt
         const count=await pool.query(`SELECT COUNT(*)::int AS count FROM creator_cut_clips WHERE project_id=$1`,[req.params.id]);
         return res.json({ok:true,project:publicCutProject(result.rows[0],count.rows[0]?.count||0)});
     }catch(error){return res.status(error?.code==="creator_feature_locked"?403:500).json(clientSafeErrorPayload(req,error,error?.code==="creator_feature_locked"?403:500,"Cut-Projekt konnte über den Launcher nicht gespeichert werden."))}
+});
+
+app.post("/api/bridge/cut-studio/projects/:id/reference-learning",widgetBridgeEventLimiter,requireStudioBridge,async(req,res)=>{
+  try{
+    const creatorId=req.studioBridge.creator_id;await requireCreatorFeatureAccess(creatorId,"cut_studio","creator");
+    const row=(await pool.query(`SELECT * FROM creator_cut_projects WHERE creator_id=$1 AND id=$2 LIMIT 1`,[creatorId,req.params.id])).rows[0];
+    if(!row)return res.status(404).json({ok:false,error:"Cut-Projekt nicht gefunden."});
+    const preset=row.export_preset&&typeof row.export_preset==="object"?row.export_preset:{};const gameProfile=cutGameProfileId(req.body?.game_profile||preset.game_profile);
+    const referenceLearning=upsertAnalyzedReference(preset.reference_learning||{},req.body?.sample||{},gameProfile);
+    const clean=sanitizeCutProject({...row,export_preset:{...preset,game_profile:gameProfile,reference_learning:referenceLearning}});
+    const updated=(await pool.query(`UPDATE creator_cut_projects SET export_preset=$3::jsonb,updated_at=NOW() WHERE creator_id=$1 AND id=$2 RETURNING *`,[creatorId,req.params.id,JSON.stringify(clean.export_preset)])).rows[0];
+    return res.json({ok:true,project:publicCutProject(updated)});
+  }catch(error){return res.status(400).json(clientSafeErrorPayload(req,error,400,"Referenzanalyse konnte nicht gespeichert werden."))}
 });
 
 app.post("/api/bridge/cut-studio/projects/:id/clips",widgetBridgeEventLimiter,requireStudioBridge,async(req,res)=>{
@@ -19191,6 +19321,389 @@ function requireLauncherKey(
 
 
 // ============================================================
+// OPT-IN GAME-AKTIVITÄT FÜR DIE ÖFFENTLICHE COMMUNITY-SEITE
+//
+// Der Launcher übermittelt ausschließlich abgeschlossene Game-Capture-
+// Sessions, wenn die lokale Freigabe aktiv ist. Gespeichert werden nur
+// ein zufälliger Client-Event-Key, ein bereinigter Spielname sowie
+// Start/Ende/Dauer. Keine PIDs, Fenstertitel, Executable-Pfade oder
+// sonstigen Prozessdetails werden serverseitig gespeichert.
+// ============================================================
+
+function publicGameActivityText(value,max=80) {
+    return String(value ?? "")
+        .replace(/[\u0000-\u001f\u007f]/g," ")
+        .replace(/\s+/g," ")
+        .trim()
+        .slice(0,max);
+}
+
+function normalizePublicGameName(value) {
+    const raw=publicGameActivityText(value,120).replace(/\.exe$/i,"").trim();
+    if (!raw) return "";
+    const lower=raw.toLowerCase();
+    const mappings=[
+        [/counter[- _]?strike\s*2|\bcs2\b/,"Counter-Strike 2"],
+        [/fortnite/,"Fortnite"],
+        [/valorant/,"VALORANT"],
+        [/minecraft/,"Minecraft"],
+        [/rocket\s*league|rocketleague/,"Rocket League"],
+        [/grand\s*theft\s*auto\s*v|gta\s*v|gta5|gta5_enhanced/,"Grand Theft Auto V"],
+        [/ea\s*sports\s*fc\s*25|fc25|fc\s*25/,"EA SPORTS FC 25"],
+        [/call\s*of\s*duty|warzone|\bcod\b/,"Call of Duty"],
+        [/league\s*of\s*legends|leagueclient|\blol\b/,"League of Legends"],
+        [/apex\s*legends|r5apex/,"Apex Legends"],
+        [/overwatch/,"Overwatch 2"]
+    ];
+    for (const [pattern,name] of mappings) if (pattern.test(lower)) return name;
+    return raw.replace(/[-_]+/g," ").replace(/\s+/g," ").trim().slice(0,80);
+}
+
+function publicGameActivityKey(name) {
+    return normalizePublicGameName(name)
+        .toLowerCase()
+        .normalize("NFKD")
+        .replace(/[\u0300-\u036f]/g,"")
+        .replace(/[^a-z0-9]+/g,"-")
+        .replace(/^-+|-+$/g,"")
+        .slice(0,80);
+}
+
+function sanitizePublicGameActivityEvent(input={}) {
+    const source=input&&typeof input==="object"&&!Array.isArray(input)?input:{};
+    const clientEventId=String(source.client_event_id||"").trim();
+    if (!/^cfsga_[a-f0-9]{32}$/.test(clientEventId)) {
+        const error=new Error("Game-Aktivitäts-ID ist ungültig.");
+        error.code="game_activity_invalid";
+        throw error;
+    }
+    const gameName=normalizePublicGameName(source.game_name);
+    const gameKey=publicGameActivityKey(gameName);
+    if (!gameName || !gameKey) {
+        const error=new Error("Spielname fehlt oder ist ungültig.");
+        error.code="game_activity_invalid";
+        throw error;
+    }
+    const startedMs=Date.parse(String(source.started_at||""));
+    const endedMs=Date.parse(String(source.ended_at||""));
+    if (!Number.isFinite(startedMs)||!Number.isFinite(endedMs)||endedMs<=startedMs) {
+        const error=new Error("Game-Aktivitätszeitraum ist ungültig.");
+        error.code="game_activity_invalid";
+        throw error;
+    }
+    const now=Date.now();
+    if (endedMs>now+5*60*1000 || startedMs<now-PUBLIC_GAME_ACTIVITY_RETENTION_DAYS*24*60*60*1000) {
+        const error=new Error("Game-Aktivität liegt außerhalb des zulässigen Zeitfensters.");
+        error.code="game_activity_invalid";
+        throw error;
+    }
+    const measuredSeconds=Math.round((endedMs-startedMs)/1000);
+    const suppliedSeconds=Math.round(Number(source.duration_seconds||0));
+    const durationSeconds=Math.max(30,Math.min(12*60*60,Math.min(measuredSeconds,suppliedSeconds>0?suppliedSeconds:measuredSeconds)));
+    if (measuredSeconds<30) {
+        const error=new Error("Game-Aktivität ist zu kurz.");
+        error.code="game_activity_invalid";
+        throw error;
+    }
+    return {
+        client_event_id:clientEventId,
+        game_name:gameName,
+        started_at:new Date(startedMs).toISOString(),
+        ended_at:new Date(startedMs+durationSeconds*1000).toISOString(),
+        duration_seconds:durationSeconds
+    };
+}
+
+function normalizeStoredGameActivityState(state={}) {
+    const source=state&&typeof state==="object"&&!Array.isArray(state)?state:{};
+    const cutoff=Date.now()-PUBLIC_GAME_ACTIVITY_RETENTION_DAYS*24*60*60*1000;
+    const seen=new Set();
+    const events=[];
+    for (const raw of Array.isArray(source.events)?source.events:[]) {
+        try {
+            const event=sanitizePublicGameActivityEvent(raw);
+            if (Date.parse(event.ended_at)<cutoff || seen.has(event.client_event_id)) continue;
+            seen.add(event.client_event_id);
+            events.push(event);
+        } catch {}
+    }
+    events.sort((a,b)=>Date.parse(a.ended_at)-Date.parse(b.ended_at));
+    return {version:1,events:events.slice(-PUBLIC_GAME_ACTIVITY_MAX_EVENTS),updated_at:source.updated_at||null};
+}
+
+async function recordCreatorGameActivity(creatorId,input={}) {
+    const event=sanitizePublicGameActivityEvent(input);
+    const client=await pool.connect();
+    try {
+        await client.query("BEGIN");
+        await client.query(
+            `INSERT INTO creator_module_state (creator_id,module_key,state,updated_at)
+             VALUES ($1,$2,'{"version":1,"events":[]}'::jsonb,NOW())
+             ON CONFLICT (creator_id,module_key) DO NOTHING`,
+            [creatorId,PUBLIC_GAME_ACTIVITY_MODULE_KEY]
+        );
+        const row=(await client.query(
+            `SELECT state FROM creator_module_state WHERE creator_id=$1 AND module_key=$2 FOR UPDATE`,
+            [creatorId,PUBLIC_GAME_ACTIVITY_MODULE_KEY]
+        )).rows[0];
+        const state=normalizeStoredGameActivityState(row?.state||{});
+        const duplicate=state.events.some(item=>item.client_event_id===event.client_event_id);
+        if (!duplicate) state.events.push(event);
+        state.events=normalizeStoredGameActivityState(state).events;
+        state.updated_at=new Date().toISOString();
+        await client.query(
+            `UPDATE creator_module_state SET state=$3::jsonb,updated_at=NOW() WHERE creator_id=$1 AND module_key=$2`,
+            [creatorId,PUBLIC_GAME_ACTIVITY_MODULE_KEY,JSON.stringify(state)]
+        );
+        await client.query("COMMIT");
+        if (String(creatorId)===String(DEFAULT_CREATOR_ID)) publicCommunityStatsCache.expires_at=0;
+        return {accepted:true,duplicate,event:{client_event_id:event.client_event_id,game_name:event.game_name,duration_seconds:event.duration_seconds}};
+    } catch (error) {
+        try { await client.query("ROLLBACK"); } catch {}
+        throw error;
+    } finally {
+        client.release();
+    }
+}
+
+async function clearCreatorGameActivity(creatorId) {
+    await pool.query(
+        `INSERT INTO creator_module_state (creator_id,module_key,state,updated_at)
+         VALUES ($1,$2,$3::jsonb,NOW())
+         ON CONFLICT (creator_id,module_key) DO UPDATE SET state=EXCLUDED.state,updated_at=NOW()`,
+        [creatorId,PUBLIC_GAME_ACTIVITY_MODULE_KEY,JSON.stringify({version:1,events:[],updated_at:new Date().toISOString()})]
+    );
+    if (String(creatorId)===String(DEFAULT_CREATOR_ID)) publicCommunityStatsCache.expires_at=0;
+    return {cleared:true};
+}
+
+async function getPublicRecentGames(creatorId,{days=PUBLIC_GAME_ACTIVITY_WINDOW_DAYS,limit=6}={}) {
+    const safeDays=Math.max(1,Math.min(30,Math.round(Number(days)||PUBLIC_GAME_ACTIVITY_WINDOW_DAYS)));
+    const safeLimit=Math.max(1,Math.min(8,Math.round(Number(limit)||6)));
+    const moduleState=await getModuleState(creatorId,PUBLIC_GAME_ACTIVITY_MODULE_KEY);
+    const state=normalizeStoredGameActivityState(moduleState?.state||{});
+    const cutoff=Date.now()-safeDays*24*60*60*1000;
+    const grouped=new Map();
+    for (const event of state.events) {
+        const start=Math.max(Date.parse(event.started_at),cutoff);
+        const end=Date.parse(event.ended_at);
+        if (!Number.isFinite(start)||!Number.isFinite(end)||end<=start) continue;
+        const seconds=Math.max(0,Math.min(Number(event.duration_seconds||0),Math.round((end-start)/1000)));
+        if (seconds<30) continue;
+        const gameKey=publicGameActivityKey(event.game_name);
+        if (!gameKey) continue;
+        const current=grouped.get(gameKey)||{key:gameKey,name:event.game_name,duration_seconds:0,sessions:0,last_played_at:null};
+        current.duration_seconds+=seconds;
+        current.sessions+=1;
+        if (!current.last_played_at||Date.parse(event.ended_at)>Date.parse(current.last_played_at)) current.last_played_at=event.ended_at;
+        grouped.set(gameKey,current);
+    }
+    const games=[...grouped.values()]
+        .sort((a,b)=>b.duration_seconds-a.duration_seconds||b.sessions-a.sessions||Date.parse(b.last_played_at||0)-Date.parse(a.last_played_at||0))
+        .slice(0,safeLimit)
+        .map((item,index)=>({rank:index+1,key:item.key,name:item.name,minutes:Math.max(1,Math.round(item.duration_seconds/60)),sessions:item.sessions,last_played_at:item.last_played_at}));
+    return {available:games.length>0,window_days:safeDays,source:"cfs_launcher_opt_in",updated_at:moduleState?.updated_at||null,games};
+}
+
+// ============================================================
+// ÖFFENTLICHE COMMUNITY-KENNZAHLEN
+//
+// Nur grobe, bewusst öffentliche Kennzahlen. Keine Tokens, Account-IDs,
+// Scopes oder Provider-Rohdaten werden an den Browser weitergegeben.
+// TikTok wird über die bereits autorisierte Default-Creator-Verbindung
+// aktualisiert. Discord wird über den öffentlichen Invite serverseitig
+// abgefragt. Beide Provider liegen hinter einem gemeinsamen Cache.
+// ============================================================
+
+function publicCommunityCount(value) {
+    const number = Number(value);
+    if (!Number.isFinite(number) || number < 0) return null;
+    return Math.floor(number);
+}
+
+async function fetchPublicDiscordCommunityStats() {
+    if (!PUBLIC_DISCORD_INVITE_CODE) {
+        throw new Error("Discord Invite-Code ist nicht konfiguriert.");
+    }
+
+    const target = assertOutboundHttpsUrl(
+        `https://discord.com/api/v10/invites/${encodeURIComponent(PUBLIC_DISCORD_INVITE_CODE)}?with_counts=true&with_expiration=true`,
+        { allowedHosts:["discord.com"], label:"Discord Invite API URL" }
+    );
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), PUBLIC_COMMUNITY_STATS_PROVIDER_TIMEOUT_MS);
+
+    try {
+        const response = await fetch(target.href, {
+            method:"GET",
+            redirect:"error",
+            headers:{
+                "Accept":"application/json",
+                "User-Agent":"cfs-zockt-community-stats/1.0 (+https://cfs-zockt.de)"
+            },
+            signal:controller.signal
+        });
+        const text = await readResponseTextBounded(response, 128 * 1024);
+        let data = {};
+        try { data = text ? JSON.parse(text) : {}; }
+        catch { throw new Error("Discord Invite API lieferte ungültiges JSON."); }
+        if (!response.ok) throw new Error(`Discord Invite API antwortete mit HTTP ${response.status}.`);
+
+        const members = publicCommunityCount(data?.approximate_member_count);
+        const online = publicCommunityCount(data?.approximate_presence_count);
+        if (members === null) throw new Error("Discord Mitgliederzahl fehlt in der Provider-Antwort.");
+
+        return {
+            available:true,
+            members,
+            online,
+            stale:false,
+            updated_at:new Date().toISOString()
+        };
+    } catch (error) {
+        if (error?.name === "AbortError") {
+            throw new Error("Discord Mitgliederzahl konnte nicht rechtzeitig geladen werden.");
+        }
+        throw error;
+    } finally {
+        clearTimeout(timeout);
+    }
+}
+
+async function fetchPublicTikTokCommunityStats() {
+    const connection = await getConnection(DEFAULT_CREATOR_ID);
+    const scopes = String(connection?.scope || "")
+        .split(/[\s,]+/)
+        .map(value => value.trim())
+        .filter(Boolean);
+
+    if (!connection?.connected || !scopes.includes("user.info.stats")) {
+        return {
+            available:false,
+            followers:null,
+            stale:false,
+            updated_at:connection?.updated_at || null
+        };
+    }
+
+    let profile = {
+        follower_count:publicCommunityCount(connection?.follower_count),
+        updated_at:connection?.updated_at || null
+    };
+    let stale = false;
+    const storedAt = connection?.updated_at ? new Date(connection.updated_at).getTime() : 0;
+    const storedFresh = Number.isFinite(storedAt) && storedAt > 0 && (Date.now() - storedAt) < PUBLIC_COMMUNITY_STATS_CACHE_TTL_MS;
+
+    if (!storedFresh) {
+        try {
+            profile = await fetchTikTokProfile(DEFAULT_CREATOR_ID);
+        } catch (error) {
+            stale = true;
+            safeLogError("public-community-tiktok-refresh", error);
+        }
+    }
+
+    const followers = publicCommunityCount(profile?.follower_count);
+    return {
+        available:followers !== null,
+        followers,
+        stale,
+        updated_at:profile?.updated_at || connection?.updated_at || null
+    };
+}
+
+async function refreshPublicCommunityStats() {
+    const previous = publicCommunityStatsCache.payload;
+    const [discordResult, tiktokResult, gamesResult] = await Promise.allSettled([
+        fetchPublicDiscordCommunityStats(),
+        fetchPublicTikTokCommunityStats(),
+        getPublicRecentGames(DEFAULT_CREATOR_ID)
+    ]);
+
+    let discord;
+    if (discordResult.status === "fulfilled") {
+        discord = discordResult.value;
+    } else {
+        safeLogError("public-community-discord-refresh", discordResult.reason);
+        discord = previous?.discord?.available
+            ? { ...previous.discord, stale:true }
+            : { available:false, members:null, online:null, stale:false, updated_at:null };
+    }
+
+    let tiktok;
+    if (tiktokResult.status === "fulfilled") {
+        tiktok = tiktokResult.value;
+    } else {
+        safeLogError("public-community-tiktok", tiktokResult.reason);
+        tiktok = previous?.tiktok?.available
+            ? { ...previous.tiktok, stale:true }
+            : { available:false, followers:null, stale:false, updated_at:null };
+    }
+
+    let recentGames;
+    if (gamesResult.status === "fulfilled") {
+        recentGames = gamesResult.value;
+    } else {
+        safeLogError("public-community-games", gamesResult.reason);
+        recentGames = previous?.recent_games?.available
+            ? { ...previous.recent_games, stale:true }
+            : { available:false, window_days:PUBLIC_GAME_ACTIVITY_WINDOW_DAYS, source:"cfs_launcher_opt_in", updated_at:null, games:[] };
+    }
+
+    const payload = {
+        ok:Boolean(discord.available || tiktok.available || recentGames.available),
+        generated_at:new Date().toISOString(),
+        refresh_seconds:Math.round(PUBLIC_COMMUNITY_STATS_CACHE_TTL_MS / 1000),
+        discord:{
+            ...discord,
+            url:PUBLIC_DISCORD_INVITE_URL
+        },
+        tiktok:{
+            ...tiktok,
+            url:PUBLIC_TIKTOK_PROFILE_URL
+        },
+        recent_games:recentGames
+    };
+
+    publicCommunityStatsCache.payload = payload;
+    publicCommunityStatsCache.expires_at = Date.now() + PUBLIC_COMMUNITY_STATS_CACHE_TTL_MS;
+    return payload;
+}
+
+async function getPublicCommunityStats() {
+    if (publicCommunityStatsCache.payload && Date.now() < publicCommunityStatsCache.expires_at) {
+        return publicCommunityStatsCache.payload;
+    }
+    if (!publicCommunityStatsCache.in_flight) {
+        publicCommunityStatsCache.in_flight = refreshPublicCommunityStats()
+            .finally(() => { publicCommunityStatsCache.in_flight = null; });
+    }
+    return publicCommunityStatsCache.in_flight;
+}
+
+app.get(
+    "/api/public/community-stats",
+    async (req, res) => {
+        res.set("Cache-Control", "public, max-age=60, stale-while-revalidate=600");
+        try {
+            const payload = await getPublicCommunityStats();
+            return res.json(payload);
+        } catch (error) {
+            safeLogError("public-community-stats", error);
+            return res.status(503).json({
+                ok:false,
+                generated_at:new Date().toISOString(),
+                discord:{available:false,members:null,online:null,url:PUBLIC_DISCORD_INVITE_URL},
+                tiktok:{available:false,followers:null,url:PUBLIC_TIKTOK_PROFILE_URL},
+                recent_games:{available:false,window_days:PUBLIC_GAME_ACTIVITY_WINDOW_DAYS,source:"cfs_launcher_opt_in",updated_at:null,games:[]}
+            });
+        }
+    }
+);
+
+
+// ============================================================
 // ÖFFENTLICHER SYSTEMSTATUS
 //
 // Für die Marketing-/Startseite absichtlich minimal: keine Version,
@@ -19306,7 +19819,8 @@ app.get(
                     version:BACKEND_VERSION,
                     status:"schema_mismatch",
                     database:"connected",
-                    schema_version:observedSchemaVersion
+                    schema_version:observedSchemaVersion,
+                    release_commit_sha256:RELEASE_COMMIT_SHA256 || null
                 });
             }
 
@@ -19329,7 +19843,10 @@ app.get(
                     "connected",
 
                 schema_version:
-                    DATABASE_SCHEMA_VERSION
+                    DATABASE_SCHEMA_VERSION,
+
+                release_commit_sha256:
+                    RELEASE_COMMIT_SHA256 || null
 
             });
 

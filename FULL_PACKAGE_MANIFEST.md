@@ -1,11 +1,11 @@
 # Full Package Manifest
 
-Stand: v36 · 25.09.2026
+Stand: v47 · 26.09.2026
 
-Files: 834
+Files: 908
 
 ```text
-        2517  .env.example
+        4044  .env.example
           66  .gitattributes
           65  .github/CODEOWNERS
         1605  .github/ISSUE_TEMPLATE/bug_report.yml
@@ -25,6 +25,8 @@ Files: 834
         1523  .github/workflows/setup-labels.yml
          812  .gitignore
           46  .npmrc
+        3540  ACCEPTANCE_READINESS_V41.md
+        3704  ACCEPTANCE_RELEASE_LOCK_V42.md
         1793  ACCOUNT_CREDENTIAL_SECURITY_PASS.md
         4201  ACCOUNT_EMAIL_RECOVERY_SECURITY_PASS.md
         1989  ACCOUNT_LOGIN_ANOMALY_SECURITY_PASS.md
@@ -32,6 +34,7 @@ Files: 834
         4367  ACCOUNT_PASSKEY_SECURITY_PASS.md
         1803  ACCOUNT_PRIVACY_LIFECYCLE_PASS.md
         2046  ADMIN_AUDIT_INTEGRITY_SECURITY_PASS17.md
+        3240  ADMIN_CONTROL_CENTER_V45.md
         2414  ADMIN_PRIVILEGED_ACTION_SECURITY_PASS16.md
         2285  APPLICATION_RECOVERY_ROLLBACK_PASS19.md
          754  BEGINNER_UX_R9.md
@@ -39,27 +42,32 @@ Files: 834
         1348  BRAND_COHERENCE_V34.md
        17364  CFS_CREATOR_SUITE_MASTER_PLAN.md
        79763  CFS_MASTER_CHECKLIST_PASS21.md
-       60347  CFS_WIDGET_STUDIO_MASTER_CHECKLIST.md
-        8004  CHANGED-FILES-CUMULATIVE.txt
-        1168  CHANGED-FILES.txt
-        1641  CONFIG_DOCTOR_V41.md
+       61156  CFS_WIDGET_STUDIO_MASTER_CHECKLIST.md
+       15442  CHANGED-FILES-CUMULATIVE.txt
+        1320  CHANGED-FILES.txt
+        2456  COMMUNITY_LIVE_V37.md
+        1760  CONFIG_DOCTOR_V41.md
+        2081  CUT_REFERENCE_LEARNING_V47.md
         3865  DATABASE_BACKUP_RECOVERY_PASS18.md
         1849  DEPLOY_AUTOMATION_V27.md
         1729  EDITORIAL_SIMPLIFICATION_V36.md
         3476  END_TO_END_ACCEPTANCE_PASS21_6.md
         3653  FINALIZATION_STATUS_V31.md
         2679  FINAL_TEST_V42.md
-       41752  FULL_PACKAGE_MANIFEST.md
+       45193  FULL_PACKAGE_MANIFEST.md
         3590  GITHUB_BOOTSTRAP_V41.md
         1491  GITHUB_RELEASE_FILES_V40.md
         2927  GITHUB_REPOSITORY_BOOTSTRAP_PASS21.md
         1167  GITHUB_REPOSITORY_READINESS_PASS21.md
         7404  GITHUB_SETUP_V40.md
+        1763  HOMEPAGE_FOCUS_V38.md
         2884  INCIDENT_RESPONSE_PASS20.md
         2892  INTEGRATION_ACCEPTANCE_PASS21_5.md
-         663  LAUNCHER_RELEASE_SAFETY_RUNBOOK.md
+        3901  LAUNCHER_COMPLETION_V44.md
+        1534  LAUNCHER_RELEASE_SAFETY_RUNBOOK.md
         4256  LAUNCHER_STABILITY_PASS.md
         2067  LOCAL_MULTISTREAM_PASS21_9.md
+        1354  PERSONAL_MISSION_V39.md
         1199  POSTDEPLOY_UI_ACCEPTANCE_V21.md
         2347  PRODUCTION-LIVE-TESTS.md
         1566  PRODUCTION-READINESS.md
@@ -67,9 +75,9 @@ Files: 834
         1896  PRODUCTION_EVIDENCE_V30.md
         2585  PRODUCTION_EVIDENCE_V38.md
         1553  PRODUCTION_FINALIZATION_PASS12.md
-        8087  PRODUCTION_GO_LIVE_RUNBOOK.md
+        9633  PRODUCTION_GO_LIVE_RUNBOOK.md
         2002  PRODUCT_ACCEPTANCE_V32.md
-       33327  PROJECT_CURRENT_STATE.md
+       47843  PROJECT_CURRENT_STATE.md
         2728  PROJECT_HEALTH_CHECK_PASS10.md
         1759  PROJECT_HEALTH_CHECK_PASS11.md
         1775  PROJECT_HEALTH_CHECK_PASS12.md
@@ -85,7 +93,8 @@ Files: 834
         1131  PUBLIC_REVIEW_ADMIN_PASS.md
         1596  R62_PROGRESS_V23.md
         2508  README-GITHUB.md
-       16000  README.md
+       19732  README.md
+        3194  RECENT_GAMES_TECHNICAL_V40.md
         1531  RELEASE-FILES-v22.txt
         4065  RELEASE-MANIFEST-v22.json
         6778  RELEASE-MANIFEST-v25.json
@@ -93,7 +102,7 @@ Files: 834
         1013  RELEASE_CANDIDATE_V22.md
         1373  RELEASE_CANDIDATE_V25.md
         2623  RELEASE_OPERATIONS_V39.md
-        6968  RENDER_SETUP_V40.md
+        7739  RENDER_SETUP_V40.md
          338  RUN-NEXT-PRODUCTION-TEST.cmd
          408  RUN-PRODUCTION-LIVE-TESTS.cmd
          729  RUN-R59-PRODUCTION-DRILL.cmd
@@ -118,6 +127,7 @@ Files: 834
         4348  STREAM_STUDIO_AUDITION_CLOCK_SYNC_PASS21_10_31.md
         3506  STREAM_STUDIO_AUDITION_LOOP_PASS21_10_32.md
         3180  STREAM_STUDIO_AUDITION_SESSION_PASS21_10_29.md
+        3517  STREAM_STUDIO_COMPLETION_V46.md
         2284  STREAM_STUDIO_DOCKS_PASS21_9_1.md
         2037  STREAM_STUDIO_DUAL_CANVAS_PASS21_10_4.md
         1425  STREAM_STUDIO_FOUNDATION_PASS21_8.md
@@ -178,8 +188,9 @@ Files: 834
         3725  WIDGET_CORE_FLOW_PASS.md
         2017  WIDGET_STUDIO_30S_UX_PASS.md
         4452  WIDGET_STUDIO_BRIDGE_PROTOCOL_V1.md
+        3812  WIDGET_STUDIO_COMPLETION_V43.md
         1235  WIDGET_STUDIO_MILESTONE_V42.md
-        4918  handoff/CURRENT-HANDOFF.md
+         644  handoff/CURRENT-HANDOFF.md
         5409  handoff/FINAL-GITHUB-MANIFEST-v19.txt
         1548  handoff/GITHUB-DEPLOY-v19.md
         2460  handoff/HANDOFF-v10.md
@@ -208,7 +219,18 @@ Files: 834
         4700  handoff/HANDOFF-v34.md
         4162  handoff/HANDOFF-v35.md
         4918  handoff/HANDOFF-v36.md
+        3231  handoff/HANDOFF-v37.md
+        3713  handoff/HANDOFF-v38.md
+        3439  handoff/HANDOFF-v39.md
         1648  handoff/HANDOFF-v4.md
+        2993  handoff/HANDOFF-v40.md
+        2738  handoff/HANDOFF-v41.md
+        3605  handoff/HANDOFF-v42.md
+        2460  handoff/HANDOFF-v43.md
+        2308  handoff/HANDOFF-v44.md
+        2475  handoff/HANDOFF-v45.md
+        2507  handoff/HANDOFF-v46.md
+         644  handoff/HANDOFF-v47.md
         2479  handoff/HANDOFF-v5.md
         2768  handoff/HANDOFF-v6.md
         2743  handoff/HANDOFF-v7.md
@@ -241,6 +263,17 @@ Files: 834
         2144  handoff/VALIDATION-v34.md
         2215  handoff/VALIDATION-v35.md
         2554  handoff/VALIDATION-v36.md
+        1322  handoff/VALIDATION-v37.md
+        1527  handoff/VALIDATION-v38.md
+        1616  handoff/VALIDATION-v39.md
+        1958  handoff/VALIDATION-v40.md
+        1246  handoff/VALIDATION-v41.md
+        1774  handoff/VALIDATION-v42.md
+        1610  handoff/VALIDATION-v43.md
+        1677  handoff/VALIDATION-v44.md
+        1414  handoff/VALIDATION-v45.md
+        1037  handoff/VALIDATION-v46.md
+         332  handoff/VALIDATION-v47.md
         7031  handoff/VALIDATION-v5.md
         9439  handoff/VALIDATION-v6.md
         9447  handoff/VALIDATION-v7.md
@@ -250,10 +283,10 @@ Files: 834
         1181  launcher/LAUNCHER_RELEASE_CHECKLIST.md
         1922  launcher/PRODUCTION_RELEASE_GATE.md
         1779  launcher/README.md
-         478  launcher/build-windows.bat
       112687  launcher/build/icon.ico
       309080  launcher/build/icon.png
-      134043  launcher/main.js
+         478  launcher/build-windows.bat
+      138759  launcher/main.js
         2909  launcher/native/audio-loopback/README.md
         1851  launcher/native/audio-loopback/build.cmd
         6198  launcher/native/audio-loopback/cfs-audio-loopback.cpp
@@ -262,25 +295,27 @@ Files: 834
        14880  launcher/native/game-capture/cfs-game-capture.cpp
       185453  launcher/package-lock.json
        12838  launcher/package.json
-        9260  launcher/preload.js
-      172492  launcher/renderer/app.js
+        9349  launcher/preload.js
+      175176  launcher/renderer/app.js
        14546  launcher/renderer/cut-audition-web-audio.js
-       77283  launcher/renderer/index.html
-       80683  launcher/renderer/styles.css
-       32150  launcher/reports/release-gate.json
-        4068  launcher/reports/release-gate.md
+       79397  launcher/renderer/index.html
+       83680  launcher/renderer/styles.css
+       31767  launcher/reports/release-gate.json
+        3760  launcher/reports/release-gate.md
        24759  launcher/src/application-audio-source-manager.js
         1326  launcher/src/beta-session-store.js
-       19466  launcher/src/bridge-client.js
+       19943  launcher/src/bridge-client.js
         3885  launcher/src/cloud-health.js
         4117  launcher/src/config-backup.js
-       15019  launcher/src/config-store.js
+       15211  launcher/src/config-store.js
+        2974  launcher/src/creator-tool-policy.js
        59927  launcher/src/cut-media-engine.js
         1720  launcher/src/device-link-client.js
         2031  launcher/src/diagnostics.js
         1998  launcher/src/entitlement-guard.js
         3100  launcher/src/event-monitor.js
         2762  launcher/src/event-spool.js
+        7459  launcher/src/game-activity-store.js
        18500  launcher/src/game-capture-source-manager.js
         2912  launcher/src/gift-streak-tracker.js
         3123  launcher/src/live-session-store.js
@@ -360,10 +395,11 @@ Files: 834
         1202  launcher/tools/generate-windows-build-evidence.mjs
         1577  launcher/tools/gift-streak-test.mjs
         1447  launcher/tools/graceful-shutdown-test.mjs
+        8551  launcher/tools/launcher-central-hub-v44-test.mjs
         6047  launcher/tools/live-acceptance-part2-test.mjs
         1814  launcher/tools/live-resume-bridge-test.mjs
         1061  launcher/tools/live-session-store-test.mjs
-        3840  launcher/tools/live-soak-production-drill-r64.mjs
+        5802  launcher/tools/live-soak-production-drill-r64.mjs
          755  launcher/tools/logger-tail-test.mjs
         1023  launcher/tools/media-source-store-v30-test.mjs
         1259  launcher/tools/media-source-store-v33-test.mjs
@@ -394,32 +430,35 @@ Files: 834
         1905  launcher/tools/version-policy-client-test.mjs
          926  launcher/tools/windows-acceptance-template-v39-test.mjs
         1152  launcher/tools/windows-build-evidence-v38-test.mjs
-        4081  launcher/tools/windows-production-drill-r63.mjs
+        4966  launcher/tools/windows-production-drill-r63.mjs
          147  launcher/vendor/audio/README.txt
          652  launcher/vendor/ffmpeg/README.md
          109  launcher/vendor/game-capture/README.txt
+        3879  lib/acceptance-artifact-approval.js
+        6378  lib/acceptance-release-lock.js
         1218  lib/account-auth-drill-security.js
         1449  lib/account-mail-drill-security.js
         5095  lib/account-mail-security.js
         3059  lib/account-mfa-security.js
         1037  lib/account-passkey-security.js
         4205  lib/beta-cohort-operations.js
-        8536  lib/config-doctor.js
+        8908  lib/config-doctor.js
         1932  lib/creator-admin-health.js
         7038  lib/creator-billing.js
        11713  lib/creator-cut-jobs.js
-       14169  lib/creator-cut-studio.js
+       14442  lib/creator-cut-studio.js
         3180  lib/creator-game-rules.js
         3525  lib/creator-games.js
         5641  lib/creator-plan-policy.js
        10125  lib/creator-widget-assets.js
-        9263  lib/creator-widget-scenes.js
+        9563  lib/creator-widget-scenes.js
+        8289  lib/cut-reference-learning.js
         1838  lib/database-bootstrap-lock.js
         4131  lib/database-runtime-security.js
          182  lib/database-schema-contract.js
         8148  lib/final-test-plan.js
         4802  lib/github-bootstrap-plan.js
-        6085  lib/launch-production-gate.js
+        6404  lib/launch-production-gate.js
         1767  lib/launcher-device-link-security.js
        15470  lib/launcher-release-policy.js
         1118  lib/live-action-delivery.js
@@ -439,13 +478,13 @@ Files: 834
          673  ops/database-recovery-policy.json
         1250  ops/incident-response-policy.json
        49327  package-lock.json
-       17592  package.json
+       19411  package.json
          228  public/.well-known/security.txt
          985  public/_headers
          310  public/_redirects
       309080  public/app-icon.png
        10556  public/assets/css/account-professional.css
-       31793  public/assets/css/admin-creators.css
+       32797  public/assets/css/admin-creators.css
         1026  public/assets/css/billing.css
         3092  public/assets/css/cfs-accessibility-v12.css
         8336  public/assets/css/cfs-dashboard-v9.css
@@ -458,24 +497,22 @@ Files: 834
         6380  public/assets/css/cfs-nav-v8.css
         6641  public/assets/css/cfs-onboarding-v4.css
        27549  public/assets/css/cfs-theme-v3.css
-      109103  public/assets/css/cfs-ui-v18.css
-       37262  public/assets/css/cut-studio.css
+      119130  public/assets/css/cfs-ui-v18.css
+       37860  public/assets/css/cut-studio.css
        19728  public/assets/css/editor.css
         1735  public/assets/css/game-runtime.css
         3712  public/assets/css/games.css
         1223  public/assets/css/launcher-connect.css
        10409  public/assets/css/launcher.css
          583  public/assets/css/scene-runtime.css
-        6986  public/assets/css/scene-studio.css
+        7384  public/assets/css/scene-studio.css
        17086  public/assets/css/site.css
-       50868  public/assets/css/stream-studio.css
+       52162  public/assets/css/stream-studio.css
       204291  public/assets/css/styles.css
         1596  public/assets/css/widget-runtime.css
-      270555  public/assets/css/widget-studio.css
+      271633  public/assets/css/widget-studio.css
       318611  public/assets/img/app-icon.png
        35902  public/assets/img/apple-touch-icon.png
-     1717088  public/assets/img/brand-showcase-01.png
-     1440340  public/assets/img/brand-showcase-02.png
        68357  public/assets/img/brand/cfs-zockt-logo.png
      2081765  public/assets/img/brand/cfs-zockt-mark-original.png
       869855  public/assets/img/brand/cfs-zockt-mark.png
@@ -489,6 +526,8 @@ Files: 834
        33946  public/assets/img/brand/merch/shirt-schwarz-vorne.webp
       161878  public/assets/img/brand/merch/tshirts.webp
       142850  public/assets/img/brand/merch/wollmuetze.webp
+     1717088  public/assets/img/brand-showcase-01.png
+     1440340  public/assets/img/brand-showcase-02.png
       105930  public/assets/img/favicon.ico
        70962  public/assets/img/hero-reference.jpg
        17876  public/assets/img/logo-footer.png
@@ -498,7 +537,7 @@ Files: 834
         2532  public/assets/img/news-3.jpg
        63805  public/assets/img/social-preview.jpg
         2626  public/assets/js/account-tabs.js
-       41810  public/assets/js/admin-creators.js
+       43859  public/assets/js/admin-creators.js
        20317  public/assets/js/app.js
         3632  public/assets/js/billing-plans.js
        10517  public/assets/js/cfs-accessibility-v12.js
@@ -514,11 +553,11 @@ Files: 834
        10570  public/assets/js/cfs-onboarding-v4.js
         7773  public/assets/js/cfs-scene-runtime.js
         8981  public/assets/js/cfs-shell-v3.js
-      189857  public/assets/js/cfs-ui-v18.js
+      194847  public/assets/js/cfs-ui-v18.js
        20957  public/assets/js/cfs-widget-renderer.js
         7364  public/assets/js/cfs-widget-runtime.js
         2628  public/assets/js/cut-audition-clock.js
-       67240  public/assets/js/cut-studio.js
+       69616  public/assets/js/cut-studio.js
        30153  public/assets/js/editor.js
         9315  public/assets/js/games.js
         1881  public/assets/js/launcher-connect.js
@@ -537,26 +576,26 @@ Files: 834
         7181  public/assets/js/page-system-check.js
         1700  public/assets/js/page-tiktok.js
         6324  public/assets/js/page-verify-email.js
-       15844  public/assets/js/scene-studio.js
+       17465  public/assets/js/scene-studio.js
         3287  public/assets/js/site.js
-      112920  public/assets/js/stream-studio.js
+      114609  public/assets/js/stream-studio.js
         2917  public/assets/js/support.js
         3393  public/assets/js/webauthn-browser.js
         4162  public/assets/js/widget-follower-goal.js
-      473607  public/assets/js/widget-studio.js
+      479575  public/assets/js/widget-studio.js
          683  public/auth/tiktok/callback.html
       657477  public/cfs-zockt-logo.png
          508  public/config/monetization.json
        14049  public/favicon.ico
          378  public/games/runtime.html
-       19932  public/index.html
+       20373  public/index.html
        24994  public/pages/account.html
-       25898  public/pages/admin-creators.html
+       26998  public/pages/admin-creators.html
         7644  public/pages/audio-studio.html
        18171  public/pages/creator-suite.html
-       26814  public/pages/cut-studio.html
+       28434  public/pages/cut-studio.html
        12225  public/pages/dashboard.html
-       13728  public/pages/datenschutz.html
+       14425  public/pages/datenschutz.html
       110279  public/pages/editor.html
         1443  public/pages/error.html
         5234  public/pages/forgot-password.html
@@ -572,16 +611,16 @@ Files: 834
        12740  public/pages/plans.html
         5076  public/pages/reset-password.html
        11116  public/pages/roadmap.html
-        9294  public/pages/scene-studio.html
+        9434  public/pages/scene-studio.html
        18891  public/pages/security.html
         6390  public/pages/settings.html
         7382  public/pages/setup.html
-       39574  public/pages/stream-studio.html
+       40088  public/pages/stream-studio.html
        13876  public/pages/support.html
         5562  public/pages/system-check.html
         5339  public/pages/tiktok.html
         4959  public/pages/verify-email.html
-       99273  public/pages/widget-studio.html
+      100381  public/pages/widget-studio.html
          149  public/robots.txt
          568  public/site.webmanifest
          691  public/sitemap.xml
@@ -589,8 +628,14 @@ Files: 834
          573  public/widgets/output.html
          382  public/widgets/scene.html
          694  public/widgets/studio.html
-        3057  render.blueprint.example.yaml
+        3114  render.blueprint.example.yaml
+       19207  reports/acceptance-readiness-v41.json
+        1494  reports/acceptance-release-lock-v42-validation.json
+        3145  reports/admin-control-center-v45.json
         2063  reports/brand-coherence-v34.json
+         958  reports/community-live-v37.json
+         342  reports/cut-reference-learning-v47.json
+        1450  reports/cut-reference-learning-v47.txt
         2002  reports/editorial-simplification-v36.json
         8324  reports/final-test-matrix.csv
        21150  reports/final-test-matrix.json
@@ -598,31 +643,50 @@ Files: 834
           84  reports/final-test-summary.json
         5134  reports/finalization-readiness-v31.json
          448  reports/github-initial-push-plan.md
+        1661  reports/homepage-focus-v38.json
+        5381  reports/launcher-completion-v44.json
         4271  reports/layout-smoke-v33.json
+       72495  reports/personal-mission-v39-validation.log
+        1752  reports/personal-mission-v39.json
         1093  reports/product-acceptance-v32-quick.json
         1164  reports/product-acceptance-v32-quick.log
         1283  reports/product-acceptance-v32.json
         1349  reports/product-acceptance-v32.log
         1283  reports/product-acceptance-v35.json
         1350  reports/product-acceptance-v36.json
+         707  reports/product-acceptance-v37.json
+        1283  reports/product-acceptance-v38.json
+        1283  reports/product-acceptance-v41.json
+        1349  reports/product-acceptance-v42.json
+        1318  reports/product-acceptance-v43.json
+        1283  reports/product-acceptance-v44.json
+        1093  reports/product-acceptance-v45.json
+        1095  reports/product-acceptance-v46.json
         1171  reports/production-evidence-v30-offline.json
          963  reports/production-go-no-go.json
          437  reports/production-go-no-go.md
-        2719  reports/production-setup-doctor.json
+        2732  reports/production-setup-doctor.json
         1037  reports/production-setup-doctor.md
        59767  reports/project-check-v32.log
+        1536  reports/recent-games-v40.json
+        3945  reports/stream-studio-completion-v46.json
       107601  reports/stream-studio21-full-v32.log
        10956  reports/visual-polish-v33-validation.log
         1241  reports/visual-polish-v33.json
         1628  reports/welcome-clarity-v35.json
-      865807  server.js
-        7411  tools/account-auth-production-drill-r62.mjs
+        2904  reports/widget-studio-completion-v43.json
+      889549  server.js
+        3678  tools/acceptance-readiness-v41-test.mjs
+       13764  tools/acceptance-readiness-v41.mjs
+        7336  tools/acceptance-release-lock-v42-test.mjs
+        8411  tools/acceptance-release-lock-v42.mjs
+        7866  tools/account-auth-production-drill-r62.mjs
         1614  tools/account-auth-production-pass62-test.mjs
         7003  tools/account-auth-production-progress-r62-v23.mjs
         5024  tools/account-credential-security-test.mjs
         9113  tools/account-email-recovery-security-test.mjs
         5655  tools/account-login-anomaly-security-test.mjs
-        5384  tools/account-mail-production-drill-r61.mjs
+        5828  tools/account-mail-production-drill-r61.mjs
         1924  tools/account-mail-production-pass61-test.mjs
         4701  tools/account-mfa-security-test.mjs
        10453  tools/account-passkey-security-test.mjs
@@ -631,6 +695,7 @@ Files: 834
         1268  tools/action-delivery-v22-test.mjs
         6110  tools/admin-audit-integrity-security-pass17-test.mjs
         1133  tools/admin-config-doctor-v41-qa.mjs
+        4902  tools/admin-control-center-v45-test.mjs
         6154  tools/admin-privileged-action-security-pass16-test.mjs
         2283  tools/application-recovery-doctor.mjs
         1877  tools/application-recovery-evidence-test.mjs
@@ -643,7 +708,8 @@ Files: 834
         4547  tools/brand-coherence-v34-test.mjs
         1853  tools/bridge-smoke-test.mjs
         2000  tools/browser-request-integrity-security-test.mjs
-        3294  tools/config-doctor-v41-test.mjs
+        3090  tools/community-live-v37-test.mjs
+        3919  tools/config-doctor-v41-test.mjs
          973  tools/config-doctor-v41.mjs
         1449  tools/configuration-workflow-v41-qa.mjs
         1021  tools/creator-admin-health-test.mjs
@@ -663,6 +729,7 @@ Files: 834
         2142  tools/cut-multitrack-keyframes-v34-qa.mjs
         1994  tools/cut-music-keyframes-v33-qa.mjs
         1728  tools/cut-music-keyframes-v33-test.mjs
+        5724  tools/cut-studio-reference-learning-v47-test.mjs
          787  tools/cut-studio-v28-test.mjs
         1302  tools/cut-timeline-media-v31-qa.mjs
         1522  tools/cut-timeline-v31-test.mjs
@@ -674,7 +741,7 @@ Files: 834
         1852  tools/database-backup.mjs
         1926  tools/database-recovery-doctor.mjs
         5559  tools/database-recovery-drill-pass60-test.mjs
-       11281  tools/database-recovery-drill-r60.mjs
+       11540  tools/database-recovery-drill-r60.mjs
         4604  tools/database-restore.mjs
         2327  tools/dependency-lockfile-enforcement-test.mjs
         1530  tools/dependency-security-baseline-test.mjs
@@ -699,10 +766,11 @@ Files: 834
         1008  tools/github-labels-v41-test.mjs
         3473  tools/github-repository-readiness-pass21-test.mjs
         1973  tools/github-setup-v40-qa.mjs
+        4607  tools/homepage-focus-v38-test.mjs
         5134  tools/incident-response-pass20-test.mjs
         7942  tools/integration-acceptance-pass21-5-test.mjs
-        2292  tools/launch-production-gate-pass67-test.mjs
-       21148  tools/launch-production-gate-r67.mjs
+        3046  tools/launch-production-gate-pass67-test.mjs
+       25585  tools/launch-production-gate-r67.mjs
         3199  tools/launcher-release-policy-test.mjs
          819  tools/legacy-verification-flags-v40-test.mjs
         1856  tools/live-recovery-v22-qa.mjs
@@ -710,6 +778,7 @@ Files: 834
         1527  tools/live-soak-production-pass64-test.mjs
         1462  tools/local-output-v24-qa.mjs
         6511  tools/multistream-pass21-9-test.mjs
+        4096  tools/personal-mission-v39-test.mjs
         1519  tools/plan-policy-v26-test.mjs
         1302  tools/post-v42-creator-isolation-test.mjs
          720  tools/post-v42-recovery-test.mjs
@@ -717,7 +786,7 @@ Files: 834
          845  tools/post-v42-stability-test.mjs
         7036  tools/postdeploy-ui-acceptance-v21.mjs
         9327  tools/predeploy-migration-safety-pass68-test.mjs
-        8020  tools/predeploy-production-doctor-r68.mjs
+        8627  tools/predeploy-production-doctor-r68.mjs
         1496  tools/premium-enforcement-v26-qa.mjs
         5046  tools/product-acceptance-v32.mjs
         1155  tools/production-canary-check.mjs
@@ -731,10 +800,10 @@ Files: 834
         2506  tools/production-finalization-pass12-test.mjs
         4201  tools/production-integration-smoke-pass21-5.mjs
         1107  tools/production-monitor-alerting-pass65-test.mjs
-        4135  tools/production-monitor-drill-r65.mjs
+        4582  tools/production-monitor-drill-r65.mjs
         1668  tools/production-multistream-smoke-pass21-9.mjs
         1519  tools/production-readiness-v37-test.mjs
-       25208  tools/production-readiness.mjs
+       30953  tools/production-readiness.mjs
         2446  tools/production-release-gate.mjs
         2233  tools/production-scene-composer-smoke-pass21-9-2.mjs
         2651  tools/production-scene-transitions-smoke-pass21-7.mjs
@@ -742,9 +811,10 @@ Files: 834
         1441  tools/production-stream-studio-smoke-pass21-8.mjs
         2102  tools/production-v38-qa.mjs
         7269  tools/production-website-smoke-pass21-4.mjs
-        3250  tools/project-small-regression-check.mjs
+        3624  tools/project-small-regression-check.mjs
         3881  tools/provider-adapters-pass21-10-6-test.mjs
         2652  tools/public-review-admin-test.mjs
+        8574  tools/recent-games-v40-test.mjs
         1425  tools/release-acceptance-v39-test.mjs
         5462  tools/release-candidate-v22.mjs
         6873  tools/release-candidate-v25.mjs
@@ -753,11 +823,11 @@ Files: 834
         1257  tools/release-ops-v39-qa.mjs
         2437  tools/release-state-snapshot.mjs
         1511  tools/release-state-verify.mjs
-        6849  tools/render-production-drill-pass59-test.mjs
-       15576  tools/render-production-drill-r59.mjs
+        7315  tools/render-production-drill-pass59-test.mjs
+       17061  tools/render-production-drill-r59.mjs
         1313  tools/repository-hygiene-v40-test.mjs
         1061  tools/scene-studio-v20-qa.mjs
-        6669  tools/scene-transitions-pass21-7-test.mjs
+        6674  tools/scene-transitions-pass21-7-test.mjs
        10247  tools/security-continuity-v32-test.mjs
         3624  tools/server-resource-hardening-pass44-test.mjs
         1359  tools/server-runtime-symbols-v42-test.mjs
@@ -772,6 +842,7 @@ Files: 834
        12318  tools/stream-studio-audition-clock-sync-pass21-10-31-test.mjs
        13629  tools/stream-studio-audition-loop-pass21-10-32-test.mjs
        14596  tools/stream-studio-audition-session-pass21-10-29-test.mjs
+        6472  tools/stream-studio-completion-v46-test.mjs
         6266  tools/stream-studio-dock-layout-pass21-9-1-test.mjs
         7260  tools/stream-studio-dual-canvas-pass21-10-4-test.mjs
         3987  tools/stream-studio-foundation-pass21-8-test.mjs
@@ -798,7 +869,7 @@ Files: 834
        15443  tools/stream-studio-timeline-audition-pass21-10-27-test.mjs
         2722  tools/stream-studio-workflow-options-pass21-10-3-test.mjs
        14847  tools/stream-studio-zero-cross-pass21-10-34-test.mjs
-        7958  tools/stripe-live-production-drill-r66.mjs
+        8405  tools/stripe-live-production-drill-r66.mjs
         1723  tools/stripe-live-production-pass66-test.mjs
         1470  tools/stripe-testmode-e2e-v38-test.mjs
         2696  tools/universal-widget-renderer-test.mjs
@@ -829,11 +900,14 @@ Files: 834
         6026  tools/widget-core-flow-pass-test.mjs
         3258  tools/widget-runtime-audio-part2-test.mjs
         3335  tools/widget-studio-30s-ux-test.mjs
+        5590  tools/widget-studio-completion-v43-test.mjs
         2571  tools/widget-studio-qa.mjs
         1305  tools/widget-studio-v10-qa.mjs
         1456  tools/widget-studio-v8-qa.mjs
         1729  tools/widget-studio-v9-qa.mjs
         2533  tools/widget-universal-v19-qa.mjs
+        4110  tools/windows-artifact-approval-v42-test.mjs
+        6692  tools/windows-artifact-approval-v42.mjs
         1688  tools/windows-launcher-production-pass63-test.mjs
          299  tools/windows-next-production-test.ps1
        13548  tools/windows-production-drill-r59.ps1

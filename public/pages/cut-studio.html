@@ -141,6 +141,16 @@
           </div>
         </section>
 
+        <section class="cut-section cut-reference-learning" data-cut-free-only>
+          <div class="cut-section-head"><div><span>OPTIONAL · LEARNING</span><h3>Game Reference Learning</h3><p>Referenzvideos liefern nur allgemeine Schnittmuster wie Hook, Tempo und Vor-/Nachlauf. Sie sind niemals Beweis dafür, dass ein Event in deinem eigenen Clip vorkommt.</p></div><strong class="cut-section-badge optional">PROFI</strong></div>
+          <div class="cut-project-grid">
+            <label><span>SPIELPROFIL</span><select id="cutGameProfile"><option value="generic">Allgemeines Gameplay</option><option value="dbd">Dead by Daylight</option><option value="fps">FPS / Shooter</option><option value="battle_royale">Battle Royale</option><option value="sports_racing">Sports / Racing</option><option value="sandbox">Sandbox / Survival</option></select></label>
+            <label><span>REFERENCE LEARNING</span><select id="cutReferenceEnabled"><option value="false">AUS</option><option value="true">AN</option></select></label>
+            <label class="full"><span>ÖFFENTLICHE YOUTUBE-REFERENZEN · MAX. 8</span><textarea id="cutReferenceUrls" rows="5" placeholder="Eine direkte YouTube-Video- oder Shorts-URL pro Zeile"></textarea><small>Es werden nur direkte öffentliche YouTube-URLs gespeichert. Fremde Videodateien werden nicht in dein Projekt übernommen. Noch nicht analysierte URLs beeinflussen keine Clip-Auswahl.</small></label>
+          </div>
+          <div class="cut-reference-status" id="cutReferenceStatus"><strong>0 ANALYSIERT</strong><span>Keine Referenzwerte aktiv.</span></div>
+        </section>
+
         <section class="cut-section cut-section-clips">
           <div class="cut-section-head"><div><span>SCHRITT 2</span><h3>Clips schneiden</h3><p>Lege Start und Ende fest. Text ist optional. Alles Weitere findest du im Profi-Modus.</p></div><button class="btn primary" id="addCutClip">+ CLIP</button></div>
           <div class="cut-timeline-head"><span>TIMELINE</span><strong id="cutClipLimit">0 / 0</strong></div>

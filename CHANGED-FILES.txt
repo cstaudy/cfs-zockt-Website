@@ -1,30 +1,41 @@
-NEU IN v36
-EDITORIAL_SIMPLIFICATION_V36.md
-tools/editorial-simplification-v36-test.mjs
-reports/editorial-simplification-v36.json
-reports/product-acceptance-v36.json
-handoff/HANDOFF-v36.md
-handoff/VALIDATION-v36.md
+NEU IN v47
+CUT_REFERENCE_LEARNING_V47.md
+handoff/HANDOFF-v47.md
+handoff/VALIDATION-v47.md
+lib/cut-reference-learning.js
+reports/cut-reference-learning-v47.json
+reports/cut-reference-learning-v47.txt
+tools/cut-studio-reference-learning-v47-test.mjs
 
-GEÄNDERT IN v36
-public/index.html
-public/assets/css/cfs-ui-v18.css
-tools/website-conviction-proof-test.mjs
-tools/website-conviction-account-start-pass14-test.mjs
-package.json
-PROJECT_CURRENT_STATE.md
-handoff/CURRENT-HANDOFF.md
-CHANGED-FILES.txt
+GEÄNDERT IN v47
 CHANGED-FILES-CUMULATIVE.txt
+CHANGED-FILES.txt
 FULL_PACKAGE_MANIFEST.md
+PROJECT_CURRENT_STATE.md
+README.md
+handoff/CURRENT-HANDOFF.md
+launcher/src/bridge-client.js
+lib/creator-cut-studio.js
+package.json
+public/assets/css/cut-studio.css
+public/assets/js/cut-studio.js
+public/pages/cut-studio.html
+server.js
+tools/project-small-regression-check.mjs
 
-RUNTIME-/UX-ÄNDERUNGEN IN v36
-Homepage editorial reduziert: 17 -> 9 Sections, 41 -> 10 Content-Artikel, ca. 1388 -> 775 Wörter
-persönlicher Abschnitt „Über cfs_zockt · Mein Plan“ ergänzt
-Angebot auf vier Hauptbereiche verdichtet
-Einstieg auf drei verständliche Schritte reduziert
-Trust/Security kompakt statt mehrfach wiederholt
-Startseiten-Navigation priorisiert Mein Plan, Angebot, Community und Sicherheit
-TikTok-Source-Funnel, Partner-Opt-in, Security-/Support-Pfade und öffentliche Statuswege funktional erhalten
-kein neuer UI-/OS-Layer; cfs-os-v24 bleibt global
-Logo, Wortmarke, Schrift, Backend-/Auth-/Billing-Verträge unverändert
+GELÖSCHT IN v47
+keine
+
+TECHNIK IN v47
+Reference Learning ist spielunabhängig und provider-neutral
+Profile: Generic, DBD, FPS/Shooter, Battle Royale, Sports/Racing, Sandbox/Survival
+maximal 8 direkte öffentliche YouTube-Referenzen pro Projekt
+pending Referenzen bleiben neutral
+nur sanitierte analyzed Ergebnisse fließen in das Lernprofil ein
+Reference Learning darf keine semantischen Events im eigenen Clip erfinden
+Kategorie-Boost nur bei bereits im eigenen Clip belegter Kategorie
+Launcher Bridge besitzt provider-neutrale Submit-Schnittstelle
+cut47:check 36/36 PASS
+Project Regression 65/65 PASS
+bestehende CUT Media-/Export-Tests v29-v36 PASS
+keine externe Gemini-/YouTube-LIVE-Evidence behauptet

@@ -9,9 +9,43 @@ Aktueller kumulativer Projektstand der cfs_zockt Website, Creator Suite und des 
 - Automatisierte Release-/Acceptance-/Stress-/OBS-Simulationen: **bestanden**
 - Externe Production-/TLS-/Hardware-/echte LIVE-Gates: **noch offen**
 
+
+
+## CUT Reference Learning Foundation v47
+
+CUT Studio besitzt jetzt eine provider-neutrale, spielunabhängige Reference-Learning-Basis. DBD ist nur noch ein Profil neben FPS/Shooter, Battle Royale, Sports/Racing, Sandbox/Survival und Generic. Bis zu acht öffentliche YouTube-Referenzen können pro Projekt gespeichert werden; `pending`-Referenzen bleiben neutral. Nur sanitierte Analyseergebnisse dürfen kleine Editing-Boosts liefern, und semantische Events müssen immer aus dem eigenen Clip stammen. Siehe `CUT_REFERENCE_LEARNING_V47.md`.
+
+## CFS Stream Studio Completion v46
+
+Stream Studio ist code-seitig **FEATURE FROZEN / READY_FOR_WINDOWS_OBS_ACCEPTANCE**. Preview/Program, Dual Canvas, Quellen-Routing, Multi-Track Recording, Multistream, Multi-Chat, Live Health/Guard und Recording→Cut bleiben bestehen. v46 ergänzt den sichtbaren Save-State, Navigation-Warnung bei ungespeicherten Änderungen und die klare Regel, dass TAKE nur veröffentlichte Scenes ins Program schaltet.
+
+Reale Windows-Capture-/Audio-, TikTok-LIVE-, OBS-/Browser-Source- und 2h-Soak-Abnahme bleibt extern offen. Siehe `STREAM_STUDIO_COMPLETION_V46.md`.
+
+## Admin Control Center Completion v45
+
+Der Admin-Bereich ist code-seitig eingefroren und klar von den Creator-Werkzeugen getrennt. Production zeigt Launch Gate, Monitoring, Mail-Outbox und Incident-Modus getrennt; manuelle Evidence kann nur serverseitig freigegebene manuelle Typen verwenden. Security Lockdown benötigt neben dem bestehenden Admin-Step-up eine ausdrückliche `SECURITY LOCKDOWN`-Bestätigung und kann optional andere Sessions sowie Launcher-Bridges/Device-Links widerrufen. Siehe `ADMIN_CONTROL_CENTER_V45.md`.
+
+Status: **FEATURE FROZEN / READY_FOR_PRODUCTION_OPERATIONS_ACCEPTANCE**. Reale Incident-/Monitoring-Abnahme bleibt Bestandteil der späteren Production-Gates.
+
+## Launcher Completion v44
+
+Der Launcher ist code-seitig eingefroren und als zentrale lokale Schaltstelle geschärft: Widget Studio, Stream Studio, Cut Studio und Dashboard öffnen aus einer kompakten Startzentrale; Update-Status und nächste Update-Aktion sind dort ebenfalls sichtbar. Externe Creator-Ziele laufen jetzt über eine Main-Process-Allowlist statt frei zusammengesetzter Renderer-URLs. Remote HTTP, fremde Origins und nicht freigegebene Seiten werden blockiert. Siehe `LAUNCHER_COMPLETION_V44.md`.
+
+Status: **FEATURE FROZEN / READY_FOR_WINDOWS_ACCEPTANCE**. Die reale Hardware-Abnahme bleibt R63 und muss das per v42 Release Lock exakt freigegebene Windows-Artefakt verwenden.
+
+## Widget Studio Completion v43
+
+Der vereinbarte Widget-Studio-Funktionsumfang ist code-seitig eingefroren: Overlay-Projekte/Scenes, Ebenen, Snap/Safe Area, 16:9/9:16, Test Center, Restore auf die letzte veröffentlichte Version und rotierbare Output-URLs. TikTok Profil, TikTok LIVE und Launcher Bridge werden getrennt dargestellt; eine Online-Bridge wird nicht als LIVE-Session ausgegeben. Siehe `WIDGET_STUDIO_COMPLETION_V43.md`.
+
+Der Status ist **FEATURE FROZEN / READY_FOR_REAL_WORLD_ACCEPTANCE**. Reale TikTok-LIVE-, OBS- und Windows-/Hardware-Evidence wird erst in der späteren Abnahme erzeugt.
+
+## Acceptance Release Lock v42
+
+Vor der echten R59–R67-Abnahme wird der Release jetzt auf einen explizit verifizierten Git-Branch/Remote/Commit gelockt. Zusätzlich wird genau ein signiertes Windows-Artefakt anhand der CI-Build-Evidence freigegeben. R59–R66 müssen denselben Release-Lock tragen; R63/R64 zusätzlich dasselbe Windows Artifact Approval. Erst R67 darf daraus `LIVE_LAUNCH_PASS` bilden. Siehe `ACCEPTANCE_RELEASE_LOCK_V42.md`.
+
 ## Aktueller Schwerpunkt
 
-Der aktuelle Ausbau priorisiert die **öffentliche Website, Sicherheit, Transparenz und Überzeugungskraft** vor neuen Feature-Baustellen. Die Website soll Besuchern zuerst verständlich zeigen, was cfs_zockt ist, welche Creator-Werkzeuge bereits vorhanden sind, welche Schutzmaßnahmen aktiv sind und welche Bereiche noch Beta bzw. nicht fertig sind.
+Der aktuelle Ausbau arbeitet die Produktbereiche **nacheinander bis zum Feature-Freeze** ab. Widget Studio, Launcher, Admin und CFS Stream Studio sind abgeschlossen und feature-frozen. CUT Studio ist jetzt im v47-Reference-Learning-Ausbau; der Lernkern ist multi-game und provider-neutral. Sicherheit, klare Zustände und bestehende Backend-/Runtime-Verträge haben dabei Vorrang vor parallelen neuen Feature-Baustellen.
 
 Bereits kumulativ enthalten:
 
@@ -195,6 +229,7 @@ Die öffentliche Website trennt Beispielansichten jetzt ausdrücklich von echten
 - keine Request-Bodies, rohe IPs oder User-Agents im Admin-Audit
 - Audit-Retention: 180 Tage
 - eigenes Production-Secret `CFS_ADMIN_ELEVATION_SECRET`
+- eigenes Production-Secret `CFS_ACCOUNT_ELEVATION_SECRET` für sensible Creator-Step-ups
 
 Prüfung:
 

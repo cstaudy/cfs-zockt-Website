@@ -1,0 +1,41 @@
+
+> cfs-zockt-creator-suite-web@3.12.0 cut47:check
+> node tools/cut-studio-reference-learning-v47-test.mjs .
+
+PASS six game profiles
+PASS dbd profile exists
+PASS fps profile exists
+PASS battle royale profile exists
+PASS sports profile exists
+PASS sandbox profile exists
+PASS youtube watch normalized
+PASS youtube shorts normalized
+PASS non youtube blocked
+PASS new reference stays pending
+PASS pending samples excluded from aggregate
+PASS aggregate hook
+PASS aggregate pacing
+PASS aggregate category weight
+PASS wrong game category removed
+PASS semantic separation forced
+PASS reference can add generic editorial boost
+PASS semantic category boost requires own evidence
+PASS reference never creates category
+PASS project stores game profile
+PASS project stores learning safely
+PASS unknown game profile falls back generic
+PASS ui has game profile selector
+PASS ui has reference toggle
+PASS ui has reference urls
+PASS ui explains semantic separation
+PASS ui max eight references
+PASS client only accepts youtube hosts
+PASS client preserves prior analyzed rows
+PASS project payload includes game profile
+PASS project payload includes reference learning
+PASS bridge accepts sanitized analyzed reference only
+PASS reference bridge route is creator scoped
+PASS launcher bridge has provider-neutral submit method
+PASS analyzed result replaces matching pending url
+PASS merged analyzed result activates aggregate
+CUT_STUDIO_REFERENCE_LEARNING_V47_PASS 36/36

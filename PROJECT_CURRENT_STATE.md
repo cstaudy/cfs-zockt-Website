@@ -4,8 +4,127 @@
 **Backend: 3.12.0**  
 **Launcher: 0.42.0**
 
+
+
+## Statusupdate 26.09.2026 – v47 CUT Reference Learning Foundation
+
+- CFS CUT Studio besitzt jetzt einen **spielunabhängigen Reference-Learning-Kern** statt DBD-Sonderlogik
+- Profile: Generic, Dead by Daylight, FPS/Shooter, Battle Royale, Sports/Racing und Sandbox/Survival
+- pro Projekt können bis zu acht direkte öffentliche YouTube-Referenzen gespeichert werden
+- neue Referenzen bleiben `pending` und sind vollständig neutral, bis strukturierte Analysewerte vorliegen
+- Referenzvideos dürfen nur Editing-Muster wie Hook, Pacing, ideale Short-Länge und Kontextfenster beeinflussen
+- semantische Kategorien erhalten nur dann einen kleinen Boost, wenn das Ereignis bereits im **eigenen Clip** belegt wurde; Reference Learning kann niemals ein Event erfinden
+- geschützte Launcher-Bridge kann provider-neutral sanitierte Analyseergebnisse einreichen; CUT selbst ist nicht an Gemini gekoppelt
+- `cut47:check` **36/36 PASS**, Project Regression **65/65 PASS**, bestehende CUT Media-/Export-Testkette v29–v36 **PASS**
+- keine reale Gemini-/YouTube-Analyse aus der Sandbox behauptet; Provider-Ausführung bleibt nächster CUT-Schritt
+
+## Statusupdate 26.09.2026 – v46 Stream Studio Completion
+
+- CFS Stream Studio ist code-seitig **FEATURE FROZEN / READY_FOR_WINDOWS_OBS_ACCEPTANCE**; große neue Stream-Funktionen nur auf ausdrücklichen Nutzerwunsch
+- Preview/Program bleiben strikt getrennt; TAKE verwendet ausschließlich veröffentlichte Scenes mit gültiger Source-URL
+- neuer sichtbarer Speicherstatus für Studio + Scene-Drafts: **GESPEICHERT / NICHT GESPEICHERT / SPEICHERT / FEHLER**
+- Browser-Navigation warnt bei ungespeicherten Studio- oder Scene-Änderungen; `Strg/Cmd+S` speichert Draft und Studio-Konfiguration in sicherer Reihenfolge
+- Output-, Audio-, Capture-, Recording-, Multistream-, Overlay- und Workspace-Änderungen markieren den Save-State korrekt
+- bestehende Dual-Canvas-, Selective-Routing-, Multi-Track-, Multistream-, Multi-Chat-, Health-/Guard- und Recording→Cut-Verträge bleiben erhalten
+- Stream-Keys, RTMP-Adressen, Roh-Audio/-Video und lokale Dateipfade bleiben außerhalb der Website; Live Guard bleibt Diagnose statt Autopilot
+- `stream46:check` **39/39 PASS**, Stream Studio Full Suite **PASS through 21.10.34**, Project Regression **64/64 PASS**
+- Product Acceptance quick **7/7**, RC25 **49/49**, Deploy **18/18**, Post-Deploy lokal **30/30**, Predeploy **30/30**
+- Full-Product-Aggregator überschritt erneut das Sandbox-Ausführungslimit; deshalb kein neuer aggregierter 9/9-PASS aus v46
+- kein neuer Windows-Hardware-/TikTok-LIVE-/OBS-/2h-Soak-/R62–R67-PASS; reale Stream-Abnahme bleibt extern offen
+- nächster vereinbarter Produktblock: **CFS CUT Studio**
+
+## Statusupdate 26.09.2026 – v45 Admin Control Center Completion
+
+- Admin ist code-seitig **FEATURE FROZEN / READY_FOR_PRODUCTION_OPERATIONS_ACCEPTANCE**; neue große Admin-Funktionen nur auf ausdrücklichen Nutzerwunsch
+- Admin bleibt auf Accounts/Beta, Support/Security, Production und Release fokussiert; direkte Widget-/Cut-Studio-Schnelllinks wurden aus dem Admin-Kontext entfernt
+- Production zeigt Launch Gate, Monitoring, Mail-Outbox und Incident-Modus getrennt; fehlende/alte Evidence wird nicht als PASS dargestellt
+- manuelle Evidence-Auswahl verwendet ausschließlich serverseitige `manual_kinds`; automatisierte R59–R67-Evidence bleibt den verifizierten Drills vorbehalten
+- Security Lockdown benötigt zusätzlich zum bestehenden 10-Minuten-Admin-Step-up die exakte Bestätigung `SECURITY LOCKDOWN`
+- Security Lockdown kann neben anderen Login-Sitzungen nun auch Launcher-Bridges und offene Device-Links gezielt widerrufen; aktuelle Admin-Session bleibt erhalten
+- HMAC-verkettetes Admin-Audit, private Support/Security-Inbox und Incident Write-Freeze bleiben unverändert aktiv
+- `admin45:check` **30/30 PASS**, Admin16 **40/40**, Admin17 **44/44**, Incident20 **41/41**, Project Regression **63/63 PASS**
+- Product Acceptance quick **7/7**, Launcher Full QA **PASS**, Stream Studio Full Suite **PASS**, RC25 **49/49**, Deploy **18/18**, Post-Deploy lokal **30/30**, Predeploy **30/30**
+- kombinierter Full-Product-Acceptance-Aggregator lief in der Sandbox beim verschachtelten Stream-Studio-Aufruf über das Ausführungslimit; deshalb kein neuer aggregierter 9/9-PASS aus v45
+- kein neuer Production-Incident-/Monitoring-/R62–R67-LIVE-PASS; reale Operations-Abnahme bleibt extern offen
+- nächster vereinbarter Produktblock nach Widget Studio, Launcher und Admin: **CFS Stream Studio**
+
+## Statusupdate 26.09.2026 – v44 Launcher Completion
+
+- Launcher ist code-seitig **FEATURE FROZEN / READY_FOR_WINDOWS_ACCEPTANCE**; große neue Launcher-Funktionen nur auf ausdrücklichen Nutzerwunsch
+- Startseite besitzt eine kompakte Creator-Zentrale für Widget Studio, Stream Studio, Cut Studio und Dashboard; der bestehende Vier-Schritte-Status Creator-PC → TikTok LIVE → Widgets → OBS/Output bleibt erhalten
+- Update-Version, Status und nächste Update-Aktion sind jetzt im einfachen Startbereich sichtbar; bestehende LIVE-Installationssperre und Event-Queue-Drain bleiben aktiv
+- neue zentrale `creator-tool-policy`: Remote HTTPS-only, HTTP nur Loopback, keine URL-Credentials, feste Tool-/Seiten-Allowlist und Same-Origin-Preview-Pfade
+- Renderer baut keine privilegierten Creator-URLs mehr; Tool-Starts laufen über `launcher:creator-tool-open` im Main Process
+- alle Renderer-Popups bleiben `deny`; nur Main-Process-geprüfte Creator-Ziele werden extern geöffnet, geblockte URL-Logs enthalten keine Query-/Hash-/Credential-Daten
+- Electron-Härtung bleibt `contextIsolation=true`, `nodeIntegration=false`, `sandbox=true`; Bridge/Device-Link/Output-/Recovery-Verträge bleiben unverändert
+- `launcher44:check` **46/46 PASS**, Launcher Full QA **PASS**, Project Regression **62/62 PASS**
+- Product Acceptance **9/9**, RC25 **49/49**, Deploy **18/18**, Post-Deploy lokal **30/30**, Predeploy **30/30**
+- kein neuer Windows-Hardware-/TikTok-LIVE-/OBS-/R62–R67-PASS; reale Launcher-Abnahme bleibt R63 mit exakt freigegebenem v42-Windows-Artefakt
+- nächster vereinbarter Produktblock: **Admin**
+
+
+## Statusupdate 26.09.2026 – v43 Widget Studio Completion
+
+- Widget Studio ist code-seitig **FEATURE FROZEN / READY_FOR_REAL_WORLD_ACCEPTANCE**; neue große Widget-Funktionen werden nur auf ausdrücklichen Nutzerwunsch wieder geöffnet
+- vereinbarter Scope vollständig: Overlay-Projekte über Stream Board/Scenes, Ebenen, Snap/Safe Area, 16:9/9:16, Test Center, Version/Restore und sichere Output-URL-Rotation
+- Widgets, Scene Studio und Stream Board können den Entwurf auf die letzte veröffentlichte Version zurücksetzen; Restore verändert LIVE nicht automatisch
+- Scene Restore validiert abhängige veröffentlichte Widgets erneut und blockiert bei fehlenden Abhängigkeiten fail-closed
+- Widget-, Scene- und Stream-Board-Output-URLs können bewusst rotiert werden; die alte Token-URL wird ungültig und die Rotation wird als Security Event protokolliert
+- TikTok Profil, TikTok LIVE und Launcher Bridge werden sichtbar getrennt; eine Online-Bridge gilt ausdrücklich nicht als aktive LIVE-Session
+- TikTok-LIVE-Test Center enthält Follow, Like, Gift, Share, Viewer und Chat; Provider Adapter **31/31 PASS**, Multi Chat **30/30 PASS**
+- `widget43:check` **29/29**, UX **40/40**, Core Flow **22/22**, Scene Composer **115/115**, Scene Transitions **59/59**, Project Regression **61/61**
+- Product Acceptance **9/9**, RC25 **49/49**, Deploy **18/18**, Post-Deploy lokal **30/30**, Predeploy **30/30**
+- keine neue reale TikTok-LIVE-/OBS-/Browser-/Windows-/R62–R67-Evidence; diese Außenwelt-Abnahme bleibt später offen
+- nächster vereinbarter Produktblock nach diesem Freeze: **Launcher**
+
+
+## Statusupdate 25.09.2026 – v42 Acceptance Release Lock
+
+- aktueller technischer Stand: **v42 Acceptance Release Lock + Windows Artifact Approval** auf v41/v40
+- echte R59–R67-Abnahme ist jetzt an **einen explizit verifizierten Git-Commit/Branch/Remote** gebunden; Branch oder Remote werden nie geraten
+- alle R59–R66-Nachweise tragen denselben `release_lock_sha256`; R67 verwirft Evidence aus einem anderen Release-Lock
+- R59 prüft über `/api/health` einen SHA-256-Fingerprint des tatsächlich laufenden Render-Commits; der rohe Commit wird nicht öffentlich ausgegeben
+- Windows-Abnahme bindet jetzt **das exakte signierte Artefakt** über CI-Build-Evidence + SHA-256 an den Release-Lock
+- R63 startet nur mit dem freigegebenen Artefakt; R64 nur nach dem dazugehörigen R63 `LIVE_WINDOWS_PASS`; R67 prüft beide Bindungen erneut kryptografisch
+- `acceptance42:check`: Release Lock **29/29 PASS** + Windows Artifact Approval **15/15 PASS**; R67 Security **10/10 PASS**
+- Project Regression **60/60 PASS**, Product Acceptance **9/9**, RC25 **49/49**, Deploy **18/18**, Post-Deploy lokal **30/30**, Predeploy **30/30**
+- in dieser Sandbox wurden bewusst **kein echter Release Lock und kein echtes Artifact Approval** erzeugt; beide Status bleiben ohne echtes Git-/Windows-Release `OPEN` und es wird kein neuer LIVE-PASS behauptet
+
+## Statusupdate 25.09.2026 – v41 Acceptance Readiness
+
+- aktueller technischer Stand: **v41 Acceptance Readiness** auf v40/v39 und der bestehenden v24 Creator-OS-Basis
+- zwei reale Production-Config-Lücken geschlossen: `CFS_ACCOUNT_ELEVATION_SECRET` und `CFS_LAUNCHER_API_KEY` sind jetzt vollständig in Config Doctor und `.env.example` gespiegelt
+- Predeploy prüft generisch alle serverseitigen `requireEnv(...)`-Pflichten gegen Doctor, Env-Beispiel und Render-Blueprint; aktuell **12/12 konsistent**
+- neuer read-only Acceptance Runner: `npm run acceptance41:status`; fail-closed Production-Variante: `npm run acceptance41:strict`
+- Runner prüft Git Branch/SHA/Remote, Production-Config, PostgreSQL-Clienttools, Windows-/Monitoring-/Stripe-Prerequisites und vorhandene R59–R67-Artefakte, ohne Provider-/DB-Schreibaktionen
+- `acceptance41:check` **20/20 PASS**, Code Readiness **15/15 PASS**, Project Regression **59/59 PASS**, Product Acceptance full **9/9 PASS**, RC25 **49/49**, Deploy **18/18**, Post-Deploy lokal **30/30**, Predeploy **30/30**
+- in dieser Sandbox bleiben Production Config, echtes Git-Ziel, PostgreSQL-Clienttools und LIVE-Evidence bewusst OPEN; kein neuer R59–R67 LIVE-PASS wird behauptet
+
 ## Statusupdate 25.09.2026 – maßgeblich vor historischen Pass-Notizen
 
+- aktueller persönlicher Homepage-Kern: **v39 Personal Mission** auf v38/v37 und der bestehenden **v24 Creator OS** Basis
+- CFS wird als persönlich verwurzelt erklärt, ohne private Namen öffentlich auszuschreiben
+- Motivation klar verdichtet: verteilte Creator-Dienste und einzeln bezahlte Extras sollen so weit wie sinnvoll in einem Paket zusammengeführt werden
+- Community-Ziel: Menschen zusammenbringen, die nicht immer jemanden zum Zocken oder Austauschen haben
+- drei Leitwerte: **ALLES AN EINEM ORT · GEMEINSAM STATT ALLEIN · RESPEKT ZUERST**
+- Startseite bleibt kompakt: **9 Sections · 691 Wörter · 8 Header-Links inklusive Logo/CTA**
+- `npm run mission39:check` **15/15 PASS**, `npm run project:check` **57/57 PASS**, Product Acceptance quick **7/7 PASS**
+- kein neuer UI-Layer; `cfs-os-v24` bleibt global; keine neue Production-/Browser-/Hardware-/LIVE-Evidence aus v39
+- aktueller Homepage-Fokus: **v38 Homepage Focus + Personal Note** auf der bestehenden **v24 Creator OS / v36-v37** Basis
+- Startseite bewusst auf wenige Kernaussagen reduziert; Header-Navigation auf die wichtigsten Einstiege beschränkt
+- Hero, Mein Plan, Angebot, Einstieg und Trust wurden textlich gekürzt; technische Details bleiben auf Unterseiten oder in aufklappbarer Transparenz
+- Community Live Stats aus v37 bleiben erhalten; Twitch wird auf der Startseite nicht beworben
+- neuer persönlicher Abschluss erklärt in Ich-Form, warum cfs_zockt für Community, ehrlichen Status und Sicherheit aufgebaut wird
+- `npm run focus38:check` ist **15/15 PASS**; Projektregression **57/57 PASS**; voller Product-Acceptance-Lauf **9/9 PASS**
+- kein neuer UI-Layer: `cfs-os-v24` bleibt global; v38 ändert fachlich nur `public/index.html` und `public/assets/css/cfs-ui-v18.css`
+- neuer Chromium-Screenshot-Lauf lieferte in der Sandbox keine belastbare Evidence; daher **kein neuer v38 Browser-PASS**
+- aktueller Community-Homepage-Stand: **v37 Community Live Stats** auf der bestehenden **v24 Creator OS / v36 Editorial Simplification** Basis
+- Startseite zeigt Discord-Mitglieder und TikTok-Follower als echte dynamische Kennzahlen mit direktem Link unter der Zahl
+- Browser ruft nur `/api/public/community-stats` auf; TikTok-Tokens und Provider-Rohdaten bleiben serverseitig
+- TikTok nutzt die vorhandene `user.info.stats`-Verbindung und den bestehenden Profil-Sync; Discord nutzt den vorhandenen Invite serverseitig
+- Provider-Cache standardmäßig 15 Minuten; bei Ausfall kein Fake-0, sondern letzter bestätigter Stand oder `nicht verfügbar`
+- `npm run community37:check` ist **22/22 PASS**; v36 Editorial bleibt **16/16**, Projektregression **57/57**, Product Acceptance **9/9**
+- reale TikTok-/Discord-Werte wurden aus dieser Sandbox nicht als LIVE-PASS behauptet; externe Provider-Evidence folgt nach Deployment
 - aktueller öffentlicher Editorial-/Homepage-Stand: **v36 Editorial Simplification** auf der bestehenden **v24 Creator OS** / v33-v35 UX-Basis
 - Startseite bewusst von 17 auf **9 Sections**, 41 auf **10 Content-Artikel** und ca. 1388 auf **775 Wörter** reduziert
 - neue Hauptlinie: **Was ist cfs_zockt? · Mein Plan · Was ich anbiete · Wie du startest · Community & Vertrauen**
@@ -503,3 +622,25 @@ Pass 21 bereitet den ersten sauberen Push des kumulativen Projekts vor:
 - Lockfile-Erzeugung bleibt bewusst ein separater manueller Workflow, bis die npm-Registry erreichbar ist
 
 Nach dem ersten Push sind Quality Gate, Lockfile-Workflow, GitHub Environments und Ruleset die nächsten Repository-Schritte.
+
+## v40 – Recent Games Technical (25.09.2026)
+
+Aktueller technischer Erweiterungsstand nach v39:
+
+- freiwillige 14-Tage-Spielaktivität im Launcher, standardmäßig AUS
+- ausschließlich abgeschlossene CFS-Game-Capture-Sessions; keine allgemeine Prozessüberwachung
+- lokal persistente, begrenzte Queue mit Crash-Recovery bis zum letzten Heartbeat
+- bestehende authentifizierte Studio-Bridge für Submit/Delete
+- bestehender `creator_module_state`-Vertrag unter `community_game_activity`; keine neue Tabelle
+- PostgreSQL Schema Generation bleibt 68
+- serverseitige Retention max. 30 Tage und 300 Events
+- öffentliche Aggregation über `/api/public/community-stats`: letzte 14 Tage, max. sechs Games
+- Homepage-Bezeichnung `MEISTGESPIELT MIT CFS` + Hinweis auf freiwillig geteilte Game-Capture-Sessions
+- Opt-out löscht lokal und fordert serverseitige Löschung an; Offline-Löschung bleibt bis zum nächsten Bridge-Kontakt vorgemerkt
+- `npm run recentgames40:check`: 21/21 PASS
+- `npm run project:check`: 58/58 PASS
+- `npm run product32:check`: 9/9 PASS
+- `npm run release25:verify`: 49/49 `RC25_READY`
+- `npm run predeploy:doctor`: 29/29 `PREDEPLOY_READY`
+
+Evidence-Grenze: lokal/statisch. R62–R67 bleiben externe operative Gates; insbesondere kein `LIVE_AUTH_PASS`, `LIVE_WINDOWS_PASS`, `LIVE_SOAK_PASS`, `LIVE_MONITOR_PASS`, `LIVE_BILLING_PASS` oder `LIVE_LAUNCH_PASS` wird aus v40 behauptet.
