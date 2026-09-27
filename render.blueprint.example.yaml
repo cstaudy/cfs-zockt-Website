@@ -39,9 +39,9 @@ services:
       - key: CFS_BILLING_GRACE_DAYS
         value: "3"
       - key: CFS_LAUNCHER_BUILD_TARGET_VERSION
-        value: 0.47.7
+        value: 0.47.12
       - key: CFS_RELEASE_EVIDENCE_VERSION
-        value: 0.47.7
+        value: 0.47.12
       - key: CFS_LAUNCHER_RELEASE_REPO
         value: cstaudy/CFS-TikTok-Backend
       - key: CFS_ALLOW_LEGACY_VERIFICATION_FLAGS

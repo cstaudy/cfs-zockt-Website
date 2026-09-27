@@ -1,3 +1,448 @@
+# v193 — Recording Handoff Initial Clip Idempotency / Launcher 0.47.12
+
+**Launcher: 0.47.12**
+
+- Adds a dedicated idempotent bridge endpoint for the initial Recording→CUT clip. The server locks the Creator resource and Cut project, validates `source_handoff_id`, reuses the existing first clip when present, and only inserts a new initial clip when the project is still empty.
+- Launcher `materializeRecordingHandoff()` now uses the idempotent initial-recording endpoint instead of generic clip creation, closing the duplicate “Gesamte Aufnahme” race under concurrent/retried handoff materialization.
+- Launcher executable code changed, so active release contracts are synchronized from 0.47.11 to **0.47.12**. Backend remains **3.12.0**, Schema Generation remains **68**. External acceptance remains OPEN.
+- Local contract: Recording Initial Clip Idempotency v193: 15/15 PASS; Launcher static check PASS; BridgeClient integration PASS; Release Readiness 20/20 PASS.
+
+# v192 — Transactional Stream Heartbeat Serialization
+
+- Serializes launcher heartbeat health updates with a dedicated PostgreSQL transaction and `SELECT ... FOR UPDATE` on the active bridge row before deriving the next health-evidence snapshot.
+- Bridge health persistence and `creator_live_state` heartbeat persistence now use the same transaction client with COMMIT/ROLLBACK semantics.
+- Server-owned support-export/audit/readiness histories are preserved from the locked row, preventing stale concurrent heartbeat reads from overwriting newer server-derived state.
+- Local contract: Stream Heartbeat Serialization v192: 12/12 PASS
+- Backend remains **3.12.0**, Launcher remains **0.47.11**, Schema Generation remains **68**. External acceptance remains OPEN.
+
+# v191 — Local Runtime Readiness Decision Record
+
+- Adds a compact server-derived local readiness decision record over diagnostic integrity, proof summary, proof trend, readiness attestation and readiness envelope. It reports eligible, open or blocked and receives a stable opaque cfsrd_ ID. The record explicitly keeps production_ready_claimed=false and external acceptance required/open; support-export seal advances to schema 24.
+- Local contract: Stream Runtime Local Readiness Decision v191: 14/14 PASS
+- Backend remains **3.12.0**, Launcher remains **0.47.11**, Schema Generation remains **68**. External acceptance remains OPEN.
+
+# v190 — Runtime Local Readiness Proof Trend
+
+- Adds a server-derived trend over local-readiness proof history with baseline, stable, improved, recovered or regressed states. Comparison uses the prior distinct export, proof severity and bounded reason-count movement. Support-export seal advances to schema 23 and binds the trend.
+- Local contract: Stream Runtime Local Readiness Proof Trend v190: 10/10 PASS
+- Backend remains **3.12.0**, Launcher remains **0.47.11**, Schema Generation remains **68**. External acceptance remains OPEN.
+
+# v189 — Runtime Local Readiness Proof History
+
+- Adds a bounded server-derived history of the last eight local runtime readiness proof summaries inside existing stream_health JSON. Each entry receives a stable opaque cfsrph_ history ID; duplicate export IDs replace the existing entry and launcher heartbeats preserve the server-owned history. Support-export seal advances to schema 22 and binds the history.
+- Local contract: Stream Runtime Local Readiness Proof History v189: 9/9 PASS
+- Backend remains **3.12.0**, Launcher remains **0.47.11**, Schema Generation remains **68**. External acceptance remains OPEN.
+
+# v188 — Local Runtime Readiness Proof Summary
+
+- Adds a compact server-derived local readiness proof summary over diagnostic integrity, readiness envelope, acceptance decision, readiness attestation and attestation trend. It reports eligible, open or blocked and receives a stable opaque cfsrpv_ ID. The proof explicitly sets production_ready_claimed=false and keeps external acceptance required/open; support-export seal advances to schema 21.
+- Local contract: Stream Runtime Local Readiness Proof Summary v188: 15/15 PASS
+- Backend remains **3.12.0**, Launcher remains **0.47.11**, Schema Generation remains **68**. External acceptance remains OPEN.
+
+# v187 — Runtime Readiness Attestation Trend
+
+- Adds a server-derived trend over readiness-attestation history with baseline, stable, improved, recovered or regressed states. Comparison uses the prior distinct export, attestation severity and bounded reason-count movement. The trend remains local-runtime-only and keeps external acceptance open; support-export seal advances to schema 20.
+- Local contract: Stream Runtime Readiness Attestation Trend v187: 12/12 PASS
+- Backend remains **3.12.0**, Launcher remains **0.47.11**, Schema Generation remains **68**. External acceptance remains OPEN.
+
+# v186 — Runtime Readiness Attestation History
+
+- Adds a bounded server-derived history of the last eight local runtime readiness attestations inside existing stream_health JSON. Each entry receives a stable opaque cfsath_ history ID; duplicate export IDs replace the existing entry and launcher heartbeats preserve the server-owned history. Support-export seal advances to schema 19 and binds the history.
+- Local contract: Stream Runtime Readiness Attestation History v186: 9/9 PASS
+- Backend remains **3.12.0**, Launcher remains **0.47.11**, Schema Generation remains **68**. External acceptance remains OPEN.
+
+# v185 — Local Runtime Readiness Attestation
+
+- Adds a server-derived local readiness attestation over diagnostic integrity, readiness envelope, envelope trend, acceptance decision, release gate and runtime acceptance matrix. It reports eligible, open or blocked and receives a stable opaque cfsat_ ID. The attestation explicitly sets production_ready_claimed=false and keeps external acceptance required/open; support-export seal advances to schema 18.
+- Local contract: Stream Runtime Readiness Attestation v185: 13/13 PASS
+- Backend remains **3.12.0**, Launcher remains **0.47.11**, Schema Generation remains **68**. External acceptance remains OPEN.
+
+# v184 — Runtime Readiness Envelope Trend
+
+- Adds a server-derived trend over readiness-envelope history with baseline, stable, improved, recovered or regressed states. Comparison uses the prior distinct export, readiness severity and bounded reason-count movement. The trend remains local-runtime-only and keeps external acceptance open; support-export seal advances to schema 17.
+- Local contract: Stream Runtime Readiness Envelope Trend v184: 11/11 PASS
+- Backend remains **3.12.0**, Launcher remains **0.47.11**, Schema Generation remains **68**. External acceptance remains OPEN.
+
+# v183 — Runtime Readiness Envelope History
+
+- Adds a bounded server-derived history of the last eight local runtime readiness envelopes inside existing stream_health JSON. Each entry receives a stable opaque cfseh_ history ID; duplicate export IDs replace the existing entry and launcher heartbeats preserve the server-owned history. Support-export seal advances to schema 16 and binds the history.
+- Local contract: Stream Runtime Readiness Envelope History v183: 9/9 PASS
+- Backend remains **3.12.0**, Launcher remains **0.47.11**, Schema Generation remains **68**. External acceptance remains OPEN.
+
+# v182 — Local Runtime Readiness Envelope
+
+- Adds a compact server-derived readiness envelope over diagnostic integrity, runtime acceptance, local release gate, acceptance decision and decision trend.
+- The envelope reports eligible, open or blocked and receives a stable opaque cfsen_ ID; regression or unresolved local evidence cannot be presented as eligible.
+- The envelope explicitly sets production_ready_claimed=false, requires external acceptance and keeps external_acceptance_claimed=false / external_acceptance_status=open; support-export seal advances to schema 15.
+- Local contract: Stream Runtime Readiness Envelope v182: 13/13 PASS
+- Backend remains **3.12.0**, Launcher remains **0.47.11**, Schema Generation remains **68**. External acceptance remains OPEN.
+
+# v179 — Runtime Acceptance Decision Snapshot
+
+- Adds a server-derived acceptance-decision snapshot with eligible, open or blocked states over diagnostic integrity, runtime acceptance, local release gate and gate trend.
+- The decision receives a stable opaque cfsad_ ID and explicitly requires external acceptance before any production go-live claim.
+- The decision is scoped to local_runtime_acceptance_decision_only, always keeps external_acceptance_claimed=false / external_acceptance_status=open, and support-export seal advances to schema 12.
+- Local contract: Stream Runtime Acceptance Decision v179: 13/13 PASS
+- Backend remains **3.12.0**, Launcher remains **0.47.11**, Schema Generation remains **68**. External acceptance remains OPEN.
+
+# v178 — Runtime Release Gate Trend
+
+- Adds a server-derived trend over the bounded release-gate history with baseline, stable, improved, recovered or regressed states.
+- Comparison uses the prior distinct export and evaluates ready/open/blocked severity plus bounded reason-count movement.
+- The trend remains local-runtime-only and keeps external_acceptance_claimed=false with external_acceptance_status=open; support-export seal advances to schema 11.
+- Local contract: Stream Runtime Release Gate Trend v178: 10/10 PASS
+- Backend remains **3.12.0**, Launcher remains **0.47.11**, Schema Generation remains **68**. External acceptance remains OPEN.
+
+# v177 — Runtime Release Gate History
+
+- Persists a bounded server-derived history of the last eight local runtime release-gate results inside the existing stream_health JSON.
+- Each entry receives a stable opaque cfsrg_ gate ID; duplicate export IDs replace the matching entry instead of growing the history.
+- Launcher heartbeats preserve the server-owned gate history; support-export seal advances to schema 10 and binds the history.
+- Local contract: Stream Runtime Release Gate History v177: 9/9 PASS
+- Backend remains **3.12.0**, Launcher remains **0.47.11**, Schema Generation remains **68**. External acceptance remains OPEN.
+
+# v176 — Local Runtime Release Gate
+
+- Adds a compact server-derived local runtime release gate with ready, open or blocked states over diagnostic integrity, runtime acceptance and acceptance trend.
+- Invalid diagnostic integrity or failed runtime acceptance blocks the local gate; open acceptance or a regression keeps it open instead of reporting ready.
+- The gate is explicitly scoped to local_runtime_release_gate_only and always reports external_acceptance_claimed=false with external_acceptance_status=open; the export seal advances to schema 9 and binds the gate.
+- Local contract: Stream Runtime Release Gate v176: 12/12 PASS
+- Backend remains **3.12.0**, Launcher remains **0.47.11**, Schema Generation remains **68**. External acceptance remains OPEN.
+
+# v173 — Runtime Acceptance Matrix
+
+- Adds a compact server-derived runtime acceptance matrix over diagnostic-chain integrity, privacy guard, live evidence, runtime health, incident state, audit continuity, replay state and diagnostic trend.
+- The matrix is explicitly scoped to local runtime evidence only and sets external_acceptance_claimed=false; it does not convert missing Windows/LIVE/Production evidence into a pass.
+- Advances the support-export seal to schema 6 so the bounded diagnostic history, trend and runtime acceptance matrix are cryptographically bound and independently recomputed by export integrity.
+- Local contract: Stream Production Runtime Acceptance v173: 12/12 PASS
+- Backend remains **3.12.0**, Launcher remains **0.47.11**, Schema Generation remains **68**. External acceptance remains OPEN.
+
+# v172 — Production Diagnostic Trend
+
+- Adds a server-derived trend over the bounded diagnostic-summary history with baseline, stable, improved, recovered or regressed states.
+- Trend comparison uses the prior distinct export and detects both status severity changes and bounded failure-count movement.
+- The export exposes only opaque references to the prior summary/export; no machine identity, raw media or secret material is added.
+- Local contract: Stream Production Diagnostic Trend v172: 9/9 PASS
+- Backend remains **3.12.0**, Launcher remains **0.47.11**, Schema Generation remains **68**. External acceptance remains OPEN.
+
+# v171 — Production Diagnostic Summary History
+
+- Persists a bounded server-derived history of the last eight production diagnostic summaries inside the existing stream_health JSON.
+- Each entry receives a stable opaque cfsds_ summary ID bound to export ID, summary status, bounded failure count, audit sequence and evidence/privacy flags.
+- Duplicate export IDs replace the matching history entry instead of growing the history, and launcher heartbeats preserve the server-owned history without a schema migration.
+- Local contract: Stream Production Diagnostic History v171: 9/9 PASS
+- Backend remains **3.12.0**, Launcher remains **0.47.11**, Schema Generation remains **68**. External acceptance remains OPEN.
+
+# v170 — Production Diagnostic Summary
+
+## v170 – Production Diagnostic Summary
+
+- Adds a compact server-derived production diagnostic summary over the verified support-export contracts.
+- The summary reports `ready`, `degraded`, `replay`, `integrity_error`, or `unavailable` plus bounded failure count, audit sequence, health verdict and incident state.
+- Advances the support-export seal to schema 5 and binds the summary status into the diagnostic chain; export integrity recomputes the summary independently.
+- Local contract: Stream Production Diagnostic Summary v170: 12/12 PASS
+
+## v169 – Support Export Replay Classification
+
+- Adds a server-derived replay classification for support exports: `new_export`, `repeat_snapshot`, or `exact_replay`.
+- The classification exposes only bounded opaque prior audit references and is recomputed by export integrity.
+- Advances the support-export seal to schema 4 and binds replay status into the diagnostic chain.
+- Local contract: Stream Support Export Replay Classification v169: 9/9 PASS
+
+## v168 – Support Export Audit Anchor Prefix
+
+- Adds a cumulative server-derived `cfsap_…` prefix to retention anchors so audit rollovers keep a cryptographic summary of the truncated prefix instead of retaining only the last dropped event.
+- Advances the support-export audit chain to schema 3 and binds the anchor prefix into the chain seal.
+- Fail-closed integrity now detects missing mature prefixes and anchor-prefix mismatches after repeated retention rollovers.
+- Local contract: Stream Support Export Audit Anchor Prefix v168: 9/9 PASS
+
+- Adds a server-derived continuity verdict over retention anchor, retained audit window and authoritative audit head.
+- Unanchored histories must start at sequence 1; anchored histories must begin exactly one sequence after the anchor and the anchor-to-head distance must equal the retained event count.
+- Export seals and the diagnostic chain bind the continuity verdict, so gaps, orphan state or inconsistent retained windows fail closed.
+- Backend remains **3.12.0**, Launcher remains **0.47.11**, Schema Generation remains **68**. External acceptance remains OPEN.
+
+# v166 — Support Export Monotone Audit Head
+
+- Adds a server-owned audit head containing the latest opaque audit-event ID, monotone sequence and timestamp.
+- New export audit events fall back to the persisted head when the visible retention window is missing, preventing silent sequence reset to 1.
+- Export integrity verifies head/event/sequence/time agreement and launcher heartbeats preserve the head inside the existing stream_health JSON.
+- Backend remains **3.12.0**, Launcher remains **0.47.11**, Schema Generation remains **68**. External acceptance remains OPEN.
+
+# v165 — Support Export Audit Retention Anchor
+
+- Fixes the bounded audit-chain rollover after the ninth support export by preserving the dropped predecessor as a server-owned retention anchor.
+- Upgrades the audit-chain seal to schema 2 so the retention anchor and the retained eight-event window are cryptographically bound together.
+- Export integrity and launcher-heartbeat preservation now carry the retention anchor forward without a database schema change.
+- Backend remains **3.12.0**, Launcher remains **0.47.11**, Schema Generation remains **68**. External acceptance remains OPEN.
+
+# v164 — Final Support Export Audit Binding
+
+- Upgrades the support-export seal to schema 3 so the current audit event, bounded audit history, audit-chain seal, integrity verdict and replay flag are cryptographically bound into the export artifact.
+- Upgrades the diagnostic chain to schema 2 and binds the audit event/chain alongside snapshot, evidence, incident, recovery history and cross-layer correlation state.
+- Export integrity independently recomputes the audit chain, verifies the latest audit event belongs to the export, then rebuilds the final export seal and diagnostic verdict after audit persistence.
+- Backend remains **3.12.0**, Launcher remains **0.47.11**, Schema Generation remains **68**. External acceptance remains OPEN.
+
+# v163 — Support Export Audit Chain Integrity
+
+- Adds an opaque `cfsah_…` chain seal over the bounded support-export audit history.
+- Server-side verification fails closed on duplicate/replayed export IDs, duplicate events, sequence gaps, broken previous-event links, time reversal, recomputed event-ID mismatch, or chain/count mismatch.
+- Export responses expose only bounded audit metadata plus the audit-chain integrity verdict; secrets, raw media and machine name remain excluded.
+- Backend remains **3.12.0**, Launcher remains **0.47.11**, Schema Generation remains **68**. External acceptance remains OPEN.
+
+# v162 — Persisted Support Export Audit
+
+- Persists a bounded server-owned support-export audit trail inside the existing `creator_live_bridges.stream_health` JSON; no schema migration is required.
+- Each export receives an opaque `cfsxa_…` audit event with export/snapshot binding, monotone sequence and previous-event link; duplicate export IDs collapse to the existing audit event.
+- Launcher heartbeats explicitly preserve the server-owned audit history so it cannot be erased by the next sanitized telemetry update.
+- Backend remains **3.12.0**, Launcher remains **0.47.11**, Schema Generation remains **68**. External acceptance remains OPEN.
+
+# v161 — Support Diagnostic Chain Integrity
+
+- Adds server-derived opaque `cfsdi_…` diagnostic-chain seal spanning export seal, support snapshot seal, evidence snapshot, incident, recovery history chain, and cross-layer correlation fingerprint.
+- Diagnostic integrity requires valid snapshot, temporal, correlation, evidence, incident, history, and history-chain checks; missing live evidence is explicit `unavailable`.
+- The exported support artifact now carries both the diagnostic-chain seal and its bounded verification verdict.
+- Backend remains **3.12.0**, Launcher remains **0.47.11**, Schema Generation remains **68**. External acceptance remains OPEN.
+
+# v160 — Cross-layer Support Correlation Fingerprint
+
+- Adds server-derived opaque `cfsec_…` fingerprint binding support snapshot seal, evidence snapshot/content fingerprint, incident identity/state, history chain, and correlation status.
+- Support snapshot seal now binds the correlation fingerprint; export integrity independently recomputes its validity.
+- No client-supplied fingerprint can become authoritative because the server derives it from the sanitized snapshot.
+- Backend remains **3.12.0**, Launcher remains **0.47.11**, Schema Generation remains **68**. External acceptance remains OPEN.
+
+# v159 — Support Export Temporal Integrity
+
+- Adds schema-2 support-export identity derived from export time, support snapshot identity, and support snapshot seal.
+- Export time must not predate the snapshot and may not exceed the bounded five-minute snapshot age window.
+- Export integrity recomputes the export ID and temporal verdict; the schema-2 export seal binds that verdict.
+- Backend remains **3.12.0**, Launcher remains **0.47.11**, Schema Generation remains **68**. External acceptance remains OPEN.
+
+# v152 — Incident Evidence Integrity Verification
+
+- Adds server-side verification for incident/recovery evidence links and chronology.
+- Fails closed on missing/legacy incident evidence, invalid IDs, last-snapshot mismatch, impossible recovery links, invalid recovery chronology, or missing server-derived marker.
+- Runtime and privacy-safe support snapshots expose only the bounded incident-integrity verdict; support seals bind both evidence-integrity and incident-integrity results.
+- Backend remains **3.12.0**, Launcher remains **0.47.11**, Schema Generation remains **68**. External acceptance remains OPEN.
+
+# v151 — Incident / Recovery Evidence Links
+
+- Incident state advances to schema 2 and records `opened_snapshot_id`, `last_snapshot_id`, and `recovered_snapshot_id`.
+- Open incidents preserve their original evidence link while every unhealthy observation advances the last-snapshot pointer.
+- Recovery is explicitly bound to the evidence snapshot that closed the incident; clear state does not invent incident IDs.
+- Backend remains **3.12.0**, Launcher remains **0.47.11**, Schema Generation remains **68**. External acceptance remains OPEN.
+
+# v150 — Privacy-safe Stream Support Export
+
+- Adds creator-authenticated JSON support export for the current Stream Studio diagnostic snapshot.
+- Export receives opaque `cfsex_…` identity and embeds a server-side verification result for the existing `cfssi_…` support seal.
+- Export remains fail-closed for secrets, raw media, and machine-name exposure.
+- Backend remains **3.12.0**, Launcher remains **0.47.11**, Schema Generation remains **68**. External acceptance remains OPEN.
+
+# v149 — Server-side Stream Health Evidence Integrity Verification
+
+- Backend now recomputes the canonical `cfshf_…` fingerprint from persisted sanitized health data and verifies schema-2 evidence server-side.
+- Integrity fails closed for missing evidence, legacy evidence, malformed IDs, self-loops, invalid sequence, fingerprint mismatch, missing server-derived marker or broken privacy guards.
+- Runtime and privacy-safe support snapshots expose only the bounded integrity verdict/reasons; they do not expose secrets or raw media.
+- Backend remains **3.12.0**, Launcher remains **0.47.11**, Schema Generation remains **68**. External acceptance remains OPEN.
+
+# v148 — Stream Health Evidence Chain v2
+
+- Stream-health evidence now separates immutable health content (`cfshf_…`) from per-observation snapshot identity (`cfshs_…`).
+- Snapshot IDs bind sequence, previous snapshot, observation time and content fingerprint, preventing self-loop chains when identical telemetry repeats.
+- Evidence advances to schema 2 while public sanitization still recognizes legacy schema 1 as legacy data.
+- Backend remains **3.12.0**, Launcher remains **0.47.11**, Schema Generation remains **68**. External acceptance remains OPEN.
+
+# v147 — Privacy-safe Support Snapshot Integrity Seal
+
+- Creator support snapshots now receive a server-derived opaque `cfssi_…` SHA-256 seal over the privacy-safe snapshot payload.
+- The seal binds snapshot identity, generation time, launcher state, health summary, evidence and privacy flags; client input cannot provide or override it.
+- Offline snapshots are sealed too, so missing runtime state is explicit rather than unverifiable.
+- Backend remains **3.12.0**, Launcher remains **0.47.11**, Schema Generation remains **68**. External acceptance remains OPEN.
+
+# v146 — Privacy-safe Stream Support Snapshot
+
+- Adds an authenticated creator support-snapshot endpoint for current Stream Studio runtime diagnostics.
+- The snapshot is server-derived and exposes only bounded health metrics, provider/status data, sanitized failure codes, and sanitized evidence/incident state.
+- Machine name, credentials, failure details, secrets and raw media are explicitly excluded; stale/offline telemetry cannot be represented as healthy.
+- Backend remains **3.12.0**, Launcher remains **0.47.11**, Schema Generation remains **68**. External acceptance remains OPEN.
+
+# v145 — Stream Incident / Recovery Correlation
+
+- Server health evidence now correlates degraded/critical snapshots into stable opaque `cfshi_…` incidents.
+- An open incident keeps its ID across subsequent unhealthy snapshots; the first healthy snapshot closes it as `recovered` and records a bounded recovery duration.
+- Healthy state without a prior incident remains `clear`; no incident is invented.
+- Backend remains **3.12.0**, Launcher remains **0.47.11**, Schema Generation remains **68**. External acceptance remains OPEN.
+
+# v144 — Server-derived Stream Health Evidence
+
+- Each accepted launcher stream-health heartbeat now receives a server-derived persistent evidence snapshot inside the existing `creator_live_bridges.stream_health` JSON.
+- Evidence uses opaque `cfshs_…` snapshot IDs, links to the previous snapshot, advances a bounded sequence, and embeds the server-derived health verdict.
+- Client-supplied evidence is ignored; secrets/raw-media exposure flags are forced false.
+- No database migration is required: Backend remains **3.12.0**, Launcher remains **0.47.11**, Schema Generation remains **68**. External acceptance remains OPEN.
+
+## v143 – Server-derived Stream Health Verdict
+
+- server independently derives `healthy / degraded / critical` from fresh sanitized stream telemetry
+- engine availability/error, classified failures, watchdog restarts, reconnect activity, and dropped frames feed the verdict
+- stale/offline telemetry cannot be represented as healthy
+- Stream Studio badge uses the server verdict instead of trusting a client-supplied aggregate state
+- Launcher remains **0.47.11**, Backend **3.12.0**, Schema Generation **68**; external acceptance remains OPEN
+
+---
+
+## v142 – Runtime Failure Health Transport
+
+- server sanitizes/whitelists Launcher failure codes before persistence/exposure
+- unknown failure codes are discarded fail-closed; privacy flags are forced false
+- Stream Studio shows a dedicated runtime status only from fresh telemetry
+- Launcher remains **0.47.11**, Backend **3.12.0**, Schema Generation **68**; external acceptance remains OPEN
+
+---
+
+## v141 – Runtime Failure Diagnostics / Launcher 0.47.11
+
+**Launcher: 0.47.11**
+
+- stable sanitized runtime failure codes cover stream engine, destinations, recording, application audio, game capture, and runtime evidence guard failures
+- diagnostics export and bridge heartbeat now carry the bounded failure summary
+- secrets and raw media remain explicitly excluded
+- Backend remains **3.12.0**, Schema Generation remains **68**; external acceptance remains OPEN
+
+---
+
+## v140 – CUT Provenance Status UX
+
+- CUT Studio now distinguishes verified, repaired, missing, and mismatched recording provenance instead of treating every syntactically valid `cfsrp_` ID as trusted.
+- A stored mismatch is surfaced as `PROVENIENZ PRÜFUNG FEHLER`; missing seals are shown as incomplete, while valid seals are explicitly verified.
+- No opaque provenance IDs or expected fingerprint values are displayed in the normal Creator UI.
+- Backend remains **3.12.0**, Launcher remains **0.47.11**, Schema Generation remains **68**. External acceptance remains OPEN.
+
+---
+
+## v139 – Stream Context Equal-Timestamp Conflict Guard
+
+**Launcher: 0.47.11**
+
+- Stream game-context ordering now rejects same-timestamp observations when they conflict with the already accepted context.
+- Conflicting observations cannot create artificial game transitions and are counted separately from older/stale observations.
+- Conflict diagnostics survive restart without exposing process names, executable paths, or provider secrets.
+- Active launcher version targets are synchronized to **0.47.11** because executable Launcher code changed.
+- Backend remains **3.12.0**, Schema Generation remains **68**. External acceptance remains OPEN.
+
+---
+
+## v138 – Recording Provenance Verification
+
+- Stored recording-backed CUT provenance is now verified against the canonical `cfsrp_` fingerprint instead of being treated as valid solely because an ID exists.
+- Public CUT project responses expose only a bounded state: `valid`, `missing`, `mismatch`, or `none`; expected/internal fingerprint material is not exposed.
+- Save/seal paths explicitly mark repaired mismatches before storage returns to a valid seal.
+- Backend remains **3.12.0**, Launcher remains **0.47.9**, Schema Generation remains **68**. External acceptance remains OPEN.
+
+---
+
+## v137 – Recording Provenance Seal
+
+- Recording-backed CUT projects receive a stable `cfsrp_` provenance fingerprint binding the source handoff, frozen game context, and bounded stream-session transition provenance.
+- Creator and Launcher-bridge create/update paths recompute the seal after provenance preservation.
+- CUT UI exposes a human-readable `PROVENIENZ VERSIEGELT` state without showing opaque IDs.
+- Backend remains **3.12.0**, Launcher remains **0.47.9**, Schema Generation remains **68**. External acceptance remains OPEN.
+
+---
+
+## v136 – Immutable Recording Provenance in CUT
+
+- Linked Recording CUT projects preserve `source_handoff_id`, frozen `recording_game_context`, and `recording_stream_session` across creator and Launcher-bridge saves.
+- Normal editable CUT settings remain writable.
+- Unlinked/manual CUT projects are unaffected.
+- Backend remains **3.12.0**, Launcher remains **0.47.9**, Schema Generation remains **68**. External acceptance remains OPEN.
+
+---
+
+## v135 – Stream Game Context Ordering / Replay Guard
+
+**Launcher: 0.47.9**
+
+- Stream start preserves the source game-context `captured_at` timestamp instead of overwriting it.
+- Older/out-of-order observations are ignored fail-closed and cannot create reverse game transitions.
+- Stale-observation counters/opaque context IDs survive restart for diagnostics.
+- Active launcher version targets are synchronized to **0.47.9**.
+- Backend remains **3.12.0**, Schema Generation remains **68**. External acceptance remains OPEN.
+
+---
+
+## v134 – CUT Stream Provenance Integrity
+
+- CUT stream-session provenance now deduplicates/validates opaque transition IDs and reconciles transition count fail-closed
+- `transition_ids_complete` makes bounded provenance coverage explicit instead of implying a full list when more than 20 transitions existed
+- CUT project meta distinguishes verified complete transition lists from intentionally truncated bounded history
+- `derived_game_time:false` remains enforced
+- Backend remains **3.12.0**, Launcher remains **0.47.8**, Schema Generation remains **68**
+- external acceptance remains OPEN
+
+## v133 – Creator Game Context Freshness Guard
+
+- Stream Studio game context now carries explicit `freshness_seconds`, `freshness_state` and `observed_at` for active presence
+- dashboard independently refuses to display stale active game context as live/ready
+- stale active data is rendered as warning and does not imply current gameplay
+- Backend remains **3.12.0**, Launcher remains **0.47.8**, Schema Generation remains **68**
+- external acceptance remains OPEN
+
+## v132 – Recording Stream Restart Integrity / Launcher 0.47.8
+
+**Launcher: 0.47.8**
+
+- persisted normalized stream-session provenance now survives Launcher restart/reload without losing `transition_ids` or `transition_count`
+- normalized references remain bounded and `derived_game_time:false` is enforced
+- active Launcher target advanced to **0.47.8** because executable Launcher code changed
+- active release/system/recovery contracts synchronized; historical handoffs remain unchanged
+- Backend remains **3.12.0**, Schema Generation remains **68**
+- external acceptance remains OPEN
+
+## v128 – Recording → CUT Idempotency
+
+- CUT project creation now treats `source_handoff_id` as the stable idempotency key for Recording handoffs
+- duplicate/retried materialization is resolved inside the existing per-creator resource lock
+- an existing project is returned with HTTP 200 / `reused:true`; only a real new project consumes a project slot and returns 201
+- deterministic `rec_` handoff IDs and persisted launcher link state remain the source of truth
+- prevents duplicate CUT projects from retries, repeated clicks or restart recovery without weakening project ownership checks
+- Backend remains **3.12.0**, Launcher remains **0.47.7**, Schema Generation remains **68**
+- local validation: v128 **8/8 PASS**, v127 **13/13 PASS**, v126 **14/14 PASS**
+- full historical current-contract regression remains non-authoritative in the uploaded repo because multiple referenced legacy test/runtime files are absent
+- external acceptance remains OPEN
+
+## v127 – Stream Session Game Context
+
+- dedicated crash-safe Stream Game Context store with opaque `cfsss_` session IDs
+- stream start freezes the initial unified game context separately from recording metadata
+- game changes during a running stream are recorded as bounded `cfsgt_` transitions
+- repeated observations do not create duplicate transitions
+- launcher restart closes an unfinished stream-context session as `interrupted` instead of fabricating continuity
+- `derived_game_time:false`: stream metadata is never converted into additional playtime
+- Backend remains **3.12.0**, Launcher remains **0.47.7**, Schema Generation remains **68**
+- local validation: v127 **13/13 PASS**, v126 **14/14 PASS**
+- external acceptance remains OPEN
+
+## v126 – Game Context Identity + CUT Preservation
+
+- stable opaque `cfsgi_<sha>` game identity from normalized title + platform
+- normalized title is carried through server → launcher recording handoff → CUT metadata
+- recording handoff schema advances to 5 / `v126-game-context-identity`
+- CUT editor now preserves immutable `recording_game_context` on normal project saves instead of silently replacing it with `none`
+- CUT project meta visibly shows the captured game/platform
+- support bundle exposes only sanitized `game_id` / normalized title, never local process/path data
+- Backend remains **3.12.0**, Launcher remains **0.47.7**, Schema Generation remains **68**
+- local validation: v126 **14/14 PASS**, v124 compatibility **18/18 PASS**, v123 compatibility **16/16 PASS**
+- external acceptance remains OPEN
+
+## v125 – Runtime Module Integrity Hotfix
+
+- restored missing runtime modules `lib/cut-candidate-engine.js`, `lib/cut-reference-provider.js`, and `lib/game-profile-portability.js`
+- closes Render startup chain beginning with `Cannot find module ./cut-candidate-engine` and prevents the two next missing-local-module crashes found by static runtime import scan
+- Candidate Engine keeps own-clip semantic authority, bounded editorial reference influence, and Ground Truth keep/reject priority
+- Backend remains **3.12.0**, Launcher remains **0.47.7**, Schema Generation remains **68**
+- local validation: backend syntax PASS, runtime local-module graph **0 missing**, CUT Candidate Engine **13/13 PASS**, v124 Game Context Operations **18/18 PASS**
+- external acceptance remains OPEN; no Windows/LIVE/Production PASS claimed
+
 ## v124 – Game Context Operational Finish / Launcher 0.47.7
 
 - Recording-Spielkontext erhält eine deterministische, opaque `cfsgc_<sha>` Integritäts-ID; beliebige eingehende IDs werden nicht vertraut, sondern aus dem normalisierten Snapshot neu berechnet
@@ -1037,3 +1482,78 @@ Status: `WEBSITE_CREATOR_FINISH_CODE_COMPLETE / LOCAL_CONTRACTS_PASS`
 - Current Contract Regression: 31/31 PASS
 
 External Windows / OBS / TikTok-LIVE / provider / production acceptance remains open.
+
+## v129 – Recording → CUT Idempotency Runtime Fix
+
+Status: `CODE_COMPLETE / LOCAL_CONTRACTS_PASS / EXTERNAL_ACCEPTANCE_OPEN`
+
+The v128 idempotency contract is corrected at runtime: existing and new CUT project creation paths now share a stable `{row,reused}` envelope, and both creator/bridge HTTP routes serialize `result.row`. Retry reuse returns 200 and does not consume another project slot. Local checks: v129 8/8 PASS, v128 8/8 PASS.
+
+## v130 – Recording Stream Session Provenance
+
+Status: `CODE_COMPLETE / LOCAL_CONTRACTS_PASS / EXTERNAL_ACCEPTANCE_OPEN`
+
+Recording finalization now snapshots a sanitized Stream Session reference separately from the frozen game context. The reference survives Recording → CUT and normal CUT saves, stays bounded/opaque, and explicitly cannot derive playtime. Local checks: v130 10/10 PASS plus v129/v127/v126 compatibility PASS.
+
+## v131 – Creator Context UI Resilience
+
+Status: `CODE_COMPLETE / LOCAL_CONTRACTS_PASS / EXTERNAL_ACCEPTANCE_OPEN`
+
+Dashboard game-context failure handling now fails closed, while CUT surfaces linked Stream Session provenance as user-readable status only. No opaque IDs are shown in the normal UI. Local checks: v131 8/8 PASS, v130 10/10 PASS, v129 8/8 PASS.
+
+## v153 – Support Export Integrity Seal
+
+Status: `CODE_COMPLETE / LOCAL_CONTRACTS_PASS / EXTERNAL_ACCEPTANCE_OPEN`
+
+- Adds a server-derived `cfsei_` integrity seal to privacy-safe stream support exports.
+- The export seal binds export identity, generation time, embedded snapshot identity/seal, verification result and privacy guards.
+- Adds a server-side export-integrity verifier that revalidates the nested support snapshot and fails closed on invalid export IDs, seal mismatch, server-derived markers or privacy flags.
+- Local contract: Support Export Integrity: 9/9 PASS
+
+## v154 – Bounded Incident Recovery History
+
+Status: `CODE_COMPLETE / LOCAL_CONTRACTS_PASS / EXTERNAL_ACCEPTANCE_OPEN`
+
+- Persists a bounded server-derived history of up to eight recovered stream incidents inside the existing health-evidence JSON.
+- Recovery history contains only opaque incident/snapshot IDs, severity and bounded timing metadata; no machine name, secrets or raw media.
+- Duplicate incident IDs are replaced rather than appended, preventing unbounded or repeated recovery records.
+- Local contract: Incident Recovery History: 8/8 PASS
+
+## v155 – Incident History Integrity Verification
+
+Status: `CODE_COMPLETE / LOCAL_CONTRACTS_PASS / EXTERNAL_ACCEPTANCE_OPEN`
+
+- Adds server-side integrity verification for the bounded recovered-incident history.
+- Fails closed on over-limit history, duplicate incident IDs, invalid snapshot links, self-recovery links, reversed chronology, recovery-duration mismatch or mismatch with the current recovered incident.
+- Runtime and privacy-safe support snapshots expose only the bounded integrity verdict; the support snapshot seal binds that verdict.
+- Local contract: Incident History Integrity: 12/12 PASS
+
+
+## v156 – Incident Recovery History Chain Seal
+
+Status: `CODE_COMPLETE / LOCAL_CONTRACTS_PASS / EXTERNAL_ACCEPTANCE_OPEN`
+
+- Adds a server-derived `cfshc_` chain seal over the bounded recovered-incident history.
+- The chain binds ordered incident/recovery snapshot links, timing, severity and bounded count.
+- Runtime and support snapshots expose a separate history-chain integrity verdict; the support snapshot seal binds it.
+- Local contract: Incident History Chain v156: 9/9 PASS
+
+
+## v157 – Stable Recovery Event IDs
+
+Status: `CODE_COMPLETE / LOCAL_CONTRACTS_PASS / EXTERNAL_ACCEPTANCE_OPEN`
+
+- Adds stable server-derived `cfsre_` event IDs to each recovered incident-history entry.
+- Event IDs bind incident identity, opened/recovered evidence snapshots, severity and timing metadata.
+- History integrity recomputes the event ID and fails closed on invalid or mismatched event identity.
+- Local contract: Recovery Event IDs v157: 10/10 PASS
+
+
+## v158 – Cross-layer Support Correlation Integrity
+
+Status: `CODE_COMPLETE / LOCAL_CONTRACTS_PASS / EXTERNAL_ACCEPTANCE_OPEN`
+
+- Adds server-side cross-layer verification across support snapshot, health evidence, incident state, incident history, history chain and recovery event identity.
+- Recovered incidents must cross-link to the current evidence snapshot and latest recovery history row.
+- Support exports carry the correlation verdict; export integrity recomputes it and the export seal binds it. Missing live evidence is explicit `unavailable`.
+- Local contract: Support Correlation v158: 12/12 PASS

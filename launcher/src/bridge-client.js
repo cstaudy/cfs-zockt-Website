@@ -129,6 +129,7 @@ class BridgeClient extends EventEmitter {
   async updateCutProject(projectId,payload={}){return this.request(`/api/bridge/cut-studio/projects/${encodeURIComponent(projectId)}`,{method:"PUT",body:payload,timeoutMs:10000});}
   async submitCutReferenceAnalysis(projectId,payload={}){return this.request(`/api/bridge/cut-studio/projects/${encodeURIComponent(projectId)}/reference-learning`,{method:"POST",body:payload,timeoutMs:15000});}
   async createCutClip(projectId,payload={}){return this.request(`/api/bridge/cut-studio/projects/${encodeURIComponent(projectId)}/clips`,{method:"POST",body:payload,timeoutMs:10000});}
+  async createInitialRecordingCutClip(projectId,payload={}){return this.request(`/api/bridge/cut-studio/projects/${encodeURIComponent(projectId)}/clips/initial-recording`,{method:"POST",body:payload,timeoutMs:10000});}
   async gameRules(){return this.request("/api/bridge/games/rules",{method:"GET",timeoutMs:8000});}
   async cutJobs(){return this.request("/api/bridge/cut-studio/jobs",{method:"GET",timeoutMs:8000});}
   async updateCutAuditionRuntime(payload={}){return this.request("/api/bridge/cut-studio/audition-runtime",{method:"POST",body:payload,timeoutMs:5000});}

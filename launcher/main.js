@@ -12,6 +12,7 @@ const { BridgeClient } = require("./src/bridge-client");
 const { ProviderManager } = require("./src/provider-manager");
 const { UpdateManager } = require("./src/update-manager");
 const { buildDiagnostics } = require("./src/diagnostics");
+const { classifyRuntimeFailures } = require("./src/runtime-failure-codes");
 const { EventSpool } = require("./src/event-spool");
 const { runPreflight } = require("./src/preflight");
 const { EventMonitor } = require("./src/event-monitor");
@@ -31,6 +32,7 @@ const { assertFeature, assertStreamDeckButton, requiredFeatureForAction } = requ
 const { BetaSessionStore } = require("./src/beta-session-store");
 const { MediaSourceStore } = require("./src/media-source-store");
 const { RecordingHandoffStore } = require("./src/recording-handoff-store");
+const { StreamGameContextStore } = require("./src/stream-game-context-store");
 const { CutMediaEngine } = require("./src/cut-media-engine");
 const { StreamEngine } = require("./src/stream-engine");
 const { WidgetLayerRenderer } = require("./src/widget-layer-renderer");
@@ -79,6 +81,8 @@ let interactiveGameService = null;
 let betaSessionStore = null;
 let mediaSourceStore = null;
 let recordingHandoffStore = null;
+let streamGameContextStore = null;
+let lastStreamGameContextSyncAt = 0;
 let cutMediaEngine = null;
 let streamEngine = null;
 let widgetLayerRenderer = null;
@@ -125,6 +129,10 @@ function currentPreflight() {
   });
 }
 
+function currentRuntimeFailures(){
+  return classifyRuntimeFailures({streamEngine:streamEngine?.snapshot?.()||{},applicationAudio:applicationAudioSourceManager?.snapshot?.()||{},gameCapture:gameCaptureSourceManager?.snapshot?.()||{},runtimeEvidence:streamRuntimeEvidence?.snapshot?.()||{}});
+}
+
 function appState(extra = {}) {
   const settings = configStore?.publicSettings?.() || {};
   const profileLimit=Math.max(1,Number(streamStudioCloud?.multistream?.max_destinations||1));
@@ -163,12 +171,14 @@ function appState(extra = {}) {
     betaCenter:{cloud:betaCloud,localSession:betaSessionStore?.snapshot?.() || {active:false,sessionId:null,lastError:""}},
     mediaEngine:cutMediaEngine?.snapshot?.() || {status:"idle",available:false,ffmpegPath:"",ffmpegSource:"",version:"",capabilities:{drawtext:false,concat:true,xfade:false,acrossfade:false,loudnorm:false,zoompan:false,rotate:false,blend:false,amix:false,sidechaincompress:false,encoders:{software:true,nvenc:false,qsv:false,amf:false}},jobId:null,progress:0,phase:"idle",mode:"clips",encoder:"software",transition:"cut",error:""},
     mediaSources:mediaSourceStore?.snapshot?.() || {schema:4,sources:{},music:{},voice:{},musicTracks:{},voiceTracks:{},sfx:{}},
-    recordingHandoffs:recordingHandoffStore?.snapshot?.() || {schema:4,pass:"v124-recording-context-integrity",maxItems:30,pending:0,ready:0,items:[]},
+    recordingHandoffs:recordingHandoffStore?.snapshot?.() || {schema:5,pass:"v126-game-context-identity",maxItems:30,pending:0,ready:0,items:[]},
+    streamGameContext:streamGameContextStore?.snapshot?.() || {schema:1,pass:"v127-stream-game-context",active:null,sessions:[],derived_game_time:false},
     cutAuditionSession:publicCutAuditionSession(),
     streamEngine:streamEngine?.snapshot?.() || {status:"idle",available:false,desiredRunning:false,capabilities:{gdigrab:false,dshow:false,processLoopback:false,gameCaptureWgc:false,encoders:{software:true,nvenc:false,amd:false,qsv:false}},destinations:{},recording:null,error:""},
     applicationAudio:applicationAudioSourceManager?.snapshot?.() || {available:false,prepared:0,sources:[],error:""},
     gameCapture:gameCaptureSourceManager?.snapshot?.() || {available:false,staged:false,runtimeVerified:false,sources:[],error:""},
     runtimeEvidence:streamRuntimeEvidence?.snapshot?.() || {schema:1,pass:"21.10.22",active:false,samples:0,events:0,lastEvidence:null,rawMediaPersisted:false,secretsPersisted:false},
+    runtimeFailures:currentRuntimeFailures(),
     streamStudio:{...streamStudioCloud,effective_config:profileApplied.config,profile_override:{active:Boolean(profileApplied.profile),profile:profileApplied.profile,warnings:profileApplied.warnings||[]},credentials:streamCredentialStore?.snapshot?.((profileApplied.config?.multistream?.destinations||streamStudioCloud?.config?.multistream?.destinations||[]).map(item=>item.id)) || {encryptionAvailable:safeStorage.isEncryptionAvailable(),targets:{}}},
     streamProfiles:profileSnapshot,
     gameActivity:gameActivityTracker?.snapshot?.() || {enabled:false,active:null,pending:0,last_error:"",raw_paths_exposed:false,secrets_exposed:false},
@@ -360,9 +370,9 @@ function recordingHandoffProjectPayload(handoff={}){
   const stamp=new Date(handoff.stoppedAt||handoff.createdAt||Date.now()),title=`Stream Recording · ${stamp.toLocaleString("de-DE",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"})}`;
   const captured=handoff.gameContext&&typeof handoff.gameContext==="object"?handoff.gameContext:{mode:"none"};
   const interactive=creatorLibrary.game||null;
-  const gameContext={mode:String(captured.mode||"none"),game_name:String(captured.game_name||""),platform:String(captured.platform||"unknown"),source:String(captured.source||""),started_at:captured.started_at||null,last_played_at:captured.last_played_at||null,presence_id:String(captured.presence_id||""),context_id:String(captured.context_id||""),resumed_after_restart:captured.resumed_after_restart===true,captured_at:captured.captured_at||handoff.stoppedAt||new Date().toISOString(),active:Boolean(interactive&&interactive.status==="running"),game_type:String(interactive?.game_type||""),title:String(interactive?.title||""),source_mode:String(interactive?.source_mode||""),round:Number(interactive?.state?.round||0)};
+  const gameContext={mode:String(captured.mode||"none"),game_name:String(captured.game_name||""),normalized_title:String(captured.normalized_title||""),game_id:String(captured.game_id||""),platform:String(captured.platform||"unknown"),source:String(captured.source||""),started_at:captured.started_at||null,last_played_at:captured.last_played_at||null,presence_id:String(captured.presence_id||""),context_id:String(captured.context_id||""),resumed_after_restart:captured.resumed_after_restart===true,captured_at:captured.captured_at||handoff.stoppedAt||new Date().toISOString(),active:Boolean(interactive&&interactive.status==="running"),game_type:String(interactive?.game_type||""),title:String(interactive?.title||""),source_mode:String(interactive?.source_mode||""),round:Number(interactive?.state?.round||0)};
   const gameNote=gameContext.game_name?`Spielkontext: ${gameContext.game_name}${gameContext.platform&&gameContext.platform!=="unknown"?` (${gameContext.platform})`:""}. `:gameContext.active?`Interactive Game: ${gameContext.title||gameContext.game_type}. `:"";
-  return{title,status:"draft",format,source_name:handoff.fileName||"CFS Recording",notes:`Automatischer lokaler Recording-Handoff aus CFS Stream Studio. ${handoff.sceneName?`Scene: ${handoff.sceneName}. `:""}${gameNote}Die Mediendatei bleibt ausschließlich auf dem Launcher-PC.`,export_preset:{fps:profile.includes("60")?60:30,quality:"high",mode:"clips",transition:"cut",encoder:"software",audio_normalize:false,audio_bitrate_kbps:192,source_tracks:(handoff.tracks||[]).map(track=>({key:track.key,label:track.label,stream_index:track.stream_index,enabled:track.enabled!==false,gain_db:Number(track.gain_db||0),mute:track.mute===true,solo:track.solo===true,pan:Number(track.pan||0),waveform:(track.analysis?.waveform||[]).slice(0,64),peak_db:track.analysis?.peak_db??null,mean_db:track.analysis?.mean_db??null,analyzed_at:track.analysis?.analyzed_at||""})),source_handoff_id:String(handoff.id||""),recording_game_context:gameContext}};
+  return{title,status:"draft",format,source_name:handoff.fileName||"CFS Recording",notes:`Automatischer lokaler Recording-Handoff aus CFS Stream Studio. ${handoff.sceneName?`Scene: ${handoff.sceneName}. `:""}${gameNote}Die Mediendatei bleibt ausschließlich auf dem Launcher-PC.`,export_preset:{fps:profile.includes("60")?60:30,quality:"high",mode:"clips",transition:"cut",encoder:"software",audio_normalize:false,audio_bitrate_kbps:192,source_tracks:(handoff.tracks||[]).map(track=>({key:track.key,label:track.label,stream_index:track.stream_index,enabled:track.enabled!==false,gain_db:Number(track.gain_db||0),mute:track.mute===true,solo:track.solo===true,pan:Number(track.pan||0),waveform:(track.analysis?.waveform||[]).slice(0,64),peak_db:track.analysis?.peak_db??null,mean_db:track.analysis?.mean_db??null,analyzed_at:track.analysis?.analyzed_at||""})),source_handoff_id:String(handoff.id||""),recording_game_context:gameContext,recording_stream_session:handoff.streamSessionRef&&typeof handoff.streamSessionRef==="object"?{...handoff.streamSessionRef,derived_game_time:false}:{session_id:"",status:"none",derived_game_time:false}}};
 }
 
 async function materializeRecordingHandoff(handoffId,{open=false}={}){
@@ -377,8 +387,8 @@ async function materializeRecordingHandoff(handoffId,{open=false}={}){
   if(existingCount<1){
     let duration=Math.max(100,Number(handoff.durationMs||0));
     try{const info=await configureCutMediaEngine().probeMediaInfo(handoff.filePath);if(Number(info?.duration_ms)>0)duration=Number(info.duration_ms)}catch{}
-    const clip=await bridge.createCutClip(project.id,{label:"Gesamte Aufnahme",in_ms:0,out_ms:Math.max(100,Math.round(duration)),selected:true,caption:"",caption_enabled:false,audio_gain_db:0,audio_fade_in_ms:0,audio_fade_out_ms:0});
-    if(clip?.clip)project={...project,clip_count:1};
+    const clip=await bridge.createInitialRecordingCutClip(project.id,{source_handoff_id:String(handoff.id||""),label:"Gesamte Aufnahme",in_ms:0,out_ms:Math.max(100,Math.round(duration)),selected:true,caption:"",caption_enabled:false,audio_gain_db:0,audio_fade_in_ms:0,audio_fade_out_ms:0});
+    if(clip?.clip)project={...project,clip_count:Math.max(1,Number(project.clip_count||0))};
   }
   recordingHandoffStore.markLinked(handoff.id,{projectId:project.id,projectTitle:project.title});
   await refreshCreatorLibrary({notify:false});
@@ -605,7 +615,7 @@ async function handleRecordingFinalized(payload={}){
   if(!payload?.ok||!payload.filePath)return;
   let duration=0;try{const info=await configureCutMediaEngine().probeMediaInfo(payload.filePath);duration=Number(info?.duration_ms||0)}catch{}
   if(bridge?.snapshot?.().connected)await refreshCreatorLibrary({notify:false}).catch(error=>logger?.warn?.("Recording game context refresh failed",error?.message));
-  const handoff=recordingHandoffStore.create({...payload,durationMs:duration||0,sceneId:payload.sceneGraph?.sceneId||"",sceneName:payload.sceneGraph?.sceneName||"",format:path.extname(payload.filePath).replace(/^\./,"")||"mkv",gameContext:creatorLibrary.gameContext||{mode:"none"}});
+  const handoff=recordingHandoffStore.create({...payload,durationMs:duration||0,sceneId:payload.sceneGraph?.sceneId||"",sceneName:payload.sceneGraph?.sceneName||"",format:path.extname(payload.filePath).replace(/^\./,"")||"mkv",gameContext:creatorLibrary.gameContext||{mode:"none"},streamSessionRef:streamGameContextStore?.snapshot?.()?.active||{}});
   send("launcher:state",appState({recordingHandoffAction:{ok:true,created:true,handoffId:handoff.id}}));
   if(bridge?.snapshot?.().connected&&creatorFeatures().cut_studio===true){
     try{await materializeRecordingHandoff(handoff.id)}catch(error){recordingHandoffStore.markError(handoff.id,error);logger?.warn?.("Recording to Cut Studio handoff failed",error?.message);send("launcher:state",appState({recordingHandoffAction:{ok:false,handoffId:handoff.id,error:String(error?.message||error)}}))}
@@ -720,7 +730,7 @@ function startStreamStudioRuntimeSync(){
   streamStudioRuntimeSyncTimer=setInterval(async()=>{
     if(streamStudioRuntimeSyncInFlight||!streamEngine?.snapshot?.().desiredRunning||!bridge?.snapshot?.().connected)return;
     streamStudioRuntimeSyncInFlight=true;
-    try{await syncStreamStudioConfig({notify:true,applyRunningScene:true})}catch(error){logger?.warn?.("Stream Studio runtime sync failed",error?.message)}finally{streamStudioRuntimeSyncInFlight=false}
+    try{await syncStreamStudioConfig({notify:true,applyRunningScene:true});if(Date.now()-lastStreamGameContextSyncAt>=10000){lastStreamGameContextSyncAt=Date.now();await refreshCreatorLibrary({notify:false});streamGameContextStore?.observe?.(creatorLibrary.gameContext||{mode:"none"});}}catch(error){logger?.warn?.("Stream Studio runtime sync failed",error?.message)}finally{streamStudioRuntimeSyncInFlight=false}
   },2000);streamStudioRuntimeSyncTimer.unref?.();
 }
 
@@ -997,6 +1007,8 @@ async function startStreamingEngine(){
     transition:cloud.config?.transition||{type:"cut",duration_ms:0,easing:"smooth"},
     watchdog:{enabled:settings.streamWatchdogEnabled!==false,timeoutSec:settings.streamWatchdogTimeoutSec||18}
   });
+  streamGameContextStore?.start?.(creatorLibrary.gameContext||{mode:"none"},{scene_name:cloud.program_scene?.name||""});
+  lastStreamGameContextSyncAt=Date.now();
   beginStreamRuntimeEvidence({targets:active,recording:settings.streamRecordingEnabled===true,capture,scene:cloud.program_scene||null,output});
   streamRuntimeEvidence?.capture?.("engine_started");
   startStreamStudioRuntimeSync();
@@ -1008,6 +1020,7 @@ async function stopStreamingEngine(){
   stopStreamStudioRuntimeSync();
   const result=await configureStreamEngine().stop();
   const runtimeEvidence=finishStreamRuntimeEvidence("stream_stop");
+  streamGameContextStore?.stop?.("stream_stop");
   logger?.info?.("Local streaming engine stopped");
   return appState({streamEngine:result,runtimeEvidence:streamRuntimeEvidence?.snapshot?.()||null,runtimeEvidenceFinalized:runtimeEvidence});
 }
@@ -1653,7 +1666,7 @@ function rebuildBridge() {
   bridge?.stop?.();
   const settings = configStore.publicSettings();
   const token = configStore.getToken();
-  bridge = new BridgeClient({ settings, token, logger, version: pkg.version, spool: eventSpool, streamHealthProvider:()=>streamEngine?.telemetry?.() || null, interactiveGamesProvider:()=>interactiveGameService?.snapshot?.() || null, liveProviderHealthProvider:()=>providers?.info?.() || {key:settings.provider||"mock",ready:false,status:"idle"} });
+  bridge = new BridgeClient({ settings, token, logger, version: pkg.version, spool: eventSpool, streamHealthProvider:()=>{const telemetry=streamEngine?.telemetry?.()||null;if(!telemetry)return null;return{...telemetry,runtimeFailures:currentRuntimeFailures()}}, interactiveGamesProvider:()=>interactiveGameService?.snapshot?.() || null, liveProviderHealthProvider:()=>providers?.info?.() || {key:settings.provider||"mock",ready:false,status:"idle"} });
 
   bridge.on("state", state => {
     send("launcher:state", appState({ bridge: state }));
@@ -2318,7 +2331,9 @@ function registerIpc() {
         encryptionAvailable:safeStorage.isEncryptionAvailable()
       }),
       encryptionAvailable: safeStorage.isEncryptionAvailable(),
-      logger
+      logger,
+      runtimeFailures:currentRuntimeFailures(),
+      runtimeEvidence:streamRuntimeEvidence?.snapshot?.()||null
     });
     const stamp = new Date().toISOString().replace(/[:.]/g, "-");
     const result = await dialog.showSaveDialog(mainWindow, {
@@ -2353,7 +2368,9 @@ function registerIpc() {
       releaseGate:{},
       monitor,
       encryptionAvailable:safeStorage.isEncryptionAvailable(),
-      logger
+      logger,
+      runtimeFailures:currentRuntimeFailures(),
+      runtimeEvidence:streamRuntimeEvidence?.snapshot?.()||null
     });
     const fieldTest = {
       schema:1,
@@ -2441,6 +2458,7 @@ app.whenReady().then(async () => {
   betaSessionStore=new BetaSessionStore(path.join(userData,"beta","active-session.json"));
   mediaSourceStore=new MediaSourceStore(path.join(userData,"cut-studio","media-sources.json"));
   recordingHandoffStore=new RecordingHandoffStore(path.join(userData,"cut-studio","recording-handoffs.json"));
+  streamGameContextStore=new StreamGameContextStore(path.join(userData,"stream-studio","game-context-sessions.json"));
   streamCredentialStore=new StreamCredentialStore(path.join(userData,"stream-studio","credentials.json"),safeStorage,logger);
   streamProfileStore=new StreamProfileStore(path.join(userData,"stream-studio","streaming-profiles.json"),{logger});
   gameActivityTracker=new GameActivityTracker({filePath:path.join(userData,"community","game-activity.json"),logger,submitter:payload=>{if(!bridge?.snapshot?.().connected)throw new Error("Creator Bridge ist offline.");return bridge.submitGameActivity(payload)}});

@@ -21,7 +21,7 @@ const { SCENE_PROFILES, sanitizeSceneConfig, validateSceneOwnership, scenePublic
 const { basePlanEntitlements, resolveCreatorEntitlements, minimumPlanForTemplate, templateAllowed, publicPlanCatalog } = require("./lib/creator-plan-policy");
 const { releaseCandidateReadiness } = require("./lib/release-candidate-readiness");
 const { sanitizeGameProfile, sanitizeScoreAction, initialGameState, gamePublicToken, publicGameRuntime, gameSceneSource, publicGameCatalog, isLauncherLocalGame, gameDefinition, dynamicLocalGameKey, isDynamicLocalGameKey } = require("./lib/creator-games");
-const { CUT_FORMATS, sanitizeCutProject, sanitizeCutClip, publicCutProject, publicCutClip } = require("./lib/creator-cut-studio");
+const { CUT_FORMATS, sanitizeCutProject, sanitizeCutClip, publicCutProject, publicCutClip, preserveRecordingProvenance, sealRecordingProvenance } = require("./lib/creator-cut-studio");
 const { profileId: cutGameProfileId, normalizePublicYoutubeUrl: normalizeCutReferenceUrl, upsertAnalyzedReference } = require("./lib/cut-reference-learning");
 const { analyzeCutReferenceWithGemini, DEFAULT_GEMINI_MODEL: DEFAULT_CUT_REFERENCE_GEMINI_MODEL } = require("./lib/cut-reference-provider");
 const { buildCutCandidates, sanitizeOwnClipEvidence, sanitizeGroundTruth } = require("./lib/cut-candidate-engine");
@@ -4670,7 +4670,7 @@ function normalizedPasswordPolicyValue(
 ) {
 
     return String(value || "")
-        .normalize("NFKC")
+        .replace(/[™®©]/g,"").normalize("NFKC")
         .trim()
         .toLowerCase();
 
@@ -7448,14 +7448,20 @@ async function getCutProject(creatorId,projectId) {
 
 async function createCutProjectWithLimit(creatorId,clean,maxProjects){
     return withCreatorResourceLock(creatorId,async client=>{
+        const sourceHandoffId=studioText(clean?.export_preset?.source_handoff_id,120,"");
+        if(sourceHandoffId){
+            const existing=await client.query(`SELECT * FROM creator_cut_projects WHERE creator_id=$1 AND export_preset->>'source_handoff_id'=$2 ORDER BY created_at ASC LIMIT 1 FOR UPDATE`,[creatorId,sourceHandoffId]);
+            if(existing.rows[0])return{row:existing.rows[0],reused:true};
+        }
         const count=await client.query(`SELECT COUNT(*)::int AS count FROM creator_cut_projects WHERE creator_id=$1`,[creatorId]);
         if(Number(count.rows[0]?.count||0)>=Number(maxProjects||0)){
             throw creatorResourceLimitError(`Dein Zugriff erlaubt maximal ${Number(maxProjects||0)} Cut-Studio Projekte.`,"cut_project_limit");
         }
-        return client.query(
+        const created=await client.query(
             `INSERT INTO creator_cut_projects(creator_id,title,status,format,notes,source_name,export_preset,created_at,updated_at) VALUES($1,$2,$3,$4,$5,$6,$7::jsonb,NOW(),NOW()) RETURNING *`,
             [creatorId,clean.title,clean.status,clean.format,clean.notes,clean.source_name,JSON.stringify(clean.export_preset)]
         );
+        return{row:created.rows[0],reused:false};
     });
 }
 
@@ -7485,6 +7491,44 @@ async function createCutClipWithLimit(creatorId,projectId,requested,maxClips){
         );
         await client.query(`UPDATE creator_cut_projects SET updated_at=NOW() WHERE creator_id=$1 AND id=$2`,[creatorId,projectId]);
         return result;
+    });
+}
+
+async function createInitialRecordingCutClipWithLimit(creatorId,projectId,sourceHandoffId,requested,maxClips){
+    return withCreatorResourceLock(creatorId,async client=>{
+        const project=(await client.query(
+            `SELECT id,export_preset FROM creator_cut_projects WHERE creator_id=$1 AND id=$2 FOR UPDATE`,
+            [creatorId,projectId]
+        )).rows[0];
+        if(!project){
+            const error=new Error("Cut-Projekt nicht gefunden.");
+            error.code="cut_project_missing";
+            error.statusCode=404;
+            throw error;
+        }
+        const expectedHandoffId=studioText(project.export_preset?.source_handoff_id,120,"");
+        const requestedHandoffId=studioText(sourceHandoffId,120,"");
+        if(!expectedHandoffId||!requestedHandoffId||expectedHandoffId!==requestedHandoffId){
+            const error=new Error("Recording-Handoff passt nicht zum Cut-Projekt.");
+            error.code="recording_handoff_mismatch";
+            error.statusCode=409;
+            throw error;
+        }
+        const existing=(await client.query(
+            `SELECT * FROM creator_cut_clips WHERE creator_id=$1 AND project_id=$2 ORDER BY sort_order ASC,created_at ASC LIMIT 1`,
+            [creatorId,projectId]
+        )).rows[0];
+        if(existing)return{row:existing,reused:true};
+        if(Number(maxClips||0)<1){
+            throw creatorResourceLimitError("Dieses Projekt erlaubt keine Clips.","cut_clip_limit");
+        }
+        const clean={...requested,sort_order:0};
+        const result=await client.query(
+            `INSERT INTO creator_cut_clips(project_id,creator_id,label,in_ms,out_ms,caption,selected,sort_order,caption_enabled,caption_position,caption_size,caption_style,audio_gain_db,audio_fade_in_ms,audio_fade_out_ms,keyframe_enabled,keyframe_zoom_start,keyframe_zoom_end,keyframe_pan_x_start,keyframe_pan_x_end,keyframe_pan_y_start,keyframe_pan_y_end,keyframe_easing,visual_keyframes,created_at,updated_at) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24::jsonb,NOW(),NOW()) RETURNING *`,
+            [projectId,creatorId,clean.label,clean.in_ms,clean.out_ms,clean.caption,clean.selected,clean.sort_order,clean.caption_enabled,clean.caption_position,clean.caption_size,clean.caption_style,clean.audio_gain_db,clean.audio_fade_in_ms,clean.audio_fade_out_ms,clean.keyframe_enabled,clean.keyframe_zoom_start,clean.keyframe_zoom_end,clean.keyframe_pan_x_start,clean.keyframe_pan_x_end,clean.keyframe_pan_y_start,clean.keyframe_pan_y_end,clean.keyframe_easing,JSON.stringify(clean.visual_keyframes||[])]
+        );
+        await client.query(`UPDATE creator_cut_projects SET updated_at=NOW() WHERE creator_id=$1 AND id=$2`,[creatorId,projectId]);
+        return{row:result.rows[0],reused:false};
     });
 }
 
@@ -12012,10 +12056,18 @@ const STREAM_TARGET_STATUSES=new Set(["idle","starting","live","reconnecting","s
 const STREAM_HEALTH_PROVIDERS=new Set(["youtube","twitch","tiktok","kick","facebook","custom_rtmp","recording",""]);
 function streamHealthNumber(value,min,max,fallback=0){const n=Number(value);return Number.isFinite(n)?Math.max(min,Math.min(max,n)):fallback;}
 function streamHealthTime(value){const text=studioText(value,64,"");if(!text)return null;const time=new Date(text);return Number.isNaN(time.getTime())?null:time.toISOString();}
+const STREAM_FAILURE_CODES=new Set(["STREAM_ENGINE_UNAVAILABLE","STREAM_ENGINE_ERROR","STREAM_WATCHDOG_RESTART","STREAM_RUNTIME_ERRORS","STREAM_DROPPED_FRAMES","STREAM_TARGET_ERROR","STREAM_TARGET_RECONNECTING","RECORDING_RUNTIME_ERROR","APPLICATION_AUDIO_UNAVAILABLE","APPLICATION_AUDIO_SOURCE_ERROR","GAME_CAPTURE_RUNTIME_UNVERIFIED","GAME_CAPTURE_UNAVAILABLE","GAME_CAPTURE_SOURCE_ERROR","RUNTIME_EVIDENCE_GUARD_FAILED"]);
+function sanitizeRuntimeFailureSummary(input={}){
+    const source=input&&typeof input==="object"&&!Array.isArray(input)?input:{};
+    const rows=Array.isArray(source.recent)?source.recent:[];
+    const recent=rows.slice(0,20).map(row=>{const code=STREAM_FAILURE_CODES.has(String(row?.code||""))?String(row.code):"";if(!code)return null;const severity=String(row?.severity||"")==="critical"?"critical":"warning";return{code,component:studioText(row?.component,40,"runtime"),severity,detail:studioText(row?.detail,240,""),at:streamHealthTime(row?.at)};}).filter(Boolean);
+    const critical=recent.filter(row=>row.severity==="critical").length,warning=recent.filter(row=>row.severity==="warning").length;
+    return{schema:1,status:critical?"critical":warning?"warning":"healthy",critical,warning,total:recent.length,recent,secrets_exposed:false,raw_media_exposed:false};
+}
 function sanitizeLauncherStreamHealth(input={}){
     const source=input&&typeof input==="object"&&!Array.isArray(input)?input:{};
     if(!Object.keys(source).length)return {};
-    const clean={schema:1,status:STREAM_HEALTH_STATUSES.has(String(source.status||""))?String(source.status):"idle",available:source.available===true,desired_running:source.desiredRunning===true||source.desired_running===true,checked_at:streamHealthTime(source.checkedAt||source.checked_at),started_at:streamHealthTime(source.startedAt||source.started_at),stopped_at:streamHealthTime(source.stoppedAt||source.stopped_at),metrics:{},destinations:[],recording:null};
+    const clean={schema:1,status:STREAM_HEALTH_STATUSES.has(String(source.status||""))?String(source.status):"idle",available:source.available===true,desired_running:source.desiredRunning===true||source.desired_running===true,checked_at:streamHealthTime(source.checkedAt||source.checked_at),started_at:streamHealthTime(source.startedAt||source.started_at),stopped_at:streamHealthTime(source.stoppedAt||source.stopped_at),metrics:{},destinations:[],recording:null,runtime_failures:sanitizeRuntimeFailureSummary(source.runtimeFailures||source.runtime_failures||{})};
     const metrics=source.metrics&&typeof source.metrics==="object"?source.metrics:{};
     clean.metrics={active:Math.round(streamHealthNumber(metrics.active,0,16)),errors:Math.round(streamHealthNumber(metrics.errors,0,100000)),reconnects:Math.round(streamHealthNumber(metrics.reconnects,0,100000)),watchdog_restarts:Math.round(streamHealthNumber(metrics.watchdogRestarts??metrics.watchdog_restarts,0,100000)),dropped_frames:Math.round(streamHealthNumber(metrics.droppedFrames??metrics.dropped_frames,0,100000000)),upload_kbps:Math.round(streamHealthNumber(metrics.uploadKbps??metrics.upload_kbps,0,500000)),live_targets:Math.round(streamHealthNumber(metrics.liveTargets??metrics.live_targets,0,8)),encoder_speed:streamHealthNumber(metrics.encoderSpeed??metrics.encoder_speed,0,10),average_fps:streamHealthNumber(metrics.averageFps??metrics.average_fps,0,240)};
     const rows=source.destinations&&typeof source.destinations==="object"&&!Array.isArray(source.destinations)?Object.values(source.destinations):(Array.isArray(source.destinations)?source.destinations:[]);
@@ -12024,13 +12076,1204 @@ function sanitizeLauncherStreamHealth(input={}){
     if(rec){const m=rec.metrics&&typeof rec.metrics==="object"?rec.metrics:{};clean.recording={status:STREAM_TARGET_STATUSES.has(String(rec.status||""))?String(rec.status):"idle",started_at:streamHealthTime(rec.startedAt||rec.started_at),stopped_at:streamHealthTime(rec.stoppedAt||rec.stopped_at),profile:studioText(rec.profile,40,""),encoder:studioText(rec.encoder,40,""),metrics:{fps:streamHealthNumber(m.fps,0,240),bitrate_kbps:streamHealthNumber(m.bitrateKbps??m.bitrate_kbps,0,50000),speed:streamHealthNumber(m.speed,0,10),dropped_frames:Math.round(streamHealthNumber(m.droppedFrames??m.dropped_frames,0,100000000)),duplicated_frames:Math.round(streamHealthNumber(m.duplicatedFrames??m.duplicated_frames,0,100000000))}};}
     return clean;
 }
+function streamHealthVerdict(health={}){
+    const source=health&&typeof health==="object"?health:{};
+    const failures=source.runtime_failures&&typeof source.runtime_failures==="object"?source.runtime_failures:{};
+    const metrics=source.metrics&&typeof source.metrics==="object"?source.metrics:{};
+    const reasons=[];
+    if(source.available===false)reasons.push({code:"engine_unavailable",severity:"critical"});
+    if(String(source.status||"")==="error")reasons.push({code:"engine_error",severity:"critical"});
+    if(Number(failures.critical||0)>0)reasons.push({code:"classified_critical",severity:"critical"});
+    if(Number(failures.warning||0)>0)reasons.push({code:"classified_warning",severity:"warning"});
+    if(Number(metrics.watchdog_restarts||0)>0)reasons.push({code:"watchdog_restart",severity:"warning"});
+    if(Number(metrics.reconnects||0)>0)reasons.push({code:"reconnect_activity",severity:"warning"});
+    if(Number(metrics.dropped_frames||0)>0)reasons.push({code:"dropped_frames",severity:"warning"});
+    const critical=reasons.some(row=>row.severity==="critical"),warning=reasons.some(row=>row.severity==="warning");
+    return{schema:1,status:critical?"critical":warning?"degraded":"healthy",ok:!critical,reasons:reasons.slice(0,12),derived:true};
+}
+function streamHealthIncidentState(verdict={},previousEvidence={},snapshotId="",observedAt=new Date().toISOString()){
+    const status=String(verdict.status||"healthy");
+    const previousIncident=previousEvidence.incident&&typeof previousEvidence.incident==="object"?previousEvidence.incident:{};
+    const previousOpen=String(previousIncident.state||"")==="open"&&/^cfshi_[a-f0-9]{24}$/.test(String(previousIncident.incident_id||""));
+    const currentSnapshot=/^cfshs_[a-f0-9]{24}$/.test(String(snapshotId||""))?String(snapshotId):null;
+    const previousSnapshot=/^cfshs_[a-f0-9]{24}$/.test(String(previousEvidence.snapshot_id||""))?String(previousEvidence.snapshot_id):null;
+    const previousOpened=/^cfshs_[a-f0-9]{24}$/.test(String(previousIncident.opened_snapshot_id||""))?String(previousIncident.opened_snapshot_id):null;
+    const at=streamHealthTime(observedAt)||new Date().toISOString();
+    if(status==="critical"||status==="degraded"){
+        const incidentId=previousOpen?String(previousIncident.incident_id):"cfshi_"+crypto.createHash("sha256").update(`stream-incident-v1|${snapshotId}|${at}`).digest("hex").slice(0,24);
+        const startedAt=previousOpen&&streamHealthTime(previousIncident.started_at)?streamHealthTime(previousIncident.started_at):at;
+        return{schema:2,state:"open",incident_id:incidentId,severity:status,started_at:startedAt,last_observed_at:at,recovered_at:null,recovery_seconds:null,opened_snapshot_id:previousOpen?(previousOpened||previousSnapshot):currentSnapshot,last_snapshot_id:currentSnapshot,recovered_snapshot_id:null,server_derived:true};
+    }
+    if(previousOpen){
+        const started=streamHealthTime(previousIncident.started_at);
+        const recoverySeconds=started?Math.max(0,Math.round((new Date(at).getTime()-new Date(started).getTime())/1000)):null;
+        return{schema:2,state:"recovered",incident_id:String(previousIncident.incident_id),severity:String(previousIncident.severity||"degraded"),started_at:started,last_observed_at:at,recovered_at:at,recovery_seconds:recoverySeconds,opened_snapshot_id:previousOpened||previousSnapshot,last_snapshot_id:currentSnapshot,recovered_snapshot_id:currentSnapshot,server_derived:true};
+    }
+    return{schema:2,state:"clear",incident_id:null,severity:"healthy",started_at:null,last_observed_at:at,recovered_at:null,recovery_seconds:null,opened_snapshot_id:null,last_snapshot_id:currentSnapshot,recovered_snapshot_id:null,server_derived:true};
+}
+function streamHealthEvidenceCanonical(health={}){
+    const clean=health&&typeof health==="object"?health:{};
+    const verdict=streamHealthVerdict(clean);
+    return JSON.stringify({schema:1,status:clean.status||"idle",available:clean.available===true,desired_running:clean.desired_running===true,metrics:clean.metrics||{},destinations:clean.destinations||[],recording:clean.recording||null,runtime_failures:clean.runtime_failures||{},verdict});
+}
+function streamRecoveryEventId(input={}){
+    const row=input&&typeof input==="object"&&!Array.isArray(input)?input:{};
+    const canonical=JSON.stringify({incident_id:String(row.incident_id||""),opened_snapshot_id:String(row.opened_snapshot_id||""),recovered_snapshot_id:String(row.recovered_snapshot_id||""),started_at:streamHealthTime(row.started_at),recovered_at:streamHealthTime(row.recovered_at),recovery_seconds:Number.isFinite(Number(row.recovery_seconds))?Math.max(0,Math.min(31536000,Math.round(Number(row.recovery_seconds)))):null,severity:["critical","degraded"].includes(String(row.severity||""))?String(row.severity):"degraded"});
+    return "cfsre_"+crypto.createHash("sha256").update(`stream-recovery-event-v1|${canonical}`).digest("hex").slice(0,24);
+}
+function streamHealthIncidentHistory(previousEvidence={},incident={}){
+    const previous=previousEvidence&&typeof previousEvidence==="object"&&!Array.isArray(previousEvidence)?previousEvidence:{};
+    const rows=Array.isArray(previous.incident_history)?previous.incident_history:[];
+    const clean=rows.map(row=>{
+        const item=row&&typeof row==="object"&&!Array.isArray(row)?row:{};
+        const incidentId=/^cfshi_[a-f0-9]{24}$/.test(String(item.incident_id||""))?String(item.incident_id):null;
+        const opened=/^cfshs_[a-f0-9]{24}$/.test(String(item.opened_snapshot_id||""))?String(item.opened_snapshot_id):null;
+        const recovered=/^cfshs_[a-f0-9]{24}$/.test(String(item.recovered_snapshot_id||""))?String(item.recovered_snapshot_id):null;
+        if(!incidentId||!opened||!recovered)return null;
+        const base={incident_id:incidentId,severity:["critical","degraded"].includes(String(item.severity||""))?String(item.severity):"degraded",started_at:streamHealthTime(item.started_at),recovered_at:streamHealthTime(item.recovered_at),recovery_seconds:Number.isFinite(Number(item.recovery_seconds))?Math.max(0,Math.min(31536000,Math.round(Number(item.recovery_seconds)))):null,opened_snapshot_id:opened,recovered_snapshot_id:recovered};
+        return{event_id:streamRecoveryEventId(base),...base};
+    }).filter(Boolean).slice(-7);
+    if(String(incident.state||"")!=="recovered"||!/^cfshi_[a-f0-9]{24}$/.test(String(incident.incident_id||"")))return clean;
+    const base={incident_id:String(incident.incident_id),severity:["critical","degraded"].includes(String(incident.severity||""))?String(incident.severity):"degraded",started_at:streamHealthTime(incident.started_at),recovered_at:streamHealthTime(incident.recovered_at),recovery_seconds:Number.isFinite(Number(incident.recovery_seconds))?Math.max(0,Math.min(31536000,Math.round(Number(incident.recovery_seconds)))):null,opened_snapshot_id:/^cfshs_[a-f0-9]{24}$/.test(String(incident.opened_snapshot_id||""))?String(incident.opened_snapshot_id):null,recovered_snapshot_id:/^cfshs_[a-f0-9]{24}$/.test(String(incident.recovered_snapshot_id||""))?String(incident.recovered_snapshot_id):null};
+    const entry={event_id:streamRecoveryEventId(base),...base};
+    if(!entry.opened_snapshot_id||!entry.recovered_snapshot_id)return clean;
+    const withoutSame=clean.filter(row=>row.incident_id!==entry.incident_id);
+    return[...withoutSame,entry].slice(-8);
+}
+function streamHealthIncidentHistoryChain(history=[]){
+    const rows=Array.isArray(history)?history:[];
+    const canonical=JSON.stringify(rows.slice(-8).map(row=>({event_id:/^cfsre_[a-f0-9]{24}$/.test(String(row?.event_id||""))?String(row.event_id):streamRecoveryEventId(row),incident_id:String(row?.incident_id||""),opened_snapshot_id:String(row?.opened_snapshot_id||""),recovered_snapshot_id:String(row?.recovered_snapshot_id||""),started_at:streamHealthTime(row?.started_at),recovered_at:streamHealthTime(row?.recovered_at),recovery_seconds:Number.isFinite(Number(row?.recovery_seconds))?Math.max(0,Math.min(31536000,Math.round(Number(row.recovery_seconds)))):null,severity:String(row?.severity||"degraded")})));
+    return{schema:1,algorithm:"sha256",chain_id:"cfshc_"+crypto.createHash("sha256").update(`stream-incident-history-chain-v1|${canonical}`).digest("hex").slice(0,24),count:Math.min(8,rows.length),server_derived:true};
+}
+function streamHealthIncidentHistoryChainIntegrity(evidence={}){
+    const source=evidence&&typeof evidence==="object"&&!Array.isArray(evidence)?evidence:{};
+    const chain=source.incident_history_chain&&typeof source.incident_history_chain==="object"&&!Array.isArray(source.incident_history_chain)?source.incident_history_chain:{};
+    const reasons=[];
+    const chainId=String(chain.chain_id||"");
+    if(!/^cfshc_[a-f0-9]{24}$/.test(chainId))reasons.push("history_chain_id_invalid");
+    const expected=streamHealthIncidentHistoryChain(source.incident_history||[]);
+    if(chainId&&chainId!==expected.chain_id)reasons.push("history_chain_mismatch");
+    if(Number(chain.count)!==expected.count)reasons.push("history_chain_count_mismatch");
+    if(chain.server_derived!==true)reasons.push("history_chain_server_derived_missing");
+    return{schema:1,status:reasons.length?"mismatch":"valid",valid:reasons.length===0,reasons:reasons.slice(0,8),server_derived:true};
+}
+function streamHealthEvidenceSnapshot(health={},previousHealth={},observedAt=new Date().toISOString()){
+    const clean=health&&typeof health==="object"?health:{};
+    const previous=previousHealth&&typeof previousHealth==="object"?previousHealth:{};
+    const previousEvidence=previous.health_evidence&&typeof previous.health_evidence==="object"?previous.health_evidence:{};
+    const verdict=streamHealthVerdict(clean);
+    const canonical=streamHealthEvidenceCanonical(clean);
+    const contentFingerprint="cfshf_"+crypto.createHash("sha256").update(canonical).digest("hex").slice(0,24);
+    const previousSnapshot=/^cfshs_[a-f0-9]{24}$/.test(String(previousEvidence.snapshot_id||""))?String(previousEvidence.snapshot_id):null;
+    const sequence=Math.max(1,Math.min(1000000000,Number(previousEvidence.sequence||0)+1));
+    const observed=streamHealthTime(observedAt)||new Date().toISOString();
+    const snapshotId="cfshs_"+crypto.createHash("sha256").update(`stream-health-evidence-v2|${sequence}|${previousSnapshot||"root"}|${observed}|${contentFingerprint}`).digest("hex").slice(0,24);
+    const incident=streamHealthIncidentState(verdict,previousEvidence,snapshotId,observedAt);
+    const incidentHistory=streamHealthIncidentHistory(previousEvidence,incident);
+    const incidentHistoryChain=streamHealthIncidentHistoryChain(incidentHistory);
+    return{schema:2,snapshot_id:snapshotId,previous_snapshot_id:previousSnapshot,content_fingerprint:contentFingerprint,sequence,observed_at:observed,verdict,incident,incident_history:incidentHistory,incident_history_chain:incidentHistoryChain,secrets_exposed:false,raw_media_exposed:false,server_derived:true};
+}
 async function getCreatorStreamStudioRuntime(creatorId){
     const result=await pool.query(`SELECT id,machine_name,client_version,last_seen_at,stream_health_at,stream_health FROM creator_live_bridges WHERE creator_id=$1 AND status='active' ORDER BY COALESCE(stream_health_at,last_seen_at,updated_at) DESC LIMIT 1`,[creatorId]);
     const row=result.rows[0];
     if(!row)return{connected:false,fresh:false,launcher:null,health:{},server_time:new Date().toISOString()};
     const now=Date.now(),lastSeen=row.last_seen_at?new Date(row.last_seen_at).getTime():0,healthAt=row.stream_health_at?new Date(row.stream_health_at).getTime():0;
     const connected=lastSeen>0&&now-lastSeen<=30000,fresh=healthAt>0&&now-healthAt<=25000;
-    return{connected,fresh,launcher:{id:String(row.id),machine_name:row.machine_name||"Creator PC",client_version:row.client_version||"",last_seen_at:row.last_seen_at||null},health:fresh&&row.stream_health&&typeof row.stream_health==="object"?sanitizeLauncherStreamHealth(row.stream_health):{},health_at:row.stream_health_at||null,server_time:new Date().toISOString()};
+    const stored=row.stream_health&&typeof row.stream_health==="object"?row.stream_health:{};
+    const health=fresh?sanitizeLauncherStreamHealth(stored):{};return{connected,fresh,launcher:{id:String(row.id),machine_name:row.machine_name||"Creator PC",client_version:row.client_version||"",last_seen_at:row.last_seen_at||null},health,verdict:fresh?streamHealthVerdict(health):{schema:1,status:connected?"stale":"offline",ok:false,reasons:[],derived:true},evidence_integrity:streamHealthEvidenceIntegrity(stored),incident_integrity:streamHealthIncidentIntegrity(stored.health_evidence||{}),incident_history_integrity:streamHealthIncidentHistoryIntegrity(stored.health_evidence||{}),incident_history_chain_integrity:streamHealthIncidentHistoryChainIntegrity(stored.health_evidence||{}),health_at:row.stream_health_at||null,server_time:new Date().toISOString()};
+}
+function streamHealthIncidentHistoryIntegrity(evidence={}){
+    const source=evidence&&typeof evidence==="object"&&!Array.isArray(evidence)?evidence:{};
+    const rows=Array.isArray(source.incident_history)?source.incident_history:[];
+    const reasons=[];
+    if(rows.length>8)reasons.push("history_limit_exceeded");
+    const seen=new Set();
+    let previousRecoveredAt=0;
+    for(const row of rows.slice(0,9)){
+        const item=row&&typeof row==="object"&&!Array.isArray(row)?row:{};
+        const incidentId=String(item.incident_id||"");
+        const eventId=String(item.event_id||"");
+        const opened=String(item.opened_snapshot_id||"");
+        const recovered=String(item.recovered_snapshot_id||"");
+        if(!/^cfshi_[a-f0-9]{24}$/.test(incidentId)){reasons.push("history_incident_id_invalid");continue;}
+        if(!/^cfsre_[a-f0-9]{24}$/.test(eventId))reasons.push("history_event_id_invalid");
+        else if(eventId!==streamRecoveryEventId(item))reasons.push("history_event_id_mismatch");
+        if(seen.has(incidentId))reasons.push("history_incident_duplicate");
+        seen.add(incidentId);
+        if(!/^cfshs_[a-f0-9]{24}$/.test(opened))reasons.push("history_opened_snapshot_invalid");
+        if(!/^cfshs_[a-f0-9]{24}$/.test(recovered))reasons.push("history_recovered_snapshot_invalid");
+        if(opened&&recovered&&opened===recovered)reasons.push("history_snapshot_self_recovery");
+        const started=streamHealthTime(item.started_at),ended=streamHealthTime(item.recovered_at);
+        if(!started||!ended)reasons.push("history_time_invalid");
+        else{
+            const startMs=new Date(started).getTime(),endMs=new Date(ended).getTime();
+            if(endMs<startMs)reasons.push("history_time_reversed");
+            if(previousRecoveredAt&&endMs<previousRecoveredAt)reasons.push("history_order_invalid");
+            previousRecoveredAt=Math.max(previousRecoveredAt,endMs);
+            const declared=Number(item.recovery_seconds);
+            const expected=Math.max(0,Math.round((endMs-startMs)/1000));
+            if(!Number.isFinite(declared)||Math.abs(declared-expected)>1)reasons.push("history_recovery_seconds_mismatch");
+        }
+    }
+    const current=source.incident&&typeof source.incident==="object"&&!Array.isArray(source.incident)?source.incident:{};
+    if(String(current.state||"")==="recovered"&&/^cfshi_[a-f0-9]{24}$/.test(String(current.incident_id||""))){
+        const last=rows[rows.length-1]||{};
+        if(String(last.incident_id||"")!==String(current.incident_id)||String(last.recovered_snapshot_id||"")!==String(current.recovered_snapshot_id||""))reasons.push("history_latest_recovery_mismatch");
+    }
+    return{schema:1,status:reasons.length?"mismatch":"valid",valid:reasons.length===0,count:Math.min(8,rows.length),reasons:[...new Set(reasons)].slice(0,8),server_derived:true};
+}
+function streamHealthIncidentIntegrity(evidence={}){
+    const source=evidence&&typeof evidence==="object"&&!Array.isArray(evidence)?evidence:{};
+    const incident=source.incident&&typeof source.incident==="object"&&!Array.isArray(source.incident)?source.incident:{};
+    if(!Object.keys(incident).length)return{schema:1,status:"missing",valid:false,reasons:["incident_missing"],server_derived:true};
+    if(Number(incident.schema)!==2)return{schema:1,status:"legacy",valid:false,reasons:["legacy_incident"],server_derived:true};
+    const reasons=[];
+    const state=String(incident.state||"");
+    const currentSnapshot=String(source.snapshot_id||"");
+    const incidentId=String(incident.incident_id||"");
+    const opened=String(incident.opened_snapshot_id||"");
+    const last=String(incident.last_snapshot_id||"");
+    const recovered=String(incident.recovered_snapshot_id||"");
+    if(!["open","recovered","clear"].includes(state))reasons.push("incident_state_invalid");
+    if(state==="clear"){
+        if(incidentId)reasons.push("clear_incident_id_present");
+        if(opened||recovered)reasons.push("clear_incident_links_present");
+    }else{
+        if(!/^cfshi_[a-f0-9]{24}$/.test(incidentId))reasons.push("incident_id_invalid");
+        if(!/^cfshs_[a-f0-9]{24}$/.test(opened))reasons.push("opened_snapshot_id_invalid");
+    }
+    if(!/^cfshs_[a-f0-9]{24}$/.test(last)||last!==currentSnapshot)reasons.push("last_snapshot_mismatch");
+    if(state==="open"&&recovered)reasons.push("open_recovery_link_present");
+    if(state==="recovered"&&(!/^cfshs_[a-f0-9]{24}$/.test(recovered)||recovered!==currentSnapshot))reasons.push("recovered_snapshot_mismatch");
+    const started=streamHealthTime(incident.started_at),ended=streamHealthTime(incident.recovered_at);
+    if(state!=="clear"&&!started)reasons.push("incident_started_at_invalid");
+    if(state==="recovered"&&(!ended||new Date(ended).getTime()<new Date(started||ended).getTime()))reasons.push("incident_recovery_time_invalid");
+    if(incident.server_derived!==true)reasons.push("incident_server_derived_missing");
+    return{schema:1,status:reasons.length?"mismatch":"valid",valid:reasons.length===0,reasons:reasons.slice(0,8),server_derived:true};
+}
+function streamHealthEvidenceIntegrity(health={}){
+    const source=health&&typeof health==="object"&&!Array.isArray(health)?health:{};
+    const evidence=source.health_evidence&&typeof source.health_evidence==="object"&&!Array.isArray(source.health_evidence)?source.health_evidence:{};
+    if(!Object.keys(evidence).length)return{schema:1,status:"missing",valid:false,reasons:["evidence_missing"],server_derived:true};
+    if(Number(evidence.schema)!==2)return{schema:1,status:"legacy",valid:false,reasons:["legacy_evidence"],server_derived:true};
+    const reasons=[];
+    const snapshotId=String(evidence.snapshot_id||"");
+    const previousId=String(evidence.previous_snapshot_id||"");
+    const contentFingerprint=String(evidence.content_fingerprint||"");
+    if(!/^cfshs_[a-f0-9]{24}$/.test(snapshotId))reasons.push("snapshot_id_invalid");
+    if(previousId&& !/^cfshs_[a-f0-9]{24}$/.test(previousId))reasons.push("previous_snapshot_id_invalid");
+    if(previousId&&previousId===snapshotId)reasons.push("snapshot_self_loop");
+    if(!/^cfshf_[a-f0-9]{24}$/.test(contentFingerprint))reasons.push("content_fingerprint_invalid");
+    const expected="cfshf_"+crypto.createHash("sha256").update(streamHealthEvidenceCanonical(source)).digest("hex").slice(0,24);
+    if(contentFingerprint&&contentFingerprint!==expected)reasons.push("content_fingerprint_mismatch");
+    if(!Number.isFinite(Number(evidence.sequence))||Number(evidence.sequence)<1)reasons.push("sequence_invalid");
+    if(evidence.server_derived!==true)reasons.push("server_derived_missing");
+    if(evidence.secrets_exposed!==false||evidence.raw_media_exposed!==false)reasons.push("privacy_guard_invalid");
+    return{schema:1,status:reasons.length?"mismatch":"valid",valid:reasons.length===0,reasons:reasons.slice(0,8),server_derived:true};
+}
+function publicStreamHealthEvidence(input={}){
+    const source=input&&typeof input==="object"&&!Array.isArray(input)?input:{};
+    const incident=source.incident&&typeof source.incident==="object"?source.incident:{};
+    const history=streamHealthIncidentHistory({incident_history:source.incident_history||[]},{});
+    return{schema:Number(source.schema)===2?2:1,snapshot_id:/^cfshs_[a-f0-9]{24}$/.test(String(source.snapshot_id||""))?String(source.snapshot_id):null,previous_snapshot_id:/^cfshs_[a-f0-9]{24}$/.test(String(source.previous_snapshot_id||""))?String(source.previous_snapshot_id):null,content_fingerprint:/^cfshf_[a-f0-9]{24}$/.test(String(source.content_fingerprint||""))?String(source.content_fingerprint):null,sequence:Math.max(0,Math.min(1000000000,Number(source.sequence||0))),observed_at:streamHealthTime(source.observed_at),incident:{schema:Number(incident.schema)===2?2:1,state:["open","recovered","clear"].includes(String(incident.state||""))?String(incident.state):"clear",incident_id:/^cfshi_[a-f0-9]{24}$/.test(String(incident.incident_id||""))?String(incident.incident_id):null,severity:["critical","degraded","healthy"].includes(String(incident.severity||""))?String(incident.severity):"healthy",started_at:streamHealthTime(incident.started_at),recovered_at:streamHealthTime(incident.recovered_at),recovery_seconds:Number.isFinite(Number(incident.recovery_seconds))?Math.max(0,Math.min(31536000,Math.round(Number(incident.recovery_seconds)))):null,opened_snapshot_id:/^cfshs_[a-f0-9]{24}$/.test(String(incident.opened_snapshot_id||""))?String(incident.opened_snapshot_id):null,last_snapshot_id:/^cfshs_[a-f0-9]{24}$/.test(String(incident.last_snapshot_id||""))?String(incident.last_snapshot_id):null,recovered_snapshot_id:/^cfshs_[a-f0-9]{24}$/.test(String(incident.recovered_snapshot_id||""))?String(incident.recovered_snapshot_id):null},incident_history:history,incident_history_chain:streamHealthIncidentHistoryChain(history),secrets_exposed:false,raw_media_exposed:false,server_derived:true};
+}
+function streamSupportCorrelationIntegrity(snapshot={}){
+    const source=snapshot&&typeof snapshot==="object"&&!Array.isArray(snapshot)?snapshot:{};
+    const evidence=source.evidence&&typeof source.evidence==="object"&&!Array.isArray(source.evidence)?source.evidence:{};
+    if(!/^cfshs_[a-f0-9]{24}$/.test(String(evidence.snapshot_id||"")))return{schema:1,status:"unavailable",valid:false,reasons:["evidence_snapshot_unavailable"],server_derived:true};
+    const reasons=[];
+    if(source.evidence_integrity?.valid!==true)reasons.push("evidence_integrity_invalid");
+    if(source.incident_integrity?.valid!==true)reasons.push("incident_integrity_invalid");
+    if(source.incident_history_integrity?.valid!==true)reasons.push("incident_history_integrity_invalid");
+    if(source.incident_history_chain_integrity?.valid!==true)reasons.push("incident_history_chain_integrity_invalid");
+    const incident=evidence.incident&&typeof evidence.incident==="object"&&!Array.isArray(evidence.incident)?evidence.incident:{};
+    const currentSnapshot=String(evidence.snapshot_id||"");
+    if(String(incident.last_snapshot_id||"")!==currentSnapshot)reasons.push("incident_last_snapshot_crosslink_mismatch");
+    const history=Array.isArray(evidence.incident_history)?evidence.incident_history:[];
+    if(String(incident.state||"")==="recovered"){
+        const last=history[history.length-1]||{};
+        if(String(last.incident_id||"")!==String(incident.incident_id||""))reasons.push("recovered_incident_history_crosslink_mismatch");
+        if(String(last.recovered_snapshot_id||"")!==currentSnapshot)reasons.push("recovered_snapshot_history_crosslink_mismatch");
+        if(!/^cfsre_[a-f0-9]{24}$/.test(String(last.event_id||"")))reasons.push("recovery_event_crosslink_missing");
+    }
+    const chain=evidence.incident_history_chain&&typeof evidence.incident_history_chain==="object"&&!Array.isArray(evidence.incident_history_chain)?evidence.incident_history_chain:{};
+    if(Number(chain.count)!==Math.min(8,history.length))reasons.push("history_chain_crosslink_count_mismatch");
+    return{schema:1,status:reasons.length?"mismatch":"valid",valid:reasons.length===0,reasons:[...new Set(reasons)].slice(0,10),server_derived:true};
+}
+function streamSupportSnapshotSeal(snapshot={}){
+    const source=snapshot&&typeof snapshot==="object"&&!Array.isArray(snapshot)?snapshot:{};
+    const canonical=JSON.stringify({schema:1,snapshot_id:source.snapshot_id||null,generated_at:streamHealthTime(source.generated_at),launcher:source.launcher||{},health:source.health||{},evidence:source.evidence||{},evidence_integrity:source.evidence_integrity||{},incident_integrity:source.incident_integrity||{},incident_history_integrity:source.incident_history_integrity||{},incident_history_chain_integrity:source.incident_history_chain_integrity||{},correlation_integrity:source.correlation_integrity||{},correlation_fingerprint:source.correlation_fingerprint||{},privacy:source.privacy||{}});
+    return{schema:1,algorithm:"sha256",seal_id:"cfssi_"+crypto.createHash("sha256").update(`stream-support-snapshot-v1|${canonical}`).digest("hex").slice(0,24),server_derived:true};
+}
+function streamSupportSnapshotIntegrity(snapshot={}){
+    const source=snapshot&&typeof snapshot==="object"&&!Array.isArray(snapshot)?snapshot:{};
+    const seal=source.integrity&&typeof source.integrity==="object"&&!Array.isArray(source.integrity)?source.integrity:{};
+    const reasons=[];
+    const sealId=String(seal.seal_id||"");
+    if(!/^cfssi_[a-f0-9]{24}$/.test(sealId))reasons.push("seal_id_invalid");
+    const expected=streamSupportSnapshotSeal(source).seal_id;
+    if(sealId&&sealId!==expected)reasons.push("seal_mismatch");
+    if(seal.server_derived!==true)reasons.push("server_derived_missing");
+    const privacy=source.privacy&&typeof source.privacy==="object"?source.privacy:{};
+    if(privacy.secrets_exposed!==false||privacy.raw_media_exposed!==false||privacy.machine_name_exposed!==false)reasons.push("privacy_guard_invalid");
+    return{schema:1,status:reasons.length?"mismatch":"valid",valid:reasons.length===0,reasons:reasons.slice(0,8),server_derived:true};
+}
+
+function streamSupportExportAuditAnchorPrefix(previousAnchor=null,droppedEvent={}){
+    const prior=sanitizeStreamSupportExportAuditAnchor(previousAnchor);
+    const dropped=droppedEvent&&typeof droppedEvent==="object"&&!Array.isArray(droppedEvent)?droppedEvent:{};
+    const eventId=/^cfsxa_[a-f0-9]{24}$/.test(String(dropped.event_id||""))?String(dropped.event_id):null;
+    const sequence=Math.max(0,Math.min(1000000000,Math.round(Number(dropped.sequence||0))));
+    if(!eventId||sequence<1)return null;
+    const canonical=JSON.stringify({schema:1,previous_prefix_id:prior?.prefix_id||null,previous_event_id:prior?.event_id||null,previous_sequence:prior?.sequence||0,event_id:eventId,sequence,generated_at:streamHealthTime(dropped.generated_at)});
+    return "cfsap_"+crypto.createHash("sha256").update(`stream-support-export-audit-anchor-v2|${canonical}`).digest("hex").slice(0,24);
+}
+function sanitizeStreamSupportExportAuditAnchor(input={}){
+    const item=input&&typeof input==="object"&&!Array.isArray(input)?input:{};
+    const eventId=/^cfsxa_[a-f0-9]{24}$/.test(String(item.event_id||""))?String(item.event_id):null;
+    const sequence=Math.max(0,Math.min(1000000000,Math.round(Number(item.sequence||0))));
+    if(!eventId||sequence<1)return null;
+    const prefixId=/^cfsap_[a-f0-9]{24}$/.test(String(item.prefix_id||""))?String(item.prefix_id):null;
+    return{schema:prefixId?2:1,event_id:eventId,sequence,generated_at:streamHealthTime(item.generated_at),prefix_id:prefixId,server_derived:true};
+}
+function sanitizeStreamSupportExportAuditHead(input={}){
+    const item=input&&typeof input==="object"&&!Array.isArray(input)?input:{};
+    const eventId=/^cfsxa_[a-f0-9]{24}$/.test(String(item.event_id||""))?String(item.event_id):null;
+    const sequence=Math.max(0,Math.min(1000000000,Math.round(Number(item.sequence||0))));
+    if(!eventId||sequence<1)return null;
+    return{schema:1,event_id:eventId,sequence,generated_at:streamHealthTime(item.generated_at),server_derived:true};
+}
+function streamSupportExportAuditHeadIntegrity(history=[],head=null,anchor=null){
+    const rows=sanitizeStreamSupportExportAuditHistory(history);
+    const cleanHead=sanitizeStreamSupportExportAuditHead(head);
+    const cleanAnchor=sanitizeStreamSupportExportAuditAnchor(anchor);
+    const reasons=[];
+    const latest=rows[rows.length-1]||null;
+    if(!cleanHead){if(rows.length||cleanAnchor)reasons.push("audit_head_missing");}
+    else{
+        if(latest){
+            if(cleanHead.event_id!==latest.event_id)reasons.push("audit_head_event_mismatch");
+            if(cleanHead.sequence!==latest.sequence)reasons.push("audit_head_sequence_mismatch");
+            if(cleanHead.generated_at!==latest.generated_at)reasons.push("audit_head_time_mismatch");
+        }else if(cleanAnchor&&cleanHead.sequence<cleanAnchor.sequence)reasons.push("audit_head_before_anchor");
+        if(cleanHead.server_derived!==true)reasons.push("audit_head_server_derived_missing");
+    }
+    return{schema:1,status:reasons.length?"mismatch":"valid",valid:reasons.length===0,event_id:cleanHead?.event_id||null,sequence:cleanHead?.sequence||0,reasons:[...new Set(reasons)].slice(0,8),server_derived:true};
+}
+function streamSupportExportAuditContinuityIntegrity(history=[],head=null,anchor=null){
+    const rows=sanitizeStreamSupportExportAuditHistory(history);
+    const cleanHead=sanitizeStreamSupportExportAuditHead(head);
+    const cleanAnchor=sanitizeStreamSupportExportAuditAnchor(anchor);
+    const reasons=[];
+    if(rows.length===0){
+        if(cleanHead||cleanAnchor)reasons.push("audit_continuity_orphan_state");
+    }else{
+        const first=rows[0],latest=rows[rows.length-1];
+        if(!cleanHead)reasons.push("audit_continuity_head_missing");
+        else{
+            if(cleanHead.sequence!==latest.sequence)reasons.push("audit_continuity_head_sequence_mismatch");
+            if(cleanHead.event_id!==latest.event_id)reasons.push("audit_continuity_head_event_mismatch");
+        }
+        if(cleanAnchor){
+            if(first.sequence!==cleanAnchor.sequence+1)reasons.push("audit_continuity_anchor_gap");
+            if(cleanHead&&cleanHead.sequence-cleanAnchor.sequence!==rows.length)reasons.push("audit_continuity_window_mismatch");
+        }else{
+            if(first.sequence!==1)reasons.push("audit_continuity_origin_sequence_invalid");
+            if(cleanHead&&cleanHead.sequence!==rows.length)reasons.push("audit_continuity_origin_count_mismatch");
+        }
+        for(let i=1;i<rows.length;i++)if(rows[i].sequence!==rows[i-1].sequence+1)reasons.push("audit_continuity_sequence_gap");
+    }
+    return{schema:1,status:reasons.length?"mismatch":"valid",valid:reasons.length===0,retained_count:rows.length,head_sequence:cleanHead?.sequence||0,anchor_sequence:cleanAnchor?.sequence||0,reasons:[...new Set(reasons)].slice(0,10),server_derived:true};
+}
+function sanitizeStreamSupportExportAuditHistory(input=[]){
+    const rows=Array.isArray(input)?input:[];
+    return rows.slice(-8).map(row=>{
+        const item=row&&typeof row==="object"&&!Array.isArray(row)?row:{};
+        const eventId=/^cfsxa_[a-f0-9]{24}$/.test(String(item.event_id||""))?String(item.event_id):null;
+        const exportId=/^cfsex_[a-f0-9]{24}$/.test(String(item.export_id||""))?String(item.export_id):null;
+        const snapshotId=/^cfssd_[a-f0-9]{24}$/.test(String(item.snapshot_id||""))?String(item.snapshot_id):null;
+        const snapshotSealId=/^cfssi_[a-f0-9]{24}$/.test(String(item.snapshot_seal_id||""))?String(item.snapshot_seal_id):null;
+        if(!eventId||!exportId||!snapshotId||!snapshotSealId)return null;
+        return{schema:1,event_id:eventId,export_id:exportId,snapshot_id:snapshotId,snapshot_seal_id:snapshotSealId,generated_at:streamHealthTime(item.generated_at),sequence:Math.max(1,Math.min(1000000000,Math.round(Number(item.sequence||1)))),previous_event_id:/^cfsxa_[a-f0-9]{24}$/.test(String(item.previous_event_id||""))?String(item.previous_event_id):null,secrets_exposed:false,raw_media_exposed:false,machine_name_exposed:false,server_derived:true};
+    }).filter(Boolean);
+}
+function streamSupportExportAuditEvent(exported={},previousHistory=[],head=null){
+    const source=exported&&typeof exported==="object"&&!Array.isArray(exported)?exported:{};
+    const history=sanitizeStreamSupportExportAuditHistory(previousHistory);
+    const cleanHead=sanitizeStreamSupportExportAuditHead(head);
+    const previous=history[history.length-1]||cleanHead||{};
+    const sequence=Math.max(1,Math.min(1000000000,Number(previous.sequence||0)+1));
+    const previousEvent=/^cfsxa_[a-f0-9]{24}$/.test(String(previous.event_id||""))?String(previous.event_id):null;
+    const base={schema:1,export_id:String(source.export_id||""),snapshot_id:String(source.snapshot?.snapshot_id||""),snapshot_seal_id:String(source.snapshot?.integrity?.seal_id||""),generated_at:streamHealthTime(source.generated_at),sequence,previous_event_id:previousEvent};
+    const eventId="cfsxa_"+crypto.createHash("sha256").update(`stream-support-export-audit-v1|${JSON.stringify(base)}`).digest("hex").slice(0,24);
+    return{...base,event_id:eventId,secrets_exposed:false,raw_media_exposed:false,machine_name_exposed:false,server_derived:true};
+}
+function streamSupportExportAuditChain(history=[],anchor=null){
+    const rows=sanitizeStreamSupportExportAuditHistory(history);
+    const cleanAnchor=sanitizeStreamSupportExportAuditAnchor(anchor);
+    const canonical=JSON.stringify({anchor:cleanAnchor?{event_id:cleanAnchor.event_id,sequence:cleanAnchor.sequence,generated_at:cleanAnchor.generated_at,prefix_id:cleanAnchor.prefix_id||null}:null,events:rows.slice(-8).map(row=>({event_id:row.event_id,export_id:row.export_id,snapshot_id:row.snapshot_id,snapshot_seal_id:row.snapshot_seal_id,generated_at:row.generated_at,sequence:row.sequence,previous_event_id:row.previous_event_id}))});
+    return{schema:3,algorithm:"sha256",chain_id:"cfsah_"+crypto.createHash("sha256").update(`stream-support-export-audit-chain-v3|${canonical}`).digest("hex").slice(0,24),count:rows.length,anchor_event_id:cleanAnchor?.event_id||null,anchor_prefix_id:cleanAnchor?.prefix_id||null,server_derived:true};
+}
+function streamSupportExportAuditHistoryIntegrity(history=[],chain={},anchor=null){
+    const raw=Array.isArray(history)?history:[];
+    const rows=sanitizeStreamSupportExportAuditHistory(raw);
+    const cleanAnchor=sanitizeStreamSupportExportAuditAnchor(anchor);
+    const reasons=[];
+    if(raw.length>8)reasons.push("audit_history_limit_exceeded");
+    if(rows.length!==raw.length)reasons.push("audit_history_entry_invalid");
+    const eventIds=new Set(),exportIds=new Set();
+    let previous=null;
+    for(const row of rows){
+        if(eventIds.has(row.event_id))reasons.push("audit_event_duplicate");
+        if(exportIds.has(row.export_id))reasons.push("audit_export_replay");
+        eventIds.add(row.event_id);exportIds.add(row.export_id);
+        if(previous){
+            if(row.sequence!==previous.sequence+1)reasons.push("audit_sequence_gap");
+            if(row.previous_event_id!==previous.event_id)reasons.push("audit_previous_event_mismatch");
+            const prevAt=previous.generated_at?new Date(previous.generated_at).getTime():NaN;
+            const rowAt=row.generated_at?new Date(row.generated_at).getTime():NaN;
+            if(Number.isFinite(prevAt)&&Number.isFinite(rowAt)&&rowAt<prevAt)reasons.push("audit_time_reversal");
+        }else if(cleanAnchor){
+            if(row.previous_event_id!==cleanAnchor.event_id)reasons.push("audit_anchor_previous_event_mismatch");
+            if(row.sequence!==cleanAnchor.sequence+1)reasons.push("audit_anchor_sequence_mismatch");
+            const anchorAt=cleanAnchor.generated_at?new Date(cleanAnchor.generated_at).getTime():NaN;
+            const rowAt=row.generated_at?new Date(row.generated_at).getTime():NaN;
+            if(Number.isFinite(anchorAt)&&Number.isFinite(rowAt)&&rowAt<anchorAt)reasons.push("audit_anchor_time_reversal");
+        }else if(row.previous_event_id)reasons.push("audit_first_previous_event_present");
+        const prior=previous?[previous]:[];
+        const expected=streamSupportExportAuditEvent({export_id:row.export_id,generated_at:row.generated_at,snapshot:{snapshot_id:row.snapshot_id,integrity:{seal_id:row.snapshot_seal_id}}},prior);
+        if(previous&&expected.event_id!==row.event_id)reasons.push("audit_event_id_mismatch");
+        previous=row;
+    }
+    const expectedChain=streamSupportExportAuditChain(rows,cleanAnchor);
+    const chainId=String(chain?.chain_id||"");
+    if(!/^cfsah_[a-f0-9]{24}$/.test(chainId))reasons.push("audit_chain_id_invalid");
+    else if(chainId!==expectedChain.chain_id)reasons.push("audit_chain_mismatch");
+    if(Number(chain?.count)!==rows.length)reasons.push("audit_chain_count_mismatch");
+    if((chain?.anchor_event_id||null)!==(cleanAnchor?.event_id||null))reasons.push("audit_chain_anchor_mismatch");
+    if((chain?.anchor_prefix_id||null)!==(cleanAnchor?.prefix_id||null))reasons.push("audit_chain_anchor_prefix_mismatch");
+    if(cleanAnchor&&cleanAnchor.sequence>8&&!cleanAnchor.prefix_id)reasons.push("audit_anchor_prefix_missing");
+    if(chain?.server_derived!==true)reasons.push("audit_chain_server_derived_missing");
+    return{schema:2,status:reasons.length?"mismatch":"valid",valid:reasons.length===0,count:rows.length,anchor_event_id:cleanAnchor?.event_id||null,reasons:[...new Set(reasons)].slice(0,12),server_derived:true};
+}
+async function appendCreatorStreamSupportExportAudit(creatorId,exported={}){
+    return withCreatorResourceLock(creatorId,async client=>{
+        const result=await client.query(`SELECT id,stream_health FROM creator_live_bridges WHERE creator_id=$1 AND status='active' ORDER BY COALESCE(stream_health_at,last_seen_at,updated_at) DESC LIMIT 1 FOR UPDATE`,[creatorId]);
+        const row=result.rows[0];
+        if(!row)return{event:null,history:[],anchor:null,head:null,persisted:false};
+        const health=row.stream_health&&typeof row.stream_health==="object"&&!Array.isArray(row.stream_health)?row.stream_health:{};
+        const history=sanitizeStreamSupportExportAuditHistory(health.support_export_history||[]);
+        let anchor=sanitizeStreamSupportExportAuditAnchor(health.support_export_audit_anchor);
+        let head=sanitizeStreamSupportExportAuditHead(health.support_export_audit_head);
+        const existing=history.find(item=>item.export_id===String(exported.export_id||""));
+        if(existing)return{event:existing,history,anchor,head,persisted:true,replayed:true};
+        const event=streamSupportExportAuditEvent(exported,history,head);
+        const combined=[...history,event];
+        if(combined.length>8){
+            const dropped=combined[combined.length-9];
+            anchor={schema:2,event_id:dropped.event_id,sequence:dropped.sequence,generated_at:dropped.generated_at,prefix_id:streamSupportExportAuditAnchorPrefix(anchor,dropped),server_derived:true};
+        }
+        const next=combined.slice(-8);
+        head={schema:1,event_id:event.event_id,sequence:event.sequence,generated_at:event.generated_at,server_derived:true};
+        await client.query(`UPDATE creator_live_bridges SET stream_health=$3::jsonb,updated_at=NOW() WHERE id=$1 AND creator_id=$2`,[row.id,creatorId,JSON.stringify({...health,support_export_history:next,support_export_audit_anchor:anchor,support_export_audit_head:head})]);
+        return{event,history:next,anchor,head,persisted:true,replayed:false};
+    });
+}
+
+function streamSupportExportReplayClassification(exported={},history=[],auditEvent=null,replayed=false){
+    const source=exported&&typeof exported==="object"&&!Array.isArray(exported)?exported:{};
+    const rows=sanitizeStreamSupportExportAuditHistory(history);
+    const exportId=String(source.export_id||"");
+    const snapshotId=String(source.snapshot?.snapshot_id||"");
+    const matchingExport=rows.find(row=>row.export_id===exportId)||null;
+    const priorSameSnapshot=[...rows].reverse().find(row=>row.snapshot_id===snapshotId&&row.export_id!==exportId)||null;
+    const status=replayed===true||matchingExport?"exact_replay":(priorSameSnapshot?"repeat_snapshot":"new_export");
+    return{schema:1,status,replayed:status==="exact_replay",repeat_snapshot:status==="repeat_snapshot",prior_event_id:priorSameSnapshot?.event_id||matchingExport?.event_id||null,prior_sequence:priorSameSnapshot?.sequence||matchingExport?.sequence||0,current_event_id:/^cfsxa_[a-f0-9]{24}$/.test(String(auditEvent?.event_id||""))?String(auditEvent.event_id):null,server_derived:true};
+}
+function streamSupportExportId(exported={}){
+    const source=exported&&typeof exported==="object"&&!Array.isArray(exported)?exported:{};
+    const canonical=JSON.stringify({schema:2,generated_at:streamHealthTime(source.generated_at),snapshot_id:source.snapshot?.snapshot_id||null,snapshot_seal_id:source.snapshot?.integrity?.seal_id||null});
+    return "cfsex_"+crypto.createHash("sha256").update(`stream-support-export-v2|${canonical}`).digest("hex").slice(0,24);
+}
+function streamSupportExportTemporalIntegrity(exported={}){
+    const source=exported&&typeof exported==="object"&&!Array.isArray(exported)?exported:{};
+    const reasons=[];
+    const exportAt=streamHealthTime(source.generated_at),snapshotAt=streamHealthTime(source.snapshot?.generated_at);
+    if(!exportAt)reasons.push("export_generated_at_invalid");
+    if(!snapshotAt)reasons.push("snapshot_generated_at_invalid");
+    if(exportAt&&snapshotAt){
+        const delta=new Date(exportAt).getTime()-new Date(snapshotAt).getTime();
+        if(delta<0)reasons.push("export_before_snapshot");
+        if(delta>300000)reasons.push("export_snapshot_age_exceeded");
+    }
+    const exportId=String(source.export_id||"");
+    if(!/^cfsex_[a-f0-9]{24}$/.test(exportId))reasons.push("export_id_invalid");
+    else if(exportId!==streamSupportExportId(source))reasons.push("export_id_mismatch");
+    return{schema:1,status:reasons.length?"mismatch":"valid",valid:reasons.length===0,reasons:reasons.slice(0,8),server_derived:true};
+}
+function streamSupportCorrelationFingerprint(snapshot={}){
+    const source=snapshot&&typeof snapshot==="object"&&!Array.isArray(snapshot)?snapshot:{};
+    const evidence=source.evidence&&typeof source.evidence==="object"&&!Array.isArray(source.evidence)?source.evidence:{};
+    const incident=evidence.incident&&typeof evidence.incident==="object"&&!Array.isArray(evidence.incident)?evidence.incident:{};
+    const chain=evidence.incident_history_chain&&typeof evidence.incident_history_chain==="object"&&!Array.isArray(evidence.incident_history_chain)?evidence.incident_history_chain:{};
+    const canonical=JSON.stringify({schema:1,snapshot_id:source.snapshot_id||null,snapshot_seal_id:source.integrity?.seal_id||null,evidence_snapshot_id:evidence.snapshot_id||null,evidence_fingerprint:evidence.content_fingerprint||null,incident_id:incident.incident_id||null,incident_state:incident.state||null,history_chain_id:chain.chain_id||null,correlation_status:source.correlation_integrity?.status||null});
+    return{schema:1,algorithm:"sha256",fingerprint_id:"cfsec_"+crypto.createHash("sha256").update(`stream-support-correlation-fingerprint-v1|${canonical}`).digest("hex").slice(0,24),server_derived:true};
+}
+function streamSupportCorrelationFingerprintIntegrity(snapshot={}){
+    const source=snapshot&&typeof snapshot==="object"&&!Array.isArray(snapshot)?snapshot:{};
+    const fingerprint=source.correlation_fingerprint&&typeof source.correlation_fingerprint==="object"&&!Array.isArray(source.correlation_fingerprint)?source.correlation_fingerprint:{};
+    const reasons=[];
+    const id=String(fingerprint.fingerprint_id||"");
+    if(!/^cfsec_[a-f0-9]{24}$/.test(id))reasons.push("correlation_fingerprint_id_invalid");
+    const expected=streamSupportCorrelationFingerprint(source).fingerprint_id;
+    if(id&&id!==expected)reasons.push("correlation_fingerprint_mismatch");
+    if(fingerprint.server_derived!==true)reasons.push("correlation_fingerprint_server_derived_missing");
+    return{schema:1,status:reasons.length?"mismatch":"valid",valid:reasons.length===0,reasons:reasons.slice(0,8),server_derived:true};
+}
+function streamSupportProductionDiagnosticSummary(exported={}){
+    const source=exported&&typeof exported==="object"&&!Array.isArray(exported)?exported:{};
+    const snapshot=source.snapshot&&typeof source.snapshot==="object"&&!Array.isArray(source.snapshot)?source.snapshot:{};
+    const evidence=snapshot.evidence&&typeof snapshot.evidence==="object"&&!Array.isArray(snapshot.evidence)?snapshot.evidence:{};
+    const incident=evidence.incident&&typeof evidence.incident==="object"&&!Array.isArray(evidence.incident)?evidence.incident:{};
+    const failures=Array.isArray(snapshot.health?.failures)?snapshot.health.failures:[];
+    const evidenceAvailable=/^cfshs_[a-f0-9]{24}$/.test(String(evidence.snapshot_id||""));
+    const contractValid=source.verification?.valid===true&&source.temporal_integrity?.valid===true&&source.correlation_integrity?.valid===true&&source.correlation_fingerprint_integrity?.valid===true&&source.audit_history_integrity?.valid===true&&source.audit_history_head_integrity?.valid===true&&source.audit_history_continuity_integrity?.valid===true;
+    let status="ready";
+    if(!evidenceAvailable)status="unavailable";
+    else if(!contractValid)status="integrity_error";
+    else if(source.replay_classification?.status==="exact_replay")status="replay";
+    else if(String(snapshot.health?.verdict||"")!=="healthy"||["open"].includes(String(incident.state||"")))status="degraded";
+    return{schema:1,status,ready:status==="ready",health_verdict:String(snapshot.health?.verdict||"offline"),incident_state:String(incident.state||"clear"),failure_count:Math.min(20,failures.length),audit_sequence:Math.max(0,Math.round(Number(source.audit_history_head?.sequence||0))),replay_status:String(source.replay_classification?.status||"unknown"),evidence_available:evidenceAvailable,privacy_safe:source.privacy?.secrets_exposed===false&&source.privacy?.raw_media_exposed===false&&source.privacy?.machine_name_exposed===false,server_derived:true};
+}
+
+function sanitizeStreamProductionDiagnosticSummaryHistory(input=[]){
+    const rows=Array.isArray(input)?input:[];
+    return rows.slice(-8).map(row=>{
+        const item=row&&typeof row==="object"&&!Array.isArray(row)?row:{};
+        const summaryId=/^cfsds_[a-f0-9]{24}$/.test(String(item.summary_id||""))?String(item.summary_id):null;
+        const exportId=/^cfsex_[a-f0-9]{24}$/.test(String(item.export_id||""))?String(item.export_id):null;
+        const status=["ready","degraded","replay","integrity_error","unavailable"].includes(String(item.status||""))?String(item.status):null;
+        const auditSequence=Math.max(0,Math.min(1000000000,Math.round(Number(item.audit_sequence||0))));
+        if(!summaryId||!exportId||!status)return null;
+        return{schema:1,summary_id:summaryId,export_id:exportId,generated_at:streamHealthTime(item.generated_at),status,health_verdict:String(item.health_verdict||"offline").slice(0,24),incident_state:String(item.incident_state||"clear").slice(0,24),failure_count:Math.max(0,Math.min(20,Math.round(Number(item.failure_count||0)))),audit_sequence:auditSequence,evidence_available:item.evidence_available===true,privacy_safe:item.privacy_safe===true,server_derived:true};
+    }).filter(Boolean);
+}
+function streamProductionDiagnosticSummaryHistoryEntry(exported={}){
+    const source=exported&&typeof exported==="object"&&!Array.isArray(exported)?exported:{};
+    const summary=source.diagnostic_summary&&typeof source.diagnostic_summary==="object"&&!Array.isArray(source.diagnostic_summary)?source.diagnostic_summary:{};
+    const base={schema:1,export_id:String(source.export_id||""),generated_at:streamHealthTime(source.generated_at),status:String(summary.status||"unavailable"),health_verdict:String(summary.health_verdict||"offline"),incident_state:String(summary.incident_state||"clear"),failure_count:Math.max(0,Math.min(20,Math.round(Number(summary.failure_count||0)))),audit_sequence:Math.max(0,Math.min(1000000000,Math.round(Number(summary.audit_sequence||0)))),evidence_available:summary.evidence_available===true,privacy_safe:summary.privacy_safe===true};
+    const summaryId="cfsds_"+crypto.createHash("sha256").update(`stream-production-diagnostic-summary-history-v1|${JSON.stringify(base)}`).digest("hex").slice(0,24);
+    return{...base,summary_id:summaryId,server_derived:true};
+}
+async function appendCreatorStreamProductionDiagnosticSummaryHistory(creatorId,exported={}){
+    return withCreatorResourceLock(creatorId,async client=>{
+        const result=await client.query(`SELECT id,stream_health FROM creator_live_bridges WHERE creator_id=$1 AND status='active' ORDER BY COALESCE(stream_health_at,last_seen_at,updated_at) DESC LIMIT 1 FOR UPDATE`,[creatorId]);
+        const row=result.rows[0];
+        if(!row)return{history:[],entry:null,persisted:false};
+        const health=row.stream_health&&typeof row.stream_health==="object"&&!Array.isArray(row.stream_health)?row.stream_health:{};
+        const history=sanitizeStreamProductionDiagnosticSummaryHistory(health.production_diagnostic_summary_history||[]);
+        const entry=streamProductionDiagnosticSummaryHistoryEntry(exported);
+        const existing=history.find(item=>item.export_id===entry.export_id);
+        const next=(existing?history.map(item=>item.export_id===entry.export_id?entry:item):[...history,entry]).slice(-8);
+        await client.query(`UPDATE creator_live_bridges SET stream_health=$3::jsonb,updated_at=NOW() WHERE id=$1 AND creator_id=$2`,[row.id,creatorId,JSON.stringify({...health,production_diagnostic_summary_history:next})]);
+        return{history:next,entry,persisted:true};
+    });
+}
+
+
+function streamProductionDiagnosticTrend(history=[],current={}){
+    const rows=sanitizeStreamProductionDiagnosticSummaryHistory(history);
+    const item=current&&typeof current==="object"&&!Array.isArray(current)?current:{};
+    const previous=[...rows].reverse().find(row=>row.export_id!==String(item.export_id||""))||null;
+    const rank={ready:0,degraded:1,replay:1,unavailable:2,integrity_error:3};
+    const currentStatus=String(item.status||"unavailable");
+    const previousStatus=previous?String(previous.status||"unavailable"):"none";
+    let status=previous?"stable":"baseline";
+    if(previous){
+        const delta=(rank[currentStatus]??2)-(rank[previousStatus]??2);
+        if(delta>0)status="regressed";
+        else if(delta<0)status="recovered";
+        else if(Number(item.failure_count||0)>Number(previous.failure_count||0))status="regressed";
+        else if(Number(item.failure_count||0)<Number(previous.failure_count||0))status="improved";
+    }
+    return{schema:1,status,current_status:currentStatus,previous_status:previousStatus,current_failure_count:Math.max(0,Math.min(20,Math.round(Number(item.failure_count||0)))),previous_failure_count:previous?Math.max(0,Math.min(20,Math.round(Number(previous.failure_count||0)))):0,previous_summary_id:previous?.summary_id||null,previous_export_id:previous?.export_id||null,server_derived:true};
+}
+
+
+function streamProductionRuntimeAcceptanceMatrix(exported={}){
+    const source=exported&&typeof exported==="object"&&!Array.isArray(exported)?exported:{};
+    const snapshot=source.snapshot&&typeof source.snapshot==="object"&&!Array.isArray(source.snapshot)?source.snapshot:{};
+    const summary=source.diagnostic_summary&&typeof source.diagnostic_summary==="object"&&!Array.isArray(source.diagnostic_summary)?source.diagnostic_summary:{};
+    const trend=source.diagnostic_trend&&typeof source.diagnostic_trend==="object"&&!Array.isArray(source.diagnostic_trend)?source.diagnostic_trend:{};
+    const checks=[
+        {id:"diagnostic_chain",status:source.diagnostic_integrity?.valid===true?"pass":"fail"},
+        {id:"privacy_guard",status:summary.privacy_safe===true?"pass":"fail"},
+        {id:"live_evidence",status:summary.evidence_available===true?"pass":"unavailable"},
+        {id:"runtime_health",status:summary.health_verdict==="healthy"?"pass":(summary.health_verdict==="offline"?"unavailable":"open")},
+        {id:"incident_state",status:["clear","recovered","closed"].includes(String(summary.incident_state||""))?"pass":"open"},
+        {id:"audit_continuity",status:source.audit_history_continuity_integrity?.valid===true?"pass":"fail"},
+        {id:"export_replay",status:source.replay_classification?.status==="exact_replay"?"open":"pass"},
+        {id:"diagnostic_trend",status:trend.status==="regressed"?"open":"pass"}
+    ];
+    const fail=checks.filter(row=>row.status==="fail").length,open=checks.filter(row=>row.status==="open").length,unavailable=checks.filter(row=>row.status==="unavailable").length,passed=checks.filter(row=>row.status==="pass").length;
+    const status=fail?"fail":(open||unavailable?"open":"pass");
+    return{schema:1,status,pass_count:passed,open_count:open,fail_count:fail,unavailable_count:unavailable,checks,scope:"local_runtime_evidence_only",external_acceptance_claimed:false,server_derived:true};
+}
+
+
+function sanitizeStreamRuntimeAcceptanceHistory(input=[]){
+    const rows=Array.isArray(input)?input:[];
+    return rows.slice(-8).map(row=>{
+        const item=row&&typeof row==="object"&&!Array.isArray(row)?row:{};
+        const acceptanceId=/^cfsam_[a-f0-9]{24}$/.test(String(item.acceptance_id||""))?String(item.acceptance_id):null;
+        const exportId=/^cfsex_[a-f0-9]{24}$/.test(String(item.export_id||""))?String(item.export_id):null;
+        const status=["pass","open","fail"].includes(String(item.status||""))?String(item.status):null;
+        if(!acceptanceId||!exportId||!status)return null;
+        return{schema:1,acceptance_id:acceptanceId,export_id:exportId,generated_at:streamHealthTime(item.generated_at),status,pass_count:Math.max(0,Math.min(16,Math.round(Number(item.pass_count||0)))),open_count:Math.max(0,Math.min(16,Math.round(Number(item.open_count||0)))),fail_count:Math.max(0,Math.min(16,Math.round(Number(item.fail_count||0)))),unavailable_count:Math.max(0,Math.min(16,Math.round(Number(item.unavailable_count||0)))),scope:"local_runtime_evidence_only",external_acceptance_claimed:false,server_derived:true};
+    }).filter(Boolean);
+}
+function streamRuntimeAcceptanceHistoryEntry(exported={}){
+    const source=exported&&typeof exported==="object"&&!Array.isArray(exported)?exported:{};
+    const matrix=source.runtime_acceptance_matrix&&typeof source.runtime_acceptance_matrix==="object"&&!Array.isArray(source.runtime_acceptance_matrix)?source.runtime_acceptance_matrix:{};
+    const base={schema:1,export_id:String(source.export_id||""),generated_at:streamHealthTime(source.generated_at),status:String(matrix.status||"open"),pass_count:Math.max(0,Math.min(16,Math.round(Number(matrix.pass_count||0)))),open_count:Math.max(0,Math.min(16,Math.round(Number(matrix.open_count||0)))),fail_count:Math.max(0,Math.min(16,Math.round(Number(matrix.fail_count||0)))),unavailable_count:Math.max(0,Math.min(16,Math.round(Number(matrix.unavailable_count||0)))),scope:"local_runtime_evidence_only",external_acceptance_claimed:false};
+    const acceptanceId="cfsam_"+crypto.createHash("sha256").update(`stream-runtime-acceptance-history-v1|${JSON.stringify(base)}`).digest("hex").slice(0,24);
+    return{...base,acceptance_id:acceptanceId,server_derived:true};
+}
+async function appendCreatorStreamRuntimeAcceptanceHistory(creatorId,exported={}){
+    return withCreatorResourceLock(creatorId,async client=>{
+        const result=await client.query(`SELECT id,stream_health FROM creator_live_bridges WHERE creator_id=$1 AND status='active' ORDER BY COALESCE(stream_health_at,last_seen_at,updated_at) DESC LIMIT 1 FOR UPDATE`,[creatorId]);
+        const row=result.rows[0];
+        if(!row)return{history:[],entry:null,persisted:false};
+        const health=row.stream_health&&typeof row.stream_health==="object"&&!Array.isArray(row.stream_health)?row.stream_health:{};
+        const history=sanitizeStreamRuntimeAcceptanceHistory(health.runtime_acceptance_history||[]);
+        const entry=streamRuntimeAcceptanceHistoryEntry(exported);
+        const existing=history.find(item=>item.export_id===entry.export_id);
+        const next=(existing?history.map(item=>item.export_id===entry.export_id?entry:item):[...history,entry]).slice(-8);
+        await client.query(`UPDATE creator_live_bridges SET stream_health=$3::jsonb,updated_at=NOW() WHERE id=$1 AND creator_id=$2`,[row.id,creatorId,JSON.stringify({...health,runtime_acceptance_history:next})]);
+        return{history:next,entry,persisted:true};
+    });
+}
+
+
+function streamRuntimeAcceptanceTrend(history=[],current={}){
+    const rows=sanitizeStreamRuntimeAcceptanceHistory(history);
+    const item=current&&typeof current==="object"&&!Array.isArray(current)?current:{};
+    const previous=[...rows].reverse().find(row=>row.export_id!==String(item.export_id||""))||null;
+    const rank={pass:0,open:1,fail:2};
+    const currentStatus=["pass","open","fail"].includes(String(item.status||""))?String(item.status):"open";
+    const previousStatus=previous?String(previous.status||"open"):"none";
+    let status=previous?"stable":"baseline";
+    if(previous){
+        const delta=(rank[currentStatus]??1)-(rank[previousStatus]??1);
+        if(delta>0)status="regressed";
+        else if(delta<0)status="recovered";
+        else if(Number(item.fail_count||0)>Number(previous.fail_count||0)||Number(item.open_count||0)>Number(previous.open_count||0))status="regressed";
+        else if(Number(item.fail_count||0)<Number(previous.fail_count||0)||Number(item.open_count||0)<Number(previous.open_count||0))status="improved";
+    }
+    return{schema:1,status,current_status:currentStatus,previous_status:previousStatus,current_fail_count:Math.max(0,Math.min(16,Math.round(Number(item.fail_count||0)))),previous_fail_count:previous?previous.fail_count:0,current_open_count:Math.max(0,Math.min(16,Math.round(Number(item.open_count||0)))),previous_open_count:previous?previous.open_count:0,previous_acceptance_id:previous?.acceptance_id||null,previous_export_id:previous?.export_id||null,scope:"local_runtime_evidence_only",external_acceptance_claimed:false,server_derived:true};
+}
+
+
+function streamRuntimeReleaseGate(exported={}){
+    const source=exported&&typeof exported==="object"&&!Array.isArray(exported)?exported:{};
+    const matrix=source.runtime_acceptance_matrix&&typeof source.runtime_acceptance_matrix==="object"&&!Array.isArray(source.runtime_acceptance_matrix)?source.runtime_acceptance_matrix:{};
+    const trend=source.runtime_acceptance_trend&&typeof source.runtime_acceptance_trend==="object"&&!Array.isArray(source.runtime_acceptance_trend)?source.runtime_acceptance_trend:{};
+    const diagnosticValid=source.diagnostic_integrity?.valid===true;
+    let status="ready";
+    const reasons=[];
+    if(!diagnosticValid){status="blocked";reasons.push("diagnostic_integrity_invalid");}
+    else if(matrix.status==="fail"){status="blocked";reasons.push("runtime_acceptance_failed");}
+    else if(matrix.status!=="pass"){status="open";reasons.push("runtime_acceptance_open");}
+    if(trend.status==="regressed"&&status==="ready"){status="open";reasons.push("runtime_acceptance_regressed");}
+    return{schema:1,status,ready:status==="ready",reasons:reasons.slice(0,8),runtime_acceptance_status:String(matrix.status||"open"),runtime_acceptance_trend:String(trend.status||"baseline"),diagnostic_integrity_valid:diagnosticValid,scope:"local_runtime_release_gate_only",external_acceptance_claimed:false,external_acceptance_status:"open",server_derived:true};
+}
+
+
+function sanitizeStreamRuntimeReleaseGateHistory(input=[]){
+    const rows=Array.isArray(input)?input:[];
+    return rows.slice(-8).map(row=>{
+        const item=row&&typeof row==="object"&&!Array.isArray(row)?row:{};
+        const gateId=/^cfsrg_[a-f0-9]{24}$/.test(String(item.gate_id||""))?String(item.gate_id):null;
+        const exportId=/^cfsex_[a-f0-9]{24}$/.test(String(item.export_id||""))?String(item.export_id):null;
+        const status=["ready","open","blocked"].includes(String(item.status||""))?String(item.status):null;
+        if(!gateId||!exportId||!status)return null;
+        return{schema:1,gate_id:gateId,export_id:exportId,generated_at:streamHealthTime(item.generated_at),status,reason_count:Math.max(0,Math.min(8,Math.round(Number(item.reason_count||0)))),runtime_acceptance_status:["pass","open","fail"].includes(String(item.runtime_acceptance_status||""))?String(item.runtime_acceptance_status):"open",runtime_acceptance_trend:["baseline","stable","improved","recovered","regressed"].includes(String(item.runtime_acceptance_trend||""))?String(item.runtime_acceptance_trend):"baseline",scope:"local_runtime_release_gate_only",external_acceptance_claimed:false,external_acceptance_status:"open",server_derived:true};
+    }).filter(Boolean);
+}
+function streamRuntimeReleaseGateHistoryEntry(exported={}){
+    const source=exported&&typeof exported==="object"&&!Array.isArray(exported)?exported:{};
+    const gate=source.runtime_release_gate&&typeof source.runtime_release_gate==="object"&&!Array.isArray(source.runtime_release_gate)?source.runtime_release_gate:{};
+    const base={schema:1,export_id:String(source.export_id||""),generated_at:streamHealthTime(source.generated_at),status:["ready","open","blocked"].includes(String(gate.status||""))?String(gate.status):"open",reason_count:Array.isArray(gate.reasons)?Math.min(8,gate.reasons.length):0,runtime_acceptance_status:String(gate.runtime_acceptance_status||"open"),runtime_acceptance_trend:String(gate.runtime_acceptance_trend||"baseline"),scope:"local_runtime_release_gate_only",external_acceptance_claimed:false,external_acceptance_status:"open"};
+    const gateId="cfsrg_"+crypto.createHash("sha256").update(`stream-runtime-release-gate-history-v1|${JSON.stringify(base)}`).digest("hex").slice(0,24);
+    return{...base,gate_id:gateId,server_derived:true};
+}
+async function appendCreatorStreamRuntimeReleaseGateHistory(creatorId,exported={}){
+    return withCreatorResourceLock(creatorId,async client=>{
+        const result=await client.query(`SELECT id,stream_health FROM creator_live_bridges WHERE creator_id=$1 AND status='active' ORDER BY COALESCE(stream_health_at,last_seen_at,updated_at) DESC LIMIT 1 FOR UPDATE`,[creatorId]);
+        const row=result.rows[0];
+        if(!row)return{history:[],entry:null,persisted:false};
+        const health=row.stream_health&&typeof row.stream_health==="object"&&!Array.isArray(row.stream_health)?row.stream_health:{};
+        const history=sanitizeStreamRuntimeReleaseGateHistory(health.runtime_release_gate_history||[]);
+        const entry=streamRuntimeReleaseGateHistoryEntry(exported);
+        const existing=history.find(item=>item.export_id===entry.export_id);
+        const next=(existing?history.map(item=>item.export_id===entry.export_id?entry:item):[...history,entry]).slice(-8);
+        await client.query(`UPDATE creator_live_bridges SET stream_health=$3::jsonb,updated_at=NOW() WHERE id=$1 AND creator_id=$2`,[row.id,creatorId,JSON.stringify({...health,runtime_release_gate_history:next})]);
+        return{history:next,entry,persisted:true};
+    });
+}
+
+
+function streamRuntimeReleaseGateTrend(history=[],current={}){
+    const rows=sanitizeStreamRuntimeReleaseGateHistory(history);
+    const item=current&&typeof current==="object"&&!Array.isArray(current)?current:{};
+    const previous=[...rows].reverse().find(row=>row.export_id!==String(item.export_id||""))||null;
+    const rank={ready:0,open:1,blocked:2};
+    const currentStatus=["ready","open","blocked"].includes(String(item.status||""))?String(item.status):"open";
+    const previousStatus=previous?String(previous.status||"open"):"none";
+    let status=previous?"stable":"baseline";
+    if(previous){
+        const delta=(rank[currentStatus]??1)-(rank[previousStatus]??1);
+        if(delta>0)status="regressed";
+        else if(delta<0)status=previousStatus==="blocked"?"recovered":"improved";
+        else if(Number(item.reason_count||0)>Number(previous.reason_count||0))status="regressed";
+        else if(Number(item.reason_count||0)<Number(previous.reason_count||0))status="improved";
+    }
+    return{schema:1,status,current_status:currentStatus,previous_status:previousStatus,current_reason_count:Math.max(0,Math.min(8,Math.round(Number(item.reason_count||0)))),previous_reason_count:previous?previous.reason_count:0,previous_gate_id:previous?.gate_id||null,previous_export_id:previous?.export_id||null,scope:"local_runtime_release_gate_only",external_acceptance_claimed:false,external_acceptance_status:"open",server_derived:true};
+}
+
+
+function streamRuntimeAcceptanceDecision(exported={}){
+    const source=exported&&typeof exported==="object"&&!Array.isArray(exported)?exported:{};
+    const gate=source.runtime_release_gate&&typeof source.runtime_release_gate==="object"&&!Array.isArray(source.runtime_release_gate)?source.runtime_release_gate:{};
+    const trend=source.runtime_release_gate_trend&&typeof source.runtime_release_gate_trend==="object"&&!Array.isArray(source.runtime_release_gate_trend)?source.runtime_release_gate_trend:{};
+    const matrix=source.runtime_acceptance_matrix&&typeof source.runtime_acceptance_matrix==="object"&&!Array.isArray(source.runtime_acceptance_matrix)?source.runtime_acceptance_matrix:{};
+    const diagnosticValid=source.diagnostic_integrity?.valid===true;
+    let status="eligible";
+    const reasons=[];
+    if(!diagnosticValid||gate.status==="blocked"||matrix.status==="fail"){status="blocked";if(!diagnosticValid)reasons.push("diagnostic_integrity_invalid");if(gate.status==="blocked")reasons.push("local_release_gate_blocked");if(matrix.status==="fail")reasons.push("runtime_acceptance_failed");}
+    else if(gate.status!=="ready"||matrix.status!=="pass"||trend.status==="regressed"){status="open";if(gate.status!=="ready")reasons.push("local_release_gate_open");if(matrix.status!=="pass")reasons.push("runtime_acceptance_open");if(trend.status==="regressed")reasons.push("release_gate_regressed");}
+    const base={schema:1,status,eligible:status==="eligible",reasons:reasons.slice(0,8),runtime_release_gate_status:String(gate.status||"open"),runtime_release_gate_trend:String(trend.status||"baseline"),runtime_acceptance_status:String(matrix.status||"open"),diagnostic_integrity_valid:diagnosticValid,scope:"local_runtime_acceptance_decision_only",requires_external_acceptance:true,external_acceptance_claimed:false,external_acceptance_status:"open"};
+    const decisionId="cfsad_"+crypto.createHash("sha256").update(`stream-runtime-acceptance-decision-v1|${JSON.stringify(base)}`).digest("hex").slice(0,24);
+    return{...base,decision_id:decisionId,server_derived:true};
+}
+
+
+function sanitizeStreamRuntimeAcceptanceDecisionHistory(input=[]){
+    const rows=Array.isArray(input)?input:[];
+    return rows.slice(-8).map(row=>{
+        const item=row&&typeof row==="object"&&!Array.isArray(row)?row:{};
+        const decisionId=/^cfsad_[a-f0-9]{24}$/.test(String(item.decision_id||""))?String(item.decision_id):null;
+        const exportId=/^cfsex_[a-f0-9]{24}$/.test(String(item.export_id||""))?String(item.export_id):null;
+        const status=["eligible","open","blocked"].includes(String(item.status||""))?String(item.status):null;
+        if(!decisionId||!exportId||!status)return null;
+        return{schema:1,decision_id:decisionId,export_id:exportId,generated_at:streamHealthTime(item.generated_at),status,reason_count:Math.max(0,Math.min(8,Math.round(Number(item.reason_count||0)))),runtime_release_gate_status:String(item.runtime_release_gate_status||"open").slice(0,16),runtime_acceptance_status:String(item.runtime_acceptance_status||"open").slice(0,16),scope:"local_runtime_acceptance_decision_only",requires_external_acceptance:true,external_acceptance_claimed:false,external_acceptance_status:"open",server_derived:true};
+    }).filter(Boolean);
+}
+function streamRuntimeAcceptanceDecisionHistoryEntry(exported={}){
+    const source=exported&&typeof exported==="object"&&!Array.isArray(exported)?exported:{};
+    const decision=source.runtime_acceptance_decision&&typeof source.runtime_acceptance_decision==="object"&&!Array.isArray(source.runtime_acceptance_decision)?source.runtime_acceptance_decision:{};
+    return{schema:1,decision_id:String(decision.decision_id||""),export_id:String(source.export_id||""),generated_at:streamHealthTime(source.generated_at),status:String(decision.status||"open"),reason_count:Math.max(0,Math.min(8,Array.isArray(decision.reasons)?decision.reasons.length:0)),runtime_release_gate_status:String(decision.runtime_release_gate_status||"open"),runtime_acceptance_status:String(decision.runtime_acceptance_status||"open"),scope:"local_runtime_acceptance_decision_only",requires_external_acceptance:true,external_acceptance_claimed:false,external_acceptance_status:"open",server_derived:true};
+}
+async function appendCreatorStreamRuntimeAcceptanceDecisionHistory(creatorId,exported={}){
+    return withCreatorResourceLock(creatorId,async client=>{
+        const result=await client.query(`SELECT id,stream_health FROM creator_live_bridges WHERE creator_id=$1 AND status='active' ORDER BY COALESCE(stream_health_at,last_seen_at,updated_at) DESC LIMIT 1 FOR UPDATE`,[creatorId]);
+        const row=result.rows[0];
+        if(!row)return{history:[],entry:null,persisted:false};
+        const health=row.stream_health&&typeof row.stream_health==="object"&&!Array.isArray(row.stream_health)?row.stream_health:{};
+        const history=sanitizeStreamRuntimeAcceptanceDecisionHistory(health.runtime_acceptance_decision_history||[]);
+        const entry=streamRuntimeAcceptanceDecisionHistoryEntry(exported);
+        const existing=history.find(item=>item.export_id===entry.export_id);
+        const next=(existing?history.map(item=>item.export_id===entry.export_id?entry:item):[...history,entry]).slice(-8);
+        await client.query(`UPDATE creator_live_bridges SET stream_health=$3::jsonb,updated_at=NOW() WHERE id=$1 AND creator_id=$2`,[row.id,creatorId,JSON.stringify({...health,runtime_acceptance_decision_history:next})]);
+        return{history:next,entry,persisted:true};
+    });
+}
+
+
+function streamRuntimeAcceptanceDecisionTrend(history=[],current={}){
+    const rows=sanitizeStreamRuntimeAcceptanceDecisionHistory(history);
+    const item=current&&typeof current==="object"&&!Array.isArray(current)?current:{};
+    const previous=[...rows].reverse().find(row=>row.export_id!==String(item.export_id||""))||null;
+    const rank={eligible:0,open:1,blocked:2};
+    const currentStatus=["eligible","open","blocked"].includes(String(item.status||""))?String(item.status):"open";
+    const previousStatus=previous?String(previous.status||"open"):"none";
+    let status=previous?"stable":"baseline";
+    if(previous){
+        const delta=(rank[currentStatus]??1)-(rank[previousStatus]??1);
+        if(delta>0)status="regressed";
+        else if(delta<0)status=previousStatus==="blocked"?"recovered":"improved";
+        else if(Number(item.reason_count||0)>Number(previous.reason_count||0))status="regressed";
+        else if(Number(item.reason_count||0)<Number(previous.reason_count||0))status="improved";
+    }
+    return{schema:1,status,current_status:currentStatus,previous_status:previousStatus,current_reason_count:Math.max(0,Math.min(8,Math.round(Number(item.reason_count||0)))),previous_reason_count:previous?previous.reason_count:0,previous_decision_id:previous?.decision_id||null,previous_export_id:previous?.export_id||null,scope:"local_runtime_acceptance_decision_only",requires_external_acceptance:true,external_acceptance_claimed:false,external_acceptance_status:"open",server_derived:true};
+}
+
+
+function streamRuntimeReadinessEnvelope(exported={}){
+    const source=exported&&typeof exported==="object"&&!Array.isArray(exported)?exported:{};
+    const decision=source.runtime_acceptance_decision&&typeof source.runtime_acceptance_decision==="object"&&!Array.isArray(source.runtime_acceptance_decision)?source.runtime_acceptance_decision:{};
+    const trend=source.runtime_acceptance_decision_trend&&typeof source.runtime_acceptance_decision_trend==="object"&&!Array.isArray(source.runtime_acceptance_decision_trend)?source.runtime_acceptance_decision_trend:{};
+    const gate=source.runtime_release_gate&&typeof source.runtime_release_gate==="object"&&!Array.isArray(source.runtime_release_gate)?source.runtime_release_gate:{};
+    const matrix=source.runtime_acceptance_matrix&&typeof source.runtime_acceptance_matrix==="object"&&!Array.isArray(source.runtime_acceptance_matrix)?source.runtime_acceptance_matrix:{};
+    const diagnosticValid=source.diagnostic_integrity?.valid===true;
+    let status="eligible";const reasons=[];
+    if(!diagnosticValid||decision.status==="blocked"||gate.status==="blocked"||matrix.status==="fail"){status="blocked";if(!diagnosticValid)reasons.push("diagnostic_integrity_invalid");if(decision.status==="blocked")reasons.push("acceptance_decision_blocked");if(gate.status==="blocked")reasons.push("release_gate_blocked");if(matrix.status==="fail")reasons.push("runtime_acceptance_failed");}
+    else if(decision.status!=="eligible"||gate.status!=="ready"||matrix.status!=="pass"||trend.status==="regressed"){status="open";if(decision.status!=="eligible")reasons.push("acceptance_decision_open");if(gate.status!=="ready")reasons.push("release_gate_open");if(matrix.status!=="pass")reasons.push("runtime_acceptance_open");if(trend.status==="regressed")reasons.push("acceptance_decision_regressed");}
+    const base={schema:1,status,eligible:status==="eligible",reasons:reasons.slice(0,8),decision_status:String(decision.status||"open"),decision_trend:String(trend.status||"baseline"),release_gate_status:String(gate.status||"open"),runtime_acceptance_status:String(matrix.status||"open"),diagnostic_integrity_valid:diagnosticValid,scope:"local_runtime_readiness_envelope_only",requires_external_acceptance:true,external_acceptance_claimed:false,external_acceptance_status:"open",production_ready_claimed:false};
+    const envelopeId="cfsen_"+crypto.createHash("sha256").update(`stream-runtime-readiness-envelope-v1|${JSON.stringify(base)}`).digest("hex").slice(0,24);
+    return{...base,envelope_id:envelopeId,server_derived:true};
+}
+
+
+function sanitizeStreamRuntimeReadinessEnvelopeHistory(input=[]){
+    const rows=Array.isArray(input)?input:[];
+    return rows.slice(-8).map(row=>{
+        const item=row&&typeof row==="object"&&!Array.isArray(row)?row:{};
+        const envelopeId=/^cfsen_[a-f0-9]{24}$/.test(String(item.envelope_id||""))?String(item.envelope_id):null;
+        const historyId=/^cfseh_[a-f0-9]{24}$/.test(String(item.history_id||""))?String(item.history_id):null;
+        const exportId=/^cfsex_[a-f0-9]{24}$/.test(String(item.export_id||""))?String(item.export_id):null;
+        const status=["eligible","open","blocked"].includes(String(item.status||""))?String(item.status):null;
+        if(!envelopeId||!historyId||!exportId||!status)return null;
+        return{schema:1,history_id:historyId,envelope_id:envelopeId,export_id:exportId,generated_at:streamHealthTime(item.generated_at),status,reason_count:Math.max(0,Math.min(8,Math.round(Number(item.reason_count||0)))),decision_status:["eligible","open","blocked"].includes(String(item.decision_status||""))?String(item.decision_status):"open",release_gate_status:["ready","open","blocked"].includes(String(item.release_gate_status||""))?String(item.release_gate_status):"open",runtime_acceptance_status:["pass","open","fail"].includes(String(item.runtime_acceptance_status||""))?String(item.runtime_acceptance_status):"open",scope:"local_runtime_readiness_envelope_only",requires_external_acceptance:true,external_acceptance_claimed:false,external_acceptance_status:"open",production_ready_claimed:false,server_derived:true};
+    }).filter(Boolean);
+}
+function streamRuntimeReadinessEnvelopeHistoryEntry(exported={}){
+    const source=exported&&typeof exported==="object"&&!Array.isArray(exported)?exported:{};
+    const envelope=source.runtime_readiness_envelope&&typeof source.runtime_readiness_envelope==="object"&&!Array.isArray(source.runtime_readiness_envelope)?source.runtime_readiness_envelope:{};
+    const base={schema:1,envelope_id:String(envelope.envelope_id||""),export_id:String(source.export_id||""),generated_at:streamHealthTime(source.generated_at),status:["eligible","open","blocked"].includes(String(envelope.status||""))?String(envelope.status):"open",reason_count:Array.isArray(envelope.reasons)?Math.min(8,envelope.reasons.length):0,decision_status:String(envelope.decision_status||"open"),release_gate_status:String(envelope.release_gate_status||"open"),runtime_acceptance_status:String(envelope.runtime_acceptance_status||"open"),scope:"local_runtime_readiness_envelope_only",requires_external_acceptance:true,external_acceptance_claimed:false,external_acceptance_status:"open",production_ready_claimed:false};
+    const historyId="cfseh_"+crypto.createHash("sha256").update(`stream-runtime-readiness-envelope-history-v1|${JSON.stringify(base)}`).digest("hex").slice(0,24);
+    return{...base,history_id:historyId,server_derived:true};
+}
+async function appendCreatorStreamRuntimeReadinessEnvelopeHistory(creatorId,exported={}){
+    return withCreatorResourceLock(creatorId,async client=>{
+        const result=await client.query(`SELECT id,stream_health FROM creator_live_bridges WHERE creator_id=$1 AND status='active' ORDER BY COALESCE(stream_health_at,last_seen_at,updated_at) DESC LIMIT 1 FOR UPDATE`,[creatorId]);
+        const row=result.rows[0];
+        if(!row)return{history:[],entry:null,persisted:false};
+        const health=row.stream_health&&typeof row.stream_health==="object"&&!Array.isArray(row.stream_health)?row.stream_health:{};
+        const history=sanitizeStreamRuntimeReadinessEnvelopeHistory(health.runtime_readiness_envelope_history||[]);
+        const entry=streamRuntimeReadinessEnvelopeHistoryEntry(exported);
+        const existing=history.find(item=>item.export_id===entry.export_id);
+        const next=(existing?history.map(item=>item.export_id===entry.export_id?entry:item):[...history,entry]).slice(-8);
+        await client.query(`UPDATE creator_live_bridges SET stream_health=$3::jsonb,updated_at=NOW() WHERE id=$1 AND creator_id=$2`,[row.id,creatorId,JSON.stringify({...health,runtime_readiness_envelope_history:next})]);
+        return{history:next,entry,persisted:true};
+    });
+}
+
+
+function streamRuntimeReadinessEnvelopeTrend(history=[],current={}){
+    const rows=sanitizeStreamRuntimeReadinessEnvelopeHistory(history);
+    const item=current&&typeof current==="object"&&!Array.isArray(current)?current:{};
+    const previous=[...rows].reverse().find(row=>row.export_id!==String(item.export_id||""))||null;
+    const rank={eligible:0,open:1,blocked:2};
+    const currentStatus=["eligible","open","blocked"].includes(String(item.status||""))?String(item.status):"open";
+    const previousStatus=previous?String(previous.status||"open"):"none";
+    let status=previous?"stable":"baseline";
+    if(previous){
+        const delta=(rank[currentStatus]??1)-(rank[previousStatus]??1);
+        if(delta>0)status="regressed";
+        else if(delta<0)status=previousStatus==="blocked"?"recovered":"improved";
+        else if(Number(item.reason_count||0)>Number(previous.reason_count||0))status="regressed";
+        else if(Number(item.reason_count||0)<Number(previous.reason_count||0))status="improved";
+    }
+    return{schema:1,status,current_status:currentStatus,previous_status:previousStatus,current_reason_count:Math.max(0,Math.min(8,Math.round(Number(item.reason_count||0)))),previous_reason_count:previous?previous.reason_count:0,previous_history_id:previous?.history_id||null,previous_envelope_id:previous?.envelope_id||null,previous_export_id:previous?.export_id||null,scope:"local_runtime_readiness_envelope_only",requires_external_acceptance:true,external_acceptance_claimed:false,external_acceptance_status:"open",production_ready_claimed:false,server_derived:true};
+}
+
+
+function streamRuntimeReadinessAttestation(exported={}){
+    const source=exported&&typeof exported==="object"&&!Array.isArray(exported)?exported:{};
+    const envelope=source.runtime_readiness_envelope&&typeof source.runtime_readiness_envelope==="object"&&!Array.isArray(source.runtime_readiness_envelope)?source.runtime_readiness_envelope:{};
+    const trend=source.runtime_readiness_envelope_trend&&typeof source.runtime_readiness_envelope_trend==="object"&&!Array.isArray(source.runtime_readiness_envelope_trend)?source.runtime_readiness_envelope_trend:{};
+    const decision=source.runtime_acceptance_decision&&typeof source.runtime_acceptance_decision==="object"&&!Array.isArray(source.runtime_acceptance_decision)?source.runtime_acceptance_decision:{};
+    const gate=source.runtime_release_gate&&typeof source.runtime_release_gate==="object"&&!Array.isArray(source.runtime_release_gate)?source.runtime_release_gate:{};
+    const matrix=source.runtime_acceptance_matrix&&typeof source.runtime_acceptance_matrix==="object"&&!Array.isArray(source.runtime_acceptance_matrix)?source.runtime_acceptance_matrix:{};
+    const diagnosticValid=source.diagnostic_integrity?.valid===true;
+    let status="eligible";const reasons=[];
+    if(!diagnosticValid||envelope.status==="blocked"||decision.status==="blocked"||gate.status==="blocked"||matrix.status==="fail"){status="blocked";if(!diagnosticValid)reasons.push("diagnostic_integrity_invalid");if(envelope.status==="blocked")reasons.push("readiness_envelope_blocked");if(decision.status==="blocked")reasons.push("acceptance_decision_blocked");if(gate.status==="blocked")reasons.push("release_gate_blocked");if(matrix.status==="fail")reasons.push("runtime_acceptance_failed");}
+    else if(envelope.status!=="eligible"||trend.status==="regressed"||decision.status!=="eligible"||gate.status!=="ready"||matrix.status!=="pass"){status="open";if(envelope.status!=="eligible")reasons.push("readiness_envelope_open");if(trend.status==="regressed")reasons.push("readiness_envelope_regressed");if(decision.status!=="eligible")reasons.push("acceptance_decision_open");if(gate.status!=="ready")reasons.push("release_gate_open");if(matrix.status!=="pass")reasons.push("runtime_acceptance_open");}
+    const base={schema:1,status,eligible:status==="eligible",reasons:reasons.slice(0,8),envelope_id:String(envelope.envelope_id||""),envelope_status:String(envelope.status||"open"),envelope_trend:String(trend.status||"baseline"),decision_status:String(decision.status||"open"),release_gate_status:String(gate.status||"open"),runtime_acceptance_status:String(matrix.status||"open"),diagnostic_integrity_valid:diagnosticValid,scope:"local_runtime_readiness_attestation_only",requires_external_acceptance:true,external_acceptance_claimed:false,external_acceptance_status:"open",production_ready_claimed:false,server_derived:true};
+    const attestationId="cfsat_"+crypto.createHash("sha256").update(`stream-runtime-readiness-attestation-v1|${JSON.stringify(base)}`).digest("hex").slice(0,24);
+    return{...base,attestation_id:attestationId};
+}
+
+
+function sanitizeStreamRuntimeReadinessAttestationHistory(input=[]){
+    const rows=Array.isArray(input)?input:[];
+    return rows.slice(-8).map(row=>{
+        const item=row&&typeof row==="object"&&!Array.isArray(row)?row:{};
+        const historyId=/^cfsath_[a-f0-9]{24}$/.test(String(item.history_id||""))?String(item.history_id):null;
+        const attestationId=/^cfsat_[a-f0-9]{24}$/.test(String(item.attestation_id||""))?String(item.attestation_id):null;
+        const exportId=/^cfsex_[a-f0-9]{24}$/.test(String(item.export_id||""))?String(item.export_id):null;
+        const status=["eligible","open","blocked"].includes(String(item.status||""))?String(item.status):null;
+        if(!historyId||!attestationId||!exportId||!status)return null;
+        return{schema:1,history_id:historyId,attestation_id:attestationId,export_id:exportId,generated_at:streamHealthTime(item.generated_at),status,reason_count:Math.max(0,Math.min(8,Math.round(Number(item.reason_count||0)))),scope:"local_runtime_readiness_attestation_only",requires_external_acceptance:true,external_acceptance_claimed:false,external_acceptance_status:"open",production_ready_claimed:false,server_derived:true};
+    }).filter(Boolean);
+}
+function streamRuntimeReadinessAttestationHistoryEntry(exported={}){
+    const source=exported&&typeof exported==="object"&&!Array.isArray(exported)?exported:{};
+    const attestation=source.runtime_readiness_attestation&&typeof source.runtime_readiness_attestation==="object"&&!Array.isArray(source.runtime_readiness_attestation)?source.runtime_readiness_attestation:{};
+    const base={schema:1,attestation_id:String(attestation.attestation_id||""),export_id:String(source.export_id||""),generated_at:streamHealthTime(source.generated_at),status:["eligible","open","blocked"].includes(String(attestation.status||""))?String(attestation.status):"open",reason_count:Math.max(0,Math.min(8,Array.isArray(attestation.reasons)?attestation.reasons.length:0)),scope:"local_runtime_readiness_attestation_only",requires_external_acceptance:true,external_acceptance_claimed:false,external_acceptance_status:"open",production_ready_claimed:false};
+    return{...base,history_id:"cfsath_"+crypto.createHash("sha256").update(`stream-runtime-readiness-attestation-history-v1|${JSON.stringify(base)}`).digest("hex").slice(0,24),server_derived:true};
+}
+async function appendCreatorStreamRuntimeReadinessAttestationHistory(creatorId,exported={}){
+    return withCreatorResourceLock(creatorId,async client=>{
+        const result=await client.query(`SELECT id,stream_health FROM creator_live_bridges WHERE creator_id=$1 AND status='active' ORDER BY COALESCE(stream_health_at,last_seen_at,updated_at) DESC LIMIT 1 FOR UPDATE`,[creatorId]);
+        const row=result.rows[0];if(!row)return{history:[],entry:null,persisted:false};
+        const health=row.stream_health&&typeof row.stream_health==="object"&&!Array.isArray(row.stream_health)?row.stream_health:{};
+        const history=sanitizeStreamRuntimeReadinessAttestationHistory(health.runtime_readiness_attestation_history||[]);
+        const entry=streamRuntimeReadinessAttestationHistoryEntry(exported);
+        const existing=history.find(item=>item.export_id===entry.export_id);
+        const next=(existing?history.map(item=>item.export_id===entry.export_id?entry:item):[...history,entry]).slice(-8);
+        await client.query(`UPDATE creator_live_bridges SET stream_health=$3::jsonb,updated_at=NOW() WHERE id=$1 AND creator_id=$2`,[row.id,creatorId,JSON.stringify({...health,runtime_readiness_attestation_history:next})]);
+        return{history:next,entry,persisted:true};
+    });
+}
+
+
+function streamRuntimeReadinessAttestationTrend(history=[],current={}){
+    const rows=sanitizeStreamRuntimeReadinessAttestationHistory(history);
+    const item=current&&typeof current==="object"&&!Array.isArray(current)?current:{};
+    const previous=[...rows].reverse().find(row=>row.export_id!==String(item.export_id||""))||null;
+    const rank={eligible:0,open:1,blocked:2};
+    const currentStatus=["eligible","open","blocked"].includes(String(item.status||""))?String(item.status):"open";
+    const previousStatus=previous?String(previous.status||"open"):"none";
+    let status=previous?"stable":"baseline";
+    if(previous){
+        const delta=(rank[currentStatus]??1)-(rank[previousStatus]??1);
+        if(delta>0)status="regressed";
+        else if(delta<0)status=previousStatus==="blocked"?"recovered":"improved";
+        else if(Number(item.reason_count||0)>Number(previous.reason_count||0))status="regressed";
+        else if(Number(item.reason_count||0)<Number(previous.reason_count||0))status="improved";
+    }
+    return{schema:1,status,current_status:currentStatus,previous_status:previousStatus,current_reason_count:Math.max(0,Math.min(8,Math.round(Number(item.reason_count||0)))),previous_reason_count:previous?previous.reason_count:0,previous_history_id:previous?.history_id||null,previous_attestation_id:previous?.attestation_id||null,previous_export_id:previous?.export_id||null,scope:"local_runtime_readiness_attestation_only",requires_external_acceptance:true,external_acceptance_claimed:false,external_acceptance_status:"open",production_ready_claimed:false,server_derived:true};
+}
+
+
+function streamRuntimeLocalReadinessProofSummary(exported={}){
+    const source=exported&&typeof exported==="object"&&!Array.isArray(exported)?exported:{};
+    const envelope=source.runtime_readiness_envelope&&typeof source.runtime_readiness_envelope==="object"&&!Array.isArray(source.runtime_readiness_envelope)?source.runtime_readiness_envelope:{};
+    const decision=source.runtime_acceptance_decision&&typeof source.runtime_acceptance_decision==="object"&&!Array.isArray(source.runtime_acceptance_decision)?source.runtime_acceptance_decision:{};
+    const attestation=source.runtime_readiness_attestation&&typeof source.runtime_readiness_attestation==="object"&&!Array.isArray(source.runtime_readiness_attestation)?source.runtime_readiness_attestation:{};
+    const trend=source.runtime_readiness_attestation_trend&&typeof source.runtime_readiness_attestation_trend==="object"&&!Array.isArray(source.runtime_readiness_attestation_trend)?source.runtime_readiness_attestation_trend:{};
+    const diagnosticValid=source.diagnostic_integrity?.valid===true;
+    let status="eligible";const reasons=[];
+    if(!diagnosticValid||[envelope.status,decision.status,attestation.status].includes("blocked")){status="blocked";if(!diagnosticValid)reasons.push("diagnostic_integrity_invalid");if(envelope.status==="blocked")reasons.push("readiness_envelope_blocked");if(decision.status==="blocked")reasons.push("acceptance_decision_blocked");if(attestation.status==="blocked")reasons.push("readiness_attestation_blocked");}
+    else if(envelope.status!=="eligible"||decision.status!=="eligible"||attestation.status!=="eligible"||trend.status==="regressed"){status="open";if(envelope.status!=="eligible")reasons.push("readiness_envelope_open");if(decision.status!=="eligible")reasons.push("acceptance_decision_open");if(attestation.status!=="eligible")reasons.push("readiness_attestation_open");if(trend.status==="regressed")reasons.push("readiness_attestation_regressed");}
+    const base={schema:1,status,eligible:status==="eligible",reasons:reasons.slice(0,8),envelope_id:String(envelope.envelope_id||""),decision_id:String(decision.decision_id||""),attestation_id:String(attestation.attestation_id||""),attestation_trend:String(trend.status||"baseline"),diagnostic_integrity_valid:diagnosticValid,scope:"local_runtime_readiness_proof_summary_only",requires_external_acceptance:true,external_acceptance_claimed:false,external_acceptance_status:"open",production_ready_claimed:false,server_derived:true};
+    return{...base,proof_id:"cfsrpv_"+crypto.createHash("sha256").update(`stream-runtime-local-readiness-proof-summary-v1|${JSON.stringify(base)}`).digest("hex").slice(0,24)};
+}
+
+
+function sanitizeStreamRuntimeLocalReadinessProofHistory(input=[]){
+    const rows=Array.isArray(input)?input:[];
+    return rows.slice(-8).map(row=>{
+        const item=row&&typeof row==="object"&&!Array.isArray(row)?row:{};
+        const historyId=/^cfsrph_[a-f0-9]{24}$/.test(String(item.history_id||""))?String(item.history_id):null;
+        const proofId=/^cfsrpv_[a-f0-9]{24}$/.test(String(item.proof_id||""))?String(item.proof_id):null;
+        const exportId=/^cfsex_[a-f0-9]{24}$/.test(String(item.export_id||""))?String(item.export_id):null;
+        const status=["eligible","open","blocked"].includes(String(item.status||""))?String(item.status):null;
+        if(!historyId||!proofId||!exportId||!status)return null;
+        return{schema:1,history_id:historyId,proof_id:proofId,export_id:exportId,generated_at:streamHealthTime(item.generated_at),status,reason_count:Math.max(0,Math.min(8,Math.round(Number(item.reason_count||0)))),scope:"local_runtime_readiness_proof_summary_only",requires_external_acceptance:true,external_acceptance_claimed:false,external_acceptance_status:"open",production_ready_claimed:false,server_derived:true};
+    }).filter(Boolean);
+}
+function streamRuntimeLocalReadinessProofHistoryEntry(exported={}){
+    const source=exported&&typeof exported==="object"&&!Array.isArray(exported)?exported:{};
+    const proof=source.runtime_local_readiness_proof_summary&&typeof source.runtime_local_readiness_proof_summary==="object"&&!Array.isArray(source.runtime_local_readiness_proof_summary)?source.runtime_local_readiness_proof_summary:{};
+    const base={schema:1,proof_id:String(proof.proof_id||""),export_id:String(source.export_id||""),generated_at:streamHealthTime(source.generated_at),status:["eligible","open","blocked"].includes(String(proof.status||""))?String(proof.status):"open",reason_count:Math.max(0,Math.min(8,Array.isArray(proof.reasons)?proof.reasons.length:0)),scope:"local_runtime_readiness_proof_summary_only",requires_external_acceptance:true,external_acceptance_claimed:false,external_acceptance_status:"open",production_ready_claimed:false};
+    return{...base,history_id:"cfsrph_"+crypto.createHash("sha256").update(`stream-runtime-local-readiness-proof-history-v1|${JSON.stringify(base)}`).digest("hex").slice(0,24),server_derived:true};
+}
+async function appendCreatorStreamRuntimeLocalReadinessProofHistory(creatorId,exported={}){
+    return withCreatorResourceLock(creatorId,async client=>{
+        const result=await client.query(`SELECT id,stream_health FROM creator_live_bridges WHERE creator_id=$1 AND status='active' ORDER BY COALESCE(stream_health_at,last_seen_at,updated_at) DESC LIMIT 1 FOR UPDATE`,[creatorId]);
+        const row=result.rows[0];if(!row)return{history:[],entry:null,persisted:false};
+        const health=row.stream_health&&typeof row.stream_health==="object"&&!Array.isArray(row.stream_health)?row.stream_health:{};
+        const history=sanitizeStreamRuntimeLocalReadinessProofHistory(health.runtime_local_readiness_proof_history||[]);
+        const entry=streamRuntimeLocalReadinessProofHistoryEntry(exported);
+        const existing=history.find(item=>item.export_id===entry.export_id);
+        const next=(existing?history.map(item=>item.export_id===entry.export_id?entry:item):[...history,entry]).slice(-8);
+        await client.query(`UPDATE creator_live_bridges SET stream_health=$3::jsonb,updated_at=NOW() WHERE id=$1 AND creator_id=$2`,[row.id,creatorId,JSON.stringify({...health,runtime_local_readiness_proof_history:next})]);
+        return{history:next,entry,persisted:true};
+    });
+}
+
+
+function streamRuntimeLocalReadinessProofTrend(history=[],current={}){
+    const rows=sanitizeStreamRuntimeLocalReadinessProofHistory(history);
+    const item=current&&typeof current==="object"&&!Array.isArray(current)?current:{};
+    const previous=[...rows].reverse().find(row=>row.export_id!==String(item.export_id||""))||null;
+    const rank={eligible:0,open:1,blocked:2};
+    const currentStatus=["eligible","open","blocked"].includes(String(item.status||""))?String(item.status):"open";
+    const previousStatus=previous?String(previous.status||"open"):"none";
+    let status=previous?"stable":"baseline";
+    if(previous){
+        const delta=(rank[currentStatus]??1)-(rank[previousStatus]??1);
+        if(delta>0)status="regressed";
+        else if(delta<0)status=previousStatus==="blocked"?"recovered":"improved";
+        else if(Number(item.reason_count||0)>Number(previous.reason_count||0))status="regressed";
+        else if(Number(item.reason_count||0)<Number(previous.reason_count||0))status="improved";
+    }
+    return{schema:1,status,current_status:currentStatus,previous_status:previousStatus,current_reason_count:Math.max(0,Math.min(8,Math.round(Number(item.reason_count||0)))),previous_reason_count:previous?previous.reason_count:0,previous_history_id:previous?.history_id||null,previous_proof_id:previous?.proof_id||null,previous_export_id:previous?.export_id||null,scope:"local_runtime_readiness_proof_summary_only",requires_external_acceptance:true,external_acceptance_claimed:false,external_acceptance_status:"open",production_ready_claimed:false,server_derived:true};
+}
+
+
+function streamRuntimeLocalReadinessDecisionRecord(exported={}){
+    const source=exported&&typeof exported==="object"&&!Array.isArray(exported)?exported:{};
+    const proof=source.runtime_local_readiness_proof_summary&&typeof source.runtime_local_readiness_proof_summary==="object"&&!Array.isArray(source.runtime_local_readiness_proof_summary)?source.runtime_local_readiness_proof_summary:{};
+    const trend=source.runtime_local_readiness_proof_trend&&typeof source.runtime_local_readiness_proof_trend==="object"&&!Array.isArray(source.runtime_local_readiness_proof_trend)?source.runtime_local_readiness_proof_trend:{};
+    const attestation=source.runtime_readiness_attestation&&typeof source.runtime_readiness_attestation==="object"&&!Array.isArray(source.runtime_readiness_attestation)?source.runtime_readiness_attestation:{};
+    const envelope=source.runtime_readiness_envelope&&typeof source.runtime_readiness_envelope==="object"&&!Array.isArray(source.runtime_readiness_envelope)?source.runtime_readiness_envelope:{};
+    const diagnosticValid=source.diagnostic_integrity?.valid===true;
+    let status="eligible";const reasons=[];
+    if(!diagnosticValid||proof.status==="blocked"||attestation.status==="blocked"||envelope.status==="blocked"){
+        status="blocked";
+        if(!diagnosticValid)reasons.push("diagnostic_integrity_invalid");
+        if(proof.status==="blocked")reasons.push("local_readiness_proof_blocked");
+        if(attestation.status==="blocked")reasons.push("readiness_attestation_blocked");
+        if(envelope.status==="blocked")reasons.push("readiness_envelope_blocked");
+    }else if(proof.status!=="eligible"||attestation.status!=="eligible"||envelope.status!=="eligible"||trend.status==="regressed"){
+        status="open";
+        if(proof.status!=="eligible")reasons.push("local_readiness_proof_open");
+        if(attestation.status!=="eligible")reasons.push("readiness_attestation_open");
+        if(envelope.status!=="eligible")reasons.push("readiness_envelope_open");
+        if(trend.status==="regressed")reasons.push("local_readiness_proof_regressed");
+    }
+    const base={schema:1,status,eligible:status==="eligible",reasons:reasons.slice(0,8),proof_id:String(proof.proof_id||""),proof_status:String(proof.status||"open"),proof_trend:String(trend.status||"baseline"),attestation_id:String(attestation.attestation_id||""),attestation_status:String(attestation.status||"open"),envelope_id:String(envelope.envelope_id||""),envelope_status:String(envelope.status||"open"),diagnostic_integrity_valid:diagnosticValid,scope:"local_runtime_readiness_decision_record_only",requires_external_acceptance:true,external_acceptance_claimed:false,external_acceptance_status:"open",production_ready_claimed:false,server_derived:true};
+    return{...base,record_id:"cfsrd_"+crypto.createHash("sha256").update(`stream-runtime-local-readiness-decision-record-v1|${JSON.stringify(base)}`).digest("hex").slice(0,24)};
+}
+
+function streamSupportExportSeal(exported={}){
+    const source=exported&&typeof exported==="object"&&!Array.isArray(exported)?exported:{};
+    const auditHistory=sanitizeStreamSupportExportAuditHistory(source.audit_history||[]);
+    const diagnosticHistory=sanitizeStreamProductionDiagnosticSummaryHistory(source.diagnostic_summary_history||[]);
+    const acceptanceHistory=sanitizeStreamRuntimeAcceptanceHistory(source.runtime_acceptance_history||[]);
+    const releaseGateHistory=sanitizeStreamRuntimeReleaseGateHistory(source.runtime_release_gate_history||[]);
+    const acceptanceDecisionHistory=sanitizeStreamRuntimeAcceptanceDecisionHistory(source.runtime_acceptance_decision_history||[]);
+    const readinessEnvelopeHistory=sanitizeStreamRuntimeReadinessEnvelopeHistory(source.runtime_readiness_envelope_history||[]);
+    const readinessAttestationHistory=sanitizeStreamRuntimeReadinessAttestationHistory(source.runtime_readiness_attestation_history||[]);
+    const localReadinessProofHistory=sanitizeStreamRuntimeLocalReadinessProofHistory(source.runtime_local_readiness_proof_history||[]);
+    const canonical=JSON.stringify({schema:24,export_id:source.export_id||null,generated_at:streamHealthTime(source.generated_at),snapshot_id:source.snapshot?.snapshot_id||null,snapshot_seal_id:source.snapshot?.integrity?.seal_id||null,verification:source.verification||{},correlation_integrity:source.correlation_integrity||{},correlation_fingerprint_integrity:source.correlation_fingerprint_integrity||{},temporal_integrity:source.temporal_integrity||{},audit:source.audit||null,audit_history:auditHistory,audit_history_anchor:source.audit_history_anchor||null,audit_history_head:source.audit_history_head||null,audit_history_head_integrity:source.audit_history_head_integrity||{},audit_history_continuity_integrity:source.audit_history_continuity_integrity||{},audit_history_chain:source.audit_history_chain||{},audit_history_integrity:source.audit_history_integrity||{},audit_replayed:source.audit_replayed===true,replay_classification:source.replay_classification||{},diagnostic_summary:source.diagnostic_summary||{},diagnostic_summary_history:diagnosticHistory,diagnostic_trend:source.diagnostic_trend||{},runtime_acceptance_matrix:source.runtime_acceptance_matrix||{},runtime_acceptance_history:acceptanceHistory,runtime_acceptance_trend:source.runtime_acceptance_trend||{},runtime_release_gate:source.runtime_release_gate||{},runtime_release_gate_history:releaseGateHistory,runtime_release_gate_trend:source.runtime_release_gate_trend||{},runtime_acceptance_decision:source.runtime_acceptance_decision||{},runtime_acceptance_decision_history:acceptanceDecisionHistory,runtime_acceptance_decision_trend:source.runtime_acceptance_decision_trend||{},runtime_readiness_envelope:source.runtime_readiness_envelope||{},runtime_readiness_envelope_history:readinessEnvelopeHistory,runtime_readiness_envelope_trend:source.runtime_readiness_envelope_trend||{},runtime_readiness_attestation:source.runtime_readiness_attestation||{},runtime_readiness_attestation_history:readinessAttestationHistory,runtime_readiness_attestation_trend:source.runtime_readiness_attestation_trend||{},runtime_local_readiness_proof_summary:source.runtime_local_readiness_proof_summary||{},runtime_local_readiness_proof_history:localReadinessProofHistory,runtime_local_readiness_proof_trend:source.runtime_local_readiness_proof_trend||{},runtime_local_readiness_decision_record:source.runtime_local_readiness_decision_record||{},privacy:source.privacy||{}});
+    return{schema:24,algorithm:"sha256",seal_id:"cfsei_"+crypto.createHash("sha256").update(`stream-support-export-seal-v24|${canonical}`).digest("hex").slice(0,24),server_derived:true};
+}
+function streamSupportExportIntegrity(exported={}){
+    const source=exported&&typeof exported==="object"&&!Array.isArray(exported)?exported:{};
+    const seal=source.integrity&&typeof source.integrity==="object"&&!Array.isArray(source.integrity)?source.integrity:{};
+    const reasons=[];
+    const exportId=String(source.export_id||"");
+    const sealId=String(seal.seal_id||"");
+    if(!/^cfsex_[a-f0-9]{24}$/.test(exportId))reasons.push("export_id_invalid");
+    if(!/^cfsei_[a-f0-9]{24}$/.test(sealId))reasons.push("export_seal_id_invalid");
+    const snapshotVerification=streamSupportSnapshotIntegrity(source.snapshot||{});
+    if(snapshotVerification.valid!==true)reasons.push("snapshot_integrity_invalid");
+    const correlation=streamSupportCorrelationIntegrity(source.snapshot||{});
+    const exportedCorrelation=source.correlation_integrity&&typeof source.correlation_integrity==="object"?source.correlation_integrity:{};
+    if(correlation.status!=="unavailable"&&correlation.valid!==true)reasons.push("cross_layer_correlation_invalid");
+    if(JSON.stringify(exportedCorrelation)!==JSON.stringify(correlation))reasons.push("cross_layer_correlation_mismatch");
+    const correlationFingerprintIntegrity=streamSupportCorrelationFingerprintIntegrity(source.snapshot||{});
+    if(correlationFingerprintIntegrity.valid!==true)reasons.push("correlation_fingerprint_integrity_invalid");
+    if(JSON.stringify(source.correlation_fingerprint_integrity||{})!==JSON.stringify(correlationFingerprintIntegrity))reasons.push("correlation_fingerprint_integrity_mismatch");
+    const temporal=streamSupportExportTemporalIntegrity(source);
+    if(temporal.valid!==true)reasons.push("export_temporal_integrity_invalid");
+    if(JSON.stringify(source.temporal_integrity||{})!==JSON.stringify(temporal))reasons.push("export_temporal_integrity_mismatch");
+    const auditHistory=sanitizeStreamSupportExportAuditHistory(source.audit_history||[]);
+    const auditChain=source.audit_history_chain&&typeof source.audit_history_chain==="object"?source.audit_history_chain:{};
+    const auditIntegrity=streamSupportExportAuditHistoryIntegrity(auditHistory,auditChain,source.audit_history_anchor);
+    const auditHeadIntegrity=streamSupportExportAuditHeadIntegrity(auditHistory,source.audit_history_head,source.audit_history_anchor);
+    const auditContinuityIntegrity=streamSupportExportAuditContinuityIntegrity(auditHistory,source.audit_history_head,source.audit_history_anchor);
+    if(auditIntegrity.valid!==true)reasons.push("export_audit_history_invalid");
+    if(auditContinuityIntegrity.valid!==true)reasons.push("export_audit_continuity_invalid");
+    if(JSON.stringify(source.audit_history_continuity_integrity||{})!==JSON.stringify(auditContinuityIntegrity))reasons.push("export_audit_continuity_integrity_mismatch");
+    if(auditHeadIntegrity.valid!==true)reasons.push("export_audit_head_invalid");
+    if(JSON.stringify(source.audit_history_head_integrity||{})!==JSON.stringify(auditHeadIntegrity))reasons.push("export_audit_head_integrity_mismatch");
+    if(JSON.stringify(source.audit_history_integrity||{})!==JSON.stringify(auditIntegrity))reasons.push("export_audit_integrity_mismatch");
+    const latest=auditHistory[auditHistory.length-1]||null;
+    if(!latest||latest.event_id!==String(source.audit?.event_id||""))reasons.push("export_audit_latest_mismatch");
+    if(latest&&latest.export_id!==exportId)reasons.push("export_audit_export_id_mismatch");
+    const replayClassification=streamSupportExportReplayClassification(source,auditHistory,source.audit,source.audit_replayed===true);
+    if(JSON.stringify(source.replay_classification||{})!==JSON.stringify(replayClassification))reasons.push("export_replay_classification_mismatch");
+    const diagnosticSummary=streamSupportProductionDiagnosticSummary(source);
+    if(JSON.stringify(source.diagnostic_summary||{})!==JSON.stringify(diagnosticSummary))reasons.push("export_diagnostic_summary_mismatch");
+    if(source.runtime_acceptance_matrix){
+        const runtimeAcceptance=streamProductionRuntimeAcceptanceMatrix(source);
+        if(JSON.stringify(source.runtime_acceptance_matrix)!==JSON.stringify(runtimeAcceptance))reasons.push("export_runtime_acceptance_matrix_mismatch");
+    }
+    if(source.runtime_acceptance_trend){
+        const acceptanceTrend=streamRuntimeAcceptanceTrend(source.runtime_acceptance_history||[],{...source.runtime_acceptance_matrix,export_id:source.export_id});
+        if(JSON.stringify(source.runtime_acceptance_trend)!==JSON.stringify(acceptanceTrend))reasons.push("export_runtime_acceptance_trend_mismatch");
+    }
+    if(source.runtime_release_gate){
+        const releaseGate=streamRuntimeReleaseGate(source);
+        if(JSON.stringify(source.runtime_release_gate)!==JSON.stringify(releaseGate))reasons.push("export_runtime_release_gate_mismatch");
+    }
+    if(source.runtime_release_gate_history){
+        const gateHistory=sanitizeStreamRuntimeReleaseGateHistory(source.runtime_release_gate_history||[]);
+        const expectedGateEntry=streamRuntimeReleaseGateHistoryEntry(source);
+        const latestGate=gateHistory[gateHistory.length-1]||null;
+        if(!latestGate||latestGate.export_id!==String(source.export_id||"")||JSON.stringify(latestGate)!==JSON.stringify(expectedGateEntry))reasons.push("export_runtime_release_gate_history_mismatch");
+    }
+    if(source.runtime_release_gate_trend){
+        const gateTrend=streamRuntimeReleaseGateTrend(source.runtime_release_gate_history||[],{...source.runtime_release_gate,export_id:source.export_id});
+        if(JSON.stringify(source.runtime_release_gate_trend)!==JSON.stringify(gateTrend))reasons.push("export_runtime_release_gate_trend_mismatch");
+    }
+    if(source.runtime_acceptance_decision){
+        const acceptanceDecision=streamRuntimeAcceptanceDecision(source);
+        if(JSON.stringify(source.runtime_acceptance_decision)!==JSON.stringify(acceptanceDecision))reasons.push("export_runtime_acceptance_decision_mismatch");
+    }
+    if(source.runtime_acceptance_decision_history){
+        const decisionHistory=sanitizeStreamRuntimeAcceptanceDecisionHistory(source.runtime_acceptance_decision_history||[]);
+        const expectedDecisionEntry=streamRuntimeAcceptanceDecisionHistoryEntry(source);
+        const latestDecision=decisionHistory[decisionHistory.length-1]||null;
+        if(!latestDecision||latestDecision.export_id!==String(source.export_id||"")||JSON.stringify(latestDecision)!==JSON.stringify(expectedDecisionEntry))reasons.push("export_runtime_acceptance_decision_history_mismatch");
+    }
+    if(source.runtime_acceptance_decision_trend){
+        const decisionTrend=streamRuntimeAcceptanceDecisionTrend(source.runtime_acceptance_decision_history||[],{...source.runtime_acceptance_decision,export_id:source.export_id,reason_count:Array.isArray(source.runtime_acceptance_decision?.reasons)?source.runtime_acceptance_decision.reasons.length:0});
+        if(JSON.stringify(source.runtime_acceptance_decision_trend)!==JSON.stringify(decisionTrend))reasons.push("export_runtime_acceptance_decision_trend_mismatch");
+    }
+    if(source.runtime_readiness_envelope){
+        const envelope=streamRuntimeReadinessEnvelope(source);
+        if(JSON.stringify(source.runtime_readiness_envelope)!==JSON.stringify(envelope))reasons.push("export_runtime_readiness_envelope_mismatch");
+    }
+    if(source.runtime_readiness_envelope_history){
+        const envelopeHistory=sanitizeStreamRuntimeReadinessEnvelopeHistory(source.runtime_readiness_envelope_history||[]);
+        const expectedEnvelopeEntry=streamRuntimeReadinessEnvelopeHistoryEntry(source);
+        const latestEnvelope=envelopeHistory[envelopeHistory.length-1]||null;
+        if(!latestEnvelope||latestEnvelope.export_id!==String(source.export_id||"")||JSON.stringify(latestEnvelope)!==JSON.stringify(expectedEnvelopeEntry))reasons.push("export_runtime_readiness_envelope_history_mismatch");
+    }
+    if(source.runtime_readiness_envelope_trend){
+        const envelopeTrend=streamRuntimeReadinessEnvelopeTrend(source.runtime_readiness_envelope_history||[],{...source.runtime_readiness_envelope,export_id:source.export_id,reason_count:Array.isArray(source.runtime_readiness_envelope?.reasons)?source.runtime_readiness_envelope.reasons.length:0});
+        if(JSON.stringify(source.runtime_readiness_envelope_trend)!==JSON.stringify(envelopeTrend))reasons.push("export_runtime_readiness_envelope_trend_mismatch");
+    }
+    if(source.runtime_readiness_attestation){
+        const attestation=streamRuntimeReadinessAttestation(source);
+        if(JSON.stringify(source.runtime_readiness_attestation)!==JSON.stringify(attestation))reasons.push("export_runtime_readiness_attestation_mismatch");
+    }
+    if(source.runtime_readiness_attestation_history){
+        const attestationHistory=sanitizeStreamRuntimeReadinessAttestationHistory(source.runtime_readiness_attestation_history||[]);
+        const expectedAttestationEntry=streamRuntimeReadinessAttestationHistoryEntry(source);
+        const latestAttestation=attestationHistory[attestationHistory.length-1]||null;
+        if(!latestAttestation||latestAttestation.export_id!==String(source.export_id||"")||JSON.stringify(latestAttestation)!==JSON.stringify(expectedAttestationEntry))reasons.push("export_runtime_readiness_attestation_history_mismatch");
+    }
+    if(source.runtime_readiness_attestation_trend){
+        const attestationTrend=streamRuntimeReadinessAttestationTrend(source.runtime_readiness_attestation_history||[],{...source.runtime_readiness_attestation,export_id:source.export_id,reason_count:Array.isArray(source.runtime_readiness_attestation?.reasons)?source.runtime_readiness_attestation.reasons.length:0});
+        if(JSON.stringify(source.runtime_readiness_attestation_trend)!==JSON.stringify(attestationTrend))reasons.push("export_runtime_readiness_attestation_trend_mismatch");
+    }
+    if(source.runtime_local_readiness_proof_summary){
+        const proofSummary=streamRuntimeLocalReadinessProofSummary(source);
+        if(JSON.stringify(source.runtime_local_readiness_proof_summary)!==JSON.stringify(proofSummary))reasons.push("export_runtime_local_readiness_proof_summary_mismatch");
+    }
+    if(source.runtime_local_readiness_proof_history){
+        const proofHistory=sanitizeStreamRuntimeLocalReadinessProofHistory(source.runtime_local_readiness_proof_history||[]);
+        const expectedProofEntry=streamRuntimeLocalReadinessProofHistoryEntry(source);
+        const latestProof=proofHistory[proofHistory.length-1]||null;
+        if(!latestProof||latestProof.export_id!==String(source.export_id||"")||JSON.stringify(latestProof)!==JSON.stringify(expectedProofEntry))reasons.push("export_runtime_local_readiness_proof_history_mismatch");
+    }
+    if(source.runtime_local_readiness_proof_trend){
+        const proofTrend=streamRuntimeLocalReadinessProofTrend(source.runtime_local_readiness_proof_history||[],{...source.runtime_local_readiness_proof_summary,export_id:source.export_id,reason_count:Array.isArray(source.runtime_local_readiness_proof_summary?.reasons)?source.runtime_local_readiness_proof_summary.reasons.length:0});
+        if(JSON.stringify(source.runtime_local_readiness_proof_trend)!==JSON.stringify(proofTrend))reasons.push("export_runtime_local_readiness_proof_trend_mismatch");
+    }
+    if(source.runtime_local_readiness_decision_record){
+        const decisionRecord=streamRuntimeLocalReadinessDecisionRecord(source);
+        if(JSON.stringify(source.runtime_local_readiness_decision_record)!==JSON.stringify(decisionRecord))reasons.push("export_runtime_local_readiness_decision_record_mismatch");
+    }
+    const expected=streamSupportExportSeal(source).seal_id;
+    if(sealId&&sealId!==expected)reasons.push("export_seal_mismatch");
+    if(seal.server_derived!==true||source.server_derived!==true)reasons.push("server_derived_missing");
+    const privacy=source.privacy&&typeof source.privacy==="object"?source.privacy:{};
+    if(privacy.secrets_exposed!==false||privacy.raw_media_exposed!==false||privacy.machine_name_exposed!==false)reasons.push("privacy_guard_invalid");
+    return{schema:1,status:reasons.length?"mismatch":"valid",valid:reasons.length===0,reasons:reasons.slice(0,8),server_derived:true};
+}
+function streamSupportDiagnosticChainSeal(exported={}){
+    const source=exported&&typeof exported==="object"&&!Array.isArray(exported)?exported:{};
+    const snapshot=source.snapshot&&typeof source.snapshot==="object"&&!Array.isArray(source.snapshot)?source.snapshot:{};
+    const evidence=snapshot.evidence&&typeof snapshot.evidence==="object"&&!Array.isArray(snapshot.evidence)?snapshot.evidence:{};
+    const incident=evidence.incident&&typeof evidence.incident==="object"&&!Array.isArray(evidence.incident)?evidence.incident:{};
+    const historyChain=evidence.incident_history_chain&&typeof evidence.incident_history_chain==="object"&&!Array.isArray(evidence.incident_history_chain)?evidence.incident_history_chain:{};
+    const canonical=JSON.stringify({schema:2,export_id:source.export_id||null,export_seal_id:source.integrity?.seal_id||null,snapshot_id:snapshot.snapshot_id||null,snapshot_seal_id:snapshot.integrity?.seal_id||null,evidence_snapshot_id:evidence.snapshot_id||null,incident_id:incident.incident_id||null,history_chain_id:historyChain.chain_id||null,correlation_fingerprint_id:snapshot.correlation_fingerprint?.fingerprint_id||null,audit_event_id:source.audit?.event_id||null,audit_chain_id:source.audit_history_chain?.chain_id||null,audit_status:source.audit_history_integrity?.status||null,audit_continuity_status:source.audit_history_continuity_integrity?.status||null,audit_head_sequence:source.audit_history_head?.sequence||0,audit_anchor_sequence:source.audit_history_anchor?.sequence||0,replay_status:source.replay_classification?.status||null,summary_status:source.diagnostic_summary?.status||null,temporal_status:source.temporal_integrity?.status||null,correlation_status:source.correlation_integrity?.status||null,privacy:source.privacy||{}});
+    return{schema:2,algorithm:"sha256",chain_id:"cfsdi_"+crypto.createHash("sha256").update(`stream-support-diagnostic-chain-v2|${canonical}`).digest("hex").slice(0,24),server_derived:true};
+}
+function streamSupportDiagnosticChainIntegrity(exported={}){
+    const source=exported&&typeof exported==="object"&&!Array.isArray(exported)?exported:{};
+    const snapshot=source.snapshot&&typeof source.snapshot==="object"&&!Array.isArray(source.snapshot)?source.snapshot:{};
+    const evidence=snapshot.evidence&&typeof snapshot.evidence==="object"&&!Array.isArray(snapshot.evidence)?snapshot.evidence:{};
+    const chain=source.diagnostic_chain&&typeof source.diagnostic_chain==="object"&&!Array.isArray(source.diagnostic_chain)?source.diagnostic_chain:{};
+    if(!/^cfshs_[a-f0-9]{24}$/.test(String(evidence.snapshot_id||"")))return{schema:1,status:"unavailable",valid:false,reasons:["live_evidence_unavailable"],server_derived:true};
+    const reasons=[];
+    const chainId=String(chain.chain_id||"");
+    if(!/^cfsdi_[a-f0-9]{24}$/.test(chainId))reasons.push("diagnostic_chain_id_invalid");
+    const expected=streamSupportDiagnosticChainSeal(source).chain_id;
+    if(chainId&&chainId!==expected)reasons.push("diagnostic_chain_mismatch");
+    if(streamSupportExportIntegrity(source).valid!==true)reasons.push("export_integrity_invalid");
+    if(source.verification?.valid!==true)reasons.push("snapshot_verification_invalid");
+    if(source.audit_history_integrity?.valid!==true)reasons.push("audit_history_integrity_invalid");
+    if(source.audit_history_head_integrity?.valid!==true)reasons.push("audit_history_head_integrity_invalid");
+    if(source.audit_history_continuity_integrity?.valid!==true)reasons.push("audit_history_continuity_integrity_invalid");
+    if(source.temporal_integrity?.valid!==true)reasons.push("temporal_integrity_invalid");
+    if(source.correlation_integrity?.valid!==true)reasons.push("correlation_integrity_invalid");
+    if(source.correlation_fingerprint_integrity?.valid!==true)reasons.push("correlation_fingerprint_integrity_invalid");
+    if(snapshot.evidence_integrity?.valid!==true)reasons.push("evidence_integrity_invalid");
+    if(snapshot.incident_integrity?.valid!==true)reasons.push("incident_integrity_invalid");
+    if(snapshot.incident_history_integrity?.valid!==true)reasons.push("incident_history_integrity_invalid");
+    if(snapshot.incident_history_chain_integrity?.valid!==true)reasons.push("incident_history_chain_integrity_invalid");
+    if(chain.server_derived!==true)reasons.push("diagnostic_chain_server_derived_missing");
+    const privacy=source.privacy&&typeof source.privacy==="object"?source.privacy:{};
+    if(privacy.secrets_exposed!==false||privacy.raw_media_exposed!==false||privacy.machine_name_exposed!==false)reasons.push("privacy_guard_invalid");
+    return{schema:1,status:reasons.length?"mismatch":"valid",valid:reasons.length===0,reasons:[...new Set(reasons)].slice(0,12),server_derived:true};
+}
+function finalizeStreamSupportSnapshotExport(exported={},auditResult={}){
+    const source=exported&&typeof exported==="object"&&!Array.isArray(exported)?exported:{};
+    const history=sanitizeStreamSupportExportAuditHistory(auditResult.history||[]);
+    source.audit=auditResult.event||null;
+    source.audit_history=history;
+    source.audit_history_count=history.length;
+    source.audit_history_anchor=sanitizeStreamSupportExportAuditAnchor(auditResult.anchor);
+    source.audit_history_head=sanitizeStreamSupportExportAuditHead(auditResult.head);
+    source.audit_history_head_integrity=streamSupportExportAuditHeadIntegrity(history,source.audit_history_head,source.audit_history_anchor);
+    source.audit_history_continuity_integrity=streamSupportExportAuditContinuityIntegrity(history,source.audit_history_head,source.audit_history_anchor);
+    source.audit_history_chain=streamSupportExportAuditChain(history,source.audit_history_anchor);
+    source.audit_history_integrity=streamSupportExportAuditHistoryIntegrity(history,source.audit_history_chain,source.audit_history_anchor);
+    source.audit_replayed=auditResult.replayed===true;
+    source.audit_persisted=auditResult.persisted===true;
+    source.replay_classification=streamSupportExportReplayClassification(source,history,source.audit,source.audit_replayed);
+    source.diagnostic_summary=streamSupportProductionDiagnosticSummary(source);
+    source.integrity=streamSupportExportSeal(source);
+    source.diagnostic_chain=streamSupportDiagnosticChainSeal(source);
+    source.diagnostic_integrity=streamSupportDiagnosticChainIntegrity(source);
+    return source;
+}
+function streamSupportSnapshotExport(snapshot={}){
+    const source=snapshot&&typeof snapshot==="object"&&!Array.isArray(snapshot)?snapshot:{};
+    const verification=streamSupportSnapshotIntegrity(source);
+    const exported={schema:2,export_id:null,generated_at:new Date().toISOString(),snapshot:source,verification,correlation_integrity:streamSupportCorrelationIntegrity(source),correlation_fingerprint_integrity:streamSupportCorrelationFingerprintIntegrity(source),privacy:{secrets_exposed:false,raw_media_exposed:false,machine_name_exposed:false},server_derived:true};
+    exported.export_id=streamSupportExportId(exported);
+    exported.temporal_integrity=streamSupportExportTemporalIntegrity(exported);
+    exported.diagnostic_summary=streamSupportProductionDiagnosticSummary(exported);
+    exported.integrity=streamSupportExportSeal(exported);
+    exported.diagnostic_chain=streamSupportDiagnosticChainSeal(exported);
+    exported.diagnostic_integrity=streamSupportDiagnosticChainIntegrity(exported);
+    return exported;
+}
+async function getCreatorStreamSupportSnapshot(creatorId){
+    const result=await pool.query(`SELECT client_version,last_seen_at,stream_health_at,stream_health FROM creator_live_bridges WHERE creator_id=$1 AND status='active' ORDER BY COALESCE(stream_health_at,last_seen_at,updated_at) DESC LIMIT 1`,[creatorId]);
+    const row=result.rows[0];
+    const generatedAt=new Date().toISOString();
+    if(!row){const snapshot={schema:1,snapshot_id:null,generated_at:generatedAt,launcher:{connected:false,client_version:""},health:{status:"offline",verdict:"offline",metrics:{},failures:[],destinations:[]},evidence:publicStreamHealthEvidence({}),evidence_integrity:streamHealthEvidenceIntegrity({}),incident_integrity:streamHealthIncidentIntegrity({}),incident_history_integrity:streamHealthIncidentHistoryIntegrity({}),incident_history_chain_integrity:streamHealthIncidentHistoryChainIntegrity({}),privacy:{secrets_exposed:false,raw_media_exposed:false,machine_name_exposed:false}};snapshot.correlation_integrity=streamSupportCorrelationIntegrity(snapshot);snapshot.correlation_fingerprint=streamSupportCorrelationFingerprint(snapshot);snapshot.integrity=streamSupportSnapshotSeal(snapshot);return snapshot;}
+    const now=Date.now(),lastSeen=row.last_seen_at?new Date(row.last_seen_at).getTime():0,healthAt=row.stream_health_at?new Date(row.stream_health_at).getTime():0;
+    const connected=lastSeen>0&&now-lastSeen<=30000,fresh=healthAt>0&&now-healthAt<=25000;
+    const stored=row.stream_health&&typeof row.stream_health==="object"?row.stream_health:{};
+    const health=fresh?sanitizeLauncherStreamHealth(stored):{};
+    const verdict=fresh?streamHealthVerdict(health):{schema:1,status:connected?"stale":"offline",ok:false,reasons:[],derived:true};
+    const evidence=publicStreamHealthEvidence(stored.health_evidence||{});
+    const evidenceIntegrity=streamHealthEvidenceIntegrity(stored);
+    const incidentIntegrity=streamHealthIncidentIntegrity(stored.health_evidence||{});
+    const incidentHistoryIntegrity=streamHealthIncidentHistoryIntegrity(stored.health_evidence||{});
+    const incidentHistoryChainIntegrity=streamHealthIncidentHistoryChainIntegrity(stored.health_evidence||{});
+    const failures=Array.isArray(health.runtime_failures?.recent)?health.runtime_failures.recent.map(row=>({code:row.code,severity:row.severity,component:row.component,at:row.at})).slice(0,20):[];
+    const destinations=Array.isArray(health.destinations)?health.destinations.map(row=>({provider:row.provider,status:row.status,reconnect_attempt:row.reconnect_attempt,metrics:{fps:row.metrics?.fps||0,bitrate_kbps:row.metrics?.bitrate_kbps||0,dropped_frames:row.metrics?.dropped_frames||0}})).slice(0,8):[];
+    const stableSeed=JSON.stringify({creator:String(creatorId),evidence:evidence.snapshot_id||"none",verdict:verdict.status,health_at:row.stream_health_at||null,client_version:row.client_version||""});
+    const snapshotId="cfssd_"+crypto.createHash("sha256").update(stableSeed).digest("hex").slice(0,24);
+    const snapshot={schema:1,snapshot_id:snapshotId,generated_at:generatedAt,launcher:{connected,fresh,client_version:studioText(row.client_version,80,"")},health:{status:fresh?health.status:(connected?"stale":"offline"),verdict:verdict.status,metrics:fresh?health.metrics:{},failures,destinations},evidence,evidence_integrity:evidenceIntegrity,incident_integrity:incidentIntegrity,incident_history_integrity:incidentHistoryIntegrity,incident_history_chain_integrity:incidentHistoryChainIntegrity,privacy:{secrets_exposed:false,raw_media_exposed:false,machine_name_exposed:false}};
+    snapshot.correlation_integrity=streamSupportCorrelationIntegrity(snapshot);
+    snapshot.correlation_fingerprint=streamSupportCorrelationFingerprint(snapshot);
+    snapshot.integrity=streamSupportSnapshotSeal(snapshot);
+    return snapshot;
 }
 
 async function touchStudioBridge(bridgeId, creatorId, input = {}) {
@@ -12038,31 +13281,73 @@ async function touchStudioBridge(bridgeId, creatorId, input = {}) {
     const clientVersion = studioText(input.client_version, 80, "");
     const capabilities = input.capabilities && typeof input.capabilities === "object" && !Array.isArray(input.capabilities) ? input.capabilities : {};
     const hasStreamHealth = input.stream_health && typeof input.stream_health === "object" && !Array.isArray(input.stream_health);
-    const streamHealth = hasStreamHealth ? sanitizeLauncherStreamHealth(input.stream_health) : {};
     const hasLiveFlag = typeof input.live_session_active === "boolean";
     const liveActive = input.live_session_active === true;
-    await pool.query(
-        `UPDATE creator_live_bridges SET
-            machine_name = CASE WHEN $3 <> '' THEN $3 ELSE machine_name END,
-            client_version = CASE WHEN $4 <> '' THEN $4 ELSE client_version END,
-            capabilities = CASE WHEN $5::jsonb <> '{}'::jsonb THEN $5::jsonb ELSE capabilities END,
-            stream_health = CASE WHEN $6 THEN $7::jsonb ELSE stream_health END,
-            stream_health_at = CASE WHEN $6 THEN NOW() ELSE stream_health_at END,
-            last_seen_at=NOW(),
-            last_connected_at=COALESCE(last_connected_at,NOW()),
-            updated_at=NOW()
-         WHERE id=$1 AND creator_id=$2 AND status='active'`,
-        [bridgeId, creatorId, machineName, clientVersion, JSON.stringify(capabilities), hasStreamHealth, JSON.stringify(streamHealth)]
-    );
-    await pool.query(
-        `INSERT INTO creator_live_state (creator_id, provider, connected, bridge_heartbeat_at, updated_at)
-         VALUES ($1,'launcher_bridge',$3,NOW(),NOW())
-         ON CONFLICT (creator_id) DO UPDATE SET
-            bridge_heartbeat_at=NOW(),
-            connected=CASE WHEN $2 THEN $3 ELSE creator_live_state.connected END,
-            provider=CASE WHEN $2 AND $3 THEN 'launcher_bridge' ELSE creator_live_state.provider END`,
-        [creatorId, hasLiveFlag, liveActive]
-    );
+    const client = await pool.connect();
+    try {
+        await client.query("BEGIN");
+        let streamHealth = hasStreamHealth ? sanitizeLauncherStreamHealth(input.stream_health) : {};
+        if (hasStreamHealth) {
+            const previousResult = await client.query(
+                `SELECT stream_health FROM creator_live_bridges
+                 WHERE id=$1 AND creator_id=$2 AND status='active'
+                 FOR UPDATE`,
+                [bridgeId, creatorId]
+            );
+            const previousHealth = previousResult.rows[0]?.stream_health && typeof previousResult.rows[0].stream_health === "object"
+                ? previousResult.rows[0].stream_health
+                : {};
+            streamHealth.health_evidence = streamHealthEvidenceSnapshot(streamHealth, previousHealth, new Date().toISOString());
+            const supportExportHistory = sanitizeStreamSupportExportAuditHistory(previousHealth.support_export_history || []);
+            if (supportExportHistory.length) streamHealth.support_export_history = supportExportHistory;
+            const supportExportAuditAnchor = sanitizeStreamSupportExportAuditAnchor(previousHealth.support_export_audit_anchor);
+            if (supportExportAuditAnchor) streamHealth.support_export_audit_anchor = supportExportAuditAnchor;
+            const supportExportAuditHead = sanitizeStreamSupportExportAuditHead(previousHealth.support_export_audit_head);
+            if (supportExportAuditHead) streamHealth.support_export_audit_head = supportExportAuditHead;
+            const productionDiagnosticSummaryHistory = sanitizeStreamProductionDiagnosticSummaryHistory(previousHealth.production_diagnostic_summary_history || []);
+            if (productionDiagnosticSummaryHistory.length) streamHealth.production_diagnostic_summary_history = productionDiagnosticSummaryHistory;
+            const runtimeAcceptanceHistory = sanitizeStreamRuntimeAcceptanceHistory(previousHealth.runtime_acceptance_history || []);
+            if (runtimeAcceptanceHistory.length) streamHealth.runtime_acceptance_history = runtimeAcceptanceHistory;
+            const runtimeReleaseGateHistory = sanitizeStreamRuntimeReleaseGateHistory(previousHealth.runtime_release_gate_history || []);
+            if (runtimeReleaseGateHistory.length) streamHealth.runtime_release_gate_history = runtimeReleaseGateHistory;
+            const runtimeAcceptanceDecisionHistory = sanitizeStreamRuntimeAcceptanceDecisionHistory(previousHealth.runtime_acceptance_decision_history || []);
+            if (runtimeAcceptanceDecisionHistory.length) streamHealth.runtime_acceptance_decision_history = runtimeAcceptanceDecisionHistory;
+            const runtimeReadinessEnvelopeHistory = sanitizeStreamRuntimeReadinessEnvelopeHistory(previousHealth.runtime_readiness_envelope_history || []);
+            if (runtimeReadinessEnvelopeHistory.length) streamHealth.runtime_readiness_envelope_history = runtimeReadinessEnvelopeHistory;
+            const runtimeReadinessAttestationHistory = sanitizeStreamRuntimeReadinessAttestationHistory(previousHealth.runtime_readiness_attestation_history || []);
+            if (runtimeReadinessAttestationHistory.length) streamHealth.runtime_readiness_attestation_history = runtimeReadinessAttestationHistory;
+            const runtimeLocalReadinessProofHistory = sanitizeStreamRuntimeLocalReadinessProofHistory(previousHealth.runtime_local_readiness_proof_history || []);
+            if (runtimeLocalReadinessProofHistory.length) streamHealth.runtime_local_readiness_proof_history = runtimeLocalReadinessProofHistory;
+        }
+        await client.query(
+            `UPDATE creator_live_bridges SET
+                machine_name = CASE WHEN $3 <> '' THEN $3 ELSE machine_name END,
+                client_version = CASE WHEN $4 <> '' THEN $4 ELSE client_version END,
+                capabilities = CASE WHEN $5::jsonb <> '{}'::jsonb THEN $5::jsonb ELSE capabilities END,
+                stream_health = CASE WHEN $6 THEN $7::jsonb ELSE stream_health END,
+                stream_health_at = CASE WHEN $6 THEN NOW() ELSE stream_health_at END,
+                last_seen_at=NOW(),
+                last_connected_at=COALESCE(last_connected_at,NOW()),
+                updated_at=NOW()
+             WHERE id=$1 AND creator_id=$2 AND status='active'`,
+            [bridgeId, creatorId, machineName, clientVersion, JSON.stringify(capabilities), hasStreamHealth, JSON.stringify(streamHealth)]
+        );
+        await client.query(
+            `INSERT INTO creator_live_state (creator_id, provider, connected, bridge_heartbeat_at, updated_at)
+             VALUES ($1,'launcher_bridge',$3,NOW(),NOW())
+             ON CONFLICT (creator_id) DO UPDATE SET
+                bridge_heartbeat_at=NOW(),
+                connected=CASE WHEN $2 THEN $3 ELSE creator_live_state.connected END,
+                provider=CASE WHEN $2 AND $3 THEN 'launcher_bridge' ELSE creator_live_state.provider END`,
+            [creatorId, hasLiveFlag, liveActive]
+        );
+        await client.query("COMMIT");
+    } catch (error) {
+        try { await client.query("ROLLBACK"); } catch {}
+        throw error;
+    } finally {
+        client.release();
+    }
 }
 
 function emptyStudioLiveState() {
@@ -17173,9 +18458,9 @@ app.get("/api/creator/cut-studio/projects",requireCreatorAccount,async(req,res)=
 app.post("/api/creator/cut-studio/projects",requireCreatorAccount,async(req,res)=>{
     try{
         const access=await requireCreatorFeatureAccess(req.creatorAccount,"cut_studio","creator");
-        const clean=sanitizeCutProject(req.body||{});
+        const clean=sealRecordingProvenance(sanitizeCutProject(req.body||{}));
         const result=await createCutProjectWithLimit(req.creatorAccount.id,clean,Number(access.entitlements.max_cut_projects||0));
-        return res.status(201).json({ok:true,project:publicCutProject(result.rows[0],0)});
+        return res.status(result.reused===true?200:201).json({ok:true,reused:result.reused===true,project:publicCutProject(result.row,0)});
     }catch(error){
         const status=error?.code==="creator_feature_locked"||error?.code==="cut_project_limit"?403:500;
         return res.status(status).json(clientSafeErrorPayload(req,error,status,"Cut-Projekt konnte nicht erstellt werden.",{includeCode:true}));
@@ -17193,7 +18478,10 @@ app.get("/api/creator/cut-studio/projects/:id",requireCreatorAccount,async(req,r
 app.put("/api/creator/cut-studio/projects/:id",requireCreatorAccount,async(req,res)=>{
     try{
         await requireCreatorFeatureAccess(req.creatorAccount,"cut_studio","creator");
-        const clean=sanitizeCutProject(req.body||{}),baseUpdatedAt=studioText(req.body?.base_updated_at,80,"");
+        const requested=sanitizeCutProject(req.body||{}),baseUpdatedAt=studioText(req.body?.base_updated_at,80,"");
+        const existing=(await pool.query(`SELECT export_preset FROM creator_cut_projects WHERE creator_id=$1 AND id=$2 LIMIT 1`,[req.creatorAccount.id,req.params.id])).rows[0];
+        if(!existing)return res.status(404).json({ok:false,error:"Cut-Projekt nicht gefunden."});
+        const clean=sealRecordingProvenance({...requested,export_preset:preserveRecordingProvenance(existing.export_preset,requested.export_preset)});
         const params=[req.creatorAccount.id,req.params.id,clean.title,clean.status,clean.format,clean.notes,clean.source_name,JSON.stringify(clean.export_preset)];
         const sql=baseUpdatedAt
             ?`UPDATE creator_cut_projects SET title=$3,status=$4,format=$5,notes=$6,source_name=$7,export_preset=((($8::jsonb - 'own_clip_evidence') - 'candidate_ground_truth') || jsonb_build_object('own_clip_evidence',COALESCE(export_preset->'own_clip_evidence','{}'::jsonb),'candidate_ground_truth',COALESCE(export_preset->'candidate_ground_truth','[]'::jsonb))),updated_at=NOW() WHERE creator_id=$1 AND id=$2 AND date_trunc('milliseconds',updated_at)=date_trunc('milliseconds',$9::timestamptz) RETURNING *`
@@ -17382,6 +18670,68 @@ app.get("/api/creator/stream-studio/runtime",requireCreatorAccount,async(req,res
     res.set("Cache-Control","no-store");
     try{const gameActivity=await getPublicRecentGames(req.creatorAccount.id,{limit:3});return res.json({ok:true,runtime:await getCreatorStreamStudioRuntime(req.creatorAccount.id),game_activity:gameActivity,game_context:creatorGameContextFromActivity(gameActivity)});}
     catch(error){safeLogError("Stream Studio Runtime Fehler:",error);return res.status(500).json({ok:false,error:"Stream Runtime konnte nicht geladen werden."});}
+});
+
+app.get("/api/creator/stream-studio/runtime/support-snapshot",requireCreatorAccount,async(req,res)=>{
+    res.set("Cache-Control","no-store");
+    try{return res.json({ok:true,snapshot:await getCreatorStreamSupportSnapshot(req.creatorAccount.id)});}
+    catch(error){safeLogError("Stream Studio Support Snapshot Fehler:",error);return res.status(500).json({ok:false,error:"Support-Diagnose konnte nicht erstellt werden."});}
+});
+
+app.get("/api/creator/stream-studio/runtime/support-snapshot/export",requireCreatorAccount,async(req,res)=>{
+    res.set("Cache-Control","no-store");
+    try{
+        const snapshot=await getCreatorStreamSupportSnapshot(req.creatorAccount.id);
+        const exported=streamSupportSnapshotExport(snapshot);
+        const audit=await appendCreatorStreamSupportExportAudit(req.creatorAccount.id,exported);
+        finalizeStreamSupportSnapshotExport(exported,audit);
+        const summaryHistory=await appendCreatorStreamProductionDiagnosticSummaryHistory(req.creatorAccount.id,exported);
+        exported.diagnostic_summary_history=summaryHistory.history;
+        exported.diagnostic_summary_history_count=summaryHistory.history.length;
+        exported.diagnostic_trend=streamProductionDiagnosticTrend(summaryHistory.history,{...exported.diagnostic_summary,export_id:exported.export_id});
+        exported.runtime_acceptance_matrix=streamProductionRuntimeAcceptanceMatrix(exported);
+        const acceptanceHistory=await appendCreatorStreamRuntimeAcceptanceHistory(req.creatorAccount.id,exported);
+        exported.runtime_acceptance_history=acceptanceHistory.history;
+        exported.runtime_acceptance_history_count=acceptanceHistory.history.length;
+        exported.runtime_acceptance_trend=streamRuntimeAcceptanceTrend(acceptanceHistory.history,{...exported.runtime_acceptance_matrix,export_id:exported.export_id});
+        exported.runtime_release_gate=streamRuntimeReleaseGate(exported);
+        const releaseGateHistory=await appendCreatorStreamRuntimeReleaseGateHistory(req.creatorAccount.id,exported);
+        exported.runtime_release_gate_history=releaseGateHistory.history;
+        exported.runtime_release_gate_history_count=releaseGateHistory.history.length;
+        exported.runtime_release_gate_trend=streamRuntimeReleaseGateTrend(releaseGateHistory.history,{...exported.runtime_release_gate,export_id:exported.export_id});
+        exported.runtime_acceptance_decision=streamRuntimeAcceptanceDecision(exported);
+        const decisionHistory=await appendCreatorStreamRuntimeAcceptanceDecisionHistory(req.creatorAccount.id,exported);
+        exported.runtime_acceptance_decision_history=decisionHistory.history;
+        exported.runtime_acceptance_decision_history_count=decisionHistory.history.length;
+        exported.runtime_acceptance_decision_trend=streamRuntimeAcceptanceDecisionTrend(decisionHistory.history,{...exported.runtime_acceptance_decision,export_id:exported.export_id,reason_count:Array.isArray(exported.runtime_acceptance_decision?.reasons)?exported.runtime_acceptance_decision.reasons.length:0});
+        exported.runtime_readiness_envelope=streamRuntimeReadinessEnvelope(exported);
+        const readinessEnvelopeHistory=await appendCreatorStreamRuntimeReadinessEnvelopeHistory(req.creatorAccount.id,exported);
+        exported.runtime_readiness_envelope_history=readinessEnvelopeHistory.history;
+        exported.runtime_readiness_envelope_history_count=readinessEnvelopeHistory.history.length;
+        exported.runtime_readiness_envelope_trend=streamRuntimeReadinessEnvelopeTrend(readinessEnvelopeHistory.history,{...exported.runtime_readiness_envelope,export_id:exported.export_id,reason_count:Array.isArray(exported.runtime_readiness_envelope?.reasons)?exported.runtime_readiness_envelope.reasons.length:0});
+        exported.runtime_readiness_attestation=streamRuntimeReadinessAttestation(exported);
+        const readinessAttestationHistory=await appendCreatorStreamRuntimeReadinessAttestationHistory(req.creatorAccount.id,exported);
+        exported.runtime_readiness_attestation_history=readinessAttestationHistory.history;
+        exported.runtime_readiness_attestation_history_count=readinessAttestationHistory.history.length;
+        exported.runtime_readiness_attestation_trend=streamRuntimeReadinessAttestationTrend(readinessAttestationHistory.history,{...exported.runtime_readiness_attestation,export_id:exported.export_id,reason_count:Array.isArray(exported.runtime_readiness_attestation?.reasons)?exported.runtime_readiness_attestation.reasons.length:0});
+        exported.runtime_local_readiness_proof_summary=streamRuntimeLocalReadinessProofSummary(exported);
+        const localReadinessProofHistory=await appendCreatorStreamRuntimeLocalReadinessProofHistory(req.creatorAccount.id,exported);
+        exported.runtime_local_readiness_proof_history=localReadinessProofHistory.history;
+        exported.runtime_local_readiness_proof_history_count=localReadinessProofHistory.history.length;
+        exported.runtime_local_readiness_proof_trend=streamRuntimeLocalReadinessProofTrend(localReadinessProofHistory.history,{...exported.runtime_local_readiness_proof_summary,export_id:exported.export_id,reason_count:Array.isArray(exported.runtime_local_readiness_proof_summary?.reasons)?exported.runtime_local_readiness_proof_summary.reasons.length:0});
+        exported.runtime_local_readiness_decision_record=streamRuntimeLocalReadinessDecisionRecord(exported);
+        exported.integrity=streamSupportExportSeal(exported);
+        exported.diagnostic_chain=streamSupportDiagnosticChainSeal(exported);
+        exported.diagnostic_integrity=streamSupportDiagnosticChainIntegrity(exported);
+        exported.runtime_acceptance_matrix=streamProductionRuntimeAcceptanceMatrix(exported);
+        exported.integrity=streamSupportExportSeal(exported);
+        exported.diagnostic_chain=streamSupportDiagnosticChainSeal(exported);
+        exported.diagnostic_integrity=streamSupportDiagnosticChainIntegrity(exported);
+        const suffix=String(snapshot.snapshot_id||"offline").replace(/[^a-zA-Z0-9_-]/g,"_");
+        res.set("Content-Type","application/json; charset=utf-8");
+        res.set("Content-Disposition",`attachment; filename="cfs-stream-support-${suffix}.json"`);
+        return res.status(200).send(JSON.stringify(exported,null,2)+"\n");
+    }catch(error){safeLogError("Stream Studio Support Export Fehler:",error);return res.status(500).json({ok:false,error:"Support-Diagnose konnte nicht exportiert werden."});}
 });
 
 app.put("/api/creator/stream-studio",requireCreatorAccount,async(req,res)=>{
@@ -17938,9 +19288,9 @@ app.get("/api/bridge/cut-studio/projects",widgetBridgeHeartbeatLimiter,requireSt
 app.post("/api/bridge/cut-studio/projects",widgetBridgeEventLimiter,requireStudioBridge,async(req,res)=>{
     try{
         const creatorId=req.studioBridge.creator_id,access=await requireCreatorFeatureAccess(creatorId,"cut_studio","creator");
-        const clean=sanitizeCutProject(req.body||{});
+        const clean=sealRecordingProvenance(sanitizeCutProject(req.body||{}));
         const result=await createCutProjectWithLimit(creatorId,clean,Number(access.entitlements.max_cut_projects||0));
-        return res.status(201).json({ok:true,project:publicCutProject(result.rows[0],0)});
+        return res.status(result.reused===true?200:201).json({ok:true,reused:result.reused===true,project:publicCutProject(result.row,0)});
     }catch(error){
         const status=error?.code==="creator_feature_locked"||error?.code==="cut_project_limit"?403:500;
         return res.status(status).json(clientSafeErrorPayload(req,error,status,"Cut-Projekt konnte über den Launcher nicht erstellt werden.",{includeCode:true}));
@@ -17949,7 +19299,10 @@ app.post("/api/bridge/cut-studio/projects",widgetBridgeEventLimiter,requireStudi
 
 app.put("/api/bridge/cut-studio/projects/:id",widgetBridgeEventLimiter,requireStudioBridge,async(req,res)=>{
     try{
-        const creatorId=req.studioBridge.creator_id;await requireCreatorFeatureAccess(creatorId,"cut_studio","creator");const clean=sanitizeCutProject(req.body||{});
+        const creatorId=req.studioBridge.creator_id;await requireCreatorFeatureAccess(creatorId,"cut_studio","creator");const requested=sanitizeCutProject(req.body||{});
+        const existing=(await pool.query(`SELECT export_preset FROM creator_cut_projects WHERE creator_id=$1 AND id=$2 LIMIT 1`,[creatorId,req.params.id])).rows[0];
+        if(!existing)return res.status(404).json({ok:false,error:"Cut-Projekt nicht gefunden."});
+        const clean=sealRecordingProvenance({...requested,export_preset:preserveRecordingProvenance(existing.export_preset,requested.export_preset)});
         const result=await pool.query(`UPDATE creator_cut_projects SET title=$3,status=$4,format=$5,notes=$6,source_name=$7,export_preset=((($8::jsonb - 'own_clip_evidence') - 'candidate_ground_truth') || jsonb_build_object('own_clip_evidence',COALESCE(export_preset->'own_clip_evidence','{}'::jsonb),'candidate_ground_truth',COALESCE(export_preset->'candidate_ground_truth','[]'::jsonb))),updated_at=NOW() WHERE creator_id=$1 AND id=$2 RETURNING *`,[creatorId,req.params.id,clean.title,clean.status,clean.format,clean.notes,clean.source_name,JSON.stringify(clean.export_preset)]);
         if(!result.rows[0])return res.status(404).json({ok:false,error:"Cut-Projekt nicht gefunden."});
         const count=await pool.query(`SELECT COUNT(*)::int AS count FROM creator_cut_clips WHERE project_id=$1`,[req.params.id]);
@@ -17981,6 +19334,18 @@ app.post("/api/bridge/cut-studio/projects/:id/candidates",widgetBridgeEventLimit
     const result=buildCutCandidates({own_evidence:hasOwn?body.own_evidence:(preset.own_clip_evidence||{}),ground_truth:hasTruth?body.ground_truth:(preset.candidate_ground_truth||[]),game_profile:gameProfile,reference_learning:preset.reference_learning||{}});
     return res.json({ok:true,...result,project_updated_at:row.updated_at||null});
   }catch(error){const status=error?.code==="creator_feature_locked"?403:error?.code==="cut_project_missing"?404:400;return res.status(status).json(clientSafeErrorPayload(req,error,status,"Clip-Kandidaten konnten über den Launcher nicht bewertet werden."))}
+});
+
+app.post("/api/bridge/cut-studio/projects/:id/clips/initial-recording",widgetBridgeEventLimiter,requireStudioBridge,async(req,res)=>{
+    try{
+        const creatorId=req.studioBridge.creator_id,access=await requireCreatorFeatureAccess(creatorId,"cut_studio","creator");
+        const requested=sanitizeCutClip(req.body||{});
+        const result=await createInitialRecordingCutClipWithLimit(creatorId,req.params.id,req.body?.source_handoff_id,requested,Number(access.entitlements.max_cut_clips_per_project||0));
+        return res.status(result.reused?200:201).json({ok:true,clip:publicCutClip(result.row),reused:result.reused===true});
+    }catch(error){
+        const status=error?.code==="creator_feature_locked"||error?.code==="cut_clip_limit"?403:error?.code==="cut_project_missing"?404:error?.code==="recording_handoff_mismatch"?409:500;
+        return res.status(status).json(clientSafeErrorPayload(req,error,status,"Initialer Recording-Clip konnte nicht erstellt werden.",{includeCode:true}));
+    }
 });
 
 app.post("/api/bridge/cut-studio/projects/:id/clips",widgetBridgeEventLimiter,requireStudioBridge,async(req,res)=>{
@@ -20227,12 +21592,17 @@ async function getPublicRecentGames(creatorId,{days=PUBLIC_GAME_ACTIVITY_WINDOW_
     };
 }
 
+function creatorGameIdentity(gameName="",platform="unknown") {
+    const normalizedTitle=String(gameName||"").replace(/[™®©]/g,"").normalize("NFKC").replace(/[\u0000-\u001f\u007f]/g," ").replace(/[^a-z0-9äöüß]+/gi," ").replace(/\s+/g," ").trim().toLowerCase().slice(0,120);
+    const safePlatform=["playstation_5","playstation_4","pc","xbox_series","xbox_one","switch","unknown"].includes(String(platform||""))?String(platform):"unknown";
+    return {normalized_title:normalizedTitle,game_id:normalizedTitle?`cfsgi_${crypto.createHash("sha256").update(`${safePlatform}|${normalizedTitle}`).digest("hex").slice(0,24)}`:""};
+}
 function creatorGameContextFromActivity(activity={}) {
     const active=activity?.active&&activity.active.game_name?activity.active:null;
-    if (active) return {mode:"active",game_name:active.game_name,platform:active.platform||"unknown",source:active.source||"launcher_manual",started_at:active.started_at||null,elapsed_seconds:Math.max(0,Number(active.elapsed_seconds)||0),resumed_after_restart:active.resumed_after_restart===true,presence_id:active.presence_id||null};
+    if (active) { const identity=creatorGameIdentity(active.game_name,active.platform),freshness=Math.max(0,Number(active.freshness_seconds)||0); return {mode:"active",game_name:active.game_name,...identity,platform:active.platform||"unknown",source:active.source||"launcher_manual",started_at:active.started_at||null,elapsed_seconds:Math.max(0,Number(active.elapsed_seconds)||0),freshness_seconds:freshness,freshness_state:freshness<=Math.ceil(PUBLIC_GAME_ACTIVITY_PRESENCE_TTL_MS/1000)?"fresh":"stale",observed_at:active.reported_at||null,resumed_after_restart:active.resumed_after_restart===true,presence_id:active.presence_id||null}; }
     const recent=Array.isArray(activity?.recent)?activity.recent[0]:null;
-    if (recent?.name) return {mode:"recent",game_name:recent.name,platform:recent.platform||"unknown",source:recent.source||"launcher_manual",last_played_at:recent.last_played_at||null,minutes:Math.max(0,Number(recent.minutes)||0)};
-    return {mode:"none",game_name:"",platform:"unknown",source:"",last_played_at:null,minutes:0};
+    if (recent?.name) { const identity=creatorGameIdentity(recent.name,recent.platform); return {mode:"recent",game_name:recent.name,...identity,platform:recent.platform||"unknown",source:recent.source||"launcher_manual",last_played_at:recent.last_played_at||null,minutes:Math.max(0,Number(recent.minutes)||0)}; }
+    return {mode:"none",game_name:"",normalized_title:"",game_id:"",platform:"unknown",source:"",last_played_at:null,minutes:0};
 }
 
 // ============================================================
