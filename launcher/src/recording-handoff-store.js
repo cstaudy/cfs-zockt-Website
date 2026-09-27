@@ -5,6 +5,33 @@ const path=require("node:path");
 const crypto=require("node:crypto");
 
 const TRACK_KEYS=new Set(["mix","mic","game","discord","music","alerts","audio1","audio2"]);
+
+const GAME_CONTEXT_MODES=new Set(["active","recent","none"]);
+const GAME_CONTEXT_PLATFORMS=new Set(["playstation_5","playstation_4","pc","xbox_series","xbox_one","switch","unknown"]);
+const GAME_CONTEXT_SOURCES=new Set(["launcher_manual","stream_capture"]);
+function optionalIso(value){if(!value)return null;const d=new Date(value);return Number.isFinite(d.getTime())?d.toISOString():null}
+function gameContextFingerprint(value={}){
+  const canonical={
+    mode:String(value?.mode||"none"),game_name:String(value?.game_name||""),platform:String(value?.platform||"unknown"),source:String(value?.source||""),
+    started_at:value?.started_at||null,last_played_at:value?.last_played_at||null,presence_id:String(value?.presence_id||""),
+    resumed_after_restart:value?.resumed_after_restart===true,captured_at:value?.captured_at||null
+  };
+  return `cfsgc_${crypto.createHash("sha256").update(JSON.stringify(canonical)).digest("hex").slice(0,32)}`;
+}
+function normalizeGameContext(value={}){
+  const mode=GAME_CONTEXT_MODES.has(String(value?.mode||""))?String(value.mode):"none";
+  const gameName=text(value?.game_name||value?.title,120,"");
+  const normalized={
+    mode:gameName?mode:"none",game_name:gameName,
+    platform:GAME_CONTEXT_PLATFORMS.has(String(value?.platform||""))?String(value.platform):"unknown",
+    source:GAME_CONTEXT_SOURCES.has(String(value?.source||""))?String(value.source):"",
+    started_at:optionalIso(value?.started_at),last_played_at:optionalIso(value?.last_played_at),
+    presence_id:/^cfsgp_[a-f0-9]{32}$/.test(String(value?.presence_id||""))?String(value.presence_id):"",
+    resumed_after_restart:value?.resumed_after_restart===true,
+    captured_at:optionalIso(value?.captured_at)||new Date().toISOString()
+  };
+  return {...normalized,context_id:gameContextFingerprint(normalized)};
+}
 function text(value,max=240){return String(value??"").replace(/[\u0000-\u001f\u007f]/g," ").replace(/\s+/g," ").trim().slice(0,max)}
 function safeId(value){return text(value,120).replace(/[^a-zA-Z0-9_-]/g,"").slice(0,120)}
 function iso(value){const d=value?new Date(value):new Date();return Number.isFinite(d.getTime())?d.toISOString():new Date().toISOString()}
@@ -40,8 +67,8 @@ class RecordingHandoffStore{
     this.filePath=filePath;this.maxItems=Math.max(5,Math.min(100,Number(maxItems)||30));
     fs.mkdirSync(path.dirname(filePath),{recursive:true});this.state=this.load();
   }
-  empty(){return{schema:2,pass:"21.10.26",items:[]}}
-  load(){try{const raw=JSON.parse(fs.readFileSync(this.filePath,"utf8"));const items=(Array.isArray(raw?.items)?raw.items:[]).slice(0,this.maxItems).map(item=>({...item,tracks:(Array.isArray(item?.tracks)?item.tracks:[]).map(normalizeTrack),mixPreview:normalizePreview(item?.mixPreview)}));return{schema:2,pass:"21.10.26",items}}catch{return this.empty()}}
+  empty(){return{schema:4,pass:"v124-recording-context-integrity",items:[]}}
+  load(){try{const raw=JSON.parse(fs.readFileSync(this.filePath,"utf8"));const items=(Array.isArray(raw?.items)?raw.items:[]).slice(0,this.maxItems).map(item=>({...item,gameContext:normalizeGameContext(item?.gameContext),tracks:(Array.isArray(item?.tracks)?item.tracks:[]).map(normalizeTrack),mixPreview:normalizePreview(item?.mixPreview)}));return{schema:4,pass:"v124-recording-context-integrity",items}}catch{return this.empty()}}
   persist(){const tmp=this.filePath+".tmp";fs.writeFileSync(tmp,JSON.stringify(this.state,null,2),"utf8");fs.renameSync(tmp,this.filePath)}
   create(input={}){
     const filePath=path.resolve(String(input.filePath||""));
@@ -54,6 +81,7 @@ class RecordingHandoffStore{
       filePath,fileName:path.basename(filePath),bytes:Math.max(0,Number(fs.statSync(filePath).size||0)),
       durationMs:durationMs(input.startedAt,input.stoppedAt,input.durationMs),profile:text(input.profile,40),encoder:text(input.encoder,40),
       sceneId:text(input.sceneId,120),sceneName:text(input.sceneName,120),format:text(input.format,12)||"mkv",
+      gameContext:normalizeGameContext({...input.gameContext,captured_at:createdAt}),
       tracks:sourceTracks(input.audioTracks),mixPreview:normalizePreview(),projectId:"",projectTitle:"",linkedAt:null
     };
     this.state.items.unshift(item);this.state.items=this.state.items.slice(0,this.maxItems);this.persist();return publicItem(item);
@@ -66,6 +94,6 @@ class RecordingHandoffStore{
   setMixPreview(id,preview={}){const row=this.state.items.find(item=>item.id===safeId(id));if(!row)throw new Error("Recording-Handoff wurde nicht gefunden.");row.mixPreview=normalizePreview(preview);this.persist();return publicItem(row)}
   get(id){return publicItem(this.state.items.find(item=>item.id===safeId(id))||null)}
   remove(id){const before=this.state.items.length;this.state.items=this.state.items.filter(item=>item.id!==safeId(id));if(this.state.items.length!==before)this.persist();return before!==this.state.items.length}
-  snapshot(){return{schema:2,pass:"21.10.26",maxItems:this.maxItems,pending:this.state.items.filter(x=>x.status!=="ready").length,ready:this.state.items.filter(x=>x.status==="ready").length,items:this.state.items.map(publicItem)}}
+  snapshot(){return{schema:4,pass:"v124-recording-context-integrity",maxItems:this.maxItems,pending:this.state.items.filter(x=>x.status!=="ready").length,ready:this.state.items.filter(x=>x.status==="ready").length,items:this.state.items.map(publicItem)}}
 }
-module.exports={RecordingHandoffStore,sourceTracks,durationMs,normalizeAnalysis,normalizePreview};
+module.exports={RecordingHandoffStore,sourceTracks,durationMs,normalizeAnalysis,normalizePreview,normalizeGameContext,gameContextFingerprint};

@@ -1,0 +1,46 @@
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { createRequire } from 'node:module';
+const require=createRequire(import.meta.url);
+const root=path.resolve(process.argv[2]||'.');
+const read=p=>fs.readFileSync(path.join(root,p),'utf8');
+const server=read('server.js');
+const main=read('launcher/main.js');
+const cutJs=read('public/assets/js/cut-studio.js');
+const storeSrc=read('launcher/src/recording-handoff-store.js');
+const cutLibSrc=read('lib/creator-cut-studio.js');
+const checks=[];
+const check=(name,ok)=>checks.push({name,ok:Boolean(ok)});
+check('bridge library returns game activity and unified context',server.includes('game_activity:gameActivity')&&server.includes('game_context:creatorGameContextFromActivity(gameActivity)'));
+check('launcher library stores unified game context',main.includes('gameActivity:data?.game_activity||null')&&main.includes('gameContext:data?.game_context&&typeof data.game_context==="object"'));
+check('recording finalization refreshes creator context before snapshot',main.includes('Recording game context refresh failed')&&main.includes('gameContext:creatorLibrary.gameContext||{mode:"none"}'));
+check('recording handoff persists sanitized game context',storeSrc.includes('normalizeGameContext')&&storeSrc.includes('gameContext:normalizeGameContext({...input.gameContext,captured_at:createdAt})'));
+check('recording handoff schema advanced',storeSrc.includes('schema:4')&&storeSrc.includes('v124-recording-context-integrity'));
+check('cut project payload prefers captured handoff game context',main.includes('const captured=handoff.gameContext')&&main.includes('recording_game_context:gameContext'));
+check('cut sanitizer accepts unified game context fields',cutLibSrc.includes('game_name:text(s.export_preset?.recording_game_context?.game_name')&&cutLibSrc.includes('presence_id:/^cfsgp_'));
+check('cut UI renders played game and platform',cutJs.includes('game.game_name')&&cutJs.includes('· SPIEL')&&cutJs.includes('game.platform'));
+check('legacy interactive game context remains available',cutLibSrc.includes('game_type:text(s.export_preset?.recording_game_context?.game_type')&&main.includes('game_type:String(interactive?.game_type||"")'));
+check('context contract does not persist process/window/path fields',!storeSrc.includes('process_name')&&!storeSrc.includes('window_title')&&!storeSrc.includes('exe_path'));
+
+const tmp=fs.mkdtempSync(path.join(os.tmpdir(),'cfs-v123-'));
+const media=path.join(tmp,'recording.mkv');fs.writeFileSync(media,'fake-recording');
+const {RecordingHandoffStore}=require(path.join(root,'launcher/src/recording-handoff-store.js'));
+const store=new RecordingHandoffStore(path.join(tmp,'handoffs.json'));
+const created=store.create({filePath:media,startedAt:'2026-09-27T00:00:00.000Z',stoppedAt:'2026-09-27T00:05:00.000Z',gameContext:{mode:'active',game_name:'Call of Duty: Warzone',platform:'playstation_5',source:'launcher_manual',started_at:'2026-09-26T23:00:00.000Z',presence_id:'cfsgp_'+'a'.repeat(32),resumed_after_restart:true,process_name:'secret.exe',local_path:'C:/secret'}});
+check('runtime handoff keeps sanitized PS5 context',created.gameContext?.game_name==='Call of Duty: Warzone'&&created.gameContext?.platform==='playstation_5'&&created.gameContext?.mode==='active');
+check('runtime handoff keeps opaque presence id',created.gameContext?.presence_id==='cfsgp_'+'a'.repeat(32));
+check('runtime handoff drops unknown secret fields',!('process_name' in (created.gameContext||{}))&&!('local_path' in (created.gameContext||{})));
+const reloaded=new RecordingHandoffStore(path.join(tmp,'handoffs.json')).get(created.id);
+check('game context survives launcher restart',reloaded?.gameContext?.game_name==='Call of Duty: Warzone'&&reloaded?.gameContext?.resumed_after_restart===true);
+
+const {sanitizeCutProject}=require(path.join(root,'lib/creator-cut-studio.js'));
+const project=sanitizeCutProject({title:'x',export_preset:{recording_game_context:{mode:'active',game_name:'Call of Duty: Warzone',platform:'playstation_5',source:'launcher_manual',started_at:'2026-09-26T23:00:00.000Z',presence_id:'cfsgp_'+'b'.repeat(32),resumed_after_restart:true,process_name:'should-drop'}}});
+check('CUT sanitizer preserves unified safe fields',project.export_preset.recording_game_context.game_name==='Call of Duty: Warzone'&&project.export_preset.recording_game_context.platform==='playstation_5'&&project.export_preset.recording_game_context.presence_id==='cfsgp_'+'b'.repeat(32));
+check('CUT sanitizer excludes arbitrary fields',!('process_name' in project.export_preset.recording_game_context));
+
+fs.rmSync(tmp,{recursive:true,force:true});
+const failed=checks.filter(x=>!x.ok);
+for(const row of checks)console.log(`${row.ok?'PASS':'FAIL'}  ${row.name}`);
+console.log(`\n${checks.length-failed.length}/${checks.length} Recording Game Context v123 checks passed.`);
+if(failed.length)process.exit(1);

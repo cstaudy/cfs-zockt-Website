@@ -20,10 +20,13 @@ const { ACTION_LEASE_SECONDS, ACTION_RETRY_DELAY_SECONDS, ACTION_MAX_ATTEMPTS, A
 const { SCENE_PROFILES, sanitizeSceneConfig, validateSceneOwnership, scenePublicToken, publicSceneRow } = require("./lib/creator-widget-scenes");
 const { basePlanEntitlements, resolveCreatorEntitlements, minimumPlanForTemplate, templateAllowed, publicPlanCatalog } = require("./lib/creator-plan-policy");
 const { releaseCandidateReadiness } = require("./lib/release-candidate-readiness");
-const { sanitizeGameProfile, sanitizeScoreAction, initialGameState, gamePublicToken, publicGameRuntime, gameSceneSource } = require("./lib/creator-games");
+const { sanitizeGameProfile, sanitizeScoreAction, initialGameState, gamePublicToken, publicGameRuntime, gameSceneSource, publicGameCatalog, isLauncherLocalGame, gameDefinition, dynamicLocalGameKey, isDynamicLocalGameKey } = require("./lib/creator-games");
 const { CUT_FORMATS, sanitizeCutProject, sanitizeCutClip, publicCutProject, publicCutClip } = require("./lib/creator-cut-studio");
-const { profileId: cutGameProfileId, upsertAnalyzedReference } = require("./lib/cut-reference-learning");
+const { profileId: cutGameProfileId, normalizePublicYoutubeUrl: normalizeCutReferenceUrl, upsertAnalyzedReference } = require("./lib/cut-reference-learning");
+const { analyzeCutReferenceWithGemini, DEFAULT_GEMINI_MODEL: DEFAULT_CUT_REFERENCE_GEMINI_MODEL } = require("./lib/cut-reference-provider");
+const { buildCutCandidates, sanitizeOwnClipEvidence, sanitizeGroundTruth } = require("./lib/cut-candidate-engine");
 const { sanitizeGameRule, gameRuleMatches, gameRulePoints, publicGameRule, publicGameRuleHit } = require("./lib/creator-game-rules");
+const { publicGamePresets, buildGameProfileBundle, parseGameProfileBundle } = require("./lib/game-profile-portability");
 const { buildCutJobManifest, sanitizeCutJobResult, publicCutJob, canTransitionCutJob } = require("./lib/creator-cut-jobs");
 const { profileSyncStatus, bridgeConnectionStatus, creatorReadiness } = require("./lib/creator-admin-health");
 const { billingAccessState, effectivePlan: effectiveBillingPlan, stripeSubscriptionSnapshot, publicBillingSubscription, billingConfigState, eventSummary: billingEventSummary, shouldApplyStripeEvent, stripeSubscriptionIdFromInvoice } = require("./lib/creator-billing");
@@ -107,6 +110,22 @@ const CLIENT_SECRET =
 const LAUNCHER_API_KEY =
     process.env.CFS_LAUNCHER_API_KEY ||
     "";
+
+// CUT Reference Learning Provider bleibt ausschließlich serverseitig.
+// Der Schlüssel wird nie an Browser oder Launcher-Renderer ausgegeben.
+const CUT_REFERENCE_GEMINI_API_KEY = String(
+    process.env.CFS_CUT_REFERENCE_GEMINI_API_KEY ||
+    process.env.GEMINI_API_KEY ||
+    ""
+).trim();
+const CUT_REFERENCE_GEMINI_MODEL = String(
+    process.env.CFS_CUT_REFERENCE_GEMINI_MODEL ||
+    DEFAULT_CUT_REFERENCE_GEMINI_MODEL
+).trim();
+const CUT_REFERENCE_PROVIDER_TIMEOUT_MS = Math.max(
+    5 * 1000,
+    Math.min(110 * 1000,Number(process.env.CFS_CUT_REFERENCE_PROVIDER_TIMEOUT_MS || 90 * 1000))
+);
 
 // Salt für datensparsame Missbrauchserkennung bei öffentlichen Rezensionen.
 // Es werden keine rohen IP-Adressen in der Datenbank gespeichert.
@@ -324,7 +343,7 @@ const LAUNCHER_MIN_BETA_VERSION =
 const LAUNCHER_BUILD_TARGET_VERSION =
     String(
         process.env.CFS_LAUNCHER_BUILD_TARGET_VERSION ||
-        "0.42.0"
+        "0.47.7"
     ).trim();
 
 const LAUNCHER_BLOCKED_VERSIONS =
@@ -5898,7 +5917,7 @@ const CREATOR_MODULES =
             stateful:
                 true,
             status:
-                "preview"
+                "beta"
         },
 
         audio_studio: {
@@ -6837,6 +6856,25 @@ async function launcherReleasePolicy(
 
 
 
+function launcherInteractiveGameModules(bridge={}) {
+    const raw=Array.isArray(bridge?.capabilities?.interactive_game_modules)?bridge.capabilities.interactive_game_modules:[];
+    const seen=new Set(),out=[];
+    for(const item of raw.slice(0,32)){
+        const id=String(item?.id||"").toLowerCase().trim().replace(/[^a-z0-9_-]/g,"").slice(0,64);
+        if(!id||seen.has(id))continue;seen.add(id);
+        const events=Array.isArray(item?.events)?[...new Set(item.events.map(v=>String(v||"").toLowerCase()).filter(v=>["chat","like","follow","share","gift","viewer_update"].includes(v)))].slice(0,8):[];
+        out.push({id,key:dynamicLocalGameKey(id),label:studioText(item?.name,80,id),category:studioText(item?.category,48,"Local Module"),engine:"launcher_local",terminal_id:id,canvas:{width:1920,height:1080},events,version:studioText(item?.version,32,"1.0.0"),dynamic:true});
+    }
+    return out;
+}
+
+function gameCatalogForBridge(bridge={}) {
+    const base=publicGameCatalog(),knownTerminal=new Set(base.map(item=>String(item.terminal_id||"")).filter(Boolean));
+    if(bridge?.capabilities?.interactive_games_catalog_v1!==true)return base;
+    const dynamic=launcherInteractiveGameModules(bridge).filter(item=>!knownTerminal.has(item.terminal_id));
+    return [...base,...dynamic];
+}
+
 async function getCreatorGameProfile(creatorId) {
     const data=await getModuleState(creatorId,"games");
     return sanitizeGameProfile(data.state||{});
@@ -6870,11 +6908,81 @@ async function getCreatorGameRuntimePublic(creatorId,{ensure=false}={}) {
     return row?publicGameRuntime(row,APP_BASE_URL):null;
 }
 
+async function creatorLiveReadiness(creatorId, accountOrId=null){
+    const [bridge,live,access]=await Promise.all([
+        getStudioBridgeStatus(creatorId),
+        getStudioLiveState(creatorId),
+        creatorAccessProfile(accountOrId||creatorId)
+    ]);
+    const release=await launcherReleasePolicy(bridge.client_version||"","stable",false,`${creatorId}:${bridge.id||"live-readiness"}`);
+    const releaseSafety=releasePolicyAllowsLive(release.policy);
+    const caps=bridge.capabilities||{};
+    const providerKey=studioText(caps.live_provider_key,24,studioText(caps.provider,24,"mock"));
+    const providerReady=caps.live_provider_health_v1===true?caps.live_provider_ready===true:(providerKey==="tikfinity"?caps.tikfinity_healthy===true:false);
+    const providerStatus=studioText(caps.live_provider_status,24,providerReady?"connected":"offline");
+    const checks=[
+        {key:"entitlement",label:"LIVE Zugriff",ok:Boolean(access?.entitlements?.live_bridge),detail:access?.entitlements?.live_bridge?"Creator LIVE-Bridge freigeschaltet":"Creator Plan oder Beta-Freigabe erforderlich"},
+        {key:"launcher",label:"Launcher online",ok:bridge.online===true,detail:bridge.online?`${bridge.machine_name||"Creator PC"}${bridge.client_version?` · ${bridge.client_version}`:""}`:"Kein frischer Launcher-Heartbeat"},
+        {key:"release",label:"Launcher Release",ok:releaseSafety.ok===true,detail:releaseSafety.ok?"Release-Policy erlaubt LIVE":studioText(release.policy?.message,180,"Launcher-Release ist für LIVE blockiert")},
+        {key:"provider_contract",label:"LIVE Provider Vertrag",ok:caps.live_provider_health_v1===true&&caps.live_provider_control_v1===true,detail:caps.live_provider_health_v1===true?"Provider Health + Control verfügbar":"Launcher aktualisieren"},
+        {key:"provider_selected",label:"LIVE Provider gewählt",ok:providerKey!=="mock"&&providerKey!=="none",detail:providerKey==="mock"?"Simulator ist kein echter LIVE-Provider":providerKey},
+        {key:"provider_ready",label:"LIVE Provider verbunden",ok:providerReady,detail:providerReady?`${providerKey} · ${providerStatus}`:`${providerKey||"Provider"} · ${providerStatus||"offline"}`}
+    ];
+    const blockers=checks.filter(row=>!row.ok);
+    const status=blockers.length===0?"ready":(bridge.online?"setup_required":"launcher_offline");
+    return {schema:1,status,ready:blockers.length===0,checks,blockers:blockers.map(row=>row.key),provider:{key:providerKey,status:providerStatus,ready:providerReady,last_event_at:studioText(caps.tikfinity_last_event_at,60,"")},launcher:{online:bridge.online===true,client_version:bridge.client_version||"",machine_name:bridge.machine_name||"",last_seen_at:bridge.last_seen_at||null},live:{active:live.connected===true,provider:live.provider||"none",session_id:live.session_id||null,last_event_at:live.last_event_at||null},release_policy:release.policy,server_time:new Date().toISOString()};
+}
+
+async function queueLiveProviderLauncherAction(creatorId,{command,provider="tikfinity"}={}){
+    const cmd=String(command||"");
+    const target=String(provider||"tikfinity");
+    if(!["connect","disconnect","reconnect"].includes(cmd)||target!=="tikfinity")throw new Error("Unbekannter LIVE-Provider-Befehl.");
+    const bridge=await getStudioBridgeStatus(creatorId);
+    if(!bridge.online){const error=new Error("Der CFS Launcher muss für die LIVE-Provider-Steuerung online sein.");error.code="live_provider_launcher_offline";throw error;}
+    if(bridge.capabilities?.live_provider_control_v1!==true){const error=new Error("Der verbundene Launcher unterstützt die LIVE-Provider-Steuerung noch nicht. Bitte Launcher aktualisieren.");error.code="live_provider_launcher_upgrade_required";throw error;}
+    const payload={schema:1,command:cmd,provider:target};
+    const result=await pool.query(`INSERT INTO creator_live_actions(id,creator_id,action_type,action_text,payload,status,attempts,expires_at,created_at) VALUES($1,$2,'live_provider_command',$3,$4::jsonb,'pending',0,NOW()+INTERVAL '1 minute',NOW()) RETURNING *`,[crypto.randomUUID(),creatorId,`LIVE Provider · TikFinity · ${cmd.toUpperCase()}`,JSON.stringify(payload)]);
+    return publicStudioAction(result.rows[0]);
+}
+
+async function queueInteractiveGameLauncherAction(creatorId,{command,gameType,required=false}={}) {
+    const cmd=String(command||"");
+    if(!["start","stop","reset","select"].includes(cmd))throw new Error("Unbekannter Interactive-Game-Befehl.");
+    const def=gameDefinition(gameType);
+    if(!def || def.engine!=="launcher_local" || !def.terminal_id)return null;
+    const bridge=await getStudioBridgeStatus(creatorId);
+    if(!bridge.online){if(required){const e=new Error("Für dieses Interactive Game muss der CFS Launcher online sein.");e.code="interactive_game_launcher_offline";throw e;}return null;}
+    if(bridge.capabilities?.interactive_games_service_v1!==true){if(required){const e=new Error("Der verbundene Launcher unterstützt die Interactive Games Engine noch nicht. Bitte Launcher aktualisieren.");e.code="interactive_game_launcher_upgrade_required";throw e;}return null;}
+    if(isDynamicLocalGameKey(def.key)){
+        const installed=launcherInteractiveGameModules(bridge).some(item=>item.terminal_id===def.terminal_id);
+        if(!installed){const e=new Error("Dieses Interactive-Game-Modul ist im verbundenen Launcher nicht installiert.");e.code="interactive_game_module_missing";throw e;}
+    }
+    const payload={game_service_version:2,command:cmd,game_type:def.key,terminal_id:def.terminal_id};
+    const result=await pool.query(`INSERT INTO creator_live_actions(id,creator_id,action_type,action_text,payload,status,attempts,expires_at,created_at) VALUES($1,$2,'interactive_game_command',$3,$4::jsonb,'pending',0,NOW()+INTERVAL '1 minute',NOW()) RETURNING *`,[crypto.randomUUID(),creatorId,`Interactive Game · ${def.label} · ${cmd.toUpperCase()}`,JSON.stringify(payload)]);
+    return publicStudioAction(result.rows[0]);
+}
+
 async function startCreatorGameRuntime(creatorId) {
     const profile=await getCreatorGameProfile(creatorId);
     if(profile.enabled===false)throw new Error("Das Spielprofil ist deaktiviert.");
     await getCreatorGameRuntimeRow(creatorId,{ensure:true});
     const state=initialGameState(profile);
+    if(isLauncherLocalGame(profile.game_type)){
+        await pool.query(
+            `UPDATE creator_game_runtime
+             SET status='starting',game_type=$2,title=$3,config=$4::jsonb,state=$5::jsonb,
+                 started_at=NULL,round_ends_at=NULL,ended_at=NULL,version=version+1,updated_at=NOW()
+             WHERE creator_id=$1`,
+            [creatorId,profile.game_type,profile.title,JSON.stringify(profile),JSON.stringify(state)]
+        );
+        try{
+            await queueInteractiveGameLauncherAction(creatorId,{command:"start",gameType:profile.game_type,required:true});
+        }catch(error){
+            await pool.query(`UPDATE creator_game_runtime SET status='idle',ended_at=NOW(),updated_at=NOW() WHERE creator_id=$1`,[creatorId]).catch(()=>null);
+            throw error;
+        }
+        return getCreatorGameRuntimePublic(creatorId);
+    }
     const result=await pool.query(
         `UPDATE creator_game_runtime
          SET status='running',game_type=$2,title=$3,config=$4::jsonb,state=$5::jsonb,
@@ -6887,7 +6995,9 @@ async function startCreatorGameRuntime(creatorId) {
 }
 
 async function stopCreatorGameRuntime(creatorId) {
-    await getCreatorGameRuntimeRow(creatorId,{ensure:true});
+    const current=await getCreatorGameRuntimeRow(creatorId,{ensure:true});
+    const currentProfile=sanitizeGameProfile(current?.config||{});
+    if(isLauncherLocalGame(currentProfile.game_type))await queueInteractiveGameLauncherAction(creatorId,{command:"stop",gameType:currentProfile.game_type,required:false}).catch(()=>null);
     const result=await pool.query(
         `UPDATE creator_game_runtime SET status='idle',ended_at=NOW(),round_ends_at=NULL,version=version+1,updated_at=NOW() WHERE creator_id=$1 RETURNING *`,
         [creatorId]
@@ -6896,6 +7006,9 @@ async function stopCreatorGameRuntime(creatorId) {
 }
 
 async function resetCreatorGameRuntime(creatorId) {
+    const before=await getCreatorGameRuntimeRow(creatorId,{ensure:true});
+    const beforeProfile=sanitizeGameProfile(before?.config||{});
+    if(before?.status==="running"&&isLauncherLocalGame(beforeProfile.game_type))await queueInteractiveGameLauncherAction(creatorId,{command:"reset",gameType:beforeProfile.game_type,required:true});
     const client=await pool.connect();
     try{
         await client.query("BEGIN");
@@ -6931,6 +7044,7 @@ async function scoreCreatorGameRuntime(creatorId,input={}) {
             const error=new Error("Das Game läuft aktuell nicht.");error.code="game_not_running";throw error;
         }
         const profile=sanitizeGameProfile(current.config||{});
+        if(isLauncherLocalGame(profile.game_type)){const error=new Error("Lokale Interactive Games verwalten ihren Spielstand im Launcher-Modul.");error.code="game_local_score_managed";throw error;}
         const state={...initialGameState(profile),...(current.state||{})};
         const key=action.team==="b"?"score_b":"score_a";
         state[key]=Math.max(0,Number(state[key]||0)+action.delta);
@@ -7022,6 +7136,10 @@ async function processCreatorGameLiveEvent(creatorId,event) {
         )).rows;
 
         const profile=sanitizeGameProfile(runtime.config||{});
+        if(isLauncherLocalGame(profile.game_type)){
+            await client.query("COMMIT");
+            return{applied:0,runtime:publicGameRuntime(runtime,APP_BASE_URL),delegated:"launcher_local"};
+        }
         const state={...initialGameState(profile),...(runtime.state||{})};
         let addA=0,addB=0,applied=0;
 
@@ -7148,7 +7266,7 @@ async function updateCutAuditionRuntime(creatorId,bridgeId,input={}){
 async function listCutExportJobs(creatorId,limit=50,{includeAudition=false}={}) {
     const safe=Math.max(1,Math.min(100,Number(limit)||50));
     const result=await pool.query(
-        `SELECT * FROM creator_cut_export_jobs WHERE creator_id=$1 ${includeAudition?"":"AND COALESCE(manifest->>'kind','cut_export')<>'cut_audition'"} ORDER BY requested_at DESC LIMIT ${safe}`,
+        `SELECT * FROM creator_cut_export_jobs WHERE creator_id=$1 ${includeAudition?"":"AND COALESCE(manifest->>'kind','cut_export') NOT IN ('cut_audition','cut_analysis')"} ORDER BY requested_at DESC LIMIT ${safe}`,
         [creatorId]
     );
     return result.rows.map(publicCutJob);
@@ -7233,6 +7351,32 @@ async function createCutAuditionJob(creatorId,projectId,input={}) {
         );
     });
     return publicCutJob(result.rows[0]);
+}
+
+async function createCutAnalysisJob(creatorId,projectId) {
+    const projectData=await getCutProject(creatorId,projectId);
+    if(!projectData)throw Object.assign(new Error("Cut-Projekt nicht gefunden."),{code:"cut_project_missing"});
+    const base=buildCutJobManifest(projectData.project,projectData.clips),gameProfile=cutGameProfileId(projectData.project?.export_preset?.game_profile);
+    const manifest={...base,schema:14,kind:"cut_analysis",analysis:{game_profile:gameProfile,max_events:12,semantic_source:"own_clip_evidence",requested_at:new Date().toISOString()}};
+    const result=await withCreatorResourceLock(creatorId,async client=>{
+        await client.query(`UPDATE creator_cut_export_jobs SET status='canceled',updated_at=NOW(),completed_at=NOW(),error_message='superseded_by_new_analysis' WHERE creator_id=$1 AND project_id=$2 AND status='queued' AND manifest->>'kind'='cut_analysis'`,[creatorId,projectId]);
+        await client.query(`DELETE FROM creator_cut_export_jobs WHERE creator_id=$1 AND manifest->>'kind'='cut_analysis' AND status IN ('completed','failed','canceled') AND requested_at < NOW()-INTERVAL '24 hours'`,[creatorId]);
+        const active=await client.query(`SELECT COUNT(*)::int AS count FROM creator_cut_export_jobs WHERE creator_id=$1 AND project_id=$2 AND status IN ('claimed','processing') AND manifest->>'kind'='cut_analysis'`,[creatorId,projectId]);
+        if(Number(active.rows[0]?.count||0)>=1)throw creatorResourceLimitError("Für dieses Cut-Projekt läuft bereits eine lokale Clipanalyse.","cut_analysis_busy");
+        return client.query(`INSERT INTO creator_cut_export_jobs(creator_id,project_id,status,manifest,result,requested_at,updated_at) VALUES($1,$2,'queued',$3::jsonb,'{}'::jsonb,NOW(),NOW()) RETURNING *`,[creatorId,projectId,JSON.stringify(manifest)]);
+    });
+    return publicCutJob(result.rows[0]);
+}
+
+async function persistCutCandidateState(creatorId,projectId,{ownEvidence,groundTruth}={}){
+    const row=(await pool.query(`SELECT * FROM creator_cut_projects WHERE creator_id=$1 AND id=$2 LIMIT 1`,[creatorId,projectId])).rows[0];
+    if(!row)throw Object.assign(new Error("Cut-Projekt nicht gefunden."),{code:"cut_project_missing"});
+    const preset=row.export_preset&&typeof row.export_preset==="object"?row.export_preset:{},gameProfile=cutGameProfileId(preset.game_profile);
+    const own=ownEvidence===undefined?sanitizeOwnClipEvidence(preset.own_clip_evidence||{},gameProfile):sanitizeOwnClipEvidence(ownEvidence||{},gameProfile);
+    const truth=groundTruth===undefined?sanitizeGroundTruth(preset.candidate_ground_truth||[]):sanitizeGroundTruth(groundTruth||[]);
+    const updated=(await pool.query(`UPDATE creator_cut_projects SET export_preset=jsonb_set(jsonb_set(COALESCE(export_preset,'{}'::jsonb),'{own_clip_evidence}',$3::jsonb,true),'{candidate_ground_truth}',$4::jsonb,true),updated_at=NOW() WHERE creator_id=$1 AND id=$2 RETURNING *`,[creatorId,projectId,JSON.stringify(own),JSON.stringify(truth)])).rows[0];
+    const result=buildCutCandidates({own_evidence:own,ground_truth:truth,game_profile:gameProfile,reference_learning:preset.reference_learning||{}});
+    return{project:publicCutProject(updated),...result};
 }
 
 async function transitionCutExportJob(creatorId,jobId,to,{bridgeId=null,result=null,errorMessage=""}={}) {
@@ -7673,7 +7817,9 @@ function publicStreamStudioSource(source){
         status:source.status||"draft",
         source_url:source.source_url||"",
         source_urls:source.source_urls||{},
-        canvas:source.published_config?.canvas||source.canvas||{width:600,height:120}
+        canvas:source.published_config?.canvas||source.canvas||{width:600,height:120},
+        source_mode:source.published_config?.source_mode||"cloud",
+        game_type:source.published_config?.game_type||""
     };
 }
 
@@ -12350,6 +12496,10 @@ async function applyStudioLiveEvent(creatorId, input = {}, provider = "simulator
         await processCreatorGameLiveEvent(creatorId, insertedEvent)
             .catch(error=>safeLogError("Creator Game LIVE Rule Fehler:",error));
     }
+    if (insertedEvent && NEXUS_EVENT_TYPES.has(insertedEvent.event_type)) {
+        await processNexusAutomationEvent(creatorId, insertedEvent)
+            .catch(error=>safeLogError("NEXUS Automation Fehler:",error));
+    }
     if (type === "live_end") cleanupStudioLiveHistory(creatorId).catch(error=>safeLogError("Widget Studio Cleanup Fehler:",error));
     return getStudioLiveState(creatorId);
 }
@@ -15379,6 +15529,18 @@ app.put(
                         req.body?.state
                     );
 
+            if(moduleKey==="games" && isDynamicLocalGameKey(state.game_type)){
+                const previous=await getCreatorGameProfile(req.creatorAccount.id);
+                const bridge=await getStudioBridgeStatus(req.creatorAccount.id);
+                const installed=launcherInteractiveGameModules(bridge).some(item=>item.key===state.game_type);
+                const changed=previous.game_type!==state.game_type;
+                if(changed && (!bridge.online || bridge.capabilities?.interactive_games_catalog_v1!==true)){
+                    return res.status(409).json({ok:false,error:"Zum Auswählen eines zusätzlichen lokalen Game-Moduls muss der aktuelle Launcher online sein.",code:"interactive_game_catalog_offline"});
+                }
+                if((changed || bridge.online) && !installed){
+                    return res.status(409).json({ok:false,error:"Dieses lokale Game-Modul ist im verbundenen Launcher nicht installiert.",code:"interactive_game_module_missing"});
+                }
+            }
 
             const result =
                 await saveModuleState(
@@ -16393,6 +16555,22 @@ app.put("/api/creator/widget-studio/interactions/:eventType", requireCreatorAcco
 // WIDGET STUDIO V6 - LAUNCHER BRIDGE API
 // ============================================================
 
+app.get("/api/creator/live-readiness",requireCreatorAccount,async(req,res)=>{
+    res.set("Cache-Control","no-store");
+    try{return res.json({ok:true,readiness:await creatorLiveReadiness(req.creatorAccount.id,req.creatorAccount)});}
+    catch(error){safeLogError("Creator LIVE Readiness Fehler:",error);return res.status(500).json({ok:false,error:"LIVE-Bereitschaft konnte nicht geladen werden."});}
+});
+
+app.post("/api/creator/live-provider/:command",requireCreatorAccount,creatorWriteLimiter,async(req,res)=>{
+    res.set("Cache-Control","no-store");
+    try{
+        await requireCreatorFeatureAccess(req.creatorAccount,"live_bridge","creator");
+        const command=String(req.params.command||"").toLowerCase();
+        const action=await queueLiveProviderLauncherAction(req.creatorAccount.id,{command,provider:"tikfinity"});
+        return res.json({ok:true,action,readiness:await creatorLiveReadiness(req.creatorAccount.id,req.creatorAccount)});
+    }catch(error){const status=error?.code==="creator_feature_locked"?403:400;return res.status(status).json(clientSafeErrorPayload(req,error,status,"LIVE-Provider-Aktion konnte nicht gestartet werden."));}
+});
+
 app.get(
     "/api/creator/launcher/releases",
     requireCreatorAccount,
@@ -16854,6 +17032,63 @@ app.post(
 // ============================================================
 // V28 — CREATOR GAMES RUNTIME
 // ============================================================
+app.get("/api/creator/games/presets",requireCreatorAccount,async(req,res)=>{
+    res.set("Cache-Control","no-store");
+    try{
+        await requireCreatorFeatureAccess(req.creatorAccount,"games","creator");
+        const bridge=await getStudioBridgeStatus(req.creatorAccount.id);
+        return res.json({ok:true,presets:publicGamePresets(gameCatalogForBridge(bridge))});
+    }catch(error){return res.status(error?.code==="creator_feature_locked"?403:500).json(clientSafeErrorPayload(req,error,error?.code==="creator_feature_locked"?403:500,"Game-Presets konnten nicht geladen werden."))}
+});
+
+app.get("/api/creator/games/profile/export",requireCreatorAccount,async(req,res)=>{
+    res.set("Cache-Control","no-store");
+    try{
+        await requireCreatorFeatureAccess(req.creatorAccount,"games","creator");
+        const profile=await getCreatorGameProfile(req.creatorAccount.id);
+        const rules=await listCreatorGameRules(req.creatorAccount.id);
+        return res.json({ok:true,bundle:buildGameProfileBundle({profile,rules})});
+    }catch(error){return res.status(error?.code==="creator_feature_locked"?403:500).json(clientSafeErrorPayload(req,error,error?.code==="creator_feature_locked"?403:500,"Game-Profil konnte nicht exportiert werden."))}
+});
+
+app.post("/api/creator/games/profile/import",requireCreatorAccount,async(req,res)=>{
+    res.set("Cache-Control","no-store");
+    try{
+        const access=await requireCreatorFeatureAccess(req.creatorAccount,"games","creator");
+        const bundle=parseGameProfileBundle(req.body?.bundle||req.body||{});
+        const profile=sanitizeGameProfile(bundle.profile);
+        const maxRules=Number(access.entitlements.max_game_rules||0);
+        if(bundle.rules.length>maxRules){const error=new Error(`Dein Zugriff erlaubt maximal ${maxRules} Game-Regeln.`);error.code="game_rule_limit";throw error;}
+        const rules=bundle.rules.map(rule=>sanitizeGameRule(rule));
+        const runtime=await getCreatorGameRuntimeRow(req.creatorAccount.id,{ensure:false});
+        if(runtime&&["running","starting"].includes(String(runtime.status||""))){const error=new Error("Stoppe das laufende Game, bevor du ein Profil importierst.");error.code="game_profile_runtime_active";throw error;}
+        if(isLauncherLocalGame(profile.game_type)){
+            const bridge=await getStudioBridgeStatus(req.creatorAccount.id);
+            if(!bridge.online||bridge.capabilities?.interactive_games_catalog_v1!==true){const error=new Error("Für dieses lokale Game-Profil muss der aktuelle Launcher online sein.");error.code="interactive_game_catalog_offline";throw error;}
+            const def=gameDefinition(profile.game_type);
+            const installed=launcherInteractiveGameModules(bridge).some(item=>item.terminal_id===def.terminal_id);
+            if(!installed){const error=new Error("Das lokale Game-Modul aus diesem Profil ist im verbundenen Launcher nicht installiert.");error.code="interactive_game_module_missing";throw error;}
+        }
+        const client=await pool.connect();
+        try{
+            await client.query("BEGIN");
+            await client.query(`INSERT INTO creator_module_state(creator_id,module_key,state,updated_at) VALUES($1,'games',$2::jsonb,NOW()) ON CONFLICT(creator_id,module_key) DO UPDATE SET state=EXCLUDED.state,updated_at=NOW()`,[req.creatorAccount.id,JSON.stringify(profile)]);
+            await client.query(`DELETE FROM creator_game_rules WHERE creator_id=$1`,[req.creatorAccount.id]);
+            for(const clean of rules){
+                await client.query(`INSERT INTO creator_game_rules(creator_id,label,enabled,event_type,team,points,amount_mode,min_amount,gift_name,gift_id,created_at,updated_at) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,NOW(),NOW())`,[req.creatorAccount.id,clean.label,clean.enabled,clean.event_type,clean.team,clean.points,clean.amount_mode,clean.min_amount,clean.gift_name,clean.gift_id]);
+            }
+            if(runtime){await client.query(`UPDATE creator_game_runtime SET status='idle',game_type=$2,title=$3,config=$4::jsonb,state=$5::jsonb,started_at=NULL,round_ends_at=NULL,ended_at=NOW(),version=version+1,updated_at=NOW() WHERE creator_id=$1`,[req.creatorAccount.id,profile.game_type,profile.title,JSON.stringify(profile),JSON.stringify(initialGameState(profile))]);}
+            await client.query("COMMIT");
+        }catch(error){await client.query("ROLLBACK");throw error}finally{client.release()}
+        return res.json({ok:true,state:profile,rules:await listCreatorGameRules(req.creatorAccount.id),imported_rules:rules.length});
+    }catch(error){
+        const conflict=["game_profile_runtime_active","interactive_game_catalog_offline","interactive_game_module_missing"].includes(error?.code);
+        const forbidden=error?.code==="creator_feature_locked"||error?.code==="game_rule_limit";
+        const status=forbidden?403:conflict?409:400;
+        return res.status(status).json(clientSafeErrorPayload(req,error,status,"Game-Profil konnte nicht importiert werden.",{includeCode:true}));
+    }
+});
+
 app.get("/api/creator/games/rules",requireCreatorAccount,async(req,res)=>{
     res.set("Cache-Control","no-store");
     try{
@@ -16894,7 +17129,7 @@ app.delete("/api/creator/games/rules/:id",requireCreatorAccount,async(req,res)=>
 
 app.get("/api/creator/games/runtime",requireCreatorAccount,async(req,res)=>{
     res.set("Cache-Control","no-store");
-    try{const access=await requireCreatorFeatureAccess(req.creatorAccount,"games","creator");return res.json({ok:true,profile:await getCreatorGameProfile(req.creatorAccount.id),runtime:await getCreatorGameRuntimePublic(req.creatorAccount.id,{ensure:true}),access_source:access.access_source})}
+    try{const access=await requireCreatorFeatureAccess(req.creatorAccount,"games","creator"),bridge=await getStudioBridgeStatus(req.creatorAccount.id);return res.json({ok:true,profile:await getCreatorGameProfile(req.creatorAccount.id),runtime:await getCreatorGameRuntimePublic(req.creatorAccount.id,{ensure:true}),catalog:gameCatalogForBridge(bridge),local_engine:{launcher_online:bridge.online===true,compatible:bridge.capabilities?.interactive_games_service_v1===true,catalog_sync:bridge.capabilities?.interactive_games_catalog_v1===true,service_ready:bridge.capabilities?.interactive_games_service_ready===true,service_running:bridge.capabilities?.interactive_games_service_running===true,active_module:studioText(bridge.capabilities?.interactive_games_active_module,64,""),modules:launcherInteractiveGameModules(bridge),catalog_hash:/^[a-f0-9]{64}$/.test(String(bridge.capabilities?.interactive_games_catalog_hash||""))?String(bridge.capabilities.interactive_games_catalog_hash):"",client_version:bridge.client_version||""},access_source:access.access_source})}
     catch(error){return res.status(error?.code==="creator_feature_locked"?403:500).json(clientSafeErrorPayload(req,error,error?.code==="creator_feature_locked"?403:500,"Game Runtime konnte nicht geladen werden."))}
 });
 app.post("/api/creator/games/runtime/start",requireCreatorAccount,async(req,res)=>{try{await requireCreatorFeatureAccess(req.creatorAccount,"games","creator");return res.json({ok:true,runtime:await startCreatorGameRuntime(req.creatorAccount.id)})}catch(error){return res.status(error?.code==="creator_feature_locked"?403:400).json(clientSafeErrorPayload(req,error,error?.code==="creator_feature_locked"?403:400,"Game konnte nicht gestartet werden."))}});
@@ -16957,9 +17192,20 @@ app.get("/api/creator/cut-studio/projects/:id",requireCreatorAccount,async(req,r
 });
 app.put("/api/creator/cut-studio/projects/:id",requireCreatorAccount,async(req,res)=>{
     try{
-        await requireCreatorFeatureAccess(req.creatorAccount,"cut_studio","creator");const clean=sanitizeCutProject(req.body||{});
-        const result=await pool.query(`UPDATE creator_cut_projects SET title=$3,status=$4,format=$5,notes=$6,source_name=$7,export_preset=$8::jsonb,updated_at=NOW() WHERE creator_id=$1 AND id=$2 RETURNING *`,[req.creatorAccount.id,req.params.id,clean.title,clean.status,clean.format,clean.notes,clean.source_name,JSON.stringify(clean.export_preset)]);
-        if(!result.rows[0])return res.status(404).json({ok:false,error:"Cut-Projekt nicht gefunden."});
+        await requireCreatorFeatureAccess(req.creatorAccount,"cut_studio","creator");
+        const clean=sanitizeCutProject(req.body||{}),baseUpdatedAt=studioText(req.body?.base_updated_at,80,"");
+        const params=[req.creatorAccount.id,req.params.id,clean.title,clean.status,clean.format,clean.notes,clean.source_name,JSON.stringify(clean.export_preset)];
+        const sql=baseUpdatedAt
+            ?`UPDATE creator_cut_projects SET title=$3,status=$4,format=$5,notes=$6,source_name=$7,export_preset=((($8::jsonb - 'own_clip_evidence') - 'candidate_ground_truth') || jsonb_build_object('own_clip_evidence',COALESCE(export_preset->'own_clip_evidence','{}'::jsonb),'candidate_ground_truth',COALESCE(export_preset->'candidate_ground_truth','[]'::jsonb))),updated_at=NOW() WHERE creator_id=$1 AND id=$2 AND date_trunc('milliseconds',updated_at)=date_trunc('milliseconds',$9::timestamptz) RETURNING *`
+            :`UPDATE creator_cut_projects SET title=$3,status=$4,format=$5,notes=$6,source_name=$7,export_preset=((($8::jsonb - 'own_clip_evidence') - 'candidate_ground_truth') || jsonb_build_object('own_clip_evidence',COALESCE(export_preset->'own_clip_evidence','{}'::jsonb),'candidate_ground_truth',COALESCE(export_preset->'candidate_ground_truth','[]'::jsonb))),updated_at=NOW() WHERE creator_id=$1 AND id=$2 RETURNING *`;
+        if(baseUpdatedAt)params.push(baseUpdatedAt);
+        const result=await pool.query(sql,params);
+        if(!result.rows[0]){
+            const current=(await pool.query(`SELECT p.*,(SELECT COUNT(*)::int FROM creator_cut_clips c WHERE c.project_id=p.id) AS clip_count FROM creator_cut_projects p WHERE p.creator_id=$1 AND p.id=$2 LIMIT 1`,[req.creatorAccount.id,req.params.id])).rows[0];
+            if(!current)return res.status(404).json({ok:false,error:"Cut-Projekt nicht gefunden."});
+            if(baseUpdatedAt)return res.status(409).json({ok:false,code:"cut_project_conflict",error:"Dieses Cut-Projekt wurde inzwischen in einer anderen Sitzung geändert. Deine lokale Recovery-Kopie bleibt erhalten.",project:publicCutProject(current,current.clip_count||0)});
+            return res.status(404).json({ok:false,error:"Cut-Projekt nicht gefunden."});
+        }
         const count=await pool.query(`SELECT COUNT(*)::int AS count FROM creator_cut_clips WHERE project_id=$1`,[req.params.id]);
         return res.json({ok:true,project:publicCutProject(result.rows[0],count.rows[0]?.count||0)});
     }catch(error){return res.status(error?.code==="creator_feature_locked"?403:500).json(clientSafeErrorPayload(req,error,error?.code==="creator_feature_locked"?403:500,"Cut-Projekt konnte nicht gespeichert werden."))}
@@ -16968,12 +17214,76 @@ app.delete("/api/creator/cut-studio/projects/:id",requireCreatorAccount,async(re
     try{await requireCreatorFeatureAccess(req.creatorAccount,"cut_studio","creator");const result=await pool.query(`DELETE FROM creator_cut_projects WHERE creator_id=$1 AND id=$2 RETURNING id`,[req.creatorAccount.id,req.params.id]);if(!result.rows[0])return res.status(404).json({ok:false,error:"Cut-Projekt nicht gefunden."});return res.json({ok:true})}
     catch(error){return res.status(error?.code==="creator_feature_locked"?403:500).json(clientSafeErrorPayload(req,error,error?.code==="creator_feature_locked"?403:500,"Cut-Projekt konnte nicht gelöscht werden."))}
 });
+app.post("/api/creator/cut-studio/projects/:id/reference-learning/analyze",requireCreatorAccount,async(req,res)=>{
+    try{
+        const creatorId=req.creatorAccount.id;
+        await requireCreatorFeatureAccess(creatorId,"cut_studio","creator");
+        if(!CUT_REFERENCE_GEMINI_API_KEY){
+            return res.status(503).json({ok:false,error:"Reference Learning Analyse ist serverseitig noch nicht konfiguriert."});
+        }
+
+        const requestedUrl=normalizeCutReferenceUrl(req.body?.url||"");
+        const initial=(await pool.query(`SELECT * FROM creator_cut_projects WHERE creator_id=$1 AND id=$2 LIMIT 1`,[creatorId,req.params.id])).rows[0];
+        if(!initial)return res.status(404).json({ok:false,error:"Cut-Projekt nicht gefunden."});
+        const initialPreset=initial.export_preset&&typeof initial.export_preset==="object"?initial.export_preset:{};
+        const gameProfile=cutGameProfileId(initialPreset.game_profile);
+        const initialSamples=Array.isArray(initialPreset.reference_learning?.samples)?initialPreset.reference_learning.samples:[];
+        if(!initialSamples.some(sample=>String(sample?.url||"")===requestedUrl)){
+            return res.status(409).json({ok:false,error:"Speichere diese Referenz zuerst im Cut-Projekt, bevor sie analysiert wird."});
+        }
+
+        const analyzed=await analyzeCutReferenceWithGemini({
+            url:requestedUrl,
+            gameProfile,
+            apiKey:CUT_REFERENCE_GEMINI_API_KEY,
+            model:CUT_REFERENCE_GEMINI_MODEL,
+            timeoutMs:CUT_REFERENCE_PROVIDER_TIMEOUT_MS
+        });
+
+        // Nach der externen Analyse den Projektstand erneut lesen. So überschreibt ein
+        // langsamer Provider-Aufruf keine zwischenzeitlichen Änderungen im Editor.
+        const latest=(await pool.query(`SELECT * FROM creator_cut_projects WHERE creator_id=$1 AND id=$2 LIMIT 1`,[creatorId,req.params.id])).rows[0];
+        if(!latest)return res.status(404).json({ok:false,error:"Cut-Projekt nicht gefunden."});
+        const latestPreset=latest.export_preset&&typeof latest.export_preset==="object"?latest.export_preset:{};
+        const latestProfile=cutGameProfileId(latestPreset.game_profile);
+        const latestSamples=Array.isArray(latestPreset.reference_learning?.samples)?latestPreset.reference_learning.samples:[];
+        if(latestProfile!==gameProfile||!latestSamples.some(sample=>String(sample?.url||"")===requestedUrl)){
+            return res.status(409).json({ok:false,error:"Das Cut-Projekt wurde während der Analyse geändert. Das Analyseergebnis wurde sicher verworfen."});
+        }
+
+        const referenceLearning=upsertAnalyzedReference(latestPreset.reference_learning||{},analyzed.sample,latestProfile);
+        const clean=sanitizeCutProject({...latest,export_preset:{...latestPreset,game_profile:latestProfile,reference_learning:referenceLearning}});
+        const updated=(await pool.query(`UPDATE creator_cut_projects SET export_preset=$3::jsonb,updated_at=NOW() WHERE creator_id=$1 AND id=$2 RETURNING *`,[creatorId,req.params.id,JSON.stringify(clean.export_preset)])).rows[0];
+        const clipCount=(await pool.query(`SELECT COUNT(*)::int AS count FROM creator_cut_clips WHERE project_id=$1`,[req.params.id])).rows[0]?.count||0;
+        return res.json({ok:true,project:publicCutProject(updated,clipCount),analysis:{provider:analyzed.provider,model:analyzed.model,url:requestedUrl,analyzed_at:analyzed.sample.analyzed_at}});
+    }catch(error){
+        const status=Number(error?.statusCode)||400;
+        safeLogError("CUT Reference Provider:",error);
+        return res.status(status).json(clientSafeErrorPayload(req,error,status,"Referenzanalyse konnte nicht abgeschlossen werden."));
+    }
+});
+
+app.post("/api/creator/cut-studio/projects/:id/candidates/preview",requireCreatorAccount,async(req,res)=>{
+    res.set("Cache-Control","no-store");
+    try{
+        const creatorId=req.creatorAccount.id;await requireCreatorFeatureAccess(creatorId,"cut_studio","creator");
+        const row=(await pool.query(`SELECT * FROM creator_cut_projects WHERE creator_id=$1 AND id=$2 LIMIT 1`,[creatorId,req.params.id])).rows[0];
+        if(!row)return res.status(404).json({ok:false,error:"Cut-Projekt nicht gefunden."});
+        const preset=row.export_preset&&typeof row.export_preset==="object"?row.export_preset:{},gameProfile=cutGameProfileId(preset.game_profile),body=req.body&&typeof req.body==="object"?req.body:{};
+        const hasOwn=Object.prototype.hasOwnProperty.call(body,"own_evidence"),hasTruth=Object.prototype.hasOwnProperty.call(body,"ground_truth");
+        if(body.persist===true&&(hasOwn||hasTruth)){const saved=await persistCutCandidateState(creatorId,req.params.id,{...(hasOwn?{ownEvidence:body.own_evidence}:{}),...(hasTruth?{groundTruth:body.ground_truth}:{})});return res.json({ok:true,...saved,project_updated_at:saved.project?.updated_at||null})}
+        const result=buildCutCandidates({own_evidence:hasOwn?body.own_evidence:(preset.own_clip_evidence||{}),ground_truth:hasTruth?body.ground_truth:(preset.candidate_ground_truth||[]),game_profile:gameProfile,reference_learning:preset.reference_learning||{}});
+        return res.json({ok:true,...result,project_updated_at:row.updated_at||null});
+    }catch(error){const status=error?.code==="creator_feature_locked"?403:error?.code==="cut_project_missing"?404:400;return res.status(status).json(clientSafeErrorPayload(req,error,status,"Clip-Kandidaten konnten nicht bewertet werden."))}
+});
+
 app.post("/api/creator/cut-studio/projects/:id/clips",requireCreatorAccount,async(req,res)=>{
     try{
         const access=await requireCreatorFeatureAccess(req.creatorAccount,"cut_studio","creator");
         const requested=sanitizeCutClip(req.body||{});
         const result=await createCutClipWithLimit(req.creatorAccount.id,req.params.id,requested,Number(access.entitlements.max_cut_clips_per_project||0));
-        return res.status(201).json({ok:true,clip:publicCutClip(result.rows[0])});
+        const projectState=(await pool.query(`SELECT updated_at FROM creator_cut_projects WHERE creator_id=$1 AND id=$2 LIMIT 1`,[req.creatorAccount.id,req.params.id])).rows[0];
+        return res.status(201).json({ok:true,clip:publicCutClip(result.rows[0]),project_updated_at:projectState?.updated_at||null});
     }catch(error){
         const status=error?.code==="creator_feature_locked"||error?.code==="cut_clip_limit"?403:error?.code==="cut_project_missing"?404:500;
         return res.status(status).json(clientSafeErrorPayload(req,error,status,"Clip konnte nicht hinzugefügt werden.",{includeCode:true}));
@@ -16998,7 +17308,7 @@ app.put("/api/creator/cut-studio/projects/:projectId/clips/order",requireCreator
             await client.query("COMMIT");
         }catch(error){await client.query("ROLLBACK");throw error}finally{client.release()}
         const data=await getCutProject(req.creatorAccount.id,req.params.projectId);
-        return res.json({ok:true,clips:data?.clips||[]});
+        return res.json({ok:true,clips:data?.clips||[],project_updated_at:data?.project?.updated_at||null});
     }catch(error){
         return res.status(error?.code==="creator_feature_locked"?403:500).json(clientSafeErrorPayload(req,error,error?.code==="creator_feature_locked"?403:500,"Timeline konnte nicht gespeichert werden."));
     }
@@ -17006,15 +17316,26 @@ app.put("/api/creator/cut-studio/projects/:projectId/clips/order",requireCreator
 
 app.put("/api/creator/cut-studio/projects/:projectId/clips/:clipId",requireCreatorAccount,async(req,res)=>{
     try{
-        await requireCreatorFeatureAccess(req.creatorAccount,"cut_studio","creator");const clean=sanitizeCutClip(req.body||{});
-        const result=await pool.query(`UPDATE creator_cut_clips SET label=$4,in_ms=$5,out_ms=$6,caption=$7,selected=$8,caption_enabled=$9,caption_position=$10,caption_size=$11,caption_style=$12,audio_gain_db=$13,audio_fade_in_ms=$14,audio_fade_out_ms=$15,keyframe_enabled=$16,keyframe_zoom_start=$17,keyframe_zoom_end=$18,keyframe_pan_x_start=$19,keyframe_pan_x_end=$20,keyframe_pan_y_start=$21,keyframe_pan_y_end=$22,keyframe_easing=$23,visual_keyframes=$24::jsonb,updated_at=NOW() WHERE creator_id=$1 AND project_id=$2 AND id=$3 RETURNING *`,[req.creatorAccount.id,req.params.projectId,req.params.clipId,clean.label,clean.in_ms,clean.out_ms,clean.caption,clean.selected,clean.caption_enabled,clean.caption_position,clean.caption_size,clean.caption_style,clean.audio_gain_db,clean.audio_fade_in_ms,clean.audio_fade_out_ms,clean.keyframe_enabled,clean.keyframe_zoom_start,clean.keyframe_zoom_end,clean.keyframe_pan_x_start,clean.keyframe_pan_x_end,clean.keyframe_pan_y_start,clean.keyframe_pan_y_end,clean.keyframe_easing,JSON.stringify(clean.visual_keyframes||[])]);
-        if(!result.rows[0])return res.status(404).json({ok:false,error:"Clip nicht gefunden."});
-        await pool.query(`UPDATE creator_cut_projects SET updated_at=NOW() WHERE creator_id=$1 AND id=$2`,[req.creatorAccount.id,req.params.projectId]);
-        return res.json({ok:true,clip:publicCutClip(result.rows[0])});
+        await requireCreatorFeatureAccess(req.creatorAccount,"cut_studio","creator");
+        const clean=sanitizeCutClip(req.body||{}),baseUpdatedAt=studioText(req.body?.base_updated_at,80,"");
+        const params=[req.creatorAccount.id,req.params.projectId,req.params.clipId,clean.label,clean.in_ms,clean.out_ms,clean.caption,clean.selected,clean.caption_enabled,clean.caption_position,clean.caption_size,clean.caption_style,clean.audio_gain_db,clean.audio_fade_in_ms,clean.audio_fade_out_ms,clean.keyframe_enabled,clean.keyframe_zoom_start,clean.keyframe_zoom_end,clean.keyframe_pan_x_start,clean.keyframe_pan_x_end,clean.keyframe_pan_y_start,clean.keyframe_pan_y_end,clean.keyframe_easing,JSON.stringify(clean.visual_keyframes||[])];
+        const sql=baseUpdatedAt
+            ?`UPDATE creator_cut_clips SET label=$4,in_ms=$5,out_ms=$6,caption=$7,selected=$8,caption_enabled=$9,caption_position=$10,caption_size=$11,caption_style=$12,audio_gain_db=$13,audio_fade_in_ms=$14,audio_fade_out_ms=$15,keyframe_enabled=$16,keyframe_zoom_start=$17,keyframe_zoom_end=$18,keyframe_pan_x_start=$19,keyframe_pan_x_end=$20,keyframe_pan_y_start=$21,keyframe_pan_y_end=$22,keyframe_easing=$23,visual_keyframes=$24::jsonb,updated_at=NOW() WHERE creator_id=$1 AND project_id=$2 AND id=$3 AND date_trunc('milliseconds',updated_at)=date_trunc('milliseconds',$25::timestamptz) RETURNING *`
+            :`UPDATE creator_cut_clips SET label=$4,in_ms=$5,out_ms=$6,caption=$7,selected=$8,caption_enabled=$9,caption_position=$10,caption_size=$11,caption_style=$12,audio_gain_db=$13,audio_fade_in_ms=$14,audio_fade_out_ms=$15,keyframe_enabled=$16,keyframe_zoom_start=$17,keyframe_zoom_end=$18,keyframe_pan_x_start=$19,keyframe_pan_x_end=$20,keyframe_pan_y_start=$21,keyframe_pan_y_end=$22,keyframe_easing=$23,visual_keyframes=$24::jsonb,updated_at=NOW() WHERE creator_id=$1 AND project_id=$2 AND id=$3 RETURNING *`;
+        if(baseUpdatedAt)params.push(baseUpdatedAt);
+        const result=await pool.query(sql,params);
+        if(!result.rows[0]){
+            const current=(await pool.query(`SELECT * FROM creator_cut_clips WHERE creator_id=$1 AND project_id=$2 AND id=$3 LIMIT 1`,[req.creatorAccount.id,req.params.projectId,req.params.clipId])).rows[0];
+            if(!current)return res.status(404).json({ok:false,error:"Clip nicht gefunden."});
+            if(baseUpdatedAt)return res.status(409).json({ok:false,code:"cut_clip_conflict",error:"Dieser Clip wurde inzwischen in einer anderen Sitzung geändert. Deine lokale Recovery-Kopie bleibt erhalten.",clip:publicCutClip(current)});
+            return res.status(404).json({ok:false,error:"Clip nicht gefunden."});
+        }
+        const projectState=(await pool.query(`UPDATE creator_cut_projects SET updated_at=NOW() WHERE creator_id=$1 AND id=$2 RETURNING updated_at`,[req.creatorAccount.id,req.params.projectId])).rows[0];
+        return res.json({ok:true,clip:publicCutClip(result.rows[0]),project_updated_at:projectState?.updated_at||null});
     }catch(error){return res.status(error?.code==="creator_feature_locked"?403:500).json(clientSafeErrorPayload(req,error,error?.code==="creator_feature_locked"?403:500,"Clip konnte nicht gespeichert werden."))}
 });
 app.delete("/api/creator/cut-studio/projects/:projectId/clips/:clipId",requireCreatorAccount,async(req,res)=>{
-    try{await requireCreatorFeatureAccess(req.creatorAccount,"cut_studio","creator");const result=await pool.query(`DELETE FROM creator_cut_clips WHERE creator_id=$1 AND project_id=$2 AND id=$3 RETURNING id`,[req.creatorAccount.id,req.params.projectId,req.params.clipId]);if(!result.rows[0])return res.status(404).json({ok:false,error:"Clip nicht gefunden."});await pool.query(`UPDATE creator_cut_projects SET updated_at=NOW() WHERE creator_id=$1 AND id=$2`,[req.creatorAccount.id,req.params.projectId]);return res.json({ok:true})}
+    try{await requireCreatorFeatureAccess(req.creatorAccount,"cut_studio","creator");const result=await pool.query(`DELETE FROM creator_cut_clips WHERE creator_id=$1 AND project_id=$2 AND id=$3 RETURNING id`,[req.creatorAccount.id,req.params.projectId,req.params.clipId]);if(!result.rows[0])return res.status(404).json({ok:false,error:"Clip nicht gefunden."});const projectState=(await pool.query(`UPDATE creator_cut_projects SET updated_at=NOW() WHERE creator_id=$1 AND id=$2 RETURNING updated_at`,[req.creatorAccount.id,req.params.projectId])).rows[0];return res.json({ok:true,project_updated_at:projectState?.updated_at||null})}
     catch(error){return res.status(error?.code==="creator_feature_locked"?403:500).json(clientSafeErrorPayload(req,error,error?.code==="creator_feature_locked"?403:500,"Clip konnte nicht gelöscht werden."))}
 });
 
@@ -17028,12 +17349,14 @@ app.get("/api/creator/stream-studio",requireCreatorAccount,async(req,res)=>{
     try{
         const creatorId=req.creatorAccount.id;
         const context=await streamStudioSourceContext(creatorId,req.creatorAccount);
+        const gameBridge=await getStudioBridgeStatus(creatorId);
         const settingsData=await getCreatorSettings(creatorId);
         const multistreamLimit=streamStudioMultistreamLimit(context.access);
         const config=sanitizeStreamStudioConfig(settingsData.settings?.stream_studio||{},context.liveSceneIds,context.liveSourceIds,multistreamLimit,context.ownedSceneIds);
         const allWidgets=(await listStudioWidgets(creatorId)).map(publicStudioWidgetRow);
         const byId=new Map(allWidgets.map(widget=>[String(widget.id),publicStreamStudioSource(widget)]));
         for(const source of context.sceneSources){if(!byId.has(String(source.id)))byId.set(String(source.id),publicStreamStudioSource(source));}
+        const gameActivity=await getPublicRecentGames(creatorId,{limit:3});
         return res.json({
             ok:true,
             config,
@@ -17044,15 +17367,20 @@ app.get("/api/creator/stream-studio",requireCreatorAccount,async(req,res)=>{
             registry:studioWidgetRegistryPublic(req.creatorAccount.plan,context.access.entitlements),
             launcher_devices:await listCreatorLauncherDevices(creatorId),
             runtime:await getCreatorStreamStudioRuntime(creatorId),
+            interactive_game:context.access.entitlements.games?await getCreatorGameRuntimePublic(creatorId):null,
+            game_activity:gameActivity,
+            game_context:creatorGameContextFromActivity(gameActivity),
+            live_readiness:await creatorLiveReadiness(creatorId,req.creatorAccount),
+            interactive_game_engine:{launcher_online:gameBridge.online===true,compatible:gameBridge.capabilities?.interactive_games_service_v1===true,service_ready:gameBridge.capabilities?.interactive_games_service_ready===true,service_running:gameBridge.capabilities?.interactive_games_service_running===true,active_module:studioText(gameBridge.capabilities?.interactive_games_active_module,64,""),module_count:launcherInteractiveGameModules(gameBridge).length,catalog_hash:/^[a-f0-9]{64}$/.test(String(gameBridge.capabilities?.interactive_games_catalog_hash||""))?String(gameBridge.capabilities.interactive_games_catalog_hash):"",client_version:gameBridge.client_version||"",tikfinity:{supported:gameBridge.capabilities?.tikfinity_provider_v1===true,status:studioText(gameBridge.capabilities?.tikfinity_status,24,"offline"),healthy:gameBridge.capabilities?.tikfinity_healthy===true,last_event_at:studioText(gameBridge.capabilities?.tikfinity_last_event_at,60,"")}},
             multistream:{max_destinations:multistreamLimit,mode:"launcher_local",cloud_relay:false,credentials:"launcher_local_only"},
-            engine:{capture:"launcher_local",cloud_media:false,stream_keys:"launcher_only",multistream:"launcher_local",protocol:2}
+            engine:{capture:"launcher_local",cloud_media:false,stream_keys:"launcher_only",multistream:"launcher_local",interactive_games:"launcher_local",protocol:5}
         });
     }catch(error){safeLogError("Stream Studio Laden Fehler:",error);return res.status(500).json({ok:false,error:"Stream Studio konnte nicht geladen werden."});}
 });
 
 app.get("/api/creator/stream-studio/runtime",requireCreatorAccount,async(req,res)=>{
     res.set("Cache-Control","no-store");
-    try{return res.json({ok:true,runtime:await getCreatorStreamStudioRuntime(req.creatorAccount.id)});}
+    try{const gameActivity=await getPublicRecentGames(req.creatorAccount.id,{limit:3});return res.json({ok:true,runtime:await getCreatorStreamStudioRuntime(req.creatorAccount.id),game_activity:gameActivity,game_context:creatorGameContextFromActivity(gameActivity)});}
     catch(error){safeLogError("Stream Studio Runtime Fehler:",error);return res.status(500).json({ok:false,error:"Stream Runtime konnte nicht geladen werden."});}
 });
 
@@ -17436,6 +17764,16 @@ app.get("/api/creator/cut-studio/jobs",requireCreatorAccount,async(req,res)=>{
         return res.json({ok:true,jobs:await listCutExportJobs(req.creatorAccount.id,75),limits:{max_pending_jobs:Number(access.entitlements.max_pending_cut_jobs||0)}});
     }catch(error){return res.status(error?.code==="creator_feature_locked"?403:500).json(clientSafeErrorPayload(req,error,error?.code==="creator_feature_locked"?403:500,"Cut-Export-Jobs konnten nicht geladen werden."))}
 });
+app.post("/api/creator/cut-studio/projects/:id/analysis-jobs",requireCreatorAccount,async(req,res)=>{
+    try{await requireCreatorFeatureAccess(req.creatorAccount,"cut_studio","creator");return res.status(201).json({ok:true,job:await createCutAnalysisJob(req.creatorAccount.id,req.params.id)})}
+    catch(error){const status=error?.code==="creator_feature_locked"?403:error?.code==="cut_project_missing"?404:error?.code==="cut_analysis_busy"?409:500;return res.status(status).json(clientSafeErrorPayload(req,error,status,"Lokale Clipanalyse konnte nicht angefordert werden."))}
+});
+app.get("/api/creator/cut-studio/projects/:id/analysis-jobs/latest",requireCreatorAccount,async(req,res)=>{
+    res.set("Cache-Control","no-store");
+    try{await requireCreatorFeatureAccess(req.creatorAccount,"cut_studio","creator");const row=(await pool.query(`SELECT * FROM creator_cut_export_jobs WHERE creator_id=$1 AND project_id=$2 AND manifest->>'kind'='cut_analysis' ORDER BY requested_at DESC LIMIT 1`,[req.creatorAccount.id,req.params.id])).rows[0];return res.json({ok:true,job:row?publicCutJob(row):null})}
+    catch(error){return res.status(error?.code==="creator_feature_locked"?403:500).json(clientSafeErrorPayload(req,error,error?.code==="creator_feature_locked"?403:500,"Clipanalyse-Status konnte nicht geladen werden."))}
+});
+
 app.post("/api/creator/cut-studio/projects/:id/export-jobs",requireCreatorAccount,async(req,res)=>{
     try{
         const access=await requireCreatorFeatureAccess(req.creatorAccount,"cut_studio","creator");
@@ -17522,7 +17860,7 @@ app.get("/api/bridge/games/rules",widgetBridgeHeartbeatLimiter,requireStudioBrid
         return res.json({ok:true,rules:await listCreatorGameRules(req.studioBridge.creator_id),recent_hits:await recentCreatorGameRuleHits(req.studioBridge.creator_id,15),limits:{max_rules:Number(access.entitlements.max_game_rules||0)}});
     }catch(error){return res.status(error?.code==="creator_feature_locked"?403:500).json(clientSafeErrorPayload(req,error,error?.code==="creator_feature_locked"?403:500,"Game-Regeln konnten nicht geladen werden."))}
 });
-app.get("/api/bridge/games/runtime",widgetBridgeHeartbeatLimiter,requireStudioBridge,async(req,res)=>{try{await requireCreatorFeatureAccess(req.studioBridge.creator_id,"games","creator");return res.json({ok:true,runtime:await getCreatorGameRuntimePublic(req.studioBridge.creator_id,{ensure:true}),profile:await getCreatorGameProfile(req.studioBridge.creator_id)})}catch(error){return res.status(error?.code==="creator_feature_locked"?403:500).json(clientSafeErrorPayload(req,error,error?.code==="creator_feature_locked"?403:500,"Game Runtime konnte nicht geladen werden."))}});
+app.get("/api/bridge/games/runtime",widgetBridgeHeartbeatLimiter,requireStudioBridge,async(req,res)=>{try{await requireCreatorFeatureAccess(req.studioBridge.creator_id,"games","creator");return res.json({ok:true,runtime:await getCreatorGameRuntimePublic(req.studioBridge.creator_id,{ensure:true}),profile:await getCreatorGameProfile(req.studioBridge.creator_id),catalog:publicGameCatalog()})}catch(error){return res.status(error?.code==="creator_feature_locked"?403:500).json(clientSafeErrorPayload(req,error,error?.code==="creator_feature_locked"?403:500,"Game Runtime konnte nicht geladen werden."))}});
 app.post("/api/bridge/games/runtime/start",widgetBridgeHeartbeatLimiter,requireStudioBridge,async(req,res)=>{try{await requireCreatorFeatureAccess(req.studioBridge.creator_id,"games","creator");return res.json({ok:true,runtime:await startCreatorGameRuntime(req.studioBridge.creator_id)})}catch(error){return res.status(error?.code==="creator_feature_locked"?403:400).json(clientSafeErrorPayload(req,error,error?.code==="creator_feature_locked"?403:400,"Game konnte nicht gestartet werden."))}});
 app.post("/api/bridge/games/runtime/stop",widgetBridgeHeartbeatLimiter,requireStudioBridge,async(req,res)=>{try{await requireCreatorFeatureAccess(req.studioBridge.creator_id,"games","creator");return res.json({ok:true,runtime:await stopCreatorGameRuntime(req.studioBridge.creator_id)})}catch(error){return res.status(error?.code==="creator_feature_locked"?403:400).json(clientSafeErrorPayload(req,error,error?.code==="creator_feature_locked"?403:400,"Game konnte nicht gestoppt werden."))}});
 app.post("/api/bridge/games/runtime/reset",widgetBridgeHeartbeatLimiter,requireStudioBridge,async(req,res)=>{try{await requireCreatorFeatureAccess(req.studioBridge.creator_id,"games","creator");return res.json({ok:true,runtime:await resetCreatorGameRuntime(req.studioBridge.creator_id)})}catch(error){return res.status(error?.code==="creator_feature_locked"?403:400).json(clientSafeErrorPayload(req,error,error?.code==="creator_feature_locked"?403:400,"Game konnte nicht zurückgesetzt werden."))}});
@@ -17534,6 +17872,15 @@ app.post("/api/bridge/community/game-activity",widgetBridgeEventLimiter,requireS
     } catch (error) {
         const status=error?.code==="game_activity_invalid"?400:500;
         return res.status(status).json(clientSafeErrorPayload(req,error,status,"Game-Aktivität konnte nicht gespeichert werden."));
+    }
+});
+app.post("/api/bridge/community/game-activity/state",widgetBridgeHeartbeatLimiter,requireStudioBridge,async(req,res)=>{
+    try {
+        const result=await updateCreatorGameActivityPresence(req.studioBridge.creator_id,req.body||{});
+        return res.json({ok:true,...result});
+    } catch (error) {
+        const status=error?.code==="game_activity_invalid"?400:500;
+        return res.status(status).json(clientSafeErrorPayload(req,error,status,"Game-Präsenz konnte nicht aktualisiert werden."));
     }
 });
 app.delete("/api/bridge/community/game-activity",widgetBridgeEventLimiter,requireStudioBridge,async(req,res)=>{
@@ -17603,7 +17950,7 @@ app.post("/api/bridge/cut-studio/projects",widgetBridgeEventLimiter,requireStudi
 app.put("/api/bridge/cut-studio/projects/:id",widgetBridgeEventLimiter,requireStudioBridge,async(req,res)=>{
     try{
         const creatorId=req.studioBridge.creator_id;await requireCreatorFeatureAccess(creatorId,"cut_studio","creator");const clean=sanitizeCutProject(req.body||{});
-        const result=await pool.query(`UPDATE creator_cut_projects SET title=$3,status=$4,format=$5,notes=$6,source_name=$7,export_preset=$8::jsonb,updated_at=NOW() WHERE creator_id=$1 AND id=$2 RETURNING *`,[creatorId,req.params.id,clean.title,clean.status,clean.format,clean.notes,clean.source_name,JSON.stringify(clean.export_preset)]);
+        const result=await pool.query(`UPDATE creator_cut_projects SET title=$3,status=$4,format=$5,notes=$6,source_name=$7,export_preset=((($8::jsonb - 'own_clip_evidence') - 'candidate_ground_truth') || jsonb_build_object('own_clip_evidence',COALESCE(export_preset->'own_clip_evidence','{}'::jsonb),'candidate_ground_truth',COALESCE(export_preset->'candidate_ground_truth','[]'::jsonb))),updated_at=NOW() WHERE creator_id=$1 AND id=$2 RETURNING *`,[creatorId,req.params.id,clean.title,clean.status,clean.format,clean.notes,clean.source_name,JSON.stringify(clean.export_preset)]);
         if(!result.rows[0])return res.status(404).json({ok:false,error:"Cut-Projekt nicht gefunden."});
         const count=await pool.query(`SELECT COUNT(*)::int AS count FROM creator_cut_clips WHERE project_id=$1`,[req.params.id]);
         return res.json({ok:true,project:publicCutProject(result.rows[0],count.rows[0]?.count||0)});
@@ -17621,6 +17968,19 @@ app.post("/api/bridge/cut-studio/projects/:id/reference-learning",widgetBridgeEv
     const updated=(await pool.query(`UPDATE creator_cut_projects SET export_preset=$3::jsonb,updated_at=NOW() WHERE creator_id=$1 AND id=$2 RETURNING *`,[creatorId,req.params.id,JSON.stringify(clean.export_preset)])).rows[0];
     return res.json({ok:true,project:publicCutProject(updated)});
   }catch(error){return res.status(400).json(clientSafeErrorPayload(req,error,400,"Referenzanalyse konnte nicht gespeichert werden."))}
+});
+
+app.post("/api/bridge/cut-studio/projects/:id/candidates",widgetBridgeEventLimiter,requireStudioBridge,async(req,res)=>{
+  try{
+    const creatorId=req.studioBridge.creator_id;await requireCreatorFeatureAccess(creatorId,"cut_studio","creator");
+    const row=(await pool.query(`SELECT * FROM creator_cut_projects WHERE creator_id=$1 AND id=$2 LIMIT 1`,[creatorId,req.params.id])).rows[0];
+    if(!row)return res.status(404).json({ok:false,error:"Cut-Projekt nicht gefunden."});
+    const preset=row.export_preset&&typeof row.export_preset==="object"?row.export_preset:{},gameProfile=cutGameProfileId(preset.game_profile),body=req.body&&typeof req.body==="object"?req.body:{};
+    const hasOwn=Object.prototype.hasOwnProperty.call(body,"own_evidence"),hasTruth=Object.prototype.hasOwnProperty.call(body,"ground_truth");
+    if(body.persist===true&&(hasOwn||hasTruth)){const saved=await persistCutCandidateState(creatorId,req.params.id,{...(hasOwn?{ownEvidence:body.own_evidence}:{}),...(hasTruth?{groundTruth:body.ground_truth}:{})});return res.json({ok:true,...saved,project_updated_at:saved.project?.updated_at||null})}
+    const result=buildCutCandidates({own_evidence:hasOwn?body.own_evidence:(preset.own_clip_evidence||{}),ground_truth:hasTruth?body.ground_truth:(preset.candidate_ground_truth||[]),game_profile:gameProfile,reference_learning:preset.reference_learning||{}});
+    return res.json({ok:true,...result,project_updated_at:row.updated_at||null});
+  }catch(error){const status=error?.code==="creator_feature_locked"?403:error?.code==="cut_project_missing"?404:400;return res.status(status).json(clientSafeErrorPayload(req,error,status,"Clip-Kandidaten konnten über den Launcher nicht bewertet werden."))}
 });
 
 app.post("/api/bridge/cut-studio/projects/:id/clips",widgetBridgeEventLimiter,requireStudioBridge,async(req,res)=>{
@@ -17644,7 +18004,7 @@ app.get(
         try {
             const creatorId=req.studioBridge.creator_id;
             const access=await creatorAccessProfile(creatorId);
-            const [widgets,scenes,creator,game,cutProjects,gameRules,gameRuleHits,cutJobs]=await Promise.all([
+            const [widgets,scenes,creator,game,cutProjects,gameRules,gameRuleHits,cutJobs,gameActivity]=await Promise.all([
                 getCreatorSceneSources(creatorId,{includeGame:Boolean(access.entitlements.games)}),
                 pool.query(
                     `SELECT * FROM creator_widget_scenes WHERE creator_id=$1 AND status='live' AND published_config IS NOT NULL ORDER BY updated_at DESC`,
@@ -17655,7 +18015,8 @@ app.get(
                 access.entitlements.cut_studio?listCutProjects(creatorId):Promise.resolve([]),
                 access.entitlements.games?listCreatorGameRules(creatorId):Promise.resolve([]),
                 access.entitlements.games?recentCreatorGameRuleHits(creatorId,10):Promise.resolve([]),
-                access.entitlements.cut_studio?listCutExportJobs(creatorId,25,{includeAudition:true}):Promise.resolve([])
+                access.entitlements.cut_studio?listCutExportJobs(creatorId,25,{includeAudition:true}):Promise.resolve([]),
+                getPublicRecentGames(creatorId,{limit:3})
             ]);
             return res.json({
                 ok:true,creator,access,entitlements:access.entitlements,
@@ -17672,6 +18033,8 @@ app.get(
                 game_rule_hits:gameRuleHits,
                 cut_projects:cutProjects,
                 cut_jobs:cutJobs,
+                game_activity:gameActivity,
+                game_context:creatorGameContextFromActivity(gameActivity),
                 server_time:new Date().toISOString()
             });
         } catch (error) {
@@ -17940,7 +18303,8 @@ app.get(
                 program_scene:programScene,
                 overlays:config.overlay_widget_ids.map(id=>sourceMap.get(id)).filter(Boolean).map(publicStreamStudioSource),
                 multistream:{max_destinations:multistreamLimit,mode:"launcher_local",failure_policy:"isolate_destination",credentials:"launcher_local_only",cloud_relay:false},
-                engine:{capture:"launcher_local",stream_keys:"launcher_only",multistream:"launcher_local",scene_graph:"hybrid_offscreen",protocol:4},
+                engine:{capture:"launcher_local",stream_keys:"launcher_only",multistream:"launcher_local",scene_graph:"hybrid_offscreen",protocol:5,interactive_games:"launcher_local"},
+                interactive_game: context.access.entitlements.games ? await getCreatorGameRuntimePublic(creatorId,{ensure:true}) : null,
                 server_time:new Date().toISOString()
             });
         }catch(error){safeLogError("Bridge Stream Studio Fehler:",error);return res.status(500).json({ok:false,error:"Stream Studio Konfiguration konnte nicht geladen werden."});}
@@ -18347,10 +18711,21 @@ app.post("/api/bridge/widget-studio/actions/ack", widgetBridgeEventLimiter, requ
             WHERE creator_id=$1
               AND id=ANY($2::text[])
               AND status='delivered'
-            RETURNING id
+            RETURNING id,action_type,payload
             `,
             [creatorId,ids]
         );
+        for(const action of result.rows){
+            if(action.action_type!=="interactive_game_command")continue;
+            const command=String(action.payload?.command||"");
+            if(command==="start"){
+                const current=await getCreatorGameRuntimeRow(creatorId,{ensure:false});
+                if(current?.status==="starting"){
+                    const profile=sanitizeGameProfile(current.config||{});
+                    await pool.query(`UPDATE creator_game_runtime SET status='running',started_at=NOW(),round_ends_at=NOW()+($2::int*INTERVAL '1 second'),ended_at=NULL,version=version+1,updated_at=NOW() WHERE creator_id=$1 AND status='starting'`,[creatorId,profile.round_seconds]);
+                }
+            }
+        }
         return res.json({ok:true,acked:result.rowCount});
     } catch(error){
         safeLogError("Widget Studio Bridge Action ACK Fehler:",error);
@@ -18385,10 +18760,15 @@ app.post("/api/bridge/widget-studio/actions/nack", widgetBridgeEventLimiter, req
             WHERE creator_id=$1
               AND id=ANY($2::text[])
               AND status='delivered'
-            RETURNING id,status
+            RETURNING id,status,action_type,payload
             `,
             [creatorId,ids,errorText,ACTION_MAX_ATTEMPTS,ACTION_TTL_MINUTES,ACTION_RETRY_DELAY_SECONDS]
         );
+        for(const action of result.rows){
+            if(action.status==="expired"&&action.action_type==="interactive_game_command"&&String(action.payload?.command||"")==="start"){
+                await pool.query(`UPDATE creator_game_runtime SET status='idle',ended_at=NOW(),round_ends_at=NULL,updated_at=NOW() WHERE creator_id=$1 AND status='starting'`,[creatorId]).catch(()=>null);
+            }
+        }
         const retry=result.rows.filter(row=>row.status==="delivered").length;
         const expired=result.rows.filter(row=>row.status==="expired").length;
         return res.json({ok:true,nacked:result.rowCount,retry_scheduled:retry,expired});
@@ -18906,88 +19286,284 @@ app.get(
 
 
 // ============================================================
-// NEXUS BASIS
+// NEXUS CONTROL PLANE
 // ============================================================
 
-app.get(
-    "/api/nexus/status",
+const NEXUS_VERSION = "2.0";
+const NEXUS_ACTION_TTL_MINUTES = 3;
+const NEXUS_MAX_AUTOMATIONS = 12;
+const NEXUS_EVENT_TYPES = new Set(["follow","like","gift","share"]);
+const NEXUS_ACTIONS = Object.freeze({
+    scene_next:{label:"Nächste Scene",target_kind:"none",automation:true},
+    scene_start:{label:"Scene starten",target_kind:"scene",automation:true},
+    output_reload:{label:"Local Output neu laden",target_kind:"none",automation:true},
+    output_stop:{label:"Local Output stoppen",target_kind:"none",automation:false,confirm:"OUTPUT STOP"},
+    alert_follow:{label:"Follow Test-Alert",target_kind:"none",automation:false},
+    alert_gift:{label:"Gift Test-Alert",target_kind:"none",automation:false},
+    alert_share:{label:"Share Test-Alert",target_kind:"none",automation:false},
+    widget_toggle:{label:"Widget lokal An / Aus",target_kind:"widget",automation:true},
+    refresh_library:{label:"Creator-Daten aktualisieren",target_kind:"none",automation:false},
+    game_toggle:{label:"Game Start / Stop",target_kind:"none",automation:false},
+    game_score_a:{label:"Game Team A +1",target_kind:"none",automation:true},
+    game_score_b:{label:"Game Team B +1",target_kind:"none",automation:true},
+    game_reset:{label:"Game Runde resetten",target_kind:"none",automation:true},
+    open_dashboard:{label:"Dashboard im Launcher öffnen",target_kind:"none",automation:false},
+    open_widget_studio:{label:"Widget Studio im Launcher öffnen",target_kind:"none",automation:false},
+    open_scene_studio:{label:"Scene Studio im Launcher öffnen",target_kind:"none",automation:false},
+    open_games:{label:"Games im Launcher öffnen",target_kind:"none",automation:false},
+    open_cut_studio:{label:"CUT Studio im Launcher öffnen",target_kind:"none",automation:false}
+});
 
-    requireCreatorAccount,
+function nexusActionCatalog({automationOnly=false}={}) {
+    return Object.entries(NEXUS_ACTIONS)
+        .filter(([,meta])=>!automationOnly || meta.automation===true)
+        .map(([key,meta])=>({key,...meta}));
+}
 
-    async (
-        req,
-        res
-    ) => {
+function sanitizeNexusRequestId(value) {
+    return studioText(value,80,"").replace(/[^a-zA-Z0-9._:-]/g,"");
+}
 
-        res.set(
-            "Cache-Control",
-            "no-store"
-        );
+async function nexusTargetOptions(creatorId) {
+    const [scenes,widgets] = await Promise.all([
+        pool.query(`SELECT id,name FROM creator_widget_scenes WHERE creator_id=$1 AND status='live' AND published_config IS NOT NULL ORDER BY updated_at DESC LIMIT 100`,[creatorId]),
+        pool.query(`SELECT id,name,widget_type FROM creator_widgets WHERE creator_id=$1 AND status='live' AND published_config IS NOT NULL ORDER BY updated_at DESC LIMIT 200`,[creatorId])
+    ]);
+    return {
+        scenes:scenes.rows.map(row=>({id:String(row.id),label:studioText(row.name,120,"Scene")})),
+        widgets:widgets.rows.map(row=>({id:String(row.id),label:studioText(row.name,120,"Widget"),widget_type:studioText(row.widget_type,60,"")}))
+    };
+}
 
-
-        const allowed =
-            canUseModule(
-                req.creatorAccount.plan,
-                "nexus"
-            );
-
-
-        return res.json({
-
-            ok:
-                true,
-
-            service:
-                "NEXUS",
-
-            version:
-                "1.0",
-
-            status:
-                "online",
-
-            allowed,
-
-            plan:
-                normalizePlan(
-                    req.creatorAccount.plan
-                ),
-
-            integrations: {
-
-                website:
-                    "online",
-
-                creator_account:
-                    "online",
-
-                launcher:
-                    "prepared",
-
-                tiktok:
-                    "active",
-
-                cut_studio:
-                    "project_runtime",
-
-                games:
-                    "active",
-
-                audio_studio:
-                    "roadmap",
-
-                twitch:
-                    "roadmap",
-
-                obs:
-                    "roadmap"
-
-            }
-
-        });
-
+async function validateNexusActionTarget(creatorId,actionKey,target="") {
+    const meta=NEXUS_ACTIONS[actionKey];
+    if(!meta)throw new Error("Diese NEXUS-Aktion ist nicht freigegeben.");
+    const clean=studioText(target,160,"");
+    if(meta.target_kind==="none")return "";
+    if(!clean)throw new Error(meta.target_kind==="scene"?"Bitte eine Scene auswählen.":"Bitte ein Widget auswählen.");
+    if(meta.target_kind==="scene"){
+        const result=await pool.query(`SELECT id FROM creator_widget_scenes WHERE creator_id=$1 AND id=$2 AND status='live' AND published_config IS NOT NULL LIMIT 1`,[creatorId,clean]);
+        if(!result.rows[0])throw new Error("Die gewählte veröffentlichte Scene wurde nicht gefunden.");
     }
-);
+    if(meta.target_kind==="widget"){
+        const result=await pool.query(`SELECT id FROM creator_widgets WHERE creator_id=$1 AND id=$2 AND status='live' AND published_config IS NOT NULL LIMIT 1`,[creatorId,clean]);
+        if(!result.rows[0])throw new Error("Das gewählte veröffentlichte Widget wurde nicht gefunden.");
+    }
+    return clean;
+}
+
+async function getNexusAutomations(creatorId) {
+    const settings=await getCreatorSettings(creatorId);
+    const rows=Array.isArray(settings?.settings?.nexus_automations)?settings.settings.nexus_automations:[];
+    return rows.slice(0,NEXUS_MAX_AUTOMATIONS).map((row,index)=>{
+        const eventType=NEXUS_EVENT_TYPES.has(String(row?.event_type||""))?String(row.event_type):"follow";
+        const actionKey=NEXUS_ACTIONS[String(row?.action||"")]?.automation===true?String(row.action):"scene_next";
+        return {
+            id:/^[0-9a-f-]{36}$/i.test(String(row?.id||""))?String(row.id):crypto.randomUUID(),
+            label:studioText(row?.label,80,`Automation ${index+1}`),
+            enabled:row?.enabled===true,
+            event_type:eventType,
+            min_amount:Math.max(1,Math.min(1000000,Math.round(Number(row?.min_amount||1)))),
+            cooldown_seconds:Math.max(0,Math.min(3600,Math.round(Number(row?.cooldown_seconds||20)))),
+            action:actionKey,
+            target:studioText(row?.target,160,"")
+        };
+    });
+}
+
+async function saveNexusAutomations(creatorId,input) {
+    const rows=Array.isArray(input)?input:[];
+    if(rows.length>NEXUS_MAX_AUTOMATIONS)throw new Error(`Maximal ${NEXUS_MAX_AUTOMATIONS} NEXUS-Automationen sind erlaubt.`);
+    const clean=[];
+    for(let index=0;index<rows.length;index+=1){
+        const row=rows[index]&&typeof rows[index]==="object"?rows[index]:{};
+        const eventType=String(row.event_type||"");
+        const actionKey=String(row.action||"");
+        if(!NEXUS_EVENT_TYPES.has(eventType))throw new Error("Unbekannter NEXUS-Trigger.");
+        if(NEXUS_ACTIONS[actionKey]?.automation!==true)throw new Error("Diese Aktion ist für NEXUS-Automationen nicht freigegeben.");
+        const target=await validateNexusActionTarget(creatorId,actionKey,row.target);
+        clean.push({
+            id:/^[0-9a-f-]{36}$/i.test(String(row.id||""))?String(row.id):crypto.randomUUID(),
+            label:studioText(row.label,80,`Automation ${index+1}`),
+            enabled:row.enabled===true,
+            event_type:eventType,
+            min_amount:Math.max(1,Math.min(1000000,Math.round(Number(row.min_amount||1)))),
+            cooldown_seconds:Math.max(0,Math.min(3600,Math.round(Number(row.cooldown_seconds||20)))),
+            action:actionKey,
+            target
+        });
+    }
+    await pool.query(
+        `INSERT INTO creator_settings(creator_id,settings,updated_at)
+         VALUES($1,jsonb_build_object('nexus_automations',$2::jsonb),NOW())
+         ON CONFLICT(creator_id) DO UPDATE SET
+           settings=jsonb_set(COALESCE(creator_settings.settings,'{}'::jsonb),'{nexus_automations}',$2::jsonb,true),
+           updated_at=NOW()`,
+        [creatorId,JSON.stringify(clean)]
+    );
+    return clean;
+}
+
+async function queueNexusAction(creatorId,{action,target="",source="manual",automationId="",eventId="",clientRequestId="",confirm=""}={}) {
+    const actionKey=String(action||"");
+    const meta=NEXUS_ACTIONS[actionKey];
+    if(!meta)throw new Error("Diese NEXUS-Aktion ist nicht freigegeben.");
+    if(meta.confirm && String(confirm||"")!==meta.confirm){
+        const error=new Error(`Bestätigung erforderlich: ${meta.confirm}`);
+        error.code="nexus_confirmation_required";
+        throw error;
+    }
+    const cleanTarget=await validateNexusActionTarget(creatorId,actionKey,target);
+    const bridge=await getStudioBridgeStatus(creatorId);
+    if(!bridge.online){const error=new Error("Der Creator Suite Launcher ist nicht online.");error.code="nexus_launcher_offline";throw error;}
+    if(bridge.capabilities?.nexus_control_plane_v1!==true){const error=new Error("Der verbundene Launcher unterstützt NEXUS Control Plane noch nicht. Bitte den aktuellen Launcher verwenden.");error.code="nexus_launcher_upgrade_required";throw error;}
+    const requestId=sanitizeNexusRequestId(clientRequestId);
+    if(requestId){
+        const existing=await pool.query(
+            `SELECT * FROM creator_live_actions WHERE creator_id=$1 AND action_type='nexus_command' AND payload->>'client_request_id'=$2 AND created_at>NOW()-INTERVAL '15 minutes' ORDER BY created_at DESC LIMIT 1`,
+            [creatorId,requestId]
+        );
+        if(existing.rows[0])return publicStudioAction(existing.rows[0]);
+    }
+    const payload={
+        nexus_version:NEXUS_VERSION,
+        command:actionKey,
+        target:cleanTarget,
+        source:source==="automation"?"automation":"manual",
+        automation_id:studioText(automationId,80,""),
+        client_request_id:requestId
+    };
+    const id=crypto.randomUUID();
+    const result=await pool.query(
+        `INSERT INTO creator_live_actions(id,creator_id,event_id,action_type,action_text,payload,status,attempts,expires_at,created_at)
+         VALUES($1,$2,$3,'nexus_command',$4,$5::jsonb,'pending',0,NOW()+($6::int*INTERVAL '1 minute'),NOW()) RETURNING *`,
+        [id,creatorId,eventId||null,meta.label,JSON.stringify(payload),NEXUS_ACTION_TTL_MINUTES]
+    );
+    return publicStudioAction(result.rows[0]);
+}
+
+async function processNexusAutomationEvent(creatorId,event) {
+    if(!event || !NEXUS_EVENT_TYPES.has(String(event.event_type||"")))return [];
+    const access=await creatorAccessProfile(creatorId);
+    if(!access?.entitlements?.nexus)return [];
+    const bridge=await getStudioBridgeStatus(creatorId);
+    if(!bridge.online || bridge.capabilities?.nexus_control_plane_v1!==true)return [];
+    const rules=await getNexusAutomations(creatorId);
+    const amount=Math.max(0,Number(event.amount||0));
+    const queued=[];
+    for(const rule of rules){
+        if(!rule.enabled || rule.event_type!==event.event_type || amount<rule.min_amount)continue;
+        const recent=await pool.query(
+            `SELECT id FROM creator_live_actions
+             WHERE creator_id=$1 AND action_type='nexus_command' AND payload->>'automation_id'=$2
+               AND created_at > NOW()-($3::int*INTERVAL '1 second')
+             LIMIT 1`,
+            [creatorId,rule.id,rule.cooldown_seconds]
+        );
+        if(recent.rows[0])continue;
+        try{
+            queued.push(await queueNexusAction(creatorId,{action:rule.action,target:rule.target,source:"automation",automationId:rule.id,eventId:event.id||""}));
+        }catch(error){safeLogError("NEXUS Automation Queue Fehler:",error);}
+    }
+    return queued;
+}
+
+async function nexusStatusSnapshot(account) {
+    const creatorId=account.id;
+    const [access,bridge,live,game,targets,automations,counts,pending] = await Promise.all([
+        creatorAccessProfile(account),
+        getStudioBridgeStatus(creatorId),
+        getStudioLiveState(creatorId),
+        getCreatorGameRuntimePublic(creatorId,{ensure:false}),
+        nexusTargetOptions(creatorId),
+        getNexusAutomations(creatorId),
+        pool.query(`SELECT
+            (SELECT COUNT(*)::int FROM creator_widgets WHERE creator_id=$1 AND status='live' AND published_config IS NOT NULL) AS widgets,
+            (SELECT COUNT(*)::int FROM creator_widget_scenes WHERE creator_id=$1 AND status='live' AND published_config IS NOT NULL) AS scenes,
+            (SELECT COUNT(*)::int FROM creator_cut_projects WHERE creator_id=$1) AS cut_projects,
+            (SELECT COUNT(*)::int FROM creator_cut_export_jobs WHERE creator_id=$1 AND status IN ('pending','claimed','processing')) AS cut_jobs`,[creatorId]),
+        pool.query(`SELECT COUNT(*)::int AS count FROM creator_live_actions WHERE creator_id=$1 AND action_type='nexus_command' AND status IN ('pending','delivered')`,[creatorId])
+    ]);
+    const allowed=Boolean(access?.entitlements?.nexus);
+    const row=counts.rows[0]||{};
+    return {
+        ok:true,
+        service:"NEXUS",
+        version:NEXUS_VERSION,
+        role:"creator_control_plane",
+        status:!allowed?"locked":!bridge.online?"launcher_offline":bridge.capabilities?.nexus_control_plane_v1===true?"ready":"launcher_upgrade_required",
+        allowed,
+        plan:access?.effective_plan||normalizePlan(account.plan),
+        access_source:access?.access_source||"plan",
+        launcher:{configured:Boolean(bridge.configured),online:Boolean(bridge.online),control_plane:bridge.capabilities?.nexus_control_plane_v1===true,machine_name:bridge.machine_name||"",client_version:bridge.client_version||"",last_seen_at:bridge.last_seen_at||null},
+        live:{connected:Boolean(live.connected),provider:live.provider||"none",viewers:Number(live.viewers||0),likes:Number(live.likes||0),gifts_count:Number(live.gifts_count||0),shares:Number(live.shares||0),started_at:live.started_at||null,stale:Boolean(live.stale)},
+        game:game?{status:game.status||"idle",title:game.title||"Game",state:game.state||{}}:{status:"not_configured",title:"Game",state:{}},
+        counts:{widgets:Number(row.widgets||0),scenes:Number(row.scenes||0),cut_projects:Number(row.cut_projects||0),cut_jobs:Number(row.cut_jobs||0),pending_actions:Number(pending.rows[0]?.count||0),automations:automations.length},
+        integrations:{website:"online",creator_account:"online",launcher:bridge.online?(bridge.capabilities?.nexus_control_plane_v1===true?"online":"upgrade_required"):bridge.configured?"prepared":"setup_required",tiktok:live.provider==="tiktok"&&live.connected?"active":"prepared",stream_studio:"active",widget_studio:"active",cut_studio:"active",games:game?"active":"prepared",audio_studio:"roadmap"},
+        actions:nexusActionCatalog(),
+        automation_actions:nexusActionCatalog({automationOnly:true}),
+        event_types:Array.from(NEXUS_EVENT_TYPES),
+        targets,
+        automations
+    };
+}
+
+app.get("/api/nexus/status",requireCreatorAccount,async(req,res)=>{
+    res.set("Cache-Control","no-store");
+    try{return res.json(await nexusStatusSnapshot(req.creatorAccount));}
+    catch(error){safeLogError("NEXUS Status Fehler:",error);return res.status(500).json({ok:false,error:"NEXUS-Status konnte nicht geladen werden."});}
+});
+
+app.get("/api/nexus/activity",requireCreatorAccount,async(req,res)=>{
+    res.set("Cache-Control","no-store");
+    try{
+        const limit=Math.max(1,Math.min(100,Number(req.query?.limit)||30));
+        const result=await pool.query(`SELECT * FROM creator_live_actions WHERE creator_id=$1 AND action_type='nexus_command' ORDER BY created_at DESC LIMIT ${limit}`,[req.creatorAccount.id]);
+        return res.json({ok:true,actions:result.rows.map(publicStudioAction)});
+    }catch(error){safeLogError("NEXUS Activity Fehler:",error);return res.status(500).json({ok:false,error:"NEXUS-Aktivität konnte nicht geladen werden."});}
+});
+
+app.post("/api/nexus/actions",requireCreatorAccount,creatorWriteLimiter,async(req,res)=>{
+    res.set("Cache-Control","no-store");
+    try{
+        await requireCreatorFeatureAccess(req.creatorAccount,"nexus","pro");
+        const action=await queueNexusAction(req.creatorAccount.id,{
+            action:req.body?.action,target:req.body?.target,clientRequestId:req.body?.client_request_id,confirm:req.body?.confirm,source:"manual"
+        });
+        return res.status(202).json({ok:true,action});
+    }catch(error){
+        const status=error?.code==="creator_feature_locked"?403:["nexus_launcher_offline","nexus_launcher_upgrade_required","nexus_confirmation_required"].includes(error?.code)?409:400;
+        return res.status(status).json(clientSafeErrorPayload(req,error,status,"NEXUS-Aktion konnte nicht gestartet werden."));
+    }
+});
+
+app.delete("/api/nexus/actions/:id",requireCreatorAccount,creatorWriteLimiter,async(req,res)=>{
+    res.set("Cache-Control","no-store");
+    try{
+        await requireCreatorFeatureAccess(req.creatorAccount,"nexus","pro");
+        const result=await pool.query(`UPDATE creator_live_actions SET status='expired',lease_until=NULL,last_error='canceled_by_creator' WHERE creator_id=$1 AND id=$2 AND action_type='nexus_command' AND status='pending' RETURNING id`,[req.creatorAccount.id,String(req.params.id||"")]);
+        if(!result.rows[0])return res.status(409).json({ok:false,error:"Die Aktion ist nicht mehr abbrechbar."});
+        return res.json({ok:true,canceled:true,id:result.rows[0].id});
+    }catch(error){const status=error?.code==="creator_feature_locked"?403:400;return res.status(status).json(clientSafeErrorPayload(req,error,status,"NEXUS-Aktion konnte nicht abgebrochen werden."));}
+});
+
+app.get("/api/nexus/automations",requireCreatorAccount,async(req,res)=>{
+    res.set("Cache-Control","no-store");
+    try{
+        const access=await creatorAccessProfile(req.creatorAccount);
+        return res.json({ok:true,allowed:Boolean(access?.entitlements?.nexus),automations:await getNexusAutomations(req.creatorAccount.id),actions:nexusActionCatalog({automationOnly:true}),event_types:Array.from(NEXUS_EVENT_TYPES),targets:await nexusTargetOptions(req.creatorAccount.id)});
+    }catch(error){safeLogError("NEXUS Automations Fehler:",error);return res.status(500).json({ok:false,error:"NEXUS-Automationen konnten nicht geladen werden."});}
+});
+
+app.put("/api/nexus/automations",requireCreatorAccount,creatorWriteLimiter,async(req,res)=>{
+    res.set("Cache-Control","no-store");
+    try{
+        await requireCreatorFeatureAccess(req.creatorAccount,"nexus","pro");
+        const automations=await saveNexusAutomations(req.creatorAccount.id,req.body?.automations);
+        return res.json({ok:true,automations});
+    }catch(error){const status=error?.code==="creator_feature_locked"?403:400;return res.status(status).json(clientSafeErrorPayload(req,error,status,"NEXUS-Automationen konnten nicht gespeichert werden."));}
+});
+
 // ============================================================
 // TIKTOK CONNECTION LADEN
 // ============================================================
@@ -19405,12 +19981,63 @@ function sanitizePublicGameActivityEvent(input={}) {
         error.code="game_activity_invalid";
         throw error;
     }
+    const allowedSources=new Set(["launcher_manual","stream_capture"]);
+    const allowedPlatforms=new Set(["playstation_5","playstation_4","pc","xbox_series","xbox_one","switch","unknown"]);
+    const activitySource=allowedSources.has(String(source.source||""))?String(source.source):"launcher_manual";
+    const activityPlatform=allowedPlatforms.has(String(source.platform||""))?String(source.platform):"unknown";
     return {
         client_event_id:clientEventId,
         game_name:gameName,
         started_at:new Date(startedMs).toISOString(),
         ended_at:new Date(startedMs+durationSeconds*1000).toISOString(),
-        duration_seconds:durationSeconds
+        duration_seconds:durationSeconds,
+        source:activitySource,
+        platform:activitySource==="stream_capture"?"pc":activityPlatform
+    };
+}
+
+const PUBLIC_GAME_ACTIVITY_PRESENCE_TTL_MS=150*1000;
+
+function sanitizePublicGameActivityPresence(input={}) {
+    const source=input&&typeof input==="object"&&!Array.isArray(input)?input:{};
+    const active=source.active===true;
+    const activitySource=["launcher_manual","stream_capture"].includes(String(source.source||""))?String(source.source):"launcher_manual";
+    const rawPlatform=["playstation_5","playstation_4","pc","xbox_series","xbox_one","switch","unknown"].includes(String(source.platform||""))?String(source.platform):"unknown";
+    const platform=activitySource==="stream_capture"?"pc":rawPlatform;
+    const gameName=normalizePublicGameName(source.game_name||source.gameName);
+    if (active && !gameName) {
+        const error=new Error("Aktive Game-Präsenz benötigt einen Spielnamen.");
+        error.code="game_activity_invalid";
+        throw error;
+    }
+    if (active && activitySource==="launcher_manual" && platform==="unknown") {
+        const error=new Error("Aktive manuelle Game-Präsenz benötigt eine Plattform.");
+        error.code="game_activity_invalid";
+        throw error;
+    }
+    const startedMs=Date.parse(String(source.started_at||""));
+    const now=Date.now();
+    const startedAt=active&&Number.isFinite(startedMs)&&startedMs<=now+5*60*1000&&startedMs>=now-24*60*60*1000?new Date(startedMs).toISOString():null;
+    const suppliedReported=Date.parse(String(source.reported_at||""));
+    const reportedAt=Number.isFinite(suppliedReported)&&suppliedReported<=now+5*60*1000?new Date(suppliedReported).toISOString():new Date(now).toISOString();
+    const suppliedChanged=Date.parse(String(source.state_changed_at||source.changed_at||""));
+    const stateChangedAt=Number.isFinite(suppliedChanged)&&suppliedChanged<=now+5*60*1000&&suppliedChanged>=now-7*24*60*60*1000?new Date(suppliedChanged).toISOString():reportedAt;
+    const transitionId=/^cfsgp_[a-f0-9]{32}$/.test(String(source.transition_id||""))?String(source.transition_id):null;
+    if (!transitionId) {
+        const error=new Error("Game-Präsenz benötigt eine gültige Transition-ID.");
+        error.code="game_activity_invalid";
+        throw error;
+    }
+    return {
+        active,
+        game_name:active?gameName:"",
+        source:activitySource,
+        platform:active?platform:"unknown",
+        started_at:startedAt,
+        resumed_after_restart:active&&source.resumed_after_restart===true,
+        transition_id:transitionId,
+        state_changed_at:stateChangedAt,
+        reported_at:reportedAt
     };
 }
 
@@ -19428,7 +20055,24 @@ function normalizeStoredGameActivityState(state={}) {
         } catch {}
     }
     events.sort((a,b)=>Date.parse(a.ended_at)-Date.parse(b.ended_at));
-    return {version:1,events:events.slice(-PUBLIC_GAME_ACTIVITY_MAX_EVENTS),updated_at:source.updated_at||null};
+    let presence=null;
+    try {
+        if (source.presence&&typeof source.presence==="object") {
+            const reported=Date.parse(String(source.presence.reported_at||""));
+            if (Number.isFinite(reported)&&Date.now()-reported<=PUBLIC_GAME_ACTIVITY_PRESENCE_TTL_MS) presence=sanitizePublicGameActivityPresence(source.presence);
+        }
+    } catch {}
+    const transitionMs=Date.parse(String(source.presence_transition_at||presence?.state_changed_at||""));
+    const presenceTransitionAt=Number.isFinite(transitionMs)?new Date(transitionMs).toISOString():null;
+    const presenceTransitionId=/^cfsgp_[a-f0-9]{32}$/.test(String(source.presence_transition_id||presence?.transition_id||""))?String(source.presence_transition_id||presence?.transition_id):null;
+    const presenceAudit=[];
+    for (const raw of Array.isArray(source.presence_audit)?source.presence_audit.slice(-20):[]) {
+        const id=/^cfsgp_[a-f0-9]{32}$/.test(String(raw?.transition_id||""))?String(raw.transition_id):null;
+        const at=Date.parse(String(raw?.state_changed_at||""));
+        if (!id||!Number.isFinite(at)) continue;
+        presenceAudit.push({transition_id:id,active:raw?.active===true,game_name:normalizePublicGameName(raw?.game_name||""),platform:["playstation_5","playstation_4","pc","xbox_series","xbox_one","switch","unknown"].includes(String(raw?.platform||""))?String(raw.platform):"unknown",source:["launcher_manual","stream_capture"].includes(String(raw?.source||""))?String(raw.source):"launcher_manual",state_changed_at:new Date(at).toISOString()});
+    }
+    return {version:4,events:events.slice(-PUBLIC_GAME_ACTIVITY_MAX_EVENTS),presence,presence_transition_at:presenceTransitionAt,presence_transition_id:presenceTransitionId,presence_audit:presenceAudit,updated_at:source.updated_at||null};
 }
 
 async function recordCreatorGameActivity(creatorId,input={}) {
@@ -19457,7 +20101,7 @@ async function recordCreatorGameActivity(creatorId,input={}) {
         );
         await client.query("COMMIT");
         if (String(creatorId)===String(DEFAULT_CREATOR_ID)) publicCommunityStatsCache.expires_at=0;
-        return {accepted:true,duplicate,event:{client_event_id:event.client_event_id,game_name:event.game_name,duration_seconds:event.duration_seconds}};
+        return {accepted:true,duplicate,event:{client_event_id:event.client_event_id,game_name:event.game_name,duration_seconds:event.duration_seconds,source:event.source,platform:event.platform}};
     } catch (error) {
         try { await client.query("ROLLBACK"); } catch {}
         throw error;
@@ -19466,12 +20110,63 @@ async function recordCreatorGameActivity(creatorId,input={}) {
     }
 }
 
+
+async function updateCreatorGameActivityPresence(creatorId,input={}) {
+    const presence=sanitizePublicGameActivityPresence(input);
+    const client=await pool.connect();
+    try {
+        await client.query("BEGIN");
+        await client.query(
+            `INSERT INTO creator_module_state (creator_id,module_key,state,updated_at)
+             VALUES ($1,$2,'{"version":2,"events":[]}'::jsonb,NOW())
+             ON CONFLICT (creator_id,module_key) DO NOTHING`,
+            [creatorId,PUBLIC_GAME_ACTIVITY_MODULE_KEY]
+        );
+        const row=(await client.query(
+            `SELECT state FROM creator_module_state WHERE creator_id=$1 AND module_key=$2 FOR UPDATE`,
+            [creatorId,PUBLIC_GAME_ACTIVITY_MODULE_KEY]
+        )).rows[0];
+        const state=normalizeStoredGameActivityState(row?.state||{});
+        const incomingChanged=Date.parse(presence.state_changed_at||"");
+        const storedChanged=Date.parse(state.presence_transition_at||state.presence?.state_changed_at||"");
+        const storedTransitionId=String(state.presence_transition_id||state.presence?.transition_id||"");
+        const duplicateTransition=storedTransitionId&&storedTransitionId===presence.transition_id;
+        if (Number.isFinite(storedChanged)&&Number.isFinite(incomingChanged)&&incomingChanged<storedChanged) {
+            await client.query("ROLLBACK");
+            return {accepted:false,stale:true,duplicate:false,presence:state.presence};
+        }
+        if (Number.isFinite(storedChanged)&&Number.isFinite(incomingChanged)&&incomingChanged===storedChanged&&!duplicateTransition) {
+            await client.query("ROLLBACK");
+            return {accepted:false,stale:true,conflict:true,duplicate:false,presence:state.presence};
+        }
+        state.presence=presence.active?presence:null;
+        state.presence_transition_at=presence.state_changed_at;
+        state.presence_transition_id=presence.transition_id;
+        if (!duplicateTransition) {
+            const auditEntry={transition_id:presence.transition_id,active:presence.active===true,game_name:presence.active?presence.game_name:"",platform:presence.active?presence.platform:"unknown",source:presence.source,state_changed_at:presence.state_changed_at};
+            state.presence_audit=[...(Array.isArray(state.presence_audit)?state.presence_audit:[]),auditEntry].slice(-20);
+        }
+        state.updated_at=new Date().toISOString();
+        await client.query(
+            `UPDATE creator_module_state SET state=$3::jsonb,updated_at=NOW() WHERE creator_id=$1 AND module_key=$2`,
+            [creatorId,PUBLIC_GAME_ACTIVITY_MODULE_KEY,JSON.stringify(state)]
+        );
+        await client.query("COMMIT");
+        if (String(creatorId)===String(DEFAULT_CREATOR_ID)) publicCommunityStatsCache.expires_at=0;
+        return {accepted:true,duplicate:Boolean(duplicateTransition),presence:state.presence};
+    } catch (error) {
+        try { await client.query("ROLLBACK"); } catch {}
+        throw error;
+    } finally {
+        client.release();
+    }
+}
 async function clearCreatorGameActivity(creatorId) {
     await pool.query(
         `INSERT INTO creator_module_state (creator_id,module_key,state,updated_at)
          VALUES ($1,$2,$3::jsonb,NOW())
          ON CONFLICT (creator_id,module_key) DO UPDATE SET state=EXCLUDED.state,updated_at=NOW()`,
-        [creatorId,PUBLIC_GAME_ACTIVITY_MODULE_KEY,JSON.stringify({version:1,events:[],updated_at:new Date().toISOString()})]
+        [creatorId,PUBLIC_GAME_ACTIVITY_MODULE_KEY,JSON.stringify({version:4,events:[],presence:null,presence_transition_at:new Date().toISOString(),presence_transition_id:null,presence_audit:[],updated_at:new Date().toISOString()})]
     );
     if (String(creatorId)===String(DEFAULT_CREATOR_ID)) publicCommunityStatsCache.expires_at=0;
     return {cleared:true};
@@ -19492,17 +20187,52 @@ async function getPublicRecentGames(creatorId,{days=PUBLIC_GAME_ACTIVITY_WINDOW_
         if (seconds<30) continue;
         const gameKey=publicGameActivityKey(event.game_name);
         if (!gameKey) continue;
-        const current=grouped.get(gameKey)||{key:gameKey,name:event.game_name,duration_seconds:0,sessions:0,last_played_at:null};
+        const current=grouped.get(gameKey)||{key:gameKey,name:event.game_name,duration_seconds:0,sessions:0,last_played_at:null,platform:event.platform||"unknown",source:event.source||"launcher_manual"};
         current.duration_seconds+=seconds;
         current.sessions+=1;
-        if (!current.last_played_at||Date.parse(event.ended_at)>Date.parse(current.last_played_at)) current.last_played_at=event.ended_at;
+        if (!current.last_played_at||Date.parse(event.ended_at)>Date.parse(current.last_played_at)) { current.last_played_at=event.ended_at; current.platform=event.platform||current.platform||"unknown"; current.source=event.source||current.source||"launcher_manual"; }
         grouped.set(gameKey,current);
     }
-    const games=[...grouped.values()]
+    const groupedGames=[...grouped.values()];
+    const games=groupedGames
+        .slice()
         .sort((a,b)=>b.duration_seconds-a.duration_seconds||b.sessions-a.sessions||Date.parse(b.last_played_at||0)-Date.parse(a.last_played_at||0))
         .slice(0,safeLimit)
-        .map((item,index)=>({rank:index+1,key:item.key,name:item.name,minutes:Math.max(1,Math.round(item.duration_seconds/60)),sessions:item.sessions,last_played_at:item.last_played_at}));
-    return {available:games.length>0,window_days:safeDays,source:"cfs_launcher_opt_in",updated_at:moduleState?.updated_at||null,games};
+        .map((item,index)=>({rank:index+1,key:item.key,name:item.name,minutes:Math.max(1,Math.round(item.duration_seconds/60)),sessions:item.sessions,last_played_at:item.last_played_at,platform:item.platform||"unknown",source:item.source||"launcher_manual"}));
+    const recent=groupedGames
+        .slice()
+        .sort((a,b)=>Date.parse(b.last_played_at||0)-Date.parse(a.last_played_at||0)||b.duration_seconds-a.duration_seconds)
+        .slice(0,Math.min(3,safeLimit))
+        .map((item,index)=>({position:index+1,key:item.key,name:item.name,minutes:Math.max(1,Math.round(item.duration_seconds/60)),sessions:item.sessions,last_played_at:item.last_played_at,platform:item.platform||"unknown",source:item.source||"launcher_manual"}));
+    return {
+        available:games.length>0,
+        window_days:safeDays,
+        source:"cfs_launcher_opt_in",
+        playtime_scope:"rolling_window",
+        updated_at:moduleState?.updated_at||null,
+        active:state.presence?.active===true?{
+            game_name:state.presence.game_name,
+            platform:state.presence.platform,
+            source:state.presence.source,
+            started_at:state.presence.started_at,
+            reported_at:state.presence.reported_at,
+            state_changed_at:state.presence.state_changed_at,
+            elapsed_seconds:state.presence.started_at?Math.max(0,Math.floor((Date.now()-Date.parse(state.presence.started_at))/1000)):0,
+            resumed_after_restart:state.presence.resumed_after_restart===true,
+            freshness_seconds:state.presence.reported_at?Math.max(0,Math.floor((Date.now()-Date.parse(state.presence.reported_at))/1000)):null,
+            presence_id:state.presence.transition_id||null
+        }:null,
+        games,
+        recent
+    };
+}
+
+function creatorGameContextFromActivity(activity={}) {
+    const active=activity?.active&&activity.active.game_name?activity.active:null;
+    if (active) return {mode:"active",game_name:active.game_name,platform:active.platform||"unknown",source:active.source||"launcher_manual",started_at:active.started_at||null,elapsed_seconds:Math.max(0,Number(active.elapsed_seconds)||0),resumed_after_restart:active.resumed_after_restart===true,presence_id:active.presence_id||null};
+    const recent=Array.isArray(activity?.recent)?activity.recent[0]:null;
+    if (recent?.name) return {mode:"recent",game_name:recent.name,platform:recent.platform||"unknown",source:recent.source||"launcher_manual",last_played_at:recent.last_played_at||null,minutes:Math.max(0,Number(recent.minutes)||0)};
+    return {mode:"none",game_name:"",platform:"unknown",source:"",last_played_at:null,minutes:0};
 }
 
 // ============================================================

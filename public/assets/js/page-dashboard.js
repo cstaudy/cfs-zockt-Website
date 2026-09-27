@@ -198,7 +198,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     tiktok:"TikTok-Profil, Verbindung und unterstützte Creator-Daten verwalten.",
     scene_studio:"Widgets und Elemente als gemeinsame Szene kombinieren.",
     editor:"Creator-Inhalte mit den erweiterten Editor-Werkzeugen bearbeiten.",
-    nexus:"Preview-Bereich für weiterführende Creator-Funktionen.",
+    nexus:"Creator Control Plane für Status, sichere Launcher-Aktionen und Event→Action-Automationen.",
     audio_studio:"Vorbereiteter Bereich auf der Roadmap.",
     twitch:"Geplante Integration auf der Roadmap.",
     obs:"Geplante tiefere OBS-Integration auf der Roadmap."
@@ -250,6 +250,84 @@ document.addEventListener("DOMContentLoaded", async () => {
       <div class="card-actions"><a class="btn" href="${paths[m.key] || "/pages/dashboard.html"}">${m.allowed ? "ÖFFNEN" : "DETAILS"}</a></div>
     </article>`;
   }).join("") || `<div class="ui-state ui-state-empty" role="status"><strong>Keine erweiterten Module gefunden</strong><p>Für deinen Account wurden aktuell keine weiteren Module gemeldet.</p></div>`;
+
+  const operationCard = (prefix, stateName, titleText, metaText) => {
+    const card = document.getElementById(`dashboard${prefix}Card`);
+    const title = document.getElementById(`dashboard${prefix}Title`);
+    const meta = document.getElementById(`dashboard${prefix}Meta`);
+    if (!card || !title || !meta) return;
+    card.classList.remove("ready", "warn", "wait");
+    card.classList.add(stateName || "wait");
+    title.textContent = titleText;
+    meta.textContent = metaText;
+  };
+
+  try {
+    const gameData = await CFS.json("/api/creator/games/runtime");
+    const gameRuntime = gameData.runtime || {};
+    const local = gameData.local_engine || {};
+    const selected = (gameData.catalog || []).find(game => game.key === gameData.profile?.game_type);
+    const status = String(gameRuntime.status || "idle").toLowerCase();
+    operationCard("Game", status === "running" ? "ready" : status === "starting" ? "warn" : "wait",
+      status === "running" ? `${selected?.label || gameRuntime.title || "Game"} läuft` : status === "starting" ? "Game startet …" : `${selected?.label || gameData.profile?.title || "Game-Plattform"} bereit`,
+      selected?.engine === "launcher_local" ? `${local.launcher_online ? "Launcher online" : "Launcher offline"} · ${Number(local.modules?.length || 0)} lokale Module` : "Cloud-Runtime verfügbar");
+  } catch {
+    operationCard("Game", "warn", "Game-Status nicht verfügbar", "Games-Seite öffnen und Verbindung prüfen");
+  }
+
+  try {
+    const streamData = await CFS.json("/api/creator/stream-studio/runtime");
+    const r = streamData.runtime || {};
+    const live = Boolean(r.live || r.output?.live || r.session?.live);
+    const launcherOnline = Boolean(r.launcher?.online || r.bridge?.online || r.interactive_game_engine?.launcher_online);
+    const gameContext = streamData.game_context || {mode:"none"};
+    const platformLabel = value => ({playstation_5:"PS5",playstation_4:"PS4",pc:"PC",xbox_series:"XBOX SERIES",xbox_one:"XBOX ONE",switch:"SWITCH"}[String(value||"")] || "PLATTFORM OFFEN");
+    if (gameContext.mode === "active" && gameContext.game_name) {
+      const minutes = Math.max(0, Math.floor(Number(gameContext.elapsed_seconds || 0) / 60));
+      operationCard("Playing", "ready", `${gameContext.game_name} aktiv`, `${platformLabel(gameContext.platform)} · ${minutes < 60 ? `${minutes} min` : `${Math.floor(minutes/60)} h ${minutes%60} min`} · laufender CFS-Spielkontext`);
+    } else if (gameContext.mode === "recent" && gameContext.game_name) {
+      operationCard("Playing", "wait", `Zuletzt: ${gameContext.game_name}`, `${platformLabel(gameContext.platform)} · bestätigter letzter Spielkontext`);
+    } else {
+      operationCard("Playing", "wait", "Kein aktives Spiel", "Game Activity ist aktuell nicht aktiv");
+    }
+    operationCard("Stream", live ? "ready" : launcherOnline ? "ready" : "wait", live ? "LIVE Session aktiv" : "Stream Studio bereit",
+      live ? "Program-Ausgabe und Laufzeit aktiv" : launcherOnline ? "Launcher verbunden · bereit für lokale Sources" : "Studio verfügbar · Launcher derzeit offline");
+  } catch {
+    operationCard("Stream", "warn", "Stream-Status nicht verfügbar", "Stream Studio öffnen und Status prüfen");
+  }
+
+  try {
+    const cutData = await CFS.json("/api/creator/cut-studio/projects");
+    const projects = Array.isArray(cutData.projects) ? cutData.projects : [];
+    const newest = projects[0];
+    operationCard("Cut", projects.length ? "ready" : "wait", projects.length ? `${projects.length} Cut-Projekt${projects.length === 1 ? "" : "e"}` : "Noch kein Cut-Projekt",
+      newest ? `Zuletzt: ${newest.title || "Cut Projekt"}` : "Recording aus Stream Studio übernehmen oder Projekt anlegen");
+  } catch {
+    operationCard("Cut", "warn", "CUT-Status nicht verfügbar", "CUT Studio öffnen und Projekte prüfen");
+  }
+
+  if (!connection.launcher) {
+    operationCard("Launcher", "wait", "Creator-PC offline", "Launcher verbinden für Capture, Games und lokale Medien");
+  } else {
+    operationCard("Launcher", "ready", "Creator-PC verbunden", "Release-Policy wird geprüft …");
+    try {
+      const releaseData = await CFS.json("/api/creator/launcher/releases?channel=stable");
+      const policy = releaseData.policy || {};
+      const current = policy.current_version || releaseData.bridge?.client_version || "Launcher";
+      const target = policy.build_target_version || policy.recommended_version || "";
+      if (policy.version_blocked === true || policy.live_allowed === false || policy.update_required === true) {
+        operationCard("Launcher", "warn", "Launcher Update erforderlich", `${current}${target ? ` → ${target}` : ""} · lokale/LIVE-Funktionen können blockiert sein`);
+      } else if (policy.update_available === true) {
+        operationCard("Launcher", "warn", "Launcher Update verfügbar", `${current}${target ? ` → ${target}` : ""} · aktuell noch kompatibel`);
+      } else if (policy.compatible === true) {
+        operationCard("Launcher", "ready", "Creator-PC kompatibel", `Launcher ${current} · Release-Policy erfüllt`);
+      } else {
+        operationCard("Launcher", "warn", "Launcher verbunden", `Version ${current} · Kompatibilität noch nicht bestätigt`);
+      }
+    } catch {
+      operationCard("Launcher", "warn", "Creator-PC verbunden", "Release-Policy konnte nicht geladen werden");
+    }
+  }
 
   document.querySelectorAll("[data-ui-reload]").forEach(button => button.addEventListener("click", () => location.reload()));
 

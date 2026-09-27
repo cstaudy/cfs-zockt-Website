@@ -1,0 +1,376 @@
+{
+  "schema": 1,
+  "type": "cfs_current_contract_regression_v58",
+  "generated_at": "2026-09-27T01:29:30.903Z",
+  "historical_scope_note": "This is a current-contract replacement suite. It does not recreate or claim execution of the 24 missing historical test files.",
+  "total": 52,
+  "passed": 52,
+  "failed": 0,
+  "status": "CURRENT_CONTRACT_REGRESSION_PASS",
+  "rows": [
+    {
+      "name": "backend-syntax",
+      "ok": true,
+      "exit_code": 0,
+      "stdout_tail": "\n> cfs-zockt-creator-suite-web@3.12.0 check\n> node --check server.js\n\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "trust",
+      "ok": true,
+      "exit_code": 0,
+      "stdout_tail": "\n> cfs-zockt-creator-suite-web@3.12.0 trust:check\n> node tools/website-trust-conviction-test.mjs .\n\nPASS  Homepage exposes a dedicated trust section\nPASS  Main navigation prioritizes security\nPASS  Homepage links to detailed security page\nPASS  Homepage does not promise absolute security\nPASS  Homepage trust claims mention no fake metrics/prices\nPASS  Login explains scrypt instead of vague future wording\nPASS  Login exposes security/privacy links\nPASS  Login describes CSRF/origin protection\nPASS  Security page marks password hashing active\nPASS  Security page documents CSRF and Origin controls\nPASS  Security page documents rate limiting\nPASS  Security page keeps an explicit partial/open area\nPASS  Security page avoids impossible 100 percent guarantee\nPASS  Server implements scrypt password hashing\nPASS  Server uses secure HttpOnly creator session cookies in production\nPASS  Server implements signed session-bound CSRF\nPASS  Server checks Fetch Metadata for browser writes\nPASS  Server has login and registration limits\nPASS  Server has a Content-Security-Policy\nPASS  Backend version stays 3.12.0\n\n20/20 trust/security checks passed.\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "security-current",
+      "ok": true,
+      "exit_code": 0,
+      "stdout_tail": "\n> cfs-zockt-creator-suite-web@3.12.0 security3:check\n> node tools/website-security-conviction-pass3-test.mjs .\n\nPASS  RFC9116 security.txt exists\nPASS  security.txt has HTTPS Contact\nPASS  security.txt has Expires\nPASS  security.txt has Canonical\nPASS  security.txt has Policy\nPASS  Server explicitly serves well-known security.txt\nPASS  Legacy security.txt path redirects canonically\nPASS  Homepage uses minimal public status endpoint\nPASS  Public status endpoint exposes only high-level state\nPASS  Operational health no longer exposes redirect URI\nPASS  Operational health no longer exposes module map\nPASS  Operational health preserves canary fields\nPASS  Production session cookie uses __Host prefix\nPASS  Production TikTok state cookie uses __Secure prefix\nPASS  Session cookie remains HttpOnly Secure root scoped\nPASS  Production requires token encryption key\nPASS  Production requires separate CSRF signing secret\nPASS  Production requires separate review HMAC key\nPASS  Production requires separate support HMAC key\nPASS  Config doctor blocks missing CSRF signing secret\nPASS  Config doctor blocks missing public HMAC keys\nPASS  Env example documents required separated secrets\nPASS  Render setup documents new separated secrets\nPASS  Server rejects likely secrets in support report\nPASS  Client rejects likely secrets before upload\nPASS  Support receipt includes short reference\nPASS  Support page explains reference and security.txt\nPASS  Security page documents host-bound sessions\nPASS  Security page documents fail-closed production secrets\nPASS  Homepage exposes verifiable security.txt path\nPASS  Homepage explains public status minimization\nPASS  Package wires security3 regression check\nPASS  Backend version remains 3.12.0\n\n33/33 website security/conviction pass 3 checks passed.\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "admin-privileged",
+      "ok": true,
+      "exit_code": 0,
+      "stdout_tail": "\n> cfs-zockt-creator-suite-web@3.12.0 admin16:check\n> node tools/admin-privileged-action-security-pass16-test.mjs .\n\nPASS  admin elevation secret configured\nPASS  production requires admin elevation secret\nPASS  production requires >=32 char admin elevation secret\nPASS  env example documents admin elevation secret\nPASS  config doctor marks admin elevation secret secret\nPASS  render blueprint generates admin elevation secret\nPASS  host-bound admin elevation cookie exists\nPASS  admin elevation cookie is HttpOnly\nPASS  admin elevation cookie is Secure in production\nPASS  admin elevation cookie is SameSite strict\nPASS  admin elevation lasts ten minutes\nPASS  admin elevation token uses HMAC SHA-256\nPASS  admin elevation signature binds current session hash\nPASS  admin elevation validates creator id\nPASS  admin elevation rejects expired tokens\nPASS  admin elevation rate limiter exists\nPASS  admin elevation verifies current password\nPASS  failed elevation creates security event\nPASS  successful elevation creates security event\nPASS  all admin writes centrally require elevation\nPASS  elevation endpoint excluded from its own gate\nPASS  missing elevation returns 428\nPASS  new login clears stale admin elevation\nPASS  logout clears admin elevation\nPASS  admin audit table exists\nPASS  admin audit stores no request body\nPASS  admin audit stores no ip or user agent\nPASS  admin audit retention is 180 days\nPASS  admin audit cleanup exists\nPASS  admin audit endpoint is admin-protected\nPASS  admin audit records minimized fields plus integrity metadata\nPASS  admin UI has explicit step-up controls\nPASS  admin UI does not persist password field\nPASS  admin UI exposes audit list\nPASS  admin wrapper handles 428 reauth response\nPASS  admin writes use wrapper\nPASS  admin elevation styling present\nPASS  public security page describes admin step-up\nPASS  security page discloses minimized audit data\nPASS  package script exposes admin16 check\n\nAdmin privileged action security: 40/40\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "admin-audit",
+      "ok": true,
+      "exit_code": 0,
+      "stdout_tail": "\n> cfs-zockt-creator-suite-web@3.12.0 admin17:check\n> node tools/admin-audit-integrity-security-pass17-test.mjs .\n\nPASS  separate audit HMAC secret exists\nPASS  audit HMAC has development-only fallback\nPASS  production requires audit HMAC secret\nPASS  production requires >=32 char audit secret\nPASS  env example documents audit secret\nPASS  config doctor treats audit secret as secret\nPASS  render blueprint generates audit secret\nPASS  audit table has chain version\nPASS  audit table has previous hash\nPASS  audit table has event hash\nPASS  legacy migration adds integrity columns without back-signing\nPASS  audit checkpoint table exists\nPASS  retention stores checkpoint before delete\nPASS  audit writes use transaction\nPASS  audit writes use advisory transaction lock\nPASS  audit chain uses HMAC SHA-256\nPASS  canonical payload binds previous hash\nPASS  canonical payload binds admin id\nPASS  canonical payload binds route and outcome\nPASS  canonical payload binds request id and time\nPASS  new events use chain version one\nPASS  root hash is explicit\nPASS  verification recomputes HMAC\nPASS  verification checks previous hash linkage\nPASS  verification uses timing-safe text comparison\nPASS  integrity returns first bad event id only\nPASS  legacy events are counted separately\nPASS  audit endpoint returns integrity result\nPASS  audit endpoint remains admin protected\nPASS  forensic export is a POST admin route\nPASS  forensic export is covered by central admin step-up\nPASS  forensic export contains integrity snapshot\nPASS  forensic export creates security event\nPASS  audit storage still avoids request body\nPASS  audit storage still avoids IP or user agent\nPASS  audit retention remains 180 days\nPASS  admin UI exposes integrity badge\nPASS  admin UI distinguishes legacy rows\nPASS  admin UI exposes forensic export\nPASS  forensic export uses adminJson wrapper\nPASS  admin UI downloads JSON locally\nPASS  integrity failure has visible bad state\nPASS  public security page describes HMAC chaining\nPASS  package script exposes admin17 check\n\nAdmin audit integrity security: 44/44\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "widget-core",
+      "ok": true,
+      "exit_code": 0,
+      "stdout_tail": "\n> cfs-zockt-creator-suite-web@3.12.0 coreflows:check\n> node tools/widget-core-flow-pass-test.mjs .\n\nPASS  Follower Goal liest Profilwert · current=1284\nPASS  Follower Goal Restwert · remaining=716\nPASS  Follower Goal Prozent · percent=64\nPASS  Manueller Counter Wert · current=42\nPASS  Manueller Counter ohne TikTok Avatar · avatar=\nPASS  Manueller Counter nutzt Creator-Identität · displayName=Creator Account\nPASS  Manueller Counter ohne Profilmetrik\nPASS  Manueller Timer läuft weiter · current=95\nPASS  Manueller Timer Status · status=LÄUFT\nPASS  LIVE Timer hold friert letzten Stand ein · current=255\nPASS  LIVE Timer zero setzt 0 · current=0\nPASS  LIVE Timer online läuft bis jetzt · current=300\nPASS  Chat hold behält letzte Nachricht\nPASS  Chat zero leert stale Chat\nPASS  Kamera Overlay bleibt statisch\nPASS  Kamera Overlay ohne Profilidentität\nPASS  Unveröffentlichte Änderungen per Config-Vergleich\nPASS  Live-Steuerung verschiebt published_at nicht\nPASS  Statische/manuelle Outputs ohne externe Snapshots\nPASS  Manueller Standard-Start ohne Plattformavatar\nPASS  Studio Preview kennt LIVE-Freshness\nPASS  Backend-Version bleibt 3.12.0 · 3.12.0\n\n22/22 Core-Flow Checks bestanden.\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "widget-ux",
+      "ok": true,
+      "exit_code": 0,
+      "stdout_tail": "\n> cfs-zockt-creator-suite-web@3.12.0 ux30:check\n> node tools/widget-studio-30s-ux-test.mjs .\n\nPASS  Quickstart goal vorhanden\nPASS  Quickstart counter vorhanden\nPASS  Quickstart timer vorhanden\nPASS  Quickstart chat vorhanden\nPASS  Quickstart camera vorhanden\nPASS  Quickstarts nur im Einfach-Modus\nPASS  Quickstart veröffentlicht nicht automatisch\nPASS  Direkter Handler vorhanden\nPASS  Quickstart erstellt über bestehenden Create-Flow\nPASS  Neues Widget überspringt doppelte Vorlagenstufe\nPASS  Kamera startet im Design-Schritt\nPASS  Goal Rezept\nPASS  Counter Rezept\nPASS  Timer Rezept\nPASS  Chat Rezept\nPASS  Kamera Rezept\nPASS  OBS Goal bleibt manuell\nPASS  OBS Counter bleibt manuell\nPASS  OBS Timer bleibt manuell\nPASS  TikTok Kamera bevorzugt 9:16\nPASS  Plan-Sperre wird respektiert\nPASS  Keine Auto-Publish-Funktion im Quickstart\nPASS  Registry enthält manual_goal\nPASS  Registry enthält follower_goal\nPASS  Registry enthält manual_counter\nPASS  Registry enthält follower_counter\nPASS  Registry enthält stream_timer\nPASS  Registry enthält live_timer\nPASS  Registry enthält chat_overlay\nPASS  Registry enthält camera_frame\nPASS  Registry enthält camera_frame_portrait\nPASS  Einfach-Preset Klar & direkt\nPASS  Einfach-Preset Clean Zahl\nPASS  Einfach-Preset Clean Timer\nPASS  Einfach-Preset Ausgewogen\nPASS  Einfach-Preset Soft Rounded\nPASS  Sechs Einfach-Schritte bleiben erhalten\nPASS  Profi-Modus bleibt vorhanden\nPASS  Responsive Quickstart CSS\nPASS  Backend-Version unverändert 3.12.0\n\n40/40 Checks bestanden.\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "launcher-static",
+      "ok": true,
+      "exit_code": 0,
+      "stdout_tail": "\n> cfs-zockt-creator-suite-launcher@0.47.7 check\n> node tools/static-check.mjs\n\nLauncher static check passed (Windows-safe path resolution).\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "launcher-stability",
+      "ok": true,
+      "exit_code": 0,
+      "stdout_tail": "\n> cfs-zockt-creator-suite-launcher@0.47.7 test:stability\n> node tools/stability-pass-test.mjs\n\n{\"ok\":true,\"checks\":4,\"launcher_version\":\"0.47.7\",\"areas\":[\"settings_atomicity\",\"live_settings_guard\",\"action_poll_serialization\",\"output_crash_recovery\"]}\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "stream-current",
+      "ok": true,
+      "exit_code": 0,
+      "stdout_tail": "ASS Docs explain outgoing and incoming gain ramps\nPASS Docs state no local media paths cross web boundary\nPASS Docs keep real Windows acceptance open\nPASS Docs do not claim Windows hardware click-free acceptance\n\nStream Studio Loop Click Guard Pass 21.10.33: 84/84 PASS\n\n> cfs-zockt-creator-suite-web@3.12.0 studio-zero-cross21:check\n> node tools/stream-studio-zero-cross-pass21-10-34-test.mjs .\n\nPASS PCM helper returns original marker\nPASS PCM helper finds real sign crossing\nPASS PCM helper snaps first boundary to 1000ms\nPASS PCM helper delta is zero at exact crossing\nPASS PCM helper reports bounded dBFS\nPASS PCM helper reports sample count\nPASS Nearest crossing prefers closest crossing\nPASS Nearest crossing delta remains small\nPASS No sign crossing uses lowest-level fallback\nPASS Lowest-level fallback selects quiet sample\nPASS Lowest-level fallback level is very quiet\nPASS Empty PCM stays on original marker\nPASS Empty PCM marks no crossing\nPASS Project defaults Zero-Cross radius to 20ms\nPASS Project clamps Zero-Cross radius to 50ms\nPASS Project clamps Zero-Cross radius to 5ms\nPASS Cut job manifest preserves sanitized Zero-Cross radius\nPASS Result sanitizer preserves Zero-Cross object\nPASS Result sanitizer clamps radius to 50ms\nPASS Result sanitizer clamps sample rate to 96kHz\nPASS Result sanitizer clamps positive delta to +50ms\nPASS Result sanitizer clamps negative delta to -50ms\nPASS Result sanitizer clamps level above 0dBFS\nPASS Result sanitizer clamps level below -96dBFS\nPASS Result sanitizer preserves crossing boolean\nPASS Result sanitizer drops local file path\nPASS Result sanitizer drops PCM-shaped extra payload\nPASS Media engine includes Zero-Cross mix inspector\nPASS Media engine uses current source-track mix graph\nPASS Media engine downmixes inspector window to mono\nPASS Media engine analyzes 48kHz by default\nPASS Media engine hard-clamps search radius to 50ms\nPASS Media engine uses binary stdout for tiny PCM window\nPASS Media engine limits PCM stdout to 64KiB\nPASS Media engine does not write inspector PCM to disk\nPASS Media engine crossing test uses sign changes\nPASS Media engine has controlled lowest-level fallback\nPASS Server audition protocol advances to schema 13\nPASS Server accepts inspect_zero_cross action\nPASS Server clamps requested search radius to 5-50ms\nPASS Server stores search radius only for inspector action\nPASS Server inspector endpoint is exact job-id scoped\nPASS Server inspector query verifies creator project job and action\nPASS Server inspector response exposes only sanitized inspection\nPASS Server request path has no local file input\nPASS Zero-Cross job remains cut_audition kind\nPASS Regular export slot count still excludes cut_audition\nPASS Launcher accepts inspector action\nPASS Launcher clamps inspector radius locally\nPASS Launcher reuses verified recording handoff boundary\nPASS Launcher maps cloud track keys back to local stream indexes\nPASS Launcher calls local mix Zero-Cross analyzer\nPASS Launcher completion result contains only zero_cross analysis metadata\nPASS Launcher marks inspector codec as analysis\nPASS Launcher does not send inspector PCM to renderer\nPASS Cut project sanitizer persists Zero-Cross radius\nPASS Cut job result sanitizer has dedicated Zero-Cross point sanitizer\nPASS Cut job result sanitizer clamps delta to ±50ms\nPASS Cut job result sanitizer clamps level to -96..0dBFS\nPASS Cut Studio exposes Zero-Cross inspector panel\nPASS Cut Studio exposes 10ms search radius\nPASS Cut Studio exposes 20ms search radius\nPASS Cut Studio exposes 50ms search radius\nPASS Cut Studio exposes A SNAP action\nPASS Cut Studio exposes B SNAP action\nPASS Cut Studio exposes BEIDE SNAP action\nPASS Cut Studio explicitly states PCM stays local\nPASS Cut Studio CSS contains Pass 21.10.34 marker\nPASS Cut Studio CSS styles Zero-Cross inspector\nPASS Cut Studio request supports inspect action\nPASS Cut Studio request sends only search radius milliseconds\nPASS Cut Studio polls exact inspector job id\nPASS Cut Studio marks old suggestions unusable after marker changes\nPASS Cut Studio invalidates inspector after source-track edits\nPASS Cut Studio invalidates inspector when A is reset\nPASS Cut Studio invalidates inspector when B is reset\nPASS Cut Studio persists Zero-Cross search radius\nPASS Cut Studio restores Zero-Cross search radius\nPASS Cut Studio shows crossing versus lowest-level mode\nPASS Cut Studio inspector request has no local path argument\nPASS Root package registers Pass 21.10.34 test\nPASS Combined Stream Studio check includes Pass 21.10.34\nPASS Master checklist advances to Pass 21.10.34\nPASS Master checklist contains Pass 21.10.34 section\nPASS Pass detail documentation exists\nPASS Docs explain advisory non-destructive behavior\nPASS Docs explain genuine sign crossing plus fallback\nPASS Docs state no PCM or local paths cross web boundary\nPASS Docs keep real Windows acceptance open\nPASS Docs do not claim universally click-free Windows result\n\nStream Studio Zero-Cross Pass 21.10.34: 90/90 PASS\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "cut-foundation",
+      "ok": true,
+      "exit_code": 0,
+      "stdout_tail": "\n> cfs-zockt-creator-suite-web@3.12.0 cut52:check\n> node tools/cut-studio-completion-v52-test.mjs .\n\nPASS analysis job has distinct internal kind\nPASS analysis job manifest records game profile\nPASS analysis job manifest declares own evidence source\nPASS new queued analysis supersedes old queued analysis\nPASS only one active analysis per project\nPASS old finished analysis jobs are pruned\nPASS launcher filters analysis jobs from creator export list\nPASS launcher update helper refuses internal analysis jobs\nPASS normal export processor refuses internal jobs\nPASS analysis rejects stale game profile\nPASS analysis uses local source store\nPASS recording handoff can restore local analysis source\nPASS missing local source fails closed\nPASS analysis requires FFmpeg\nPASS media probe accepts modern FFmpeg stream ids\nPASS analysis persists only reduced evidence\nPASS project sanitizer stores own evidence\nPASS project sanitizer stores candidate ground truth\nPASS candidate semantic source cannot become reference\nPASS reference influence is explicitly editorial\nPASS reference boost remains bounded\nPASS reject remains ineligible\nPASS keep has score floor\nPASS candidate UI exposes own clip analysis\nPASS completed empty analysis is represented honestly\nPASS empty analysis explicitly refuses invented events\nPASS analysis polling remains separate from export polling\nCUT_STUDIO_COMPLETION_V52_PASS 27/27\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "cut-windows-contract",
+      "ok": true,
+      "exit_code": 0,
+      "stdout_tail": "\n> cfs-zockt-creator-suite-web@3.12.0 cut53:check\n> node tools/cut-windows-acceptance-v53-test.mjs .\n\nPASS complete v53 evidence passes\nPASS non-Windows fails\nPASS non-x64 fails\nPASS artifact hash required\nPASS expected artifact hash required\nPASS artifact hash mismatch fails\nPASS runtime app hash required\nPASS bundled FFmpeg required\nPASS FFmpeg hash required\nPASS FFmpeg version required\nPASS capability drawtext required\nPASS capability xfade required\nPASS capability acrossfade required\nPASS capability loudnorm required\nPASS capability zoompan required\nPASS capability rotate required\nPASS capability blend required\nPASS capability amix required\nPASS capability sidechaincompress required\nPASS software encoder required\nPASS synthetic smoke required\nPASS synthetic own-clip highlights required\nPASS synthetic export bytes required\nPASS two real recordings required\nPASS two recording variants required\nPASS real recording video codec required\nPASS real export must succeed\nPASS raw upload boundary required\nPASS variant signature includes container and codecs\nPASS stable evidence hash is deterministic\nPASS CUT engine prioritizes bundled FFmpeg candidate\nPASS runtime gate requires real Windows\nPASS runtime gate requires installed app.asar\nPASS runtime gate requires bundled ffmpeg.exe\nPASS runtime gate requires two recordings\nPASS runtime synthetic path uses Own Clip Evidence\nPASS runtime synthetic path performs real export\nPASS runtime evidence never uploads raw media\n\nCUT Windows Acceptance v53: 38/38 PASS\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "cut-release-binding",
+      "ok": true,
+      "exit_code": 0,
+      "stdout_tail": "\n> cfs-zockt-creator-suite-web@3.12.0 cut54:check\n> node tools/cut-release-lock-v54-test.mjs && node tools/cut-windows-release-bound-v54-test.mjs\n\nPASS valid release lock\nPASS binding deterministic\nPASS remote required\nPASS branch required\nPASS git sha required\nPASS artifact sha required\nPASS launcher version required\nPASS backend version required\nPASS schema generation required\nPASS runtime artifact bound\nPASS runtime artifact mismatch fails\nPASS runtime launcher mismatch fails\nPASS runtime backend mismatch fails\nPASS runtime schema mismatch fails\nCUT_RELEASE_LOCK_V54 14/14 PASS\nPASS v54 runner requires release lock\nPASS release lock validation is called\nPASS runtime is checked against release lock\nPASS database schema runtime contract is imported\nPASS artifact expected hash comes from lock\nPASS release lock binding enters evidence\nPASS evidence keeps git remote branch and head\nPASS v54 CMD uses release lock argument\nPASS launcher exposes v54 acceptance script\nCUT_WINDOWS_RELEASE_BOUND_V54 9/9 PASS\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "cut-evidence-bundle",
+      "ok": true,
+      "exit_code": 0,
+      "stdout_tail": "\n> cfs-zockt-creator-suite-web@3.12.0 cut55:check\n> node tools/cut-windows-evidence-bundle-v55-test.mjs\n\nPASS PASS evidence bundles successfully\nPASS bundle status explicit\nPASS release binding retained\nPASS raw media remains excluded\nPASS recording path reduced to basename\nPASS source hashes included\nPASS bundle hash included\nPASS FAIL acceptance cannot be bundled\nPASS mismatched lock fails closed\nCUT_WINDOWS_EVIDENCE_V55 9/9 PASS\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "cut-provider-contract",
+      "ok": true,
+      "exit_code": 0,
+      "stdout_tail": "\n> cfs-zockt-creator-suite-web@3.12.0 cut57:check\n> node tools/cut-reference-provider-acceptance-v57-test.mjs\n\nPASS valid provider evidence passes\nPASS secret exposure fails\nPASS raw media download boundary fails\nPASS missing url hash fails\nPASS invalid sample status fails\nPASS invalid score fails\nPASS url hashing deterministic\nPASS runner never serializes API key\nPASS unconfigured real runner fails closed\nPASS fail evidence contains no secret\nCUT_REFERENCE_PROVIDER_V57 10/10 PASS\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "r59-contract",
+      "ok": true,
+      "exit_code": 0,
+      "stdout_tail": "\n> cfs-zockt-creator-suite-web@3.12.0 security59:check\n> node tools/render-production-drill-pass59-test.mjs .\n\nPASS render drill npm script registered\nPASS security59 npm script registered\nPASS security59 wired into project regression\nPASS drill requires HTTPS production target\nPASS drill supports explicit live mode\nPASS drill supports strict Render env mode\nPASS drill supports external-only mode\nPASS strict-env and external-only are mutually exclusive\nPASS external-only suppresses runtime env evaluation\nPASS external-only reason is explicit in report checks\nPASS report records external-only mode\nPASS runtime doctor remains wired for strict env\nPASS database transport policy remains wired\nPASS lockfile readiness is checked\nPASS Node 22 engine readiness is checked\nPASS Render blueprint readiness is checked\nPASS Render build must use npm ci\nPASS Render health path must be api health\nPASS canonical production domain is checked\nPASS production origin pin is checked\nPASS plaintext production credentials are rejected\nPASS generated secret diagnostics name missing secrets\nPASS Blueprint generates account elevation secret\nPASS live DNS resolution is checked\nPASS HTTP to HTTPS redirect is checked\nPASS canonical redirect origin is checked\nPASS HTTPS root response is checked\nPASS HTTPS root retries transient request failures\nPASS root retry is limited to transient network failures\nPASS root retry exhaustion remains a blocking failure\nPASS HSTS is checked\nPASS CSP is checked\nPASS nosniff is checked\nPASS Referrer-Policy is checked\nPASS Permissions-Policy is checked\nPASS X-Powered-By absence is checked\nPASS request ID is checked\nPASS health endpoint HTTP 200 is checked\nPASS health payload requires app and database online\nPASS deployed backend version is checked\nPASS deployed schema generation is checked\nPASS health no-store is checked\nPASS health Set-Cookie absence is checked\nPASS public status accepts only online or degraded\nPASS public status no-store is checked\nPASS private env path exposure is probed\nPASS malformed JSON handling is probed\nPASS TLS trust uses rejectUnauthorized\nPASS TLS expiry is checked\nPASS external DNS limitations become BLOCKED not fake PASS\nPASS live failures produce LIVE_FAIL\nPASS successful live suite produces LIVE_PASS\nPASS blocking failures set nonzero exit\nPASS externally blocked suite uses distinct exit code\nPASS Blueprint remains manual deploy\nPASS Blueprint health check remains api health\n\nRender Production Drill Security R59: 56/56 PASS\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "r60-contract",
+      "ok": true,
+      "exit_code": 0,
+      "stdout_tail": "\n> cfs-zockt-creator-suite-web@3.12.0 security60:check\n> node tools/database-recovery-drill-pass60-test.mjs .\n\nPASS recovery drill npm script registered\nPASS security60 npm script registered\nPASS R60 drill file exists\nPASS backup implementation exists\nPASS backup verifier exists\nPASS restore implementation exists\nPASS recovery policy exists\nPASS drill requires production DATABASE_URL\nPASS drill requires separate recovery target env\nPASS drill supports preflight\nPASS drill requires explicit live mode\nPASS live restore requires explicit confirmation\nPASS source and target identities must differ\nPASS target must be empty before restore\nPASS production backup is created with existing backup tool\nPASS backup is cryptographically verified before restore\nPASS restore uses hardened restore tool\nPASS restore tool separately blocks backup source target\nPASS restore tool separately blocks DATABASE_URL target\nPASS restore tool separately requires empty target\nPASS restore tool requires explicit execute flag\nPASS critical account table is verified\nPASS critical session table is verified\nPASS critical settings table is verified\nPASS critical module state table is verified\nPASS schema state table is verified\nPASS production evidence table is verified\nPASS schema generation is checked after restore\nPASS invalid PostgreSQL indexes are checked\nPASS unvalidated PostgreSQL constraints are checked\nPASS write probe uses a temporary table\nPASS write probe is rolled back\nPASS critical row counts are recorded without source mutation\nPASS R60 evidence path matches R67 default collector\nPASS R60 evidence has source-target-separate flag\nPASS R60 evidence has critical tables flag\nPASS R60 evidence has write probe flag\nPASS R60 evidence records invalid index count\nPASS R60 evidence records constraint validation count\nPASS recovery evidence signing function exists\nPASS recovery evidence verification function exists\nPASS recovery evidence HMAC excludes its own signature\nPASS recovery evidence HMAC uses timing safe comparison\nPASS recovery evidence key is domain separated\nPASS R67 imports recovery evidence verifier\nPASS R67 requires full LIVE_RESTORE_PASS\nPASS R67 requires critical tables ok\nPASS R67 requires write probe ok\nPASS R67 requires zero invalid indexes\nPASS R67 requires zero unvalidated constraints\n\nDatabase Recovery Drill Security R60: 50/50 PASS\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "r61-contract",
+      "ok": true,
+      "exit_code": 0,
+      "stdout_tail": "\n> cfs-zockt-creator-suite-web@3.12.0 security61:check\n> node tools/account-mail-production-pass61-test.mjs .\n\nPASS mail drill security library exists\nPASS prepare sends three real mail categories\nPASS pending stores challenge hashes rather than plaintext codes\nPASS verify requires all inbox codes\nPASS evidence only becomes LIVE_MAIL_PASS after verification\nPASS mail evidence HMAC verifies\nPASS mail evidence HMAC rejects tampering\nPASS confirmation hash binds category and code\n\nAccount Mail Production Security R61: 8/8 PASS\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "r62-contract",
+      "ok": true,
+      "exit_code": 0,
+      "stdout_tail": "\n> cfs-zockt-creator-suite-web@3.12.0 security62:check\n> node tools/account-auth-production-pass62-test.mjs .\n\nPASS R62 queries public auth readiness\nPASS R62 requires canonical RP and UV required\nPASS R62 verifies real production security events\nPASS R62 proves temporary passkey cleanup\nPASS R62 never turns manual yes/no into PASS\nPASS auth evidence HMAC verifies\nPASS auth evidence rejects tampering\n\nAccount Auth Production Security R62: 7/7 PASS\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "r63-contract",
+      "ok": true,
+      "exit_code": 0,
+      "stdout_tail": "\n> cfs-zockt-creator-suite-web@3.12.0 security63:check\n> node tools/windows-launcher-production-pass63-test.mjs .\n\nPASS R63 evaluator accepts complete evidence\nPASS R63 rejects unsigned artifact\nPASS R63 rejects signer mismatch\nPASS R63 uses Windows Authenticode\nPASS R63 runs audio hardware doctor\nPASS R63 runs game capture hardware doctor\nPASS R63 requires real clean install/updater/device link evidence\n\nWindows Launcher Production Security R63: 7/7 PASS\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "r64-contract",
+      "ok": true,
+      "exit_code": 0,
+      "stdout_tail": "\n> cfs-zockt-creator-suite-web@3.12.0 security64:check\n> node tools/live-soak-production-pass64-test.mjs .\n\nPASS R64 requires at least two hours\nPASS R64 rejects missing R63 binding\nPASS R64 rejects missing artifact binding\nPASS R64 rejects short soak\nPASS R64 rejects fatal error\nPASS R64 rejects missing OBS confirmation\nPASS R64 final evidence validates hash and state\nPASS R64 rejects evidence tampering\n\nLIVE Soak Production Security R64: 8/8 PASS\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "r65-contract",
+      "ok": true,
+      "exit_code": 0,
+      "stdout_tail": "\n> cfs-zockt-creator-suite-web@3.12.0 security65:check\n> node tools/production-monitor-alerting-pass65-test.mjs .\n\nPASS monitor security library supports signed webhook delivery\nPASS R65 requires external webhook mode and required flag\nPASS R65 sends unique challenge in real external alert\nPASS R65 stores only challenge hash\nPASS R65 requires code received outside the app\nPASS R65 signs final evidence\n\nProduction Monitoring Security R65: 6/6 PASS\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "r66-contract",
+      "ok": true,
+      "exit_code": 0,
+      "stdout_tail": "\n> cfs-zockt-creator-suite-web@3.12.0 security66:check\n> node tools/stripe-live-production-pass66-test.mjs .\n\nPASS R66 accepts only Stripe LIVE secret key\nPASS R66 verifies live Price objects through Stripe API\nPASS R66 never creates or updates financial Stripe objects\nPASS R66 requires real LIVE billing DB events\nPASS R66 requires resilience subscription update and reset\nPASS R66 evidence marks financial actions manual\nPASS Stripe evidence HMAC verifies\nPASS Stripe evidence HMAC rejects tampering\n\nStripe LIVE Production Security R66: 8/8 PASS\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "r67-contract",
+      "ok": true,
+      "exit_code": 0,
+      "stdout_tail": "\n> cfs-zockt-creator-suite-web@3.12.0 security67:check\n> node tools/launch-production-gate-pass67-test.mjs .\n\nPASS R67 imports all eight evidence classes\nPASS R67 cryptographically verifies R60/R61/R62/R65/R66\nPASS R67 rechecks R63 and R64 evaluators\nPASS R67 accepts external-only R59 only with runtime doctor revalidation\nPASS R67 still accepts strict-env R59\nPASS launch policy becomes ready with all required fresh evidence\nPASS launch policy blocks unhealthy monitor\n\nLaunch Production Gate Security R67: 7/7 PASS\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "r68-contract",
+      "ok": true,
+      "exit_code": 0,
+      "stdout_tail": "\n> cfs-zockt-creator-suite-web@3.12.0 security68:check\n> node tools/predeploy-migration-safety-pass68-test.mjs .\n\nPASS schema contract version 68\nPASS schema contract production slot\nPASS bootstrap lock namespace stable\nPASS bootstrap wait bounded to 45 seconds\nPASS bootstrap uses try advisory lock\nPASS bootstrap lock scoped to current database\nPASS bootstrap uses numeric application namespace\nPASS bootstrap uses polling not unbounded blocking lock\nPASS bootstrap timeout fails closed\nPASS bootstrap always unlocks\nPASS failed unlock destroys pooled client\nPASS immediate lock returns task result\nPASS immediate lock executes task once\nPASS immediate lock unlocks once\nPASS healthy unlock keeps pooled connection reusable\nPASS contention retries advisory lock\nPASS contention reports wait callback\nPASS contention path releases client\nPASS unlock failure destroys connection\nPASS lock contention timeout rejects startup\nPASS task never runs without lock\nPASS timeout releases waiting client\nPASS server imports bootstrap lock\nPASS server imports schema contract\nPASS all local server runtime modules exist\nPASS launch production gate runtime module exists\nPASS server bootstraps DB under advisory lock\nPASS workers start after locked DB bootstrap\nPASS HTTP listen starts after locked DB bootstrap\nPASS server creates schema state table\nPASS schema state slot constrained to production\nPASS schema state stores backend version\nPASS schema state upsert occurs after DDL\nPASS health reads schema state\nPASS health fails closed on mismatch\nPASS schema mismatch is HTTP 503\nPASS schema mismatch advertises retry-after\nPASS healthy health payload exposes schema version\nPASS Render stays manual deploy\nPASS Render build remains npm ci\nPASS Render start remains npm start\nPASS Render health uses schema-aware health route\nPASS predeploy doctor script registered\nPASS security68 script registered\nPASS full predeploy gate registered\nPASS security68 wired into project check\nPASS doctor verifies lockfile parity\nPASS doctor verifies local runtime modules exist\nPASS doctor scans merge conflicts\nPASS doctor verifies schema mismatch fail-closed\nPASS R59 checks deployed schema generation\nPASS R67 requires R59 schema check\n\nPre-Deploy Migration Safety R68: 52/52 PASS\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "website-current-acceptance",
+      "ok": true,
+      "exit_code": 0,
+      "stdout_tail": "\n> cfs-zockt-creator-suite-web@3.12.0 website21:check\n> node tools/website-acceptance-pass21-3-14-test.mjs . && node tools/website-accessibility-responsive-pass21-3-12-test.mjs . && node tools/website-visual-polish-pass21-3-13-test.mjs .\n\nPASS  all internal static links/assets/fragments resolve\nPASS  HTML pages have no duplicate IDs\nPASS  all primary public pages exist\nPASS  homepage exposes /pages/creator-suite.html\nPASS  homepage exposes /pages/creator-suite.html#widget-studio\nPASS  homepage exposes /pages/creator-suite.html#games\nPASS  homepage exposes /pages/creator-suite.html#launcher\nPASS  homepage exposes /pages/plans.html\nPASS  homepage exposes /pages/roadmap.html\nPASS  homepage exposes /pages/security.html\nPASS  homepage exposes /pages/support.html\nPASS  homepage exposes /pages/login.html\nPASS  homepage exposes /pages/login.html#regForm\nPASS  homepage keeps clear primary free-start CTA\nPASS  homepage keeps TikTok source-aware CTA journey\nPASS  partner surface remains hidden by default\nPASS  registration anchor exists\nPASS  login links password recovery\nPASS  login links email verification\nPASS  auth recovery pages exist\nPASS  all creator workspace pages exist\nPASS  dashboard/shared creator shell reaches core tools\nPASS  private support anchor exists\nPASS  homepage links private support route\nPASS  RFC 9116 security.txt exists\nPASS  homepage links verifiable security.txt\nPASS  public status route is linked\nPASS  custom 404 and 500 pages exist\nPASS  TikTok callback page exists\nPASS  widget/game runtime pages exist\nPASS  sitemap URLs resolve to public files\nPASS  sitemap includes all primary indexable pages\nPASS  no stale backend-neu reference in active website/deploy surface\nPASS  Pass 21.3.14 documentation exists\n\nWebsite Acceptance Pass 21.3.14: 34/34 PASS\nPASS  accessibility initializer exists\nPASS  skip link is injected\nPASS  main content receives stable target\nPASS  notices receive status/alert semantics\nPASS  aria-disabled links cannot be activated\nPASS  live regions are configured\nPASS  accessibility initializer is started\nPASS  visible focus styling exists\nPASS  skip link focus styling exists\nPASS  reduced motion is respected\nPASS  forced colors are respected\nPASS  touch targets have baseline height\nPASS  mobile nav has viewport-safe scrolling\nPASS  small screen grids collapse\nPASS  generic UI states exist\nPASS  dashboard has explicit empty state\nPASS  scene studio output fields are named\nPASS  widget studio output fields are named\nPASS  setup controls are named\nPASS  audio controls are named\nPASS  creator editor color/source controls are named\nPASS  pass documentation exists\n\nWebsite Accessibility/Responsive Pass 21.3.12: 22/22 PASS\nPASS  pass marker exists\nPASS  shared surface token exists\nPASS  shared border token exists\nPASS  shared radius tokens exist\nPASS  shared shadow tokens exist\nPASS  button hover state is polished\nPASS  disabled button state exists\nPASS  form hover state exists\nPASS  public marketing rhythm exists\nPASS  public cards receive shared hover treatment\nPASS  creator workspace visual background exists\nPASS  creator tool cards receive hover treatment\nPASS  management hub visual refinement exists\nPASS  mobile 760 refinement exists\nPASS  mobile 520 refinement exists\nPASS  no literal escaped newline sequences remain\nPASS  pass documentation exists\nPASS  key pages still use shared stylesheet\nPASS  stylesheet brace balance is valid\n\nWebsite Visual Polish Pass 21.3.13: 19/19 PASS\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "nexus-current",
+      "ok": true,
+      "exit_code": 0,
+      "stdout_tail": "\n> cfs-zockt-creator-suite-web@3.12.0 nexus65:check\n> node tools/nexus-completion-v65-test.mjs .\n\nPASS master plan closes NEXUS product-role item\nPASS public Creator Suite presents NEXUS as beta control plane\nPASS PRO plan names NEXUS Control Plane Beta\nPASS roadmap moves NEXUS into beta/active build lane\nPASS dashboard explains current NEXUS role\nPASS integrations explains orchestration boundary\nPASS NEXUS page says studios remain independent\nPASS server blocks incompatible launcher capability\nPASS server never accepts arbitrary NEXUS command key\nPASS manual output stop is confirmation-gated\nPASS activity keeps delivery attempts and errors visible\nPASS launcher does not forward nexus_command to renderer\nPASS receipt journal is exposed in launcher diagnostics state\nPASS NEXUS does not claim external Windows acceptance\n\nNEXUS_COMPLETION_V65 14/14 PASS\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "interactive-games-current",
+      "ok": true,
+      "exit_code": 0,
+      "stdout_tail": "\n> cfs-zockt-creator-suite-web@3.12.0 games72:check\n> node tools/interactive-games-integration-v72-test.mjs . && node launcher/tools/interactive-game-service-v70-test.mjs launcher\n\nPASS catalog contains migrated classic games and launcher-local profiles\nPASS local game output is loopback-only\nPASS viewer identity remains stable across local events\nPASS gift value is converted to per-unit diamonds without streak double multiplication\nPASS launcher snapshot exposes no service token/raw secret\nPASS website start is launcher-acknowledged before local runtime becomes RUNNING\nPASS website exposes launcher compatibility for local games\nPASS cloud scoring/rules are not a second state engine for launcher-local games\nPASS stream studio receives interactive game runtime and marks launcher-local sources\nPASS CUT project metadata preserves recording game context\nPASS launcher forwards normalized provider events into active local game service\nPASS launcher deduplicates interactive game commands through receipt journal\nPASS launcher bridge advertises interactive games service capability\nPASS managed game engine is bundled as an Electron extraResource\nPASS launcher version advanced for game-service contract\nPASS embedded terminal keeps TikFinity launcher-managed and uses launcher data path\n\nInteractive Games Integration v72: 16/16 PASS\nPASS managed service becomes healthy\nPASS managed instance fingerprint is present but token is not exposed\nPASS prepared, migrated classics, v89 and v95 game modules are discoverable\nPASS managed mutations require service token\nPASS authorized game selection works\nPASS authorized normalized LIVE event reaches hub\nPASS managed TikFinity control requires launcher service token\nPASS authorized launcher may control local TikFinity provider\nPASS runtime state is written to launcher-owned data directory\n\nInteractive Game Service v70: 9/9 PASS\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "interactive-games-module-platform",
+      "ok": true,
+      "exit_code": 0,
+      "stdout_tail": "\n> cfs-zockt-creator-suite-web@3.12.0 games76:check\n> node tools/interactive-games-module-platform-v76-test.mjs .\n\nPASS launcher version 0.47.7\nPASS dynamic local game key accepted\nPASS dynamic local game gets launcher engine\nPASS dynamic local terminal id derived safely\nPASS invalid dynamic key fails closed to chat battle\nPASS bundled modules discovered without service start\nPASS bundled module discovery includes nexus\nPASS bundled module discovery includes boss arena\nPASS module manifests are sanitized\nPASS bridge advertises catalog capability\nPASS bridge advertises sanitized modules\nPASS bridge does not expose game service token\nPASS backend merges launcher module catalog\nPASS backend validates dynamic module installation\nPASS backend requires online catalog for new custom module selection\nPASS interactive action schema advanced to v2\nPASS creator games api exposes service state\nPASS stream studio exposes game engine health\nPASS games UI preserves module metadata\nPASS games UI shows module count\nPASS stream UI shows local service readiness\nPASS launcher executes terminal id from signed action payload\nPASS launcher heartbeat gets interactive game snapshot provider\nPASS launcher renderer exposes installed module count\n24/24 PASS\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "interactive-games-profile-platform",
+      "ok": true,
+      "exit_code": 0,
+      "stdout_tail": "\n> cfs-zockt-creator-suite-web@3.12.0 games80:check\n> node tools/interactive-games-profile-platform-v80-test.mjs .\n\nPASS launcher version 0.47.7\nPASS profile bundle schema fixed\nPASS preset catalog includes core presets\nPASS dynamic local preset generated\nPASS export bundle excludes runtime token fields by construction\nPASS bundle parser rejects wrong schema\nPASS bundle parser rejects oversized rule list\nPASS server exposes presets endpoint\nPASS server exposes profile export\nPASS server exposes profile import\nPASS import blocks active runtime\nPASS import validates local launcher module\nPASS import replaces rules transactionally\nPASS profile toolkit visible in games UI\nPASS profile import file is JSON-only\nPASS client limits import file size\nPASS client export uses JSON blob\nPASS OBS source metadata visible\nPASS launcher manager computes catalog hash\nPASS bridge sends catalog hash only as sha256\nPASS server publishes catalog hash to creator UI\nPASS support bundle includes sanitized game report\nPASS support game report marks secrets excluded\nPASS support game report marks raw media excluded\nInteractive Games Profile Platform v80: 24/24 PASS\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "website-creator-finish",
+      "ok": true,
+      "exit_code": 0,
+      "stdout_tail": "\n> cfs-zockt-creator-suite-web@3.12.0 website84:check\n> node tools/website-creator-finish-v84-test.mjs .\n\nPASS dashboard operations section\nPASS dashboard interactive games state\nPASS dashboard stream state\nPASS dashboard cut state\nPASS dashboard launcher state\nPASS setup dynamic game field\nPASS setup game catalog runtime\nPASS setup local module labels\nPASS setup validates saved active game\nPASS setup modern start modules\nPASS setup save and start action\nPASS setup start routing\nPASS integrations honest current copy\nPASS obs current integration entry\nPASS twitch output profile wording\nPASS integrations creator tiktok endpoint\nPASS no obsolete integrations roadmap group\nPASS no obsolete fixed-only game select\nPASS dashboard responsive operations css\nPASS dashboard operations mobile css\n\nWebsite Creator Finish v84: 20/20 PASS\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "release-readiness-finish",
+      "ok": true,
+      "exit_code": 0,
+      "stdout_tail": "\n> cfs-zockt-creator-suite-web@3.12.0 release88:check\n> node tools/release-readiness-finish-v88-test.mjs .\n\nPASS launcher package 0.47.7\nPASS project current header 0.47.7\nPASS env build target 0.47.7\nPASS env evidence version 0.47.7\nPASS render build target 0.47.7\nPASS recovery policy 0.47.7\nPASS homepage current launcher copy\nPASS roadmap current launcher copy\nPASS creator suite current launcher copy\nPASS system check v3 title\nPASS system check readiness cards\nPASS system check expected contract\nPASS system check backend health\nPASS system check launcher policy\nPASS system check games runtime\nPASS system check stream runtime\nPASS system check cut runtime\nPASS dashboard release policy awareness\nPASS dashboard required update warning\nPASS dashboard compatible state\n\nRelease Readiness Finish v88: 20/20 PASS\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "interactive-games-live-patterns",
+      "ok": true,
+      "exit_code": 0,
+      "stdout_tail": "\n> cfs-zockt-creator-suite-web@3.12.0 games89:check\n> node tools/interactive-games-live-patterns-v89-test.mjs .\n\nPASS sky-climb manifest id\nPASS sky-climb own CFS author\nPASS sky-climb entry exists\nPASS sky-climb uses central game sdk\nPASS sky-climb has no remote scripts\nPASS tower-clash manifest id\nPASS tower-clash own CFS author\nPASS tower-clash entry exists\nPASS tower-clash uses central game sdk\nPASS tower-clash has no remote scripts\nPASS horde-survival manifest id\nPASS horde-survival own CFS author\nPASS horde-survival entry exists\nPASS horde-survival uses central game sdk\nPASS horde-survival has no remote scripts\nPASS merge-reactor manifest id\nPASS merge-reactor own CFS author\nPASS merge-reactor entry exists\nPASS merge-reactor uses central game sdk\nPASS merge-reactor has no remote scripts\nPASS wire-defuse manifest id\nPASS wire-defuse own CFS author\nPASS wire-defuse entry exists\nPASS wire-defuse uses central game sdk\nPASS wire-defuse has no remote scripts\nPASS launcher discovers at least nine local modules\nPASS launcher catalog includes sky-climb\nPASS launcher catalog includes tower-clash\nPASS launcher catalog includes horde-survival\nPASS launcher catalog includes merge-reactor\nPASS launcher catalog includes wire-defuse\nPASS catalog exposes only sanitized module fields\nPASS all new games use supported live event types\n33/33 PASS\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "interactive-games-expansion",
+      "ok": true,
+      "exit_code": 0,
+      "stdout_tail": "\n> cfs-zockt-creator-suite-web@3.12.0 games95:check\n> node tools/interactive-games-expansion-v95-test.mjs .\n\nPASS goal-rush manifest id\nPASS goal-rush own CFS author\nPASS goal-rush entry exists\nPASS goal-rush uses central game sdk\nPASS goal-rush has no remote scripts\nPASS goal-rush supports normalized LIVE events\nPASS flap-duel manifest id\nPASS flap-duel own CFS author\nPASS flap-duel entry exists\nPASS flap-duel uses central game sdk\nPASS flap-duel has no remote scripts\nPASS flap-duel supports normalized LIVE events\nPASS stack-forge manifest id\nPASS stack-forge own CFS author\nPASS stack-forge entry exists\nPASS stack-forge uses central game sdk\nPASS stack-forge has no remote scripts\nPASS stack-forge supports normalized LIVE events\nPASS role-raid manifest id\nPASS role-raid own CFS author\nPASS role-raid entry exists\nPASS role-raid uses central game sdk\nPASS role-raid has no remote scripts\nPASS role-raid supports normalized LIVE events\nPASS country-clash manifest id\nPASS country-clash own CFS author\nPASS country-clash entry exists\nPASS country-clash uses central game sdk\nPASS country-clash has no remote scripts\nPASS country-clash supports normalized LIVE events\nPASS obstacle-chat-run manifest id\nPASS obstacle-chat-run own CFS author\nPASS obstacle-chat-run entry exists\nPASS obstacle-chat-run uses central game sdk\nPASS obstacle-chat-run has no remote scripts\nPASS obstacle-chat-run supports normalized LIVE events\nPASS launcher discovers at least fifteen local modules\nPASS launcher catalog includes goal-rush\nPASS launcher catalog includes flap-duel\nPASS launcher catalog includes stack-forge\nPASS launcher catalog includes role-raid\nPASS launcher catalog includes country-clash\nPASS launcher catalog includes obstacle-chat-run\nPASS new module ids are unique\nPASS catalog stays sanitized\n45/45 PASS\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "interactive-games-tikfinity-unification",
+      "ok": true,
+      "exit_code": 0,
+      "stdout_tail": "\n> cfs-zockt-creator-suite-web@3.12.0 games99:check\n> node tools/interactive-games-tikfinity-unification-v99-test.mjs . && node launcher/tools/tikfinity-managed-provider-v99-test.mjs launcher/resources/interactive-games-terminal\n\nPASS chat_battle local\nPASS chat_battle terminal\nPASS chat-battle manifest\nPASS chat-battle html\nPASS community_quiz local\nPASS community_quiz terminal\nPASS community-quiz manifest\nPASS community-quiz html\nPASS gift_rush local\nPASS gift_rush terminal\nPASS gift-rush manifest\nPASS gift-rush html\nPASS provider catalog tikfinity\nPASS tikfinity factory\nPASS settings accepts tikfinity\nPASS tikfinity maps to tiktok\nPASS loopback validation\nPASS managed provider event\nPASS SSE origin filter\nPASS chat map\nPASS gift repeat map\nPASS managed connect route remains auth protected\nPASS managed writes use cfs auth\nPASS launcher UI offers tikfinity\nPASS launcher UI label\nPASS launcher 0.47.7\nPASS provider connects local service\nPASS provider forwards normalized event\nPASS provider disconnects service\nInteractive Games + TikFinity v99: 29/29 PASS\nPASS managed tikfinity reaches connected state\nPASS managed tikfinity event reaches launcher manager\nPASS chat payload is normalized for CFS bridge\nPASS source is marked tikfinity before provider normalizer\nPASS manager keeps raw secrets out of snapshot\nPASS managed tikfinity can disconnect cleanly\nManaged TikFinity Provider v99: 6/6 PASS\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "tikfinity-operations-v103",
+      "ok": true,
+      "exit_code": 0,
+      "stdout_tail": "\n> cfs-zockt-creator-suite-web@3.12.0 tikfinity103:check\n> node tools/tikfinity-operations-v103-test.mjs . && node launcher/tools/tikfinity-managed-provider-v99-test.mjs launcher/resources/interactive-games-terminal\n\nPASS managed tikfinity enables autoConnect\nPASS managed tikfinity enables reconnect\nPASS tikfinity still loopback only\nPASS tikfinity snapshot exposes healthy flag\nPASS tikfinity snapshot exposes stale flag\nPASS bridge advertises tikfinity provider capability\nPASS bridge publishes tikfinity status\nPASS bridge publishes tikfinity health\nPASS bridge publishes last event timestamp\nPASS server exposes sanitized tikfinity engine status\nPASS stream studio renders tikfinity provider state\nPASS launcher shows automatic reconnect state\nPASS launcher shows last tikfinity event\nPASS provider secrets remain out of bridge fields\nPASS provider endpoint is status only on website\nTikFinity Operations v103: 15/15 PASS\nPASS managed tikfinity reaches connected state\nPASS managed tikfinity event reaches launcher manager\nPASS chat payload is normalized for CFS bridge\nPASS source is marked tikfinity before provider normalizer\nPASS manager keeps raw secrets out of snapshot\nPASS managed tikfinity can disconnect cleanly\nManaged TikFinity Provider v99: 6/6 PASS\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "live-readiness-v107",
+      "ok": true,
+      "exit_code": 0,
+      "stdout_tail": "\n> cfs-zockt-creator-suite-web@3.12.0 live107:check\n> node tools/live-readiness-v107-test.mjs .\n\nPASS bridge accepts live provider health callback\nPASS bridge advertises provider control capability\nPASS bridge advertises provider health capability\nPASS bridge publishes provider key\nPASS bridge publishes provider readiness\nPASS main heartbeat uses provider manager health\nPASS launcher intercepts live provider action\nPASS launcher action only allows tikfinity\nPASS launcher action supports connect disconnect reconnect\nPASS launcher action uses receipt dedupe\nPASS launcher action ACKs successful command\nPASS backend exposes readiness endpoint\nPASS backend exposes provider command endpoint\nPASS backend readiness checks entitlement\nPASS backend readiness checks launcher\nPASS backend readiness checks release policy\nPASS backend readiness rejects simulator as real provider\nPASS backend provider action requires launcher capability\nPASS stream studio response exposes readiness\nPASS stream studio UI has live ready status\nPASS stream studio UI has provider controls\nPASS stream studio renders readiness\nPASS stream studio controls provider through creator API\nPASS runtime refresh also refreshes readiness\nPASS preflight includes server live provider gate\nPASS provider panel responsive styling exists\n\nLive Readiness v107: 26/26 PASS\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "live-soak-release-binding-v108",
+      "ok": true,
+      "exit_code": 0,
+      "stdout_tail": "\n> cfs-zockt-creator-suite-web@3.12.0 live108:check\n> node tools/live-soak-release-binding-v108-test.mjs .\n\nPASS R64 state requires R63 evidence fingerprint\nPASS R64 rejects missing R63 fingerprint\nPASS R64 rejects missing artifact fingerprint\nPASS R64 start requires prior R63 evidence\nPASS R64 start requires LIVE_WINDOWS_PASS\nPASS R64 stores R63 evidence sha\nPASS R64 stores Windows artifact sha\nPASS R67 requires R63 file before R64 import\nPASS R67 compares R63 evidence sha\nPASS R67 compares Windows artifact sha\n\nLive Soak Release Binding v108: 10/10 PASS\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "final-evidence-bundle-v109",
+      "ok": true,
+      "exit_code": 0,
+      "stdout_tail": "\n> cfs-zockt-creator-suite-web@3.12.0 acceptance109:check\n> node tools/final-evidence-bundle-v109-test.mjs .\n\nPASS bundle knows eleven external evidence classes\nPASS all valid evidence becomes pass\nPASS all pass sets all_external_pass\nPASS R63/R64 same artifact binds\nPASS missing evidence remains OPEN\nPASS missing evidence prevents all pass\nPASS invalid json is BLOCKED\nPASS artifact mismatch breaks binding\nPASS bundle exposes only basenames\nPASS bundle hashes source evidence\nPASS bundle does not embed raw source objects\n\nFinal Evidence Bundle v109: 11/11 PASS\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "windows-live-operator-kit-v110",
+      "ok": true,
+      "exit_code": 0,
+      "stdout_tail": "\n> cfs-zockt-creator-suite-web@3.12.0 acceptance110:check\n> node tools/windows-live-operator-kit-v110-test.mjs .\n\nPASS kit states it is not pass evidence\nPASS kit requires exact git identity\nPASS kit pins launcher target\nPASS kit orders R63 before R64\nPASS kit documents R63 prerequisite\nPASS kit documents two hour soak\nPASS kit requires OBS confirmation\nPASS kit requires provider confirmation\nPASS kit ends with evidence bundle\nPASS kit ends with final readiness status\nPASS kit forbids simulated launch pass\n\nWindows LIVE Operator Kit v110: 11/11 PASS\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "final-readiness-v111",
+      "ok": true,
+      "exit_code": 0,
+      "stdout_tail": "\n> cfs-zockt-creator-suite-web@3.12.0 acceptance111:check\n> node tools/final-readiness-v111-test.mjs .\n\nPASS local green external open is explicit\nPASS external open is not external ready\nPASS all evidence plus binding completes external acceptance\nPASS missing local contracts blocks local readiness\nPASS missing operator kit blocks local readiness\nPASS artifact binding is separate required check\nPASS blocked external evidence stays visible\n\nFinal Readiness v111: 7/7 PASS\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "gaming-home-v112",
+      "ok": true,
+      "exit_code": 0,
+      "stdout_tail": "\n> cfs-zockt-creator-suite-web@3.12.0 gaming112:check\n> node tools/gaming-home-v112-test.mjs .\n\nPASS  v112 gaming theme is loaded\nPASS  Reference-inspired hero uses project-owned artwork\nPASS  LIVE card uses original project logo\nPASS  Public navigation stays functional\nPASS  Stream section does not invent schedule dates\nPASS  Exactly three recent-game UI slots exist\nPASS  Recent-game UI clearly avoids fake hours\nPASS  Community metrics use runtime IDs instead of hard-coded counts\nPASS  Community stats API is consumed\nPASS  Game values are escaped before HTML insertion\nPASS  Backend preserves most-played list\nPASS  Backend exposes last-played list\nPASS  Backend documents rolling playtime scope\nPASS  No PlayStation source is falsely claimed\nPASS  Gaming CSS contains responsive breakpoints\nPASS  Creator/account/security paths remain present\n\n16/16 Gaming Home v112 checks passed.\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "logo-palette-v115",
+      "ok": true,
+      "exit_code": 0,
+      "stdout_tail": "\n> cfs-zockt-creator-suite-web@3.12.0 brand115:check\n> node tools/logo-palette-v115-test.mjs .\n\nPASS  Homepage declares v115 stream-end refinement\nPASS  Creator Suite declares v115 stream-end refinement\nPASS  Homepage stream-end palette block exists\nPASS  Creator Suite stream-end brand block exists\nPASS  Decorative palette remains blue/white on homepage\nPASS  Creator Suite cards use white-to-blue signature edge\nPASS  Creator Suite hero uses circular blue ring motif\nPASS  Primary CTA stays blue/white instead of multi-color\nPASS  No decorative purple token introduced in public theme\nPASS  Original project logo remains in LIVE card\n\n10/10 Logo Palette v115 checks passed.\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "game-activity-v116",
+      "ok": true,
+      "exit_code": 0,
+      "stdout_tail": "\n> cfs-zockt-creator-suite-web@3.12.0 gameactivity116:check\n> node tools/game-activity-telemetry-v116-test.mjs . && node launcher/tools/game-activity-tracker-v116-test.mjs\n\nPASS backend accepts game activity metadata\nPASS backend preserves platform in recent games\nPASS launcher tracker persists crash-safe state\nPASS launcher tracker checkpoints long sessions\nPASS launcher tracker uses deterministic backend ids\nPASS settings keep tracking opt-in\nPASS manual PS5 metadata is supported\nPASS stream capture source is supported\nPASS main process wires tracker to bridge\nPASS main process shuts tracker down before bridge stop\nPASS bridge advertises tracking capability\nPASS renderer can sync and clear activity\nPASS UI copy does not claim real PSN integration\nPASS public API remains explicit CFS opt-in source\n\n14/14 Game Activity Telemetry v116 checks passed.\nPASS manual PS5 session starts opt-in\nPASS periodic checkpoint queues a segment\nPASS queued segment reaches submitter\nPASS event id follows backend contract\nPASS event id is deterministic\nPASS stop flushes final segment\nPASS stream capture is forced to PC metadata\nPASS short sessions are discarded\nPASS crash recovery does not count launcher-offline gap\nPASS recovered segment can sync\nPASS snapshot exposes no paths or secrets\n\n11/11 Game Activity Tracker v116 checks passed.\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "game-activity-v117",
+      "ok": true,
+      "exit_code": 0,
+      "stdout_tail": "\n> cfs-zockt-creator-suite-web@3.12.0 gameactivity117:check\n> node tools/game-activity-workflow-v117-test.mjs . && node launcher/tools/game-activity-tracker-v116-test.mjs\n\nPASS  launcher exposes explicit game start/switch action\nPASS  launcher exposes explicit session stop action\nPASS  launcher keeps manual PS5 workflow copy\nPASS  start action enables tracking before save\nPASS  stop action disables tracking before sync\nPASS  launcher renders live session duration\nPASS  launcher refreshes active timer without full state event\nPASS  tracker snapshot exposes elapsed seconds only as derived runtime data\nPASS  elapsed seconds derive from active session clock\nPASS  homepage maps PS5 platform label\nPASS  homepage game cards show platform and source\nPASS  homepage keeps captured hours and session count\nPASS  backend recent-game contract already carries platform/source\nPASS  no PSN API or PlayStation credential path is invented\n\n14/14 Game Activity Workflow v117 checks passed.\nPASS manual PS5 session starts opt-in\nPASS periodic checkpoint queues a segment\nPASS queued segment reaches submitter\nPASS event id follows backend contract\nPASS event id is deterministic\nPASS stop flushes final segment\nPASS stream capture is forced to PC metadata\nPASS short sessions are discarded\nPASS crash recovery does not count launcher-offline gap\nPASS recovered segment can sync\nPASS snapshot exposes no paths or secrets\n\n11/11 Game Activity Tracker v116 checks passed.\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "game-activity-v118",
+      "ok": true,
+      "exit_code": 0,
+      "stdout_tail": "\n> cfs-zockt-creator-suite-web@3.12.0 gameactivity118:check\n> node launcher/tools/game-activity-resilience-v118-test.mjs && node tools/game-activity-resilience-v118-test.mjs .\n\nPASS heartbeat gap queues only last confirmed activity\nPASS tracking resumes after gap without counting sleep time\nPASS failed sync enters retry state\nPASS automatic flush respects backoff\nPASS manual force bypasses retry backoff\nPASS successful retry clears retry metadata\nPASS stop after stale heartbeat caps end at last seen\nPASS snapshot exposes gap guard but no secrets\n\n8/8 Game Activity Resilience v118 checks passed.\nPASS tracker defines heartbeat gap guard\nPASS stale heartbeat uses last seen safe end\nPASS checkpoint records heartbeat_gap reason\nPASS tracker defines exponential retry metadata\nPASS automatic flush respects retry due\nPASS forced flush is supported\nPASS bridge reconnect forces immediate sync retry\nPASS manual sync forces immediate retry\nPASS launcher UI exposes sync waiting state\nPASS snapshot remains secret/path free\n\n10/10 Game Activity Resilience v118 contract checks passed.\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "game-activity-v119",
+      "ok": true,
+      "exit_code": 0,
+      "stdout_tail": "\n> cfs-zockt-creator-suite-web@3.12.0 gameactivity119:check\n> node tools/game-activity-presence-v119-test.mjs . && node launcher/tools/game-activity-tracker-v116-test.mjs && node launcher/tools/game-activity-resilience-v118-test.mjs\n\nPASS  backend exposes sanitized presence route\nPASS  presence has finite stale ttl\nPASS  manual active presence requires platform\nPASS  stream capture presence forces PC\nPASS  public recent games exposes only sanitized active fields\nPASS  launcher bridge has dedicated presence method\nPASS  launcher publishes presence on reconnect\nPASS  launcher refreshes presence periodically\nPASS  launcher clears presence on graceful shutdown\nPASS  renderer shows blocked target reason\nPASS  homepage can show active game without counting unfinished time\nPASS  homepage active card still labels platform and source\nPASS  tracker fails closed when manual platform is missing\nPASS  valid PS5 target starts after blocked state\n\n14/14 Game Activity Presence v119 checks passed.\nPASS manual PS5 session starts opt-in\nPASS periodic checkpoint queues a segment\nPASS queued segment reaches submitter\nPASS event id follows backend contract\nPASS event id is deterministic\nPASS stop flushes final segment\nPASS stream capture is forced to PC metadata\nPASS short sessions are discarded\nPASS crash recovery does not count launcher-offline gap\nPASS recovered segment can sync\nPASS snapshot exposes no paths or secrets\n\n11/11 Game Activity Tracker v116 checks passed.\nPASS heartbeat gap queues only last confirmed activity\nPASS tracking resumes after gap without counting sleep time\nPASS failed sync enters retry state\nPASS automatic flush respects backoff\nPASS manual force bypasses retry backoff\nPASS successful retry clears retry metadata\nPASS stop after stale heartbeat caps end at last seen\nPASS snapshot exposes gap guard but no secrets\n\n8/8 Game Activity Resilience v118 checks passed.\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "game-activity-v120",
+      "ok": true,
+      "exit_code": 0,
+      "stdout_tail": "\n> cfs-zockt-creator-suite-web@3.12.0 game120:check\n> node tools/game-activity-transition-v120-test.mjs . && node launcher/tools/game-activity-transition-v120-test.mjs\n\nPASS  tracker persists presence change timestamp\nPASS  heartbeat does not rewrite presence transition\nPASS  launcher publishes state_changed_at\nPASS  inactive presence also publishes state_changed_at\nPASS  backend sanitizes state_changed_at\nPASS  backend stores transition tombstone\nPASS  backend rejects stale presence transitions\nPASS  public active state exposes server-derived elapsed seconds\nPASS  public active state exposes freshness only\nPASS  homepage shows running duration separately from finished playtime\nPASS  homepage refreshes public stats periodically\nPASS  homepage refreshes after tab becomes visible\nPASS  homepage bypasses stale browser cache for live state\nPASS  launcher UI shows presence freshness\nPASS  no process/window/path data added to public active shape\nPASS  tracker still marks secrets and raw paths excluded\n\n16/16 Game Activity Transition v120 contract checks passed.\nPASS  start creates presence transition timestamp\nPASS  heartbeat does not create a new transition\nPASS  game switch advances transition timestamp\nPASS  stop advances transition timestamp\nPASS  transition timestamp is crash-safe persisted\n\n5/5 Game Activity Transition v120 runtime checks passed.\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "game-activity-v121",
+      "ok": true,
+      "exit_code": 0,
+      "stdout_tail": "\n> cfs-zockt-creator-suite-web@3.12.0 game121:check\n> node tools/game-activity-recovery-stream-v121-test.mjs . && node launcher/tools/game-activity-recovery-v121-test.mjs\n\nPASS  tracker state advanced to recovery-aware schema\nPASS  crash recovery preserves sanitized candidate\nPASS  resume marker only set on matching target\nPASS  launcher presence publishes restart-resume flag\nPASS  server sanitizes restart-resume flag\nPASS  stream studio initial API exposes game activity\nPASS  stream studio runtime refresh exposes game activity\nPASS  public active payload exposes restart-resume flag only\nPASS  stream studio has separate active-game status surface\nPASS  stream studio renders active game platform and elapsed time\nPASS  stream runtime refresh updates game activity without full reload\nPASS  stream studio marks restart recovery explicitly\nPASS  launcher target still fails closed without manual platform\nPASS  no process/window/path fields added to presence contract\n\n14/14 Game Activity Recovery + Stream v121 checks passed.\nPASS  session active before simulated restart\nPASS  restart closes previous active segment\nPASS  restart keeps sanitized recovery candidate\nPASS  matching configured target resumes fresh session\nPASS  resumed session starts at current time, not before downtime\nPASS  recovery candidate is consumed after resume\nPASS  different target never inherits restart-resume marker\nPASS  different target clears obsolete recovery candidate\n\n8/8 Game Activity Recovery v121 checks passed.\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "game-context-v122",
+      "ok": true,
+      "exit_code": 0,
+      "stdout_tail": "\n> cfs-zockt-creator-suite-web@3.12.0 game122:check\n> node tools/game-context-integrity-v122-test.mjs . && node launcher/tools/game-presence-transition-v122-test.mjs\n\nPASS  tracker schema advanced with persistent presence transition id\nPASS  tracker transition id is deterministic sha256 token\nPASS  launcher publishes transition id with active and inactive presence\nPASS  backend requires valid transition id\nPASS  backend rejects older transitions\nPASS  backend rejects conflicting same-time transitions\nPASS  duplicate transition refresh does not append audit entry\nPASS  presence audit is bounded and sanitized\nPASS  public game activity exposes opaque presence id only\nPASS  stream studio initial response exposes unified game context\nPASS  stream runtime response exposes unified game context\nPASS  stream context distinguishes active recent and none\nPASS  stream UI renders recent confirmed context without pretending active\nPASS  stream runtime refresh updates unified context\nPASS  stream label describes context rather than only active session\nPASS  presence contract still excludes process window and path fields\n\n16/16 Game Context Integrity v122 checks passed.\nPASS  active transition id has expected opaque format\nPASS  heartbeat keeps same transition id\nPASS  heartbeat keeps same state-changed timestamp\nPASS  stop creates new transition id\nPASS  stop transition time advances\nPASS  same-clock next transition is forced monotonic\nPASS  new game gets distinct transition id\nPASS  transition id is persisted crash-safely\n\n8/8 Game Presence Transition v122 checks passed.\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "recording-game-context-v123",
+      "ok": true,
+      "exit_code": 0,
+      "stdout_tail": "\n> cfs-zockt-creator-suite-web@3.12.0 gamecontext123:check\n> node tools/recording-game-context-v123-test.mjs .\n\nPASS  bridge library returns game activity and unified context\nPASS  launcher library stores unified game context\nPASS  recording finalization refreshes creator context before snapshot\nPASS  recording handoff persists sanitized game context\nPASS  recording handoff schema advanced\nPASS  cut project payload prefers captured handoff game context\nPASS  cut sanitizer accepts unified game context fields\nPASS  cut UI renders played game and platform\nPASS  legacy interactive game context remains available\nPASS  context contract does not persist process/window/path fields\nPASS  runtime handoff keeps sanitized PS5 context\nPASS  runtime handoff keeps opaque presence id\nPASS  runtime handoff drops unknown secret fields\nPASS  game context survives launcher restart\nPASS  CUT sanitizer preserves unified safe fields\nPASS  CUT sanitizer excludes arbitrary fields\n\n16/16 Recording Game Context v123 checks passed.\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "game-context-operations-v124",
+      "ok": true,
+      "exit_code": 0,
+      "stdout_tail": "\n> cfs-zockt-creator-suite-web@3.12.0 gamecontext124:check\n> node tools/game-context-operations-v124-test.mjs .\n\nPASS  launcher advanced to 0.47.7\nPASS  recording handoff schema advanced to v4\nPASS  recording context fingerprint uses cfsgc sha prefix\nPASS  launcher forwards immutable context id into CUT payload\nPASS  CUT sanitizer accepts only valid context ids\nPASS  support bundle accepts game activity and recording handoffs\nPASS  support bundle writes separate sanitized game activity file\nPASS  support bundle writes recording handoff summary without raw media\nPASS  dashboard has dedicated game context card\nPASS  dashboard renders active and recent unified context\nPASS  dashboard operation grid handles added card responsively\nPASS  context fingerprint is deterministic\nPASS  context fingerprint helper matches normalized snapshot\nPASS  recording context drops arbitrary local/process fields\nPASS  support bundle runtime writes both new files\nPASS  game activity support report remains sanitized\nPASS  recording support report keeps context id but no file path\nPASS  recording support report explicitly excludes raw media\n\n18/18 Game Context Operations v124 checks passed.\n",
+      "stderr_tail": ""
+    }
+  ]
+}

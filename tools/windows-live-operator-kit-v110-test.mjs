@@ -1,0 +1,14 @@
+import fs from 'node:fs';import path from 'node:path';import assert from 'node:assert/strict';
+const root=path.resolve(process.argv[2]||'.'),src=fs.readFileSync(path.join(root,'tools/windows-live-operator-kit-v110.mjs'),'utf8');let p=0;const t=(n,o)=>{console.log(`${o?'PASS':'FAIL'} ${n}`);o?p++:(process.exitCode=1)};
+t('kit states it is not pass evidence',src.includes('kein PASS-Nachweis'));
+t('kit requires exact git identity',src.includes('HEAD SHA')&&src.includes('Niemals raten'));
+t('kit pins launcher target',src.includes('0.47.7'));
+t('kit orders R63 before R64',src.indexOf('R63 Windows Launcher')<src.indexOf('R64 starten'));
+t('kit documents R63 prerequisite',src.includes('ohne gültige R63 Evidence'));
+t('kit documents two hour soak',src.includes('mindestens 2 Stunden'));
+t('kit requires OBS confirmation',src.includes('CFS_SOAK_OBS_OK=true'));
+t('kit requires provider confirmation',src.includes('CFS_SOAK_PROVIDER_OK=true'));
+t('kit ends with evidence bundle',src.includes('acceptance109:bundle'));
+t('kit ends with final readiness status',src.includes('acceptance111:status'));
+t('kit forbids simulated launch pass',src.includes('LIVE_LAUNCH_PASS')&&src.includes('lokalen Tests'));
+console.log(`\nWindows LIVE Operator Kit v110: ${p}/11 PASS`);if(p!==11)process.exitCode=1;

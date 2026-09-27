@@ -1,10 +1,317 @@
+## v124 – Game Context Operational Finish / Launcher 0.47.7
+
+- Recording-Spielkontext erhält eine deterministische, opaque `cfsgc_<sha>` Integritäts-ID; beliebige eingehende IDs werden nicht vertraut, sondern aus dem normalisierten Snapshot neu berechnet
+- Recording-Handoff auf Schema 4 (`v124-recording-context-integrity`) angehoben; CUT übernimmt die validierte Context-ID zusammen mit Spiel, Plattform, Quelle und Capture-Zeitpunkt
+- Creator-Dashboard besitzt jetzt einen eigenen **SPIELKONTEXT**-Betriebsstatus für aktive bzw. zuletzt bestätigte Games
+- Launcher Support Bundle enthält neue sanitisierte `game-activity.json` und `recording-handoffs.json`; lokale Medienpfade und Rohmedien bleiben ausgeschlossen
+- Operations-Grid reagiert per auto-fit auf den zusätzlichen Statusblock statt eine feste Kartenanzahl vorauszusetzen
+- Launcher auf **0.47.7** angehoben und aktive Release-/System-/Game-Verträge synchronisiert
+- externer Acceptance-Status bleibt **LOCAL_READY_EXTERNAL_OPEN**; keine Windows-/LIVE-/PlayStation-/Production-Pässe werden aus diesem lokalen Block abgeleitet
+
+## v123 – Recording → CUT Unified Game Context / Launcher 0.47.6
+
+- einheitlicher Game Context läuft jetzt durch **Stream Studio → Recording Handoff → CUT Studio**
+- Launcher friert den Spielkontext beim Finalisieren der Aufnahme ein; ein später aktives anderes Spiel kann den Recording-Kontext nicht überschreiben
+- Recording-Handoff-Schema auf v3 erweitert und Game Context crash-sicher über Launcher-Neustarts persistiert
+- CUT `recording_game_context` unterstützt Spielname, Plattform, Quelle, Zeitstempel, opaque Presence-ID und Restart-Resume-Marker
+- alte Interactive-Game-Felder bleiben kompatibel erhalten
+- keine Prozessnamen, Fenstertitel, EXE-Pfade oder zusätzliche lokale Pfade werden in den Spielkontext übernommen
+- Launcher auf **0.47.6** angehoben und aktive Release-/System-/Game-Verträge synchronisiert
+- Validation: v123 **16/16 PASS**, Recording→CUT **62/62**, CUT Completion **27/27**, v122 **16/16 + 8/8**, v121 **14/14 + 8/8**, Release Readiness **20/20**, Gaming Home **16/16**, Current Contract Regression **51/51 PASS**
+- externer Status bleibt **LOCAL_READY_EXTERNAL_OPEN**
+
+## v122 – Game Presence Transition Integrity + Unified Stream Context / Launcher 0.47.5
+
+- stabile `cfsgp_<sha>` Presence-Transition-ID eingeführt; Heartbeats behalten dieselbe ID, echte Start/Stop/Wechsel-Zustände erhalten eine neue ID
+- Transition-Zeitpunkte werden lokal strikt monoton gehalten, damit gleichzeitige Zustandswechsel nicht uneindeutig werden
+- Backend verwirft ältere und konfliktierende Presence-Transitions fail-closed und führt einen auf 20 Einträge begrenzten sanitisierten Presence-Audit-Verlauf
+- öffentliche API veröffentlicht nur eine opaque `presence_id`, niemals den internen Audit-Verlauf
+- Stream Studio erhält einen einheitlichen `game_context` mit `active`, `recent` oder `none`, damit künftige Recording-/CUT-Metadaten denselben Spielkontext verwenden können
+- Stream Studio zeigt bei fehlender aktiver Session kontrolliert den letzten bestätigten Kontext als `ZULETZT`, ohne ihn als LIVE auszugeben
+- Launcher auf **0.47.5** angehoben und aktive Release-/System-/Game-Verträge synchronisiert
+- externer Status bleibt **LOCAL_READY_EXTERNAL_OPEN**; keine PSN-/Windows-/LIVE-/Production-Abnahme wird lokal behauptet
+- Validation: v122 **16/16 Contract + 8/8 Runtime PASS**, v121 compatibility **14/14 + 8/8**, Release Readiness **20/20**, Gaming Home **16/16**, Current Contract Regression **50/50 PASS**
+
+## v121 – Game Activity Restart Recovery + Stream Studio Context / Launcher 0.47.4
+
+- unterbrochene Game-Session wird beim Neustart nur bis zum letzten bestätigten Heartbeat abgeschlossen; Launcher-Offtime wird nicht als Spielzeit gezählt
+- sanitisiertes `recovery_candidate` erlaubt automatisches Wiederaufnehmen desselben Game-/Plattform-Ziels als frische Session
+- `resumed_after_restart` wird über Launcher → Backend → Stream Studio transportiert, ohne Prozess-/Fenster-/Pfaddaten zu veröffentlichen
+- Stream Studio hat jetzt einen separaten Status **AKTIVES SPIEL** mit Game, Plattform, Laufzeit und Recovery-Hinweis; Interactive Games bleiben davon getrennt
+- Stream-Studio Runtime aktualisiert den Game-Activity-Kontext im bestehenden 5-Sekunden-Telemetriezyklus
+- Launcher auf **0.47.4** angehoben und aktive Release-/System-/Game-Verträge synchronisiert
+- Validation: v121 **14/14 Contract + 8/8 Runtime PASS**, v120 **16/16 + 5/5**, Release Readiness **20/20**, Gaming Home **16/16**, Current Contract Regression **49/49 PASS**
+- historischer `stream46:check` verweist weiterhin auf eine nicht vorhandene alte Testdatei; aktuelle Stream-Abdeckung ist in der 49/49 Current Contract Regression grün
+- externer Status bleibt **LOCAL_READY_EXTERNAL_OPEN**
+
+## v120 – Game Activity Transition Ordering / Launcher 0.47.4
+
+- Game-Activity-Presence erhält jetzt einen persistierten `presence_changed_at`-Zeitpunkt für echte Zustandswechsel (Start, Spielwechsel, Stop, Crash-Recovery).
+- Heartbeats aktualisieren nur `last_seen_at`; sie erzeugen keinen neuen Presence-Zustandswechsel.
+- Launcher sendet `state_changed_at` bei aktiver und inaktiver Presence.
+- Backend hält `presence_transition_at` als Tombstone und verwirft ältere verspätete Presence-Updates fail-closed, damit ein altes `active` nach einem neueren `stop` nicht wieder sichtbar werden kann.
+- öffentliche Active-Game-Daten enthalten nur serverseitig abgeleitete Laufzeit/Freshness; keine Prozesse, Fenstertitel, Pfade oder Credentials.
+- Homepage aktualisiert Community-/Game-Status alle 60 Sekunden sowie beim Zurückkehren in den Tab und zeigt laufende Session-Dauer getrennt von abgeschlossener Spielzeit.
+- Launcher-UI zeigt zusätzlich, wie frisch die lokale Presence zuletzt bestätigt wurde.
+- Launcher auf **0.47.4** angehoben; aktive Release-/System-Check-Verträge synchronisiert.
+- Validation: v120 contract **16/16 PASS**, runtime **5/5 PASS**, v116–v119 kompatibel, Release Readiness **20/20 PASS**, Gaming Home **16/16 PASS**, Current Contract Regression **48/48 PASS**.
+- externer Status bleibt `LOCAL_READY_EXTERNAL_OPEN`; keine PSN-/Windows-/LIVE-/Production-Abnahme wird lokal behauptet.
+
+## v119 – Game Activity Presence / Launcher 0.47.2
+
+- aktive Game-Präsenz ist jetzt technisch von abgeschlossener Spielzeit getrennt; laufende Minuten werden nicht vorzeitig als fertige Spielstunden verbucht
+- Launcher veröffentlicht nur sanitisierten Präsenzzustand: Spielname, Plattform, Quelle, Session-Start und Report-Zeit – keine Prozess-/Pfad-/Credential-Daten
+- manuelles Tracking ist fail-closed ohne gültigen Spielnamen und Plattform; Stream-Capture bleibt auf PC normalisiert
+- Präsenz-TTL 150 Sekunden, Refresh alle 60 Sekunden, Re-Publish nach Bridge-Reconnect sowie sauberer inactive-State beim Shutdown
+- Homepage kann `GERADE AKTIV` zeigen und kennzeichnet unfertige Sessions ausdrücklich als noch nicht in Spielzeit eingerechnet
+- Launcher auf **0.47.2** angehoben; aktive Release-/System-Check-Verträge synchronisiert
+- Validation: v119 **14/14 PASS**, Tracker v116 **11/11**, Resilience v118 **8/8**, Release Readiness **20/20**, Current Contract Regression **47/47 PASS**
+- externer Status bleibt `LOCAL_READY_EXTERNAL_OPEN`; keine PSN-/Windows-/LIVE-/Production-Abnahme wird lokal behauptet
+
+## v118 – Game Activity Resilience / Launcher 0.47.2
+
+- Game-Activity-Tracking zählt nach Standby, Scheduler-Stall oder langer Heartbeat-Lücke keine unbestätigte Offline-Zeit als Spielzeit.
+- stale Sessions werden bis zum letzten bestätigten `last_seen_at` segmentiert; danach beginnt ein neuer bestätigter Abschnitt.
+- fehlgeschlagene Telemetrie-Synchronisation verwendet begrenzten exponentiellen Backoff mit sichtbarem Retry-Zustand.
+- manueller Sync und Bridge-Reconnect dürfen den Backoff bewusst umgehen und sofort erneut senden.
+- Launcher-UI zeigt `SYNC WARTET` und den nächsten Retry-Zeitpunkt.
+- Launcher-Version auf **0.47.2** angehoben und aktive Versions-/Release-Verträge synchronisiert.
+- Validation: v118 runtime **8/8 PASS**, contract **10/10 PASS**, v116 **14/14**, v117 **14/14**, Release Readiness **20/20**, Current Contract Regression **46/46 PASS**.
+- externer Acceptance-Status bleibt **LOCAL_READY_EXTERNAL_OPEN**; keine PSN-/Windows-/LIVE-/Production-Pässe werden lokal behauptet.
+
+## v117 – Game Activity Workflow Completion
+
+- Launcher Game Activity besitzt jetzt getrennte Aktionen für **Spiel starten/wechseln**, **Session stoppen** und **manuell synchronisieren**.
+- laufende Session zeigt Spielname, Plattform und kontinuierlich berechnete Laufzeit; Tracker-Puffer/Deduplizierung/Crash-Recovery aus v116 bleiben unverändert aktiv.
+- die drei Homepage-Karten „Zuletzt gespielt“ zeigen bei echten Daten jetzt zusätzlich **Plattform** (z. B. PS5) und **Quelle** (`CFS LAUNCHER` / `CFS CAPTURE`).
+- PlayStation bleibt derzeit ein manueller Opt-in-Kontext; es wird weiterhin keine PSN-API oder externe PlayStation-Spielzeit behauptet.
+- Validation: Game Activity Workflow **14/14 PASS**, Tracker **11/11 PASS**, Launcher Static **PASS**, Gaming Home **16/16 PASS**, Current Contract Regression **45/45 PASS**.
+- ab v117 werden nur noch Delta-/Update-Pakete mit geänderten und neuen Dateien ausgeliefert; unveränderte Projektdateien werden nicht erneut gepackt.
+
+## v116 – Game Activity Telemetry Foundation
+
+- Launcher auf **0.47.2** angehoben und aktive Release-/System-Check-Ziele synchronisiert
+- echter opt-in Datenpfad für Spielaktivität: Launcher → lokaler Recovery-Puffer → Bridge → Backend → öffentliche Recent-Games-Aggregation
+- neue Quellen: `launcher_manual` für Konsolen/PS5-Setup und `stream_capture` für PC-Capture; noch **keine behauptete PSN-API**
+- Plattform-Metadaten werden sanitisiert; `stream_capture` ist zwingend PC
+- GameActivityTracker checkpointet lange Sessions alle 15 Minuten, puffert offline, verwendet stabile `cfsga_<sha>` IDs und zählt nach Crash nur bis zum letzten lokalen Heartbeat
+- Launcher UI besitzt opt-in Aktivierung, Spieltitel, Plattform, Quelle, manuellen Sync und Privacy-Clear
+- Backend Recent-/Most-Played-Aggregation bewahrt Quelle/Plattform und bleibt öffentlich als `cfs_launcher_opt_in` gekennzeichnet
+- Validation: Game Activity Telemetry **14/14 PASS**, Tracker **11/11 PASS**, Release Readiness **20/20 PASS**, Current Contract Regression **44/44 PASS**
+- externer Acceptance-Status bleibt **LOCAL_READY_EXTERNAL_OPEN**; keine PSN-/Windows-/LIVE-/Production-Pässe werden behauptet
+
+## v115 – Stream-end Blue/White Brand Upgrade
+
+- öffentliche Website-Farbwelt weiter auf die vom Nutzer freigegebene Stream-Ende-Referenz verdichtet: Deep Navy/Black + Ice White + CFS Blue/Cyan
+- Homepage trägt jetzt die v115-Refinement-Markierung `v115-stream-end-bluewhite`; Hero, Buttons, Karten und Headlines besitzen stärkere Weiß→Cyan→Blau-Kontraste
+- Creator-Suite-Marketingseite wurde auf dieselbe Markenlogik gezogen und wirkt dadurch weniger neutral und konsistenter zum CFS-Logo
+- zusätzlicher Ring-/Light-Mood im Creator-Suite-Hero übernimmt die visuelle Richtung der Stream-Ende-Grafik, ohne die Seitenstruktur zu verändern
+- LIVE-Karte behält das Originalprojekt-Logo; dynamische „Zuletzt gespielt“-Slots und ehrliche Daten-Fallbacks bleiben unverändert
+- Validation: Logo Palette v115 **10/10 PASS**, Gaming Home compatibility **16/16**, Website Acceptance **34/34**, Accessibility **22/22**, Visual Polish **19/19**, Website Creator Finish **20/20**, Current Contract Regression **43/43 PASS**
+- externer Acceptance-Status bleibt **LOCAL_READY_EXTERNAL_OPEN**; keine Windows-/LIVE-/PlayStation-/Production-Pässe werden aus dem Design-Umbau abgeleitet
+
+## v114 – Logo-led Blue/White Brand Refinement
+
+- öffentliche Homepage-Farbwelt konsequent aus dem vorhandenen CFS-Logo abgeleitet: Deep Navy/Black + White + CFS Blue/Cyan
+- dekorative Warm/Violet/Green-Spielkarten-Themes werden auf die gemeinsame CFS-Blauwelt normalisiert; Statusfarben bleiben funktional reserviert
+- Community-, Games-, Creator-Suite-, Account- und Trust-Flächen besitzen jetzt stärkere Weiß-/Blau-Kontraste, kontrollierte Glows und eine einheitliche Marken-Signatur
+- Original-CFS-Logo bleibt im LIVE-Bereich; keine neuen Fantasie-Brand-Assets wurden für diese Farbveredelung eingeführt
+- Struktur, dynamische drei „Zuletzt gespielt“-Slots und ehrliche Daten-Fallbacks bleiben unverändert
+- Validation: Logo Palette v114 **10/10 PASS**, Gaming Home compatibility **16/16**, Website Acceptance **34/34**, Accessibility **22/22**, Visual Polish **19/19**, Current Contract Regression **43/43 PASS**
+- externer Acceptance-Status bleibt **LOCAL_READY_EXTERNAL_OPEN**; keine Windows-/LIVE-/PlayStation-/Production-Pässe werden aus dem Design-Umbau abgeleitet
+
+## v112 – CFS Gaming Home / Dynamic Recent Games
+
+- öffentliche Startseite auf die neue CFS-Gaming-Markenrichtung umgestellt: Dark Navy/Black, Electric Cyan/Blue, klare Neon-Kanten, große Gaming-Headlines und bildstarker Hero
+- vorhandene Website-/Creator-Routen bleiben erhalten; Trust-, Security-, Account- und Release-Verträge wurden nicht entfernt
+- Stream-/Community-/Creator-Suite-Bereiche wurden in die neue Designsprache überführt, ohne Demo-Termine oder erfundene Community-Zahlen einzubauen
+- drei dynamische Slots **ZULETZT GESPIELT** lesen echte CFS-Launcher-Spielaktivität aus `/api/public/community-stats`; leere Slots zeigen ausdrücklich keine Demodaten
+- Backend liefert zusätzlich zu bestehendem Most-Played-Ranking jetzt eine nach `last_played_at` sortierte `recent`-Liste (max. 3); Spielzeit bleibt als rollierendes CFS-Fenster gekennzeichnet
+- PlayStation-Spielzeit wird noch nicht behauptet; die UI nennt PS-Daten erst dann als Quelle, wenn eine belastbare Anbindung vorhanden ist
+- neue visuelle Hero-Art stammt aus dem im Projekt erzeugten CFS-Gaming-Entwurf und ist lokal unter `public/assets/img/cfs-gaming-hero-v112.png` eingebettet
+- Validation: Gaming Home v112 **15/15 PASS**, Website Acceptance **34/34**, Accessibility **22/22**, Visual Polish **19/19**, Current Contract Regression **42/42 PASS**
+- externer Acceptance-Status bleibt unverändert: **LOCAL_READY_EXTERNAL_OPEN**; keine Windows-/LIVE-/Production-Pässe werden aus dem Design-Umbau abgeleitet
+
+## v111 – Final Acceptance Preparation
+
+- R64 LIVE/OBS-Soak ist jetzt fail-closed an die vorherige R63-Windows-Evidence und deren exakten Windows-Artefakt-SHA gebunden.
+- R67 akzeptiert R64 nur, wenn R63-Evidence-Hash und Windows-Artefakt mit dem Soak übereinstimmen.
+- Neuer portabler Final-Evidence-Index v109 zeigt R59–R67, CUT Windows und CUT Provider als `PASS / OPEN / BLOCKED`, ohne Rohmedien oder Secrets einzubetten.
+- Neuer Windows/LIVE Operator Kit v110 führt die echte Zielsystem-Abnahme in der richtigen Reihenfolge zusammen.
+- Final Readiness v111 trennt lokalen Abschluss strikt von externer Evidence; aktueller Status: **LOCAL_READY_EXTERNAL_OPEN**.
+- Validation: v108 **10/10 PASS**, v109 **11/11 PASS**, v110 **11/11 PASS**, v111 **7/7 PASS**, R64 Security **8/8**, R67 Security **7/7**, Current Contract **41/41 PASS**.
+- Externer Evidence-Index aktuell: **0 PASS / 11 OPEN / 0 BLOCKED**; Strict Gate verweigert den Abschluss erwartungsgemäß mit Exit 3.
+- Status: **CODE_COMPLETE / LOCAL_CONTRACTS_PASS / FINAL_ACCEPTANCE_PREPARED / EXTERNAL_ACCEPTANCE_OPEN**.
+
+## v107 – Technical LIVE Readiness Finish
+
+- Website, Launcher und LIVE-Provider verwenden jetzt einen gemeinsamen fail-closed `LIVE READY`-Vertrag.
+- Launcher-Heartbeat veröffentlicht sanitisierten Provider-Key, Provider-Status und Readiness; keine Tokens, lokalen Pfade oder Provider-Secrets werden übertragen.
+- LIVE READY prüft Creator-Entitlement, frischen Launcher-Heartbeat, Launcher-Release-Policy, Provider-Control/Health-Vertrag, echten Provider statt Simulator und tatsächliche Provider-Verbindung.
+- Stream Studio zeigt LIVE READY sichtbar an und nimmt den serverseitigen Gate-Status in den Stream-Check auf.
+- TikFinity kann aus Stream Studio per deduplizierter Action Queue verbunden, neu verbunden oder getrennt werden; erlaubt ist ausschließlich der lokale TikFinity-Provider.
+- Launcher führt `live_provider_command` privilegiert im Main Process aus und ACK/NACKt fail-closed; Renderer erhält keinen freien Provider-Befehl.
+- Validation: `live107:check` **26/26 PASS**, TikFinity Operations **15/15**, Managed Provider **6/6**, Current Contract **37/37 PASS**.
+- Status: **CODE_COMPLETE / LOCAL_CONTRACTS_PASS / LIVE_READY_GATE_COMPLETE / EXTERNAL_ACCEPTANCE_OPEN**.
+
+## v103 – TikFinity Operations / Provider Recovery
+
+- Managed TikFinity aktiviert Auto-Connect + Reconnect am lokalen Loopback-WebSocket.
+- Launcher-Bridge veröffentlicht sanitisierten TikFinity-Status, Health und letzten Event-Zeitpunkt.
+- Stream Studio zeigt den TikFinity-Providerzustand direkt beim lokalen Interactive-Game-Status.
+- Launcher zeigt Reconnect-Zustand und letztes TikFinity-Event sichtbar an.
+- Keine Provider-Secrets oder Service-Tokens verlassen den Launcher.
+- Validation: `tikfinity103:check` 15/15 PASS, Managed Provider 6/6 PASS, Current Contract 36/36 PASS.
+
 # cfs_zockt – aktueller Gesamtstand
 
-**Stand: 16.09.2026**  
+**Stand: 27.09.2026**  
 **Backend: 3.12.0**  
-**Launcher: 0.42.0**
+**Launcher: 0.47.7**
 
 
+## Statusupdate 26.09.2026 – v99 TikFinity + Unified Game Core
+
+- **Chat Battle, Community Quiz und Gift Rush** vom alten Cloud-Spielpfad auf den gemeinsamen lokalen Launcher-Game-Core migriert; **NEXUS bleibt Control-Plane/Sonderfall**
+- TikFinity als optionaler **lokaler Launcher-LIVE-Provider** ergänzt: TikTok LIVE → TikFinity Desktop → Loopback WebSocket → CFS Launcher → normalisierter CFS Eventbus → Website/Games
+- TikFinity-Endpunkt ist auf `ws://` + Loopback (`127.0.0.1` / `localhost` / `::1`) begrenzt; keine Web-Credentials oder Provider-Secrets im Browser
+- Managed Game Service akzeptiert TikFinity Connect/Disconnect nur mit dem internen Launcher-Service-Token
+- Launcher wartet beim TikFinity-Provider auf eine echte lokale WebSocket-Verbindung und schlägt fail-closed fehl, wenn TikFinity Desktop nicht erreichbar ist
+- Launcher-Version auf **0.46.0** gezogen; Website, Release-Readiness, Recovery-Policy und aktive Versionsverträge synchronisiert
+- `games99:check` → **29/29 Contract PASS + 6/6 Managed End-to-End PASS**
+- Managed Game Service → **9/9 PASS**
+- Current Contract Regression → **35/35 PASS**
+- eingebettete Terminal-Altsuite: TikFinity-/Normalizer-Tests PASS; 6 Standalone-NEXUS-Tests bleiben wegen absichtlich nicht eingebetteter alter Startdateien außerhalb des Managed-Pakets nicht anwendbar
+- Status: **CODE_COMPLETE / LOCAL_CONTRACTS_PASS / TIKFINITY_LOCAL_PATH_VERIFIED / EXTERNAL_ACCEPTANCE_OPEN**
+
+
+
+
+## Statusupdate 26.09.2026 – v95 Interactive Games Expansion
+
+- sechs weitere eigene lokale CFS-Game-Module: **Goal Rush, Flap Duel, Stack Forge, Role Raid, Country Clash, Chat Obstacle Run**
+- vorhandene dynamische `local:<module-id>`-Plattform wird unverändert genutzt; kein Backend-Hardcoding pro neuem Spiel nötig
+- alle Module nutzen ausschließlich normalisierte CFS-LIVE-Events und den zentralen `InteractiveGameClient`
+- keine fremden TikTok-Spielcodes/Assets übernommen; nur allgemeine LIVE-Mechanikklassen als eigene CFS-Spiele umgesetzt
+- Launcher-Katalog erwartet jetzt mindestens 15 lokale Module
+- `games95:check` → **45/45 PASS**
+- Managed Game Service → **8/8 PASS**
+- Current Contract Regression → **34/34 PASS**
+- lokaler/code-seitiger Stand bleibt: **CODE_COMPLETE / LOCAL_CONTRACTS_PASS / EXTERNAL_ACCEPTANCE_OPEN**
+
+## Statusupdate 26.09.2026 – v89 Interactive Games LIVE Pattern Expansion
+
+- fünf neue eigene CFS-LIVE-Game-Module ergänzt: **Sky Climb, Tower Clash, Horde Survival, Merge Reactor, Wire Defuse**
+- Mechaniken orientieren sich an öffentlich etablierten TikTok-LIVE-Interaktionsklassen (Buffs, Gegner, Shields, Environment Changes, Team-/Race-/Puzzle-Prinzipien), ohne fremden Code oder Markenassets zu kopieren
+- alle neuen Module verwenden ausschließlich den bestehenden normalisierten `InteractiveGameClient`-Eventstrom
+- keine direkte TikFinity-/TikTok-Verbindung in den Modulen, keine externen Scripts, keine Provider-Secrets
+- Launcher-Modulkatalog erkennt jetzt mindestens neun lokale Spielmodule automatisch
+- `games89:check` → **33/33 PASS**
+- Managed Game Service → **8/8 PASS**
+- Current Contract Regression → **33/33 PASS**
+- lokaler/code-seitiger Stand bleibt: **CODE_COMPLETE / LOCAL_CONTRACTS_PASS / EXTERNAL_ACCEPTANCE_OPEN**
+
+## Statusupdate 26.09.2026 – v88 Release Readiness Finish
+
+- aktive Launcher-Zielversion konsistent auf **0.46.0** gezogen: Website, Creator-Suite, Roadmap, `.env.example`, Render Blueprint und Application-Recovery-Policy
+- System Check auf **v3 Creator Suite Readiness** erweitert: Backend 3.12.0, Schema 68, Launcher-Release-Policy sowie Games/Stream/CUT/NEXUS werden getrennt geprüft
+- Dashboard wertet jetzt die reale Launcher-Release-Policy aus; verbunden allein bedeutet nicht mehr automatisch „bereit“
+- Pflichtupdate, Version-Block oder LIVE-Block werden sichtbar als Warnzustand dargestellt; kompatible Versionen werden explizit bestätigt
+- externe Acceptance bleibt getrennt und wird weiterhin nicht als lokal bestanden dargestellt
+- `release88:check` → **20/20 PASS**
+- Current Contract Regression → **32/32 PASS**
+- lokaler/code-seitiger Stand: **CODE_COMPLETE / LOCAL_CONTRACTS_PASS / EXTERNAL_ACCEPTANCE_OPEN**
+
+
+
+
+## Statusupdate 26.09.2026 – v57 CUT Acceptance & Evidence Hardening
+
+- CUT Studio bleibt **FEATURE FROZEN / READY_FOR_WINDOWS_CUT_ACCEPTANCE**; v54–v57 öffnen keinen neuen Feature-Scope
+- v54 bindet Windows-CUT-Acceptance an Git Remote, expliziten Branch, HEAD SHA, Artefakt-SHA, Launcher-/Backend-Version und Schema Generation 68
+- v55 erzeugt minimierte, gehashte Windows-Evidence ohne Rohmedien und ohne vollständige lokale Recording-Pfade
+- v56 inventarisiert die historische Regression reproduzierbar: aktuell **75 Blöcke, 51 ausführbar, 24 unavailable** wegen im gelieferten Paket fehlender Testdateien
+- v57 ergänzt einen fail-closed Real-Provider-Acceptance-Runner für Reference Learning; API-Key wird nicht in Evidence geschrieben, Referenz-URL nur als SHA-256 gespeichert
+- Test-Drift bereinigt: Trust **20/20**, Security3 **33/33**, Admin-Step-up **40/40 PASS**; bestehende sichere Cookie-/Elevation-v2-Implementierung wurde nicht abgeschwächt
+- neue Checks: v54 **23/23**, v55 **9/9**, v56 **8/8**, v57 **10/10 PASS**; Launcher Static Check PASS
+- `project:check` **51/75**; die verbleibenden 24 Blöcke entsprechen den im v56-Inventory als fehlend ausgewiesenen historischen Testdateien
+- weiterhin kein echter `WINDOWS_CUT_PASS`, kein `REFERENCE_PROVIDER_PASS` und kein Production-/R59–R67-PASS aus dieser Umgebung
+
+## Statusupdate 26.09.2026 – v53 CUT Windows Acceptance Gate
+
+- CUT Studio bleibt **FEATURE FROZEN / READY_FOR_WINDOWS_CUT_ACCEPTANCE**; v53 öffnet keinen neuen Feature-Scope
+- neuer fail-closed Windows-Acceptance-Runner bindet die CUT-Abnahme an den ausdrücklich erwarteten SHA-256 des Release-Artefakts sowie den installierten `app.asar`-Runtime-Fingerprint
+- Acceptance akzeptiert nur das wirklich gebündelte `resources/ffmpeg/ffmpeg.exe`; PATH-/Environment-FFmpeg reicht nicht für `WINDOWS_CUT_PASS`
+- Pflicht-Smoke: Own-Clip-Evidence + echter Reel-Export mit Caption, Keyframes, Transition, Normalisierung, Musik, Voiceover und Ducking
+- zusätzlich mindestens zwei reale Recording-Varianten mit unterschiedlicher Container-/Codec-Signatur und echtem lokalen Export
+- Evidence speichert reduzierte Metadaten/Hashes; Rohmedien werden nicht hochgeladen
+- `cut53:check` **38/38 PASS**; v47–v52 bleiben PASS; `cut52:real-local` PASS; Backend-Syntax und Launcher Static Check PASS
+- `project:check` **44/71**; die **35 FAIL-Einträge sind gegenüber v52 unverändert**
+- echter v53-Runner wurde in der Linux-Sandbox aufgerufen und verweigert den PASS korrekt fail-closed; **kein `WINDOWS_CUT_PASS` behauptet**
+- nächste reale Aktion: v53 Runner auf dem installierten, exakt freigegebenen Windows-Artefakt mit mindestens zwei echten Recording-Varianten ausführen
+
+## Statusupdate 26.09.2026 – v52 CFS CUT Studio Completion
+
+- CFS CUT Studio ist code-seitig **FEATURE FROZEN / READY_FOR_WINDOWS_CUT_ACCEPTANCE**
+- End-to-End: Local Recording → Launcher Own-Clip Analyzer → Own Clip Evidence → Candidate Engine → optional Reference Influence → Keep/Reject Review → echter CUT-Clip
+- interne `cut_analysis`-Jobs bleiben vollständig vom normalen Exportpfad getrennt
+- veraltete Analyse-Jobs werden bei geändertem Game Profile fail-closed verworfen
+- moderne FFmpeg-Stream-IDs werden bei der Audioerkennung berücksichtigt
+- echter lokaler FFmpeg-Integrationstest mit synthetischem Video+Audio → **PASS**; Rohmaterial-Upload bleibt false
+- `cut52:check` **27/27 PASS**; komplette vorhandene nicht-reale CUT-Testdatei-Suite **29/29 Dateien PASS**
+- `project:check` **43/70**; die **35 FAIL-Einträge sind gegenüber v51 exakt unverändert**
+- deshalb weiterhin **kein vollständiger Project-Regression-PASS**, kein Windows-/Provider-Live-/Production-PASS
+- externe Restabnahme: echter Windows Launcher + Recording→CUT + reale Codec-/Dateivarianten + echte Reference-Provider-Ausführung
+
+## Statusupdate 26.09.2026 – v51 CUT Local Analysis + Candidate Review
+
+- lokaler Launcher-Analyzer erzeugt reduzierte `own_clip_evidence` aus der eigenen Aufnahme
+- Foundation-Analyzer erzeugt bewusst nur generische `best`-Highlights und erfindet keine DBD-/Game-Ereignisse
+- Candidate Review im Web-Editor mit Score, Evidence-Zeitfenster und begrenztem Reference-Boost
+- Keep/Reject/Reset wird serverseitig als Ground Truth persistiert
+- Candidate kann als echter CUT-Clip übernommen werden
+- `cut51:check` **30/30 PASS**; v51 war noch kein Freeze, Completion-Härtung folgt in v52
+
+## Statusupdate 26.09.2026 – v50 CUT Candidate Evidence Separation
+
+- neuer provider-neutraler **CUT Candidate Engine** als eigene Core-Schicht; Kandidaten entstehen ausschließlich aus sanitisierten Ereignissen des eigenen Clips
+- Candidate-Semantik, Kategorie und Evidence-Zeitfenster stammen ausschließlich aus `own_clip_evidence`; Fremdreferenzen dürfen diese Werte weder erzeugen noch ersetzen
+- Reference Learning wird erst **nach** vorhandener eigener Clip-Evidence angewendet und ist auf einen kleinen redaktionellen Score-Boost von maximal `0.12` begrenzt
+- bestehendes Ground Truth bleibt dominant: `reject` macht Kandidaten unzulässig, `keep` erhält Vorrang vor Reference-Gewichtung
+- Creator API und Launcher Bridge besitzen getrennte Candidate-Preview-Endpunkte; übertragen werden reduzierte Evidence-/Decision-Daten, keine Rohvideos
+- Launcher Bridge Client kann die Candidate Preview jetzt direkt aufrufen; lokale Analyse kann damit später an denselben sicheren Vertrag angeschlossen werden
+- `cut50:check` **20/20 PASS**, `cut49:check` **27/27 PASS**, gesamte vorhandene nicht-reale CUT-Testdatei-Suite **27/27 Dateien PASS**
+- Backend-Syntax **PASS**, Launcher Static Check **PASS**
+- `project:check` endet bei **41/68**; gegenüber v48 **39/66** sind exakt die zwei neuen CUT-Checks hinzugekommen und beide PASS, während die bereits vorhandene FAIL-Liste unverändert bleibt
+- daher weiterhin **kein vollständiger Project-Regression-PASS** und **noch kein CUT Feature Freeze**
+- nächster CUT-Schritt: tatsächliche Own-Clip-Analyse an den Candidate-Vertrag anschließen, Candidate Review/Keep/Reject im Editor persistent machen und danach Completion-Abnahme durchführen
+
+## Statusupdate 26.09.2026 – v49 CUT Recovery / Autosave Hardening
+
+- CUT Studio besitzt jetzt sichtbare Save-Zustände: **GESPEICHERT / NICHT GESPEICHERT / SPEICHERT … / SPEICHERN FEHLGESCHLAGEN**
+- Projekt- und Clip-Änderungen werden debounced automatisch gespeichert; manuelles Speichern sichert Projekt und Clip-Formulare in definierter Reihenfolge
+- lokale Recovery-Snapshots schützen noch nicht erfolgreich gespeicherte Eingaben; Wiederherstellung wird nur angeboten, wenn Snapshot und Server auf derselben Projektbasis stehen
+- stale Recovery-Snapshots werden nicht blind eingespielt und können bewusst verworfen werden
+- Backend verwendet optionale `base_updated_at`-Guards für Projekt- und Clip-Updates; parallele veraltete Editorstände erhalten **409 Conflict** statt neuere Daten zu überschreiben
+- Clip Create/Update/Delete/Order geben den aktualisierten Projekt-Zeitstempel zurück, damit derselbe Editor nicht durch eigene Clip-Änderungen einen falschen Konflikt erzeugt
+- kein Schema-Sprung nötig; PostgreSQL Schema Generation bleibt **68**
+- `cut49:check` **27/27 PASS**
+- v49 wurde nicht als CUT-Abschluss gewertet; Candidate-/Ground-Truth-Trennung blieb anschließend offen und wurde in v50 umgesetzt
+
+## Statusupdate 26.09.2026 – v48 CUT Reference Provider Integration
+
+- sichere **serverseitige** Provider-Schicht ergänzt; Provider-Key bleibt ausschließlich im Backend-Environment
+- CUT Studio kann gespeicherte `pending`-YouTube-Referenzen über die Creator-API analysieren lassen
+- Browser/Renderer senden nur die bereits gespeicherte Referenz-URL; kein Provider-Secret und keine rohe Provider-Antwort gelangen in den Client
+- feste HTTPS-Provider-Domain, Redirect-Block, Timeout und begrenzte Antwortgröße
+- strukturierte JSON-Ausgabe mit Game-Profile-Schema; Ergebnis wird zusätzlich durch den bestehenden v47-Sanitizer normalisiert
+- fremde Referenzvideos werden nicht in CFS heruntergeladen oder dauerhaft gespeichert
+- Projekt wird nach der externen Analyse erneut gelesen; geändertes Game Profile oder entfernte Referenz verwirft das Ergebnis fail-closed
+- Reference Learning bleibt ausschließlich Editing-Guidance; eigene Clip-Semantik/Ground Truth darf nicht aus Fremdreferenzen entstehen
+- `cut48:check` **28/28 PASS**, `cut47:check` **36/36 PASS**, Backend-Syntax **PASS**, Launcher Static Check **PASS**
+- kompletter `project:check` im gelieferten Gesamtpaket nicht vollständig reproduzierbar, da mehrere referenzierte historische Testdateien bereits im unveränderten ZIP fehlen; mehrere ältere statische Checks schlagen im Originalstand identisch fehl. Baseline **38/65**, v48 **39/66** mit zusätzlichem `cut48` PASS und identischer FAIL-Liste
+- daher **kein neuer vollständiger Project-Regression-PASS**, **kein Provider-Live-PASS** und **noch kein CUT Feature Freeze**
+- nächster CUT-Schritt: Recovery/Autosave/Projektzustand härten, Candidate Engine vs. eigene Evidence vs. Reference Influence abschließend prüfen, danach Completion/Freeze
 
 ## Statusupdate 26.09.2026 – v47 CUT Reference Learning Foundation
 
@@ -644,3 +951,89 @@ Aktueller technischer Erweiterungsstand nach v39:
 - `npm run predeploy:doctor`: 29/29 `PREDEPLOY_READY`
 
 Evidence-Grenze: lokal/statisch. R62–R67 bleiben externe operative Gates; insbesondere kein `LIVE_AUTH_PASS`, `LIVE_WINDOWS_PASS`, `LIVE_SOAK_PASS`, `LIVE_MONITOR_PASS`, `LIVE_BILLING_PASS` oder `LIVE_LAUNCH_PASS` wird aus v40 behauptet.
+
+## Statusupdate 26.09.2026 – v61 Local Acceptance Completion
+
+- aktueller lokaler Abschlussstand: **v61 Local Acceptance Completion**
+- die 24 im gelieferten Paket fehlenden historischen Regressionstests bleiben transparent `unavailable`; sie wurden nicht erfunden oder nachträglich als PASS markiert
+- neuer vollständig ausführbarer Current-Contract-Runner `npm run project58:run` → **26/26 PASS**
+- zwei Stream-Studio-Tests wurden an die bereits härtere aktuelle Runtime angepasst: interne `cut_analysis`-Jobs bleiben zusätzlich zu `cut_audition` aus der normalen Exportliste; Audition nutzt den aktuellen Autosave/Recovery-Flush; Schema-Prüfung ist auf `cut_audition` begrenzt (Runtime aktuell Schema 13)
+- read-only External Acceptance Status v59 → **0 PASS / 11 OPEN / 0 BLOCKED** in dieser Sandbox
+- External Acceptance Runbook v60 legt die echte Reihenfolge Git/Release Lock → R59–R67 plus Windows CUT/Reference Provider fest
+- Local Completion Gate v61 → **`LOCAL_ACCEPTANCE_PREPARED`**
+- `LOCAL_ACCEPTANCE_PREPARED` ist ausdrücklich kein Production-, Windows-, OBS-, TikTok-LIVE-, Provider-, Billing- oder Launch-PASS
+- nächster legitimer Schritt ist die echte Außenweltabnahme auf verifiziertem Release/Windows/Production; feature-frozen Produktbereiche werden nur für echte Acceptance-Fehler wieder geöffnet
+
+## v66 – NEXUS Creator Control Plane Completion
+
+NEXUS ist jetzt code-seitig abgeschlossen und feature-frozen als zentrale Creator Control Plane. Der Block umfasst sichere Launcher-Aktionen, Status/Activity, persistente Redelivery-Receipts, Event→Action-Automationen und die öffentliche Produktintegration.
+
+Validation: v66 8/8 PASS, Current Contract Regression 27/27 PASS, v62 16/16, v63 15/15, v64 14/14, v65 14/14. Status: `FEATURE_FROZEN / READY_FOR_WINDOWS_NEXUS_ACCEPTANCE`. Reale Windows-/LIVE-/Production-Evidence bleibt extern.
+
+## Statusupdate 26.09.2026 – v72 Interactive Games Website Integration
+
+- Interactive Games sind nicht mehr auf den alten Team-A/Team-B-Core begrenzt: Cloud-Games und Launcher-Local-Game-Profile teilen einen gemeinsamen Katalog.
+- Das bereitgestellte Interactive Games Terminal v4.1.0 wurde als verwaltete lokale Launcher-Engine integriert; enthalten sind NEXUS, Boss Arena, Team Race und Welche Tür?.
+- Direkte TikFinity-Verbindung der eingebetteten Engine ist im CFS-Managed-Mode deaktiviert. Normalisierte LIVE-Events kommen ausschließlich über die bestehende CFS Launcher-/Provider-Pipeline.
+- Lokaler Service ist loopback-only, mutierende CFS-Endpunkte sind mit einem kurzlebigen Service-Token geschützt, Runtime-State liegt im Launcher UserData-Verzeichnis.
+- Website Start nutzt `STARTING → Launcher Action/Receipt → RUNNING`; ein fehlender/alter Launcher wird fail-closed abgewiesen.
+- Stream Studio behandelt lokale Games als Launcher-Local-Quelle und zeigt den aktiven Game-Status.
+- Recording→CUT-Handoff bewahrt reduzierten Game-Kontext; CUT zeigt Game/Runde im Projektkontext.
+- Launcher 0.43.0 verwaltet Service-Lifecycle, Game-Auswahl, normalisierte Event-Weitergabe und deduplizierte Action-Receipts.
+- Cloud-Score-/Rule-Engine wird für Launcher-Local-Games serverseitig nicht als zweiter Spielstand verwendet.
+- Externe Windows-/LIVE-/OBS-/Production-Acceptance bleibt weiterhin separat.
+
+
+### v72 Final Validation
+
+- Interactive Games Integration **16/16 PASS**
+- Embedded Managed Game Service **8/8 PASS**
+- Current Contract Regression **28/28 PASS**
+- Status: `READY_FOR_WINDOWS_INTERACTIVE_GAMES_ACCEPTANCE`
+- Externe Windows/LIVE/OBS/Production-Evidence bleibt offen.
+
+## Statusupdate 26.09.2026 – v76 Interactive Games Module Platform Completion
+
+- Launcher auf **0.44.0** angehoben.
+- Interactive Games sind nicht mehr nur auf fest im Backend codierte lokale Spiele begrenzt.
+- Der Launcher scannt installierte `game.json`-Module beim Start direkt aus dem eingebetteten Game-Paket, ohne dafür den lokalen HTTP-Service starten zu müssen.
+- Der Launcher meldet einen sanitisierten Modul-Katalog über die bestehende Creator-Bridge (`interactive_games_catalog_v1`). Service-Token, lokale Datenpfade und Roh-Secrets werden dabei nicht übertragen.
+- Die Website führt bekannte Built-in-Games und zusätzlich erkannte lokale Module gemeinsam im Game-Katalog. Zusätzliche Module verwenden stabile Schlüssel im Format `local:<terminal-id>`.
+- Ein neu ausgewähltes dynamisches Modul kann nur gespeichert werden, wenn ein aktueller kompatibler Launcher online ist und genau dieses Modul meldet.
+- Beim Start wird das Modul nochmals serverseitig gegen den aktuellen Launcher-Katalog geprüft; entfernte oder nicht installierte Module schlagen fail-closed fehl.
+- Interactive-Game-Actions verwenden jetzt `game_service_version: 2` und transportieren die validierte `terminal_id` explizit zum Launcher.
+- Der Launcher prüft die installierte Modulliste nochmals lokal, bevor er ein Modul aktiviert.
+- Stream Studio zeigt Launcher-/Service-Readiness, aktives Modul und Modulanzahl für lokale Interactive Games.
+- Die Games-Seite zeigt erkannte lokale Module und deren Version; der Launcher zeigt die Anzahl installierter Module auch ohne laufenden Game-Service.
+- Bestehender Recording→CUT-Handoff bleibt kompatibel; dynamische `local:<id>`-Game-Kontexte werden nicht auf einen Built-in-Typ zurückgesetzt.
+- Final Validation: `games76:check` **24/24 PASS**, Interactive Games v72 **16/16 PASS**, Managed Game Service **8/8 PASS**, CUT Completion **27/27 PASS**, Current Contract Regression **29/29 PASS**, Launcher Static/Stability **PASS**.
+- Externe Windows-/OBS-/TikTok-LIVE-/Production-Acceptance bleibt separat und wird nicht aus diesen lokalen Tests abgeleitet.
+
+
+## Statusupdate 26.09.2026 – v80 Interactive Games Profile & Recovery Completion
+
+- Launcher auf **0.46.0** angehoben.
+- Games-Seite besitzt jetzt Presets für Cloud- und Launcher-Local-Games.
+- Creator können Game-Profile inklusive LIVE-Regeln als versioniertes `cfs.game-profile` JSON sichern und wieder importieren.
+- Export enthält keine Runtime-/Output-/Service-Tokens, Provider-Secrets oder lokalen Medienpfade.
+- Import ist transaktional, ersetzt Profil + LIVE-Regeln gemeinsam und ist fail-closed, solange ein Game `RUNNING`/`STARTING` ist.
+- Local-Game-Import verlangt einen kompatiblen online Launcher und das tatsächlich installierte Zielmodul.
+- Games-Seite zeigt Source-Modus, Canvas, Modul und OBS-Readiness explizit; lokale Quellen werden weiterhin nur als Loopback-Quelle behandelt.
+- Launcher berechnet einen stabilen SHA-256-Fingerprint über den sanitisierten installierten Game-Katalog und meldet ihn über die Bridge, ohne den Game-Service dafür zu starten.
+- Launcher Support Bundle enthält `interactive-games.json` mit sanitisiertem Modul-/Servicezustand, aber keine Secrets oder Rohmedien.
+- Final Validation: `games80:check` **24/24 PASS**, `games76:check` **24/24 PASS**, Interactive Games v72 **16/16 PASS**, Managed Game Service **8/8 PASS**, CUT Completion **27/27 PASS**, Stream Studio Full Contract **PASS**, Launcher Static/Stability **PASS**, Current Contract Regression **30/30 PASS**.
+- Externe Windows-/OBS-/TikTok-LIVE-/Production-Acceptance bleibt separat und wird nicht aus lokalen Tests abgeleitet.
+
+
+## v84 Website Creator Finish
+
+Status: `WEBSITE_CREATOR_FINISH_CODE_COMPLETE / LOCAL_CONTRACTS_PASS`
+
+- Dashboard operations cockpit for Games / Stream / CUT / Launcher
+- Dynamic Interactive Games catalog in Creator Setup
+- Save-and-open start workflow
+- Integrations Hub aligned with actual OBS Browser Source / multistream capabilities
+- Website v84 validation: 20/20 PASS
+- Current Contract Regression: 31/31 PASS
+
+External Windows / OBS / TikTok-LIVE / provider / production acceptance remains open.

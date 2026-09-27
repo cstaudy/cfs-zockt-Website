@@ -346,6 +346,9 @@
             <div><span>PLAN</span><strong id="toolsGameAccess">–</strong></div>
             <div><span>LIVE REGELN</span><strong id="toolsGameRuleCount">0</strong></div>
             <div><span>REGEL-TREFFER</span><strong id="toolsGameHitCount">0</strong></div>
+            <div><span>ENGINE</span><strong id="toolsGameEngine">CLOUD</strong></div>
+            <div><span>LOCAL SERVICE</span><strong id="toolsGameService">AUS</strong></div>
+            <div><span>MODUL</span><strong id="toolsGameModule">–</strong></div>
           </div>
           <div class="inline">
             <button class="btn primary" id="toolsGameStart">GAME STARTEN</button>
@@ -357,7 +360,7 @@
             <button class="btn" id="toolsCopyGameUrl">URL KOPIEREN</button>
             <button class="btn" id="toolsPreviewGame">VORSCHAU</button>
           </div>
-          <div class="notice compact">V29 kann echte Follow-, Like-, Gift- und Share-Events über Creator-Regeln auf Game-Punkte abbilden. Manuelle Punkte bleiben zusätzlich möglich.</div>
+          <div class="notice compact">Cloud-Games und lokale Interactive-Game-Module teilen denselben CFS LIVE-Event-Pfad. Lokale Module laufen im Launcher; TikTok-/Provider-Secrets und Rohmedien bleiben außerhalb der Website.</div>
         </section>
 
         <section class="panel">
@@ -402,7 +405,7 @@
           <label><span>BACKEND URL</span><input id="backendUrl" placeholder="https://cfs-zockt.de"></label>
           <label><span>PC / MASCHINENNAME</span><input id="machineName" maxlength="120"></label>
           <label class="full"><span>BRIDGE-SCHLÜSSEL</span><input id="bridgeToken" type="password" placeholder="cfsb_..."><small>Leer lassen, wenn bereits sicher gespeichert.</small></label>
-          <label><span>LIVE PROVIDER</span><select id="providerSelect"><option value="mock">Simulator</option><option value="tiktool">TikTok LIVE · TikTool (Drittanbieter)</option></select></label>
+          <label><span>LIVE PROVIDER</span><select id="providerSelect"><option value="mock">Simulator</option><option value="tikfinity">TikTok LIVE · TikFinity (lokal)</option><option value="tiktool">TikTok LIVE · TikTool (Drittanbieter)</option></select></label>
           <label><span>TIKTOK USERNAME</span><input id="tiktokUsername" placeholder="@cfs_zockt"></label>
           <label class="full"><span>TIKTOOL API-KEY</span><input id="tiktoolApiKey" type="password" placeholder="Provider-Key"><small>Nur für den optionalen Drittanbieter-LIVE-Provider. Leer lassen, wenn bereits sicher gespeichert.</small></label>
           <div class="full inline">
@@ -413,7 +416,16 @@
           </div>
         </div>
         <div class="notice" id="encryptionNotice"></div>
-        <div class="notice warn">TikTool ist ein unabhängiger Drittanbieter und nicht TikTok. Bei Auswahl dieses Providers verbindet sich der Launcher mit dessen LIVE-Service. Der API-Key bleibt lokal verschlüsselt gespeichert.</div>
+        <div class="notice warn">TikFinity läuft optional lokal auf demselben Streaming-PC (standardmäßig ws://127.0.0.1:21213/) und benötigt keinen Web-API-Key in CFS. TikTool bleibt als unabhängiger alternativer Drittanbieter verfügbar; dessen API-Key bleibt lokal verschlüsselt gespeichert.</div>
+        <div class="mini-head" style="margin-top:18px">GAME ACTIVITY · OPT-IN</div>
+        <div class="form-grid">
+          <label><span>ERFASSUNG</span><select id="gameActivityEnabled"><option value="false">Aus</option><option value="true">Aktiv</option></select></label>
+          <label><span>QUELLE</span><select id="gameActivitySource"><option value="launcher_manual">Manuell · ideal für PS5</option><option value="stream_capture">PC Stream-Capture</option></select></label>
+          <label class="full"><span>AKTUELLES SPIEL</span><input id="gameActivityGameName" maxlength="80" placeholder="z. B. Call of Duty: Warzone"><small>Bei PlayStation aktuell manuell. Eine spätere echte PSN-Quelle kann denselben Datenpfad übernehmen.</small></label>
+          <label><span>PLATTFORM</span><select id="gameActivityPlatform"><option value="playstation_5">PlayStation 5</option><option value="playstation_4">PlayStation 4</option><option value="pc">PC</option><option value="xbox_series">Xbox Series</option><option value="xbox_one">Xbox One</option><option value="switch">Nintendo Switch</option><option value="unknown">Nicht angegeben</option></select></label>
+          <div class="full inline"><button class="btn primary" id="startGameActivity">SPIEL STARTEN / WECHSELN</button><button class="btn" id="stopGameActivity">SESSION STOPPEN</button><button class="btn" id="syncGameActivity">JETZT SYNCHRONISIEREN</button><button class="btn danger ghost" id="clearGameActivity">ERFASSTE SPIELZEIT LÖSCHEN</button></div>
+        </div>
+        <div class="notice compact" id="gameActivityStatus">Spielaktivität ist standardmäßig ausgeschaltet.</div>
       </section>
       <section class="panel">
         <div class="panel-head"><div><span>DIAGNOSE</span><h2>Bridge Status</h2></div></div>
@@ -887,7 +899,7 @@
     <section class="view" data-page="beta">
       <div class="page-head"><span class="eyebrow">BETA TEST · RELEASE CANDIDATE</span><h1>TEST & FEEDBACK.</h1><p>Aktive Beta-Tester können reproduzierbare Test-Sessions starten und Feedback direkt mit einer sicheren Diagnose-Zusammenfassung senden.</p><div class="entitlement-banner" id="betaAccessBanner">Beta-Status wird geprüft…</div></div>
       <div class="beta-columns">
-        <section class="panel"><div class="panel-head"><div><span>TEST SESSION</span><h2>Aktueller Testlauf</h2><p>Version, Provider und Output-Gate werden automatisch mitprotokolliert.</p></div><span class="pill" id="betaSessionPill">OFF</span></div><div class="form-grid"><label class="full"><span>TESTBEZEICHNUNG</span><input id="betaSessionLabel" maxlength="120" value="Creator Suite Beta Test"></label><label class="full"><span>ERGEBNIS / NOTIZ BEIM BEENDEN</span><textarea id="betaSessionSummary" maxlength="2000" placeholder="Was wurde getestet? Was ist aufgefallen?"></textarea></label></div><div class="output-local-status"><div><span>SESSION</span><strong id="betaSessionId">–</strong></div><div><span>GESTARTET</span><strong id="betaSessionStarted">–</strong></div><div><span>FEEDBACK</span><strong id="betaRecentFeedback">0</strong></div><div><span>LAUNCHER</span><strong id="betaLauncherVersion">0.42.0</strong></div></div><div class="inline"><button class="btn primary" id="startBetaSession">TESTSESSION STARTEN</button><button class="btn danger" id="endBetaSession" disabled>TESTSESSION BEENDEN</button><button class="btn" id="refreshBetaCenter">STATUS LADEN</button></div></section>
+        <section class="panel"><div class="panel-head"><div><span>TEST SESSION</span><h2>Aktueller Testlauf</h2><p>Version, Provider und Output-Gate werden automatisch mitprotokolliert.</p></div><span class="pill" id="betaSessionPill">OFF</span></div><div class="form-grid"><label class="full"><span>TESTBEZEICHNUNG</span><input id="betaSessionLabel" maxlength="120" value="Creator Suite Beta Test"></label><label class="full"><span>ERGEBNIS / NOTIZ BEIM BEENDEN</span><textarea id="betaSessionSummary" maxlength="2000" placeholder="Was wurde getestet? Was ist aufgefallen?"></textarea></label></div><div class="output-local-status"><div><span>SESSION</span><strong id="betaSessionId">–</strong></div><div><span>GESTARTET</span><strong id="betaSessionStarted">–</strong></div><div><span>FEEDBACK</span><strong id="betaRecentFeedback">0</strong></div><div><span>LAUNCHER</span><strong id="betaLauncherVersion">0.47.7</strong></div></div><div class="inline"><button class="btn primary" id="startBetaSession">TESTSESSION STARTEN</button><button class="btn danger" id="endBetaSession" disabled>TESTSESSION BEENDEN</button><button class="btn" id="refreshBetaCenter">STATUS LADEN</button></div></section>
         <section class="panel"><div class="panel-head"><div><span>AUTOMATISCH ANGEHÄNGT</span><h2>Diagnose-Snapshot</h2></div></div><div class="beta-diagnostic-grid"><div><span>BRIDGE</span><strong id="betaDiagBridge">–</strong></div><div><span>LIVE</span><strong id="betaDiagLive">–</strong></div><div><span>LOCAL OUTPUT</span><strong id="betaDiagOutput">–</strong></div><div><span>OUTPUT GATE</span><strong id="betaDiagGate">–</strong></div></div><div class="notice compact">Es werden keine Bridge-Keys, Provider-Keys oder kompletten Logs an das Feedback angehängt. Gesendet wird nur eine begrenzte technische Zusammenfassung.</div></section>
       </div>
       <section class="panel beta-feedback-panel"><div class="panel-head"><div><span>FEEDBACK SENDEN</span><h2>Bug / Idee / UX</h2><p>Je genauer die Schritte, desto leichter lässt sich ein Problem reproduzieren.</p></div></div><div class="form-grid"><label><span>TYP</span><select id="betaFeedbackKind"><option value="bug">Bug</option><option value="ux">UX</option><option value="idea">Idee</option><option value="other">Sonstiges</option></select></label><label><span>PRIORITÄT</span><select id="betaFeedbackSeverity"><option value="low">Low</option><option value="medium" selected>Medium</option><option value="high">High</option><option value="critical">Critical</option></select></label><label><span>BEREICH</span><select id="betaFeedbackCategory"><option value="launcher">Launcher</option><option value="live">LIVE</option><option value="widgets">Widgets</option><option value="scenes">Scenes</option><option value="obs">OBS</option><option value="tiktok">TikTok</option><option value="games">Games</option><option value="cut_studio">Cut Studio</option><option value="account">Account</option><option value="other">Sonstiges</option></select></label><label class="full"><span>TITEL</span><input id="betaFeedbackTitle" maxlength="160" placeholder="Kurz und eindeutig"></label><label class="full"><span>BESCHREIBUNG</span><textarea id="betaFeedbackDescription" maxlength="5000" placeholder="Was ist passiert?"></textarea></label><label class="full"><span>SCHRITTE ZUM NACHSTELLEN</span><textarea id="betaFeedbackSteps" maxlength="5000" placeholder="1. ...&#10;2. ...&#10;3. ..."></textarea></label><label><span>ERWARTET</span><textarea id="betaFeedbackExpected" maxlength="3000"></textarea></label><label><span>TATSÄCHLICH</span><textarea id="betaFeedbackActual" maxlength="3000"></textarea></label></div><div class="inline"><button class="btn primary" id="submitBetaFeedback">FEEDBACK SENDEN</button></div></section>
@@ -948,7 +960,7 @@
       </section>
 
       <section class="panel about">
-        <span>VERSION</span><strong id="appVersion">0.42.0</strong>
+        <span>VERSION</span><strong id="appVersion">0.47.7</strong>
         <p>Creator-Isolation- und Beta-Center-Version mit persönlichem TikTok-Sync und Tester-Status.</p>
       </section>
     </section>
@@ -1007,7 +1019,7 @@
           <h2>LIVE Quelle wählen.</h2>
           <p>Für Tests reicht der Simulator. Für echte TikTok-LIVE-Ereignisse kann später der optionale Drittanbieter-Provider verwendet werden.</p>
           <div class="setup-form">
-            <label><span>PROVIDER</span><select id="setupProvider"><option value="mock">Simulator</option><option value="tiktool">TikTok LIVE · TikTool</option></select></label>
+            <label><span>PROVIDER</span><select id="setupProvider"><option value="mock">Simulator</option><option value="tikfinity">TikTok LIVE · TikFinity (lokal)</option><option value="tiktool">TikTok LIVE · TikTool</option></select></label>
             <label><span>TIKTOK USERNAME</span><input id="setupTikTokUsername" placeholder="@creator"></label>
             <label class="full"><span>PROVIDER API KEY</span><input id="setupTiktoolKey" type="password" placeholder="nur bei TikTool"></label>
           </div>

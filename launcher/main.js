@@ -25,7 +25,9 @@ const { OutputWindowManager, BACKGROUND_MODES } = require("./src/output-window-m
 const { OutputGateStore } = require("./src/output-gate-store");
 const { StreamDeckStore } = require("./src/stream-deck-store");
 const { executeStreamDeckAction } = require("./src/stream-deck-actions");
-const { assertFeature, assertStreamDeckButton } = require("./src/entitlement-guard");
+const { NexusActionReceiptStore } = require("./src/nexus-action-receipts");
+const { InteractiveGameServiceManager } = require("./src/interactive-game-service-manager");
+const { assertFeature, assertStreamDeckButton, requiredFeatureForAction } = require("./src/entitlement-guard");
 const { BetaSessionStore } = require("./src/beta-session-store");
 const { MediaSourceStore } = require("./src/media-source-store");
 const { RecordingHandoffStore } = require("./src/recording-handoff-store");
@@ -37,6 +39,7 @@ const { GameCaptureSourceManager } = require("./src/game-capture-source-manager"
 const { StreamRuntimeEvidenceRecorder } = require("./src/stream-runtime-evidence");
 const { StreamCredentialStore } = require("./src/stream-credential-store");
 const { StreamProfileStore, localSettingsPatch } = require("./src/stream-profile-store");
+const { GameActivityTracker } = require("./src/game-activity-tracker");
 const { providerInfo: streamProviderInfo, providerCatalogPublic } = require("./src/stream-provider-catalog");
 const { checkCloudHealth, creatorReady } = require("./src/cloud-health");
 const { planSettingsTransition, assertLiveSafeSecretChange } = require("./src/runtime-stability");
@@ -62,14 +65,17 @@ let settingsPath = "";
 let spoolPath = "";
 let cloudHealth = {ok:false,online:false,database:false,status:"unknown",modules:{},latencyMs:0,checkedAt:null,error:"Noch nicht geprüft."};
 let cloudHealthTimer = null;
+let gameActivityPresenceTimer = null;
 let deviceLinkClient = null;
 let deviceLinkPollTimer = null;
 let deviceLinkPolling = false;
-let creatorLibrary = {widgets:[],scenes:[],game:null,gameRules:[],gameRuleHits:[],cutProjects:[],cutJobs:[],creator:null,loadedAt:null,error:""};
+let creatorLibrary = {widgets:[],scenes:[],game:null,gameActivity:null,gameContext:{mode:"none"},gameRules:[],gameRuleHits:[],cutProjects:[],cutJobs:[],creator:null,loadedAt:null,error:""};
 let outputManager = null;
 let outputGateStore = null;
 let outputGatePath = "";
 let streamDeckStore = null;
+let nexusActionReceiptStore = null;
+let interactiveGameService = null;
 let betaSessionStore = null;
 let mediaSourceStore = null;
 let recordingHandoffStore = null;
@@ -81,6 +87,7 @@ let gameCaptureSourceManager = null;
 let streamRuntimeEvidence = null;
 let streamCredentialStore = null;
 let streamProfileStore = null;
+let gameActivityTracker = null;
 let streamStudioCloud = {config:null,program_scene:null,overlays:[],multistream:{max_destinations:1},engine:{},loadedAt:null,error:"",runtime_update:null};
 let streamStudioRuntimeSyncTimer = null;
 let streamStudioRuntimeSyncInFlight = false;
@@ -151,10 +158,12 @@ function appState(extra = {}) {
     outputDisplays: outputManager?.displays?.() || [],
     outputBackgroundModes: Object.values(BACKGROUND_MODES),
     streamDeck: streamDeckStore?.snapshot?.() || null,
+    nexusReceipts: nexusActionReceiptStore?.snapshot?.() || {schema:1,count:0,receipts:[]},
+    interactiveGames: interactiveGameService?.snapshot?.() || {available:false,running:false,port:8787,baseUrl:"http://127.0.0.1:8787",overlayUrl:"http://127.0.0.1:8787/overlay.html",activeGame:"",managed:true},
     betaCenter:{cloud:betaCloud,localSession:betaSessionStore?.snapshot?.() || {active:false,sessionId:null,lastError:""}},
     mediaEngine:cutMediaEngine?.snapshot?.() || {status:"idle",available:false,ffmpegPath:"",ffmpegSource:"",version:"",capabilities:{drawtext:false,concat:true,xfade:false,acrossfade:false,loudnorm:false,zoompan:false,rotate:false,blend:false,amix:false,sidechaincompress:false,encoders:{software:true,nvenc:false,qsv:false,amf:false}},jobId:null,progress:0,phase:"idle",mode:"clips",encoder:"software",transition:"cut",error:""},
     mediaSources:mediaSourceStore?.snapshot?.() || {schema:4,sources:{},music:{},voice:{},musicTracks:{},voiceTracks:{},sfx:{}},
-    recordingHandoffs:recordingHandoffStore?.snapshot?.() || {schema:2,pass:"21.10.26",maxItems:30,pending:0,ready:0,items:[]},
+    recordingHandoffs:recordingHandoffStore?.snapshot?.() || {schema:4,pass:"v124-recording-context-integrity",maxItems:30,pending:0,ready:0,items:[]},
     cutAuditionSession:publicCutAuditionSession(),
     streamEngine:streamEngine?.snapshot?.() || {status:"idle",available:false,desiredRunning:false,capabilities:{gdigrab:false,dshow:false,processLoopback:false,gameCaptureWgc:false,encoders:{software:true,nvenc:false,amd:false,qsv:false}},destinations:{},recording:null,error:""},
     applicationAudio:applicationAudioSourceManager?.snapshot?.() || {available:false,prepared:0,sources:[],error:""},
@@ -162,6 +171,7 @@ function appState(extra = {}) {
     runtimeEvidence:streamRuntimeEvidence?.snapshot?.() || {schema:1,pass:"21.10.22",active:false,samples:0,events:0,lastEvidence:null,rawMediaPersisted:false,secretsPersisted:false},
     streamStudio:{...streamStudioCloud,effective_config:profileApplied.config,profile_override:{active:Boolean(profileApplied.profile),profile:profileApplied.profile,warnings:profileApplied.warnings||[]},credentials:streamCredentialStore?.snapshot?.((profileApplied.config?.multistream?.destinations||streamStudioCloud?.config?.multistream?.destinations||[]).map(item=>item.id)) || {encryptionAvailable:safeStorage.isEncryptionAvailable(),targets:{}}},
     streamProfiles:profileSnapshot,
+    gameActivity:gameActivityTracker?.snapshot?.() || {enabled:false,active:null,pending:0,last_error:"",raw_paths_exposed:false,secrets_exposed:false},
     streamProviders:providerCatalogPublic(),
     encryptionAvailable: safeStorage.isEncryptionAvailable(),
     ...extra
@@ -181,6 +191,12 @@ function startCloudHealthLoop() {
   setTimeout(()=>refreshCloudHealth().catch(()=>{}),1800);
   cloudHealthTimer=setInterval(()=>refreshCloudHealth().catch(()=>{}),60000);
   cloudHealthTimer.unref?.();
+}
+
+function startGameActivityPresenceLoop() {
+  clearInterval(gameActivityPresenceTimer);
+  gameActivityPresenceTimer=setInterval(()=>publishGameActivityPresence().catch(()=>{}),60000);
+  gameActivityPresenceTimer.unref?.();
 }
 
 function refreshTray() {
@@ -321,6 +337,11 @@ async function gameControl(action,input={}){
   else if(action==="score")data=await bridge.gameScore(input.team,input.delta);
   else data=await bridge.gameRuntime();
   creatorLibrary={...creatorLibrary,game:data?.runtime||creatorLibrary.game};
+  const runtime=creatorLibrary.game||{};
+  if(runtime.source_mode==="launcher_local"){
+    if(action==="stop") await interactiveGameService?.stop?.();
+    else if(["start","status","reset"].includes(action)) await interactiveGameService?.selectGame?.(runtime.game_type);
+  }
   const next=appState({gameAction:{action,runtime:creatorLibrary.game}});
   send("launcher:state",next);
   return next;
@@ -337,7 +358,11 @@ async function openCutProject(projectId){
 function recordingHandoffProjectPayload(handoff={}){
   const profile=String(handoff.profile||"").toLowerCase(),format=profile.includes("vertical")?"vertical":"landscape";
   const stamp=new Date(handoff.stoppedAt||handoff.createdAt||Date.now()),title=`Stream Recording · ${stamp.toLocaleString("de-DE",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"})}`;
-  return{title,status:"draft",format,source_name:handoff.fileName||"CFS Recording",notes:`Automatischer lokaler Recording-Handoff aus CFS Stream Studio. ${handoff.sceneName?`Scene: ${handoff.sceneName}. `:""}Die Mediendatei bleibt ausschließlich auf dem Launcher-PC.`,export_preset:{fps:profile.includes("60")?60:30,quality:"high",mode:"clips",transition:"cut",encoder:"software",audio_normalize:false,audio_bitrate_kbps:192,source_tracks:(handoff.tracks||[]).map(track=>({key:track.key,label:track.label,stream_index:track.stream_index,enabled:track.enabled!==false,gain_db:Number(track.gain_db||0),mute:track.mute===true,solo:track.solo===true,pan:Number(track.pan||0),waveform:(track.analysis?.waveform||[]).slice(0,64),peak_db:track.analysis?.peak_db??null,mean_db:track.analysis?.mean_db??null,analyzed_at:track.analysis?.analyzed_at||""})),source_handoff_id:String(handoff.id||"")}};
+  const captured=handoff.gameContext&&typeof handoff.gameContext==="object"?handoff.gameContext:{mode:"none"};
+  const interactive=creatorLibrary.game||null;
+  const gameContext={mode:String(captured.mode||"none"),game_name:String(captured.game_name||""),platform:String(captured.platform||"unknown"),source:String(captured.source||""),started_at:captured.started_at||null,last_played_at:captured.last_played_at||null,presence_id:String(captured.presence_id||""),context_id:String(captured.context_id||""),resumed_after_restart:captured.resumed_after_restart===true,captured_at:captured.captured_at||handoff.stoppedAt||new Date().toISOString(),active:Boolean(interactive&&interactive.status==="running"),game_type:String(interactive?.game_type||""),title:String(interactive?.title||""),source_mode:String(interactive?.source_mode||""),round:Number(interactive?.state?.round||0)};
+  const gameNote=gameContext.game_name?`Spielkontext: ${gameContext.game_name}${gameContext.platform&&gameContext.platform!=="unknown"?` (${gameContext.platform})`:""}. `:gameContext.active?`Interactive Game: ${gameContext.title||gameContext.game_type}. `:"";
+  return{title,status:"draft",format,source_name:handoff.fileName||"CFS Recording",notes:`Automatischer lokaler Recording-Handoff aus CFS Stream Studio. ${handoff.sceneName?`Scene: ${handoff.sceneName}. `:""}${gameNote}Die Mediendatei bleibt ausschließlich auf dem Launcher-PC.`,export_preset:{fps:profile.includes("60")?60:30,quality:"high",mode:"clips",transition:"cut",encoder:"software",audio_normalize:false,audio_bitrate_kbps:192,source_tracks:(handoff.tracks||[]).map(track=>({key:track.key,label:track.label,stream_index:track.stream_index,enabled:track.enabled!==false,gain_db:Number(track.gain_db||0),mute:track.mute===true,solo:track.solo===true,pan:Number(track.pan||0),waveform:(track.analysis?.waveform||[]).slice(0,64),peak_db:track.analysis?.peak_db??null,mean_db:track.analysis?.mean_db??null,analyzed_at:track.analysis?.analyzed_at||""})),source_handoff_id:String(handoff.id||""),recording_game_context:gameContext}};
 }
 
 async function materializeRecordingHandoff(handoffId,{open=false}={}){
@@ -393,6 +418,7 @@ async function previewRecordingHandoffMix(handoffId){
 }
 
 function isCutAuditionJob(job){return String(job?.manifest?.kind||"")==="cut_audition"}
+function isCutAnalysisJob(job){return String(job?.manifest?.kind||"")==="cut_analysis"}
 function publicCutAuditionSession(){
   const row=cutAuditionSession;if(!row)return{active:false,sessionId:"",projectId:"",state:"idle",startMs:0,endMs:0,positionMs:0,loopEnabled:false,loopStartMs:0,loopEndMs:0,loopCrossfadeMs:0,prefetched:0};
   return{active:true,sessionId:String(row.id||""),projectId:String(row.projectId||""),state:String(row.state||"playing"),startMs:Number(row.startMs||0),endMs:Number(row.endMs||0),positionMs:Number(row.positionMs??row.startMs??0),loopEnabled:row.loopEnabled===true,loopStartMs:Number(row.loopStartMs||0),loopEndMs:Number(row.loopEndMs||0),loopCrossfadeMs:Number(row.loopCrossfadeMs||0),prefetched:Number(row.prefetched||0)};
@@ -532,6 +558,35 @@ async function processCutAuditionJob(inputJob){
     throw error;
   }
 }
+async function processCutAnalysisJob(inputJob){
+  let job=inputJob;
+  try{
+    if(job.status==="queued")job=(await bridge.claimCutJob(job.id)).job;
+    if(job.status==="claimed")job=(await bridge.startCutJob(job.id)).job;
+    if(job.status!=="processing")return false;
+    await refreshCreatorLibrary({notify:false});
+    const project=(creatorLibrary.cutProjects||[]).find(row=>String(row.id)===String(job.project_id));
+    if(!project)throw new Error("Cut-Projekt für lokale Analyse wurde nicht gefunden.");
+    const requestedProfile=String(job.manifest?.analysis?.game_profile||"generic"),currentProfile=String(project.export_preset?.game_profile||"generic");
+    if(requestedProfile!==currentProfile)throw new Error("Das Game Profile wurde seit Anforderung der Clipanalyse geändert. Die veraltete Analyse wird nicht angewendet.");
+    let source=mediaSourceStore.get(job.project_id);
+    if(!source?.exists){
+      const handoff=(recordingHandoffStore?.snapshot?.().items||[]).find(item=>String(item.projectId||"")===String(job.project_id)&&item.exists&&item.filePath);
+      if(handoff){mediaSourceStore.set(job.project_id,{sourceName:handoff.fileName||project.source_name||"Recording",filePath:handoff.filePath});source=mediaSourceStore.get(job.project_id)}
+    }
+    if(!source?.exists)throw new Error("Für die lokale Clipanalyse ist diesem Projekt noch keine Videodatei im Launcher zugeordnet.");
+    const engine=configureCutMediaEngine(),probe=await engine.probe();if(!probe.available)throw new Error(probe.error||"FFmpeg wurde nicht gefunden.");
+    const maxEvents=Math.max(1,Math.min(24,Math.round(Number(job.manifest?.analysis?.max_events||12))));
+    const evidence=await engine.analyzeOwnClipEvidence(source.filePath,{streamIndex:0,maxEvents});
+    const preview=await bridge.previewCutCandidates(job.project_id,{own_evidence:evidence,persist:true});
+    job=(await bridge.completeCutJob(job.id,{output_name:"local-own-clip-evidence",duration_ms:0,bytes:0,codec:"analysis",note:`cut_analysis_local_signal_v1 · ${Number(preview?.own_event_count||0)} own-source events`})).job;
+    await refreshCreatorLibrary({notify:false});updateCutJobInLibrary(job);send("launcher:state",appState({cutAnalysisAction:{ok:true,projectId:String(job.project_id),eventCount:Number(preview?.own_event_count||0),candidateCount:Array.isArray(preview?.ranked)?preview.ranked.length:0}}));return true;
+  }catch(error){
+    if(job?.id&&["claimed","processing"].includes(String(job.status||""))){try{job=(await bridge.failCutJob(job.id,String(error?.message||error))).job;updateCutJobInLibrary(job)}catch{}}
+    send("launcher:state",appState({cutAnalysisAction:{ok:false,projectId:String(job?.project_id||""),error:String(error?.message||error)}}));throw error;
+  }
+}
+
 async function pollCutAuditionJobs(){
   if(cutAuditionPolling||!bridge?.snapshot?.().connected)return;
   cutAuditionPolling=true;
@@ -539,6 +594,8 @@ async function pollCutAuditionJobs(){
     const data=await bridge.cutJobs(),jobs=Array.isArray(data?.jobs)?data.jobs:[];
     const queued=jobs.find(job=>isCutAuditionJob(job)&&job.status==="queued");
     if(queued)await processCutAuditionJob(queued);
+    const analysis=jobs.find(job=>isCutAnalysisJob(job)&&job.status==="queued");
+    if(analysis)await processCutAnalysisJob(analysis);
   }catch(error){logger?.warn?.("Cut audition poll failed",error?.message||error)}finally{cutAuditionPolling=false}
 }
 function startCutAuditionLoop(){clearInterval(cutAuditionTimer);cutAuditionTimer=setInterval(()=>pollCutAuditionJobs().catch(()=>{}),1500);cutAuditionTimer.unref?.();setTimeout(()=>pollCutAuditionJobs().catch(()=>{}),600)}
@@ -547,7 +604,8 @@ function stopCutAuditionLoop(){clearInterval(cutAuditionTimer);cutAuditionTimer=
 async function handleRecordingFinalized(payload={}){
   if(!payload?.ok||!payload.filePath)return;
   let duration=0;try{const info=await configureCutMediaEngine().probeMediaInfo(payload.filePath);duration=Number(info?.duration_ms||0)}catch{}
-  const handoff=recordingHandoffStore.create({...payload,durationMs:duration||0,sceneId:payload.sceneGraph?.sceneId||"",sceneName:payload.sceneGraph?.sceneName||"",format:path.extname(payload.filePath).replace(/^\./,"")||"mkv"});
+  if(bridge?.snapshot?.().connected)await refreshCreatorLibrary({notify:false}).catch(error=>logger?.warn?.("Recording game context refresh failed",error?.message));
+  const handoff=recordingHandoffStore.create({...payload,durationMs:duration||0,sceneId:payload.sceneGraph?.sceneId||"",sceneName:payload.sceneGraph?.sceneName||"",format:path.extname(payload.filePath).replace(/^\./,"")||"mkv",gameContext:creatorLibrary.gameContext||{mode:"none"}});
   send("launcher:state",appState({recordingHandoffAction:{ok:true,created:true,handoffId:handoff.id}}));
   if(bridge?.snapshot?.().connected&&creatorFeatures().cut_studio===true){
     try{await materializeRecordingHandoff(handoff.id)}catch(error){recordingHandoffStore.markError(handoff.id,error);logger?.warn?.("Recording to Cut Studio handoff failed",error?.message);send("launcher:state",appState({recordingHandoffAction:{ok:false,handoffId:handoff.id,error:String(error?.message||error)}}))}
@@ -1088,7 +1146,7 @@ async function clearCutSfx(projectId,trackId){
 
 function updateCutJobInLibrary(job){
   if(!job?.id)return;
-  if(isCutAuditionJob(job))return;
+  if(isCutAuditionJob(job)||isCutAnalysisJob(job))return;
   const jobs=Array.isArray(creatorLibrary.cutJobs)?creatorLibrary.cutJobs.slice():[];
   const index=jobs.findIndex(item=>String(item.id)===String(job.id));
   if(index>=0)jobs[index]=job;else jobs.unshift(job);
@@ -1101,6 +1159,7 @@ async function processCutJob(jobId){
   if(!creatorLibrary.loadedAt)await refreshCreatorLibrary({notify:false});
   let job=findCutJob(jobId);
   if(!job)throw new Error("Cut-Export-Job ist nicht in deinem Creator Account verfügbar.");
+  if(isCutAuditionJob(job)||isCutAnalysisJob(job))throw new Error("Interne CUT-Jobs dürfen nicht über den normalen Export-Prozessor ausgeführt werden.");
   const source=mediaSourceStore.get(job.project_id);
   if(!source?.exists)throw new Error("Ordne diesem Cut-Projekt zuerst eine lokale Videodatei zu.");
   const linkedRecordingHandoff=(recordingHandoffStore?.snapshot?.().items||[]).find(item=>{if(String(item.projectId||"")!==String(job.project_id||"")||!item.filePath)return false;try{return path.resolve(item.filePath)===path.resolve(source.filePath)}catch{return String(item.filePath)===String(source.filePath)}})||null;
@@ -1162,12 +1221,8 @@ function openCutExportFolder(){
 }
 
 
-async function runStreamDeckButton(buttonId){
-  const button=streamDeckStore?.getButton?.(buttonId);
-  if(!button)throw new Error("Stream-Deck Button nicht gefunden.");
-  assertStreamDeckButton(creatorFeatures(),button);
-
-  const result=await executeStreamDeckAction(button,{
+function streamDeckExecutionContext(){
+  return {
     isLive:async()=>Boolean(bridge?.liveActive),
     startLive,
     endLive,
@@ -1187,11 +1242,118 @@ async function runStreamDeckButton(buttonId){
     gameScore:async(team,delta)=>{const next=await gameControl("score",{team,delta});return next.creatorLibrary.game},
     openCutProject,
     openPage:openCreatorTool
-  });
+  };
+}
 
+async function runStreamDeckButton(buttonId){
+  const button=streamDeckStore?.getButton?.(buttonId);
+  if(!button)throw new Error("Stream-Deck Button nicht gefunden.");
+  assertStreamDeckButton(creatorFeatures(),button);
+  const result=await executeStreamDeckAction(button,streamDeckExecutionContext());
   const next=appState({streamDeckAction:result});
   send("launcher:state",next);
   return next;
+}
+
+const NEXUS_LAUNCHER_ACTIONS=new Set([
+  "scene_next","scene_start","output_reload","output_stop","alert_follow","alert_gift","alert_share",
+  "widget_toggle","refresh_library","game_toggle","game_score_a","game_score_b","game_reset",
+  "open_dashboard","open_widget_studio","open_scene_studio","open_games","open_cut_studio"
+]);
+
+async function executeInteractiveGameCommandAction(action){
+  const id=String(action?.id||"");
+  const payload=action?.payload&&typeof action.payload==="object"?action.payload:{};
+  const command=String(payload.command||"");
+  const gameType=String(payload.game_type||"");
+  const terminalId=String(payload.terminal_id||"");
+  if(!id)throw new Error("Interactive Game Action-ID fehlt.");
+  if(!["start","stop","reset","select"].includes(command))throw new Error("Interactive Game Aktion ist im Launcher nicht freigegeben.");
+  assertFeature(creatorFeatures(),"games","Interactive Games");
+  const existing=nexusActionReceiptStore?.get?.(id);
+  if(existing){await bridge.ackActions([id]);return existing.result||{ok:true,replayed:true};}
+  try{
+    let result;
+    if(command==="stop")result=await interactiveGameService.stop();
+    else if(command==="reset"){await interactiveGameService.stop();result=await interactiveGameService.selectGame(gameType,terminalId);}
+    else result=await interactiveGameService.selectGame(gameType,terminalId);
+    nexusActionReceiptStore?.remember?.(id,`interactive_game_${command}`,result||{});
+    await bridge.ackActions([id]);
+    send("launcher:state",appState({interactiveGameAction:{ok:true,id,command,gameType,result}}));
+    return result;
+  }catch(error){
+    try{await bridge.nackActions([id],String(error?.message||error||"interactive_game_failed").slice(0,300));}catch{}
+    send("launcher:state",appState({interactiveGameAction:{ok:false,id,command,gameType,error:String(error?.message||error)}}));
+    throw error;
+  }
+}
+
+
+async function executeLiveProviderCommandAction(action){
+  const id=String(action?.id||"");
+  const payload=action?.payload&&typeof action.payload==="object"?action.payload:{};
+  const command=String(payload.command||"");
+  const provider=String(payload.provider||"tikfinity");
+  if(!id)throw new Error("LIVE Provider Action-ID fehlt.");
+  if(provider!=="tikfinity"||!["connect","disconnect","reconnect"].includes(command))throw new Error("LIVE Provider Aktion ist im Launcher nicht freigegeben.");
+  assertFeature(creatorFeatures(),"live_bridge","LIVE Bridge");
+  const existing=nexusActionReceiptStore?.get?.(id);
+  if(existing){await bridge.ackActions([id]);return existing.result||{ok:true,replayed:true};}
+  try{
+    let result;
+    if(command==="disconnect"){
+      await providers?.stop?.();
+      result={ok:true,provider,status:"offline",ready:false};
+    }else{
+      const saved=configStore.save({provider});
+      await providers.use(provider);
+      const info=await providers.start({machineName:saved.machineName,username:saved.tiktokUsername,apiKey:configStore.getTikToolKey()});
+      bridge?.updateCredentials?.(saved,configStore.getToken());
+      result={ok:true,provider:info.key||provider,status:info.status||(info.ready?"connected":"idle"),ready:info.ready===true};
+    }
+    nexusActionReceiptStore?.remember?.(id,`live_provider_${command}`,result);
+    await bridge.ackActions([id]);
+    send("launcher:state",appState({liveProviderAction:{ok:true,id,command,result}}));
+    return result;
+  }catch(error){
+    try{await bridge.nackActions([id],String(error?.message||error||"live_provider_failed").slice(0,300));}catch{}
+    send("launcher:state",appState({liveProviderAction:{ok:false,id,command,error:String(error?.message||error)}}));
+    throw error;
+  }
+}
+
+async function executeNexusCommandAction(action){
+  const id=String(action?.id||"");
+  const payload=action?.payload&&typeof action.payload==="object"?action.payload:{};
+  const command=String(payload.command||"");
+  const target=String(payload.target||"");
+  if(!id)throw new Error("NEXUS Action-ID fehlt.");
+  if(!NEXUS_LAUNCHER_ACTIONS.has(command))throw new Error("NEXUS Aktion ist im Launcher nicht freigegeben.");
+  const features=creatorFeatures();
+  assertFeature(features,"nexus","NEXUS");
+  const required=requiredFeatureForAction(command);
+  if(required)assertFeature(features,required,`NEXUS · ${command}`);
+
+  const existing=nexusActionReceiptStore?.get?.(id);
+  if(existing){
+    await bridge.ackActions([id]);
+    logger?.info?.("NEXUS action redelivery acknowledged without re-execution",id,command);
+    return existing.result||{ok:true,action:command,replayed:true};
+  }
+
+  try{
+    const result=await executeStreamDeckAction({action:command,target},streamDeckExecutionContext());
+    nexusActionReceiptStore?.remember?.(id,command,result||{});
+    await bridge.ackActions([id]);
+    logger?.info?.("NEXUS action completed",id,command);
+    send("launcher:state",appState({nexusAction:{ok:true,id,command,result}}));
+    return result;
+  }catch(error){
+    try{await bridge.nackActions([id],String(error?.message||error||"nexus_action_failed").slice(0,300));}catch{}
+    logger?.warn?.("NEXUS action failed",id,command,error?.message);
+    send("launcher:state",appState({nexusAction:{ok:false,id,command,error:String(error?.message||error)}}));
+    throw error;
+  }
 }
 
 
@@ -1289,7 +1451,7 @@ function configureDeviceLinkClient() {
 
 async function refreshCreatorLibrary({notify=true} = {}) {
   if (!bridge?.snapshot?.().connected) {
-    creatorLibrary = {widgets:[],scenes:[],game:null,gameRules:[],gameRuleHits:[],cutProjects:[],cutJobs:[],creator:null,loadedAt:null,error:"Bridge offline"};
+    creatorLibrary = {widgets:[],scenes:[],game:null,gameActivity:null,gameContext:{mode:"none"},gameRules:[],gameRuleHits:[],cutProjects:[],cutJobs:[],creator:null,loadedAt:null,error:"Bridge offline"};
     if (notify) send("launcher:state",appState());
     return creatorLibrary;
   }
@@ -1299,10 +1461,12 @@ async function refreshCreatorLibrary({notify=true} = {}) {
       widgets:Array.isArray(data?.widgets)?data.widgets:[],
       scenes:Array.isArray(data?.scenes)?data.scenes:[],
       game:data?.game || null,
+      gameActivity:data?.game_activity||null,
+      gameContext:data?.game_context&&typeof data.game_context==="object"?data.game_context:{mode:"none"},
       gameRules:Array.isArray(data?.game_rules)?data.game_rules:[],
       gameRuleHits:Array.isArray(data?.game_rule_hits)?data.game_rule_hits:[],
       cutProjects:Array.isArray(data?.cut_projects)?data.cut_projects:[],
-      cutJobs:Array.isArray(data?.cut_jobs)?data.cut_jobs.filter(job=>!isCutAuditionJob(job)):[],
+      cutJobs:Array.isArray(data?.cut_jobs)?data.cut_jobs.filter(job=>!isCutAuditionJob(job)&&!isCutAnalysisJob(job)):[],
       creator:data?.creator || null,
       loadedAt:new Date().toISOString(),
       error:""
@@ -1426,6 +1590,7 @@ async function logoutLauncherDevice() {
   }
 
   try { await outputManager?.stop?.(); } catch {}
+  try { await interactiveGameService?.stop?.(); } catch {}
   stopStreamStudioRuntimeSync();
   try { await streamEngine?.stop?.(); } catch {}
   finishStreamRuntimeEvidence("device_logout");
@@ -1441,22 +1606,63 @@ async function logoutLauncherDevice() {
   stopDeviceLinkPolling();
   configStore.clearPendingDeviceLink();
   configStore.clearToken();
-  creatorLibrary = {widgets:[],scenes:[],game:null,gameRules:[],gameRuleHits:[],cutProjects:[],cutJobs:[],creator:null,loadedAt:null,error:""};
+  creatorLibrary = {widgets:[],scenes:[],game:null,gameActivity:null,gameContext:{mode:"none"},gameRules:[],gameRuleHits:[],cutProjects:[],cutJobs:[],creator:null,loadedAt:null,error:""};
   rebuildBridge();
   return appState({deviceLogout:{remoteRevoked}});
 }
 
 
+function currentGameActivityTarget(settings=configStore?.publicSettings?.() || {}) {
+  const source=String(settings.gameActivitySource||"launcher_manual");
+  const streamName=String(settings.streamGameProcessName||settings.streamGameWindowTitle||"").trim();
+  return {
+    enabled:settings.gameActivityEnabled===true,
+    source,
+    gameName:source==="stream_capture"?streamName:String(settings.gameActivityGameName||"").trim(),
+    platform:source==="stream_capture"?"pc":String(settings.gameActivityPlatform||"unknown")
+  };
+}
+
+async function publishGameActivityPresence(snapshot=gameActivityTracker?.snapshot?.()||null) {
+  if(!bridge?.snapshot?.().connected || !bridge?.publishGameActivityState)return null;
+  const active=snapshot?.active||null;
+  const changedAt=snapshot?.presence_changed_at||active?.started_at||new Date().toISOString();
+  const payload=active?{
+    active:true,
+    game_name:String(active.game_name||"").slice(0,80),
+    source:String(active.source||"launcher_manual"),
+    platform:String(active.platform||"unknown"),
+    started_at:active.started_at||null,
+    resumed_after_restart:active.resumed_after_restart===true,
+    state_changed_at:changedAt,
+    transition_id:String(snapshot?.presence_transition_id||"").slice(0,48)
+  }:{active:false,state_changed_at:changedAt,transition_id:String(snapshot?.presence_transition_id||"").slice(0,48)};
+  try{return await bridge.publishGameActivityState(payload)}catch(error){logger?.warn("Game activity presence publish failed",error?.message);return null}
+}
+
+function syncGameActivityTracking({flush=true,publish=true}={}) {
+  if(!gameActivityTracker)return null;
+  const snap=gameActivityTracker.configure(currentGameActivityTarget());
+  if(flush)gameActivityTracker.flush().catch(error=>logger?.warn("Game activity flush failed",error?.message));
+  if(publish)publishGameActivityPresence(snap).catch(()=>{});
+  send("launcher:state",appState());
+  return snap;
+}
+
 function rebuildBridge() {
   bridge?.stop?.();
   const settings = configStore.publicSettings();
   const token = configStore.getToken();
-  bridge = new BridgeClient({ settings, token, logger, version: pkg.version, spool: eventSpool, streamHealthProvider:()=>streamEngine?.telemetry?.() || null });
+  bridge = new BridgeClient({ settings, token, logger, version: pkg.version, spool: eventSpool, streamHealthProvider:()=>streamEngine?.telemetry?.() || null, interactiveGamesProvider:()=>interactiveGameService?.snapshot?.() || null, liveProviderHealthProvider:()=>providers?.info?.() || {key:settings.provider||"mock",ready:false,status:"idle"} });
 
   bridge.on("state", state => {
     send("launcher:state", appState({ bridge: state }));
     refreshTray();
 
+    if (state.connected) {
+      gameActivityTracker?.flush?.({force:true}).catch(error=>logger?.warn("Game activity flush after bridge connect failed",error?.message));
+      publishGameActivityPresence().catch(()=>{});
+    }
     if (state.connected && (!creatorLibrary.loadedAt || creatorLibrary.error)) {
       refreshCreatorLibrary().catch(()=>{});
     }
@@ -1482,6 +1688,10 @@ function rebuildBridge() {
   });
 
   bridge.on("action", action => {
+    const actionType=String(action?.action_type||"");
+    if(actionType==="live_provider_command"){executeLiveProviderCommandAction(action).catch(()=>{});return;}
+    if(actionType==="nexus_command"){executeNexusCommandAction(action).catch(()=>{});return;}
+    if(actionType==="interactive_game_command"){executeInteractiveGameCommandAction(action).catch(()=>{});return;}
     send("launcher:action", action);
   });
 
@@ -1502,11 +1712,12 @@ function rebuildBridge() {
 async function rebuildProvider() {
   const settings = configStore.publicSettings();
   if (!providers) {
-    providers = new ProviderManager(logger);
+    providers = new ProviderManager(logger,{interactiveGameService});
     providers.on("event", event => {
       try {
         eventMonitor?.record?.(event);
         bridge.enqueueEvent(event);
+        interactiveGameService?.pushEvent?.(event).catch?.(()=>{});
         send("launcher:state", appState());
       } catch (error) {
         logger.warn("Provider event rejected", error.message);
@@ -1624,6 +1835,10 @@ async function gracefulShutdown(reason = "app_quit") {
   stopStreamStudioRuntimeSync();
   try { await streamEngine?.stop?.(); } catch {}
   finishStreamRuntimeEvidence(reason);
+  try {
+    await gameActivityTracker?.shutdown?.(reason);
+    await publishGameActivityPresence(gameActivityTracker?.snapshot?.()||null);
+  } catch (error) { logger?.warn("Game activity shutdown warning",error?.message); }
 
   logger?.info("Graceful shutdown started", reason);
   try {
@@ -1639,6 +1854,7 @@ async function gracefulShutdown(reason = "app_quit") {
     bridge?.stop?.();
     updates?.stop?.();
     clearInterval(cloudHealthTimer);
+    clearInterval(gameActivityPresenceTimer);
     stopDeviceLinkPolling();
     logger?.info("Graceful shutdown finished");
   }
@@ -1663,6 +1879,7 @@ function registerIpc() {
     updates?.configure?.(saved);
     updates?.start?.(saved);
     configureDeviceLinkClient();
+    syncGameActivityTracking();
     logger.info("Launcher settings updated",transition.criticalChanges.length?`connection fields: ${transition.criticalChanges.join(",")}`:"runtime-only");
 
     if(transition.bridgeCredentialsChanged){
@@ -1692,6 +1909,20 @@ function registerIpc() {
 
   ipcMain.handle("launcher:creator-library", async () => {
     await refreshCreatorLibrary({notify:false});
+    return appState();
+  });
+
+  ipcMain.handle("launcher:game-activity-sync", async () => {
+    const snap=syncGameActivityTracking({flush:false,publish:false});
+    await gameActivityTracker?.flush?.({force:true});
+    await publishGameActivityPresence(snap);
+    return appState();
+  });
+
+  ipcMain.handle("launcher:game-activity-clear", async () => {
+    gameActivityTracker?.stop?.("privacy_clear");
+    await publishGameActivityPresence(gameActivityTracker?.snapshot?.()||null);
+    if (bridge?.snapshot?.().connected) await bridge.clearGameActivity();
     return appState();
   });
 
@@ -1802,6 +2033,13 @@ function registerIpc() {
   ipcMain.handle("launcher:game-control", async (_event,input) => {
     return gameControl(String(input?.action||"status"),input||{});
   });
+  ipcMain.handle("launcher:interactive-games-start", async (_event,input) => {
+    const runtime=(await bridge.gameRuntime())?.runtime||creatorLibrary.game||{};
+    await interactiveGameService.selectGame(String(input?.gameType||runtime.game_type||"nexus"));
+    return appState();
+  });
+  ipcMain.handle("launcher:interactive-games-stop", async () => { await interactiveGameService.stop(); return appState(); });
+  ipcMain.handle("launcher:interactive-games-status", async () => appState());
 
   ipcMain.handle("launcher:open-cut-project", async (_event,projectId) => {
     await openCutProject(projectId);
@@ -2136,6 +2374,9 @@ function registerIpc() {
       diagnostics,
       fieldTest,
       releaseGate,
+      interactiveGames:interactiveGameService?.snapshot?.() || null,
+      gameActivity:gameActivityTracker?.snapshot?.() || null,
+      recordingHandoffs:recordingHandoffStore?.snapshot?.() || null,
       logText:logger?.tail?.(50000) || ""
     });
     shell.showItemInFolder(bundle.folder);
@@ -2194,11 +2435,16 @@ app.whenReady().then(async () => {
   outputGatePath=path.join(userData,"output-tests","real-world-gate.json");
   outputGateStore=new OutputGateStore(outputGatePath,{version:pkg.version,platform:process.platform});
   streamDeckStore=new StreamDeckStore(path.join(userData,"stream-deck","layout.json"));
+  nexusActionReceiptStore=new NexusActionReceiptStore(path.join(userData,"nexus","action-receipts.json"));
+  const gameServiceRoot=app.isPackaged?path.join(process.resourcesPath,"interactive-games-terminal"):path.join(__dirname,"resources","interactive-games-terminal");
+  interactiveGameService=new InteractiveGameServiceManager({logger,serviceRoot:gameServiceRoot,userDataPath:userData,port:8787});
   betaSessionStore=new BetaSessionStore(path.join(userData,"beta","active-session.json"));
   mediaSourceStore=new MediaSourceStore(path.join(userData,"cut-studio","media-sources.json"));
   recordingHandoffStore=new RecordingHandoffStore(path.join(userData,"cut-studio","recording-handoffs.json"));
   streamCredentialStore=new StreamCredentialStore(path.join(userData,"stream-studio","credentials.json"),safeStorage,logger);
   streamProfileStore=new StreamProfileStore(path.join(userData,"stream-studio","streaming-profiles.json"),{logger});
+  gameActivityTracker=new GameActivityTracker({filePath:path.join(userData,"community","game-activity.json"),logger,submitter:payload=>{if(!bridge?.snapshot?.().connected)throw new Error("Creator Bridge ist offline.");return bridge.submitGameActivity(payload)}});
+  gameActivityTracker.startLoop();
   configureCutMediaEngine();
   configureStreamEngine();
   configureStreamRuntimeEvidence();
@@ -2216,6 +2462,8 @@ app.whenReady().then(async () => {
   configureDeviceLinkClient();
   await rebuildProvider();
   rebuildBridge();
+  syncGameActivityTracking();
+  startGameActivityPresenceLoop();
   if (configStore.getPendingDeviceLink?.()) scheduleDeviceLinkPolling(1200);
   createWindow();
   startCutAuditionLoop();

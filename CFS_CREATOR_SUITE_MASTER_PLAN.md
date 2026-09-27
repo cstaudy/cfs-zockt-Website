@@ -1,6 +1,33 @@
 # cfs_zockt Creator Suite — Master-Checkliste
 
-Stand: Milestone V42 / Launcher 0.42.0
+Stand: v124 Game Context Operational Finish / Launcher 0.47.7
+
+
+## v124 Game Context Operational Finish
+- [x] deterministische `cfsgc_<sha>` Integritäts-ID für eingefrorene Recording-Spielkontexte
+- [x] Recording-Handoff Schema 4 und validierte CUT-Weitergabe
+- [x] Dashboard-Status für aktiven/letzten Spielkontext
+- [x] sanitisierte Game-Activity- und Recording-Handoff-Supportberichte ohne lokale Medienpfade
+- [x] responsive Operations-Karten ohne feste Kartenanzahl
+- [x] Launcher 0.47.7
+
+## v123 Recording → CUT Unified Game Context
+- [x] Bridge Library liefert denselben sanitisierten `game_context` wie Stream Studio
+- [x] Launcher friert den Game Context beim Recording-Finalize ein
+- [x] Recording-Handoff persistiert den Kontext crash-sicher
+- [x] CUT Studio übernimmt Spielname + Plattform aus dem Recording-Kontext
+- [x] Legacy Interactive-Game-Kontext bleibt kompatibel
+- [x] keine Prozess-/Fenster-/EXE-/Credential-Daten im Game Context
+- [x] Launcher 0.47.7
+
+## v121 Game Activity Restart Recovery + Stream Studio Context
+- [x] Crash/Restart-Recovery schließt die alte Session am letzten bestätigten Heartbeat
+- [x] keine Launcher-Offtime als Spielzeit
+- [x] sanitisiertes Recovery-Candidate für dasselbe Spiel/Plattform-Ziel
+- [x] Stream Studio erhält aktiven Game-Kontext über initiale und Runtime-API
+- [x] separates AKTIVES-SPIEL-Statusfeld im Stream Studio
+- [x] `resumed_after_restart` ohne Prozess-/Pfad-/Credential-Daten
+- [x] Launcher 0.47.7
 
 Diese Liste ist ab jetzt die zentrale Arbeitsreihenfolge. Jeder neue Milestone
 markiert Punkte als erledigt und nimmt den nächsten sinnvollen Block.
@@ -190,7 +217,10 @@ markiert Punkte als erledigt und nimmt den nächsten sinnvollen Block.
 - [x] V36: mehrere Musik-/Voice-Spuren + Cubic-Bezier Value-Easing + lokale Waveform/Peak-Analyse
 - [ ] Cut Studio optionaler Advanced Pass: echte Bezier-Tangenten / Beat-Snap / Wellenform-Mixer-Automation
 - [x] V28: Cut Studio Projekte in öffentlichen Creator Launcher integriert
-- [ ] NEXUS Produktrolle final definieren
+- [x] NEXUS Produktrolle final definiert: Creator Control Plane für Status, sichere Launcher-Aktionen und Event→Action-Automationen
+- [x] Interactive Games Terminal v4.1.0 als Launcher-Local-Game-Engine integriert (NEXUS, Boss Arena, Team Race, Welche Tür?)
+- [x] einheitlicher Game Profile/Adapter-Vertrag für Cloud- und Launcher-Local-Games
+- [x] Stream Studio + CUT Handoff + Launcher an Interactive Games angebunden
 
 ## L. PRO / BILLING / PRODUKT
 
@@ -388,3 +418,20 @@ markiert Punkte als erledigt und nimmt den nächsten sinnvollen Block.
 - [x] Integritätsprüfung im Admin Control Center
 - [x] step-up-geschützter Forensik-Export
 - [x] weiterhin keine Request-Bodies, rohen IPs oder User-Agents im Audit
+
+
+## v80 INTERACTIVE GAMES PROFILE / RECOVERY COMPLETION
+
+- [x] Game-Presets für Cloud- und Launcher-Local-Games
+- [x] versionierter profilbezogener JSON-Export ohne Secrets/Tokens
+- [x] transaktionaler Profil-/LIVE-Regel-Import
+- [x] Import-Sperre während RUNNING/STARTING
+- [x] Launcher-Modulprüfung vor Local-Game-Import
+- [x] OBS-/Source-Metadaten in der Games-Seite
+- [x] Launcher Game-Catalog SHA-256-Fingerprint
+- [x] sanitisiertes Interactive-Games Support-Bundle
+- [x] Launcher 0.47.7
+- [x] Current Contract Regression 30/30 PASS
+- [ ] reale Windows Interactive-Games Acceptance
+- [ ] echte TikTok-LIVE-Event-Acceptance
+- [ ] echte OBS-/LIVE-Studio-Abnahme

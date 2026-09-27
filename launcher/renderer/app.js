@@ -299,7 +299,7 @@ function fmtTime(value) {
 }
 
 function providerLabel(key) {
-  return key === "tiktool" ? "TIKTOK LIVE · TIKTOOL" : "SIMULATOR";
+  return key === "tikfinity" ? "TIKTOK LIVE · TIKFINITY" : key === "tiktool" ? "TIKTOK LIVE · TIKTOOL" : "SIMULATOR";
 }
 
 function syncNow(){
@@ -472,7 +472,7 @@ function renderHomeHub(nextState=state){
   const creator=bridge.creator||library.creator||{},profile=creator.profile||{};
   const creatorName=profile.display_name||creator.display_name||"Creator Account";
   const provider=String(settings.provider||"mock");
-  const tiktokReady=provider==="tiktool"&&Boolean(String(settings.tiktokUsername||"").trim())&&Boolean(settings.tiktoolKeyStored);
+  const tiktokReady=provider==="tikfinity" ? Boolean(nextState?.provider?.ready) : provider==="tiktool"&&Boolean(String(settings.tiktokUsername||"").trim())&&Boolean(settings.tiktoolKeyStored);
   const simulator=provider==="mock";
   const loaded=Boolean(library.loadedAt&&!library.error);
   const widgets=Array.isArray(library.widgets)?library.widgets:[];
@@ -1036,17 +1036,22 @@ function renderDeckTarget(actionKey,currentTarget=""){
 }
 
 function renderCreatorTools(nextState=state){
-  const library=nextState?.creatorLibrary||{},game=library.game||{},config=game.config||{},score=game.state||{},running=game.status==="running",features=currentCreatorFeatures();
+  const library=nextState?.creatorLibrary||{},game=library.game||{},config=game.config||{},score=game.state||{},running=game.status==="running",starting=game.status==="starting",features=currentCreatorFeatures();
   const pill=$("#toolsGamePill");
   if(!pill)return;
-  pill.textContent=running?"RUNNING":"IDLE";pill.className="pill"+(running?" ok":"");
+  pill.textContent=running?"RUNNING":starting?"STARTING":"IDLE";pill.className="pill"+(running?" ok":"");
   $("#toolsGameTitle").textContent=game.title||config.title||"Community Battle";
   $("#toolsTeamA").textContent=config.team_a_name||"TEAM A";$("#toolsTeamB").textContent=config.team_b_name||"TEAM B";
   $("#toolsScoreA").textContent=String(Number(score.score_a||0));$("#toolsScoreB").textContent=String(Number(score.score_b||0));
   $("#toolsGameTarget").textContent=String(Number(score.target_score||config.target_score||100));$("#toolsGameRound").textContent=String(Number(score.round||1));$("#toolsGameAccess").textContent=features.games===true?"FREI":"GESPERRT";
   $("#toolsGameRuleCount").textContent=String((library.gameRules||[]).filter(rule=>rule.enabled!==false).length);
   $("#toolsGameHitCount").textContent=String((library.gameRuleHits||[]).length);
-  $("#toolsGameStart").disabled=features.games!==true||running;$("#toolsGameStop").disabled=features.games!==true||!running;$("#toolsGameReset").disabled=features.games!==true;
+  const gameService=nextState?.interactiveGames||{},localGame=game.source_mode==="launcher_local"||game.game_definition?.engine==="launcher_local";
+  $("#toolsGameEngine").textContent=localGame?"LAUNCHER LOCAL":"CLOUD";
+  $("#toolsGameService").textContent=gameService.ready?"BEREIT":gameService.running?"STARTET":"AUS";
+  const installedModules=Array.isArray(gameService.modules)?gameService.modules:[];
+  $("#toolsGameModule").textContent=gameService.activeGame||game.game_definition?.terminal_id||(installedModules.length?`${installedModules.length} MODULE`:"–");
+  $("#toolsGameStart").disabled=features.games!==true||running||starting;$("#toolsGameStop").disabled=features.games!==true||(!running&&!starting);$("#toolsGameReset").disabled=features.games!==true;
   $("#toolsScoreAPlus").disabled=features.games!==true||!running;$("#toolsScoreBPlus").disabled=features.games!==true||!running;
   const url=game.source_url||"";$("#toolsGameUrl").value=url;$("#toolsCopyGameUrl").disabled=!url;$("#toolsPreviewGame").disabled=!url;$("#toolsPreviewGame").dataset.url=url;
 
@@ -1320,6 +1325,42 @@ function renderStreamEngine(nextState){
   }
 }
 
+function gameActivityPlatformLabel(value){
+  return ({playstation_5:"PS5",playstation_4:"PS4",pc:"PC",xbox_series:"XBOX SERIES",xbox_one:"XBOX ONE",switch:"NINTENDO SWITCH",unknown:"PLATTFORM OFFEN"})[String(value||"unknown")]||"PLATTFORM OFFEN";
+}
+
+function formatGameActivityDuration(seconds){
+  const total=Math.max(0,Math.floor(Number(seconds||0)));
+  const h=Math.floor(total/3600);
+  const m=Math.floor((total%3600)/60);
+  const s=total%60;
+  if(h>0)return `${h}h ${String(m).padStart(2,"0")}m`;
+  return `${m}m ${String(s).padStart(2,"0")}s`;
+}
+
+function renderGameActivityStatus(currentState=state){
+  const ga=currentState?.gameActivity||{};
+  const settings=currentState?.settings||{};
+  const gaStatus=$("#gameActivityStatus");
+  if(!gaStatus)return;
+  const active=ga.active;
+  if(active){
+    const started=Date.parse(active.started_at||"");
+    const liveElapsed=Number.isFinite(started)?Math.max(Number(active.elapsed_seconds||0),Math.floor((Date.now()-started)/1000)):Number(active.elapsed_seconds||0);
+    const syncNote=ga.last_error
+      ? ` · SYNC WARTET${ga.retry_count?` (${ga.retry_count})`:""}${ga.next_retry_at?` · nächster Versuch ${fmtTime(ga.next_retry_at)}`:""}`
+      : (ga.pending?` · ${ga.pending} Segment(e) warten auf Sync`:" · synchron");
+    const presenceNote=Number.isFinite(Number(ga.last_seen_age_seconds))?` · Präsenz vor ${Math.max(0,Number(ga.last_seen_age_seconds))}s bestätigt`:"";
+    gaStatus.textContent=`LÄUFT · ${active.game_name} · ${gameActivityPlatformLabel(active.platform)} · ${formatGameActivityDuration(liveElapsed)}${presenceNote}${syncNote}`;
+  }else{
+    const queued=Number(ga.pending||0)>0?` · ${ga.pending} Segment(e) warten auf Sync`:"";
+    const retry=ga.last_error?` · SYNC WARTET${ga.next_retry_at?` bis ${fmtTime(ga.next_retry_at)}`:""}`:"";
+    const targetError=String(ga.target_error||"").trim();
+    gaStatus.textContent=targetError?`TRACKING BLOCKIERT · ${targetError}${queued}${retry}`:`Spielaktivität ist ${settings.gameActivityEnabled===true?"aktiviert, aber noch ohne gültiges Spiel":"ausgeschaltet"}${queued}${retry}.`;
+  }
+  gaStatus.className="notice compact"+((ga.last_error||ga.target_error)?" warn":"");
+}
+
 function render(next) {
   state = next || state;
   if (!state) return;
@@ -1334,7 +1375,7 @@ function render(next) {
   $("#bridgePill").className = "pill status" + (live ? " live" : connected ? " online" : "");
   $("#providerPill").textContent = providerLabel(settings.provider);
   $("#statProvider").textContent = providerLabel(settings.provider);
-  $("#statProviderDetail").textContent = settings.provider === "tiktool" ? (settings.tiktokUsername ? `@${settings.tiktokUsername}` : "Username fehlt") : "Bereit zum Testen";
+  const tikState=state?.interactiveGames?.tikfinity||{};$("#statProviderDetail").textContent = settings.provider === "tikfinity" ? (state?.provider?.ready ? `TikFinity verbunden${tikState.lastEventAt?` · Event ${fmtTime(tikState.lastEventAt)}`:""}` : tikState.status==="reconnecting"||tikState.status==="connecting" ? "TikFinity verbindet automatisch neu …" : `TikFinity ${String(tikState.status||"offline").toUpperCase()}${tikState.lastError?` · ${tikState.lastError}`:""}`) : settings.provider === "tiktool" ? (settings.tiktokUsername ? `@${settings.tiktokUsername}` : "Username fehlt") : "Bereit zum Testen";
 
   $("#statBridge").textContent = connected ? "ONLINE" : "OFFLINE";
   $("#statHeartbeat").textContent = connected ? `Heartbeat ${fmtTime(bridge.lastHeartbeatAt)}` : (bridge.lastError || "Noch keine Verbindung");
@@ -1381,6 +1422,11 @@ function render(next) {
   $("#providerSelect").value = settings.provider || "mock";
   $("#tiktokUsername").value = settings.tiktokUsername || "";
   $("#tiktoolApiKey").placeholder = settings.tiktoolKeyStored ? "Sicher gespeichert · zum Ersetzen neuen Key einfügen" : "Provider-Key";
+  $("#gameActivityEnabled").value = String(settings.gameActivityEnabled === true);
+  $("#gameActivitySource").value = settings.gameActivitySource || "launcher_manual";
+  $("#gameActivityGameName").value = settings.gameActivityGameName || "";
+  $("#gameActivityPlatform").value = settings.gameActivityPlatform || "unknown";
+  renderGameActivityStatus(state);
   $("#ttsEnabled").value = String(settings.ttsEnabled !== false);
   $("#ttsRate").value = String(settings.ttsRate ?? 1);
   $("#ttsPitch").value = String(settings.ttsPitch ?? 1);
@@ -1390,7 +1436,7 @@ function render(next) {
   $("#autoUpdate").checked = settings.autoUpdate !== false;
   $("#autoRecoverLive").checked = settings.autoRecoverLive !== false;
   $("#updateChannel").value = settings.updateChannel === "beta" ? "beta" : "stable";
-  $("#appVersion").textContent = state.appVersion || "0.42.0";
+  $("#appVersion").textContent = state.appVersion || "0.47.7";
   loadVoices();
   $("#ttsVoiceName").value = settings.ttsVoiceName || "";
   renderUpdate(state.update || {});
@@ -1509,6 +1555,10 @@ async function saveSettings(extra = {}) {
     autoUpdate: $("#autoUpdate").checked,
     autoRecoverLive: $("#autoRecoverLive").checked,
     updateChannel: $("#updateChannel").value === "beta" ? "beta" : "stable",
+    gameActivityEnabled: $("#gameActivityEnabled")?.value === "true",
+    gameActivitySource: $("#gameActivitySource")?.value || "launcher_manual",
+    gameActivityGameName: $("#gameActivityGameName")?.value || "",
+    gameActivityPlatform: $("#gameActivityPlatform")?.value || "unknown",
     ...extra
   };
   state = await window.CFSLauncher.saveSettings(data);
@@ -2184,7 +2234,36 @@ async function init() {
     speechSynthesis.onvoiceschanged = loadVoices;
   }
 
-  window.CFSLauncher.onState(next => render(next));
+  
+$("#startGameActivity")?.addEventListener("click",async()=>{
+  const game=String($("#gameActivityGameName")?.value||"").trim();
+  if(!game){toast("Bitte zuerst ein aktuelles Spiel eintragen.",true);return;}
+  try{
+    $("#gameActivityEnabled").value="true";
+    state=await saveSettings({gameActivityEnabled:true});
+    state=await window.CFSLauncher.syncGameActivity();
+    render(state);
+    toast("Spielsession läuft. Beim Wechsel wird die vorherige Session sauber abgeschlossen.");
+  }catch(error){toast(error?.message||String(error),true)}
+});
+$("#stopGameActivity")?.addEventListener("click",async()=>{
+  try{
+    $("#gameActivityEnabled").value="false";
+    state=await saveSettings({gameActivityEnabled:false});
+    state=await window.CFSLauncher.syncGameActivity();
+    render(state);
+    toast("Spielsession beendet und zur Synchronisierung vorgemerkt.");
+  }catch(error){toast(error?.message||String(error),true)}
+});
+$("#syncGameActivity")?.addEventListener("click",async()=>{
+  try{state=await saveSettings();state=await window.CFSLauncher.syncGameActivity();render(state);toast("Spielaktivität wurde synchronisiert.")}catch(error){toast(error?.message||String(error),true)}
+});
+$("#clearGameActivity")?.addEventListener("click",async()=>{
+  if(!confirm("Erfasste CFS-Spielzeit wirklich löschen?"))return;
+  try{state=await window.CFSLauncher.clearGameActivity();render(state);toast("Erfasste CFS-Spielzeit wurde gelöscht.")}catch(error){toast(error?.message||String(error),true)}
+});
+setInterval(()=>renderGameActivityStatus(state),1000);
+window.CFSLauncher.onState(next => render(next));
   window.CFSLauncher.onAction(action => queueTts(action));
   window.CFSLauncher.onCutAudition(payload=>{
     const previewPath=String(payload?.previewPath||"");

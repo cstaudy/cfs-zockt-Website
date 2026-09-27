@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#030711">
-<title>System Check v2 | cfs_zockt</title>
+<title>System Check v3 | cfs_zockt</title>
 <style>
 :root{--bg:#030711;--panel:#091525;--line:#173657;--text:#f5f8ff;--muted:#8fa5bf;--accent:#148cff;--accent2:#27d0ff;--ok:#48dc95;--warn:#ffc75c;--danger:#ff7589}
 *{box-sizing:border-box}html{color-scheme:dark}
@@ -17,6 +17,7 @@ h1{margin:10px 0 12px;font-size:clamp(42px,7vw,74px);line-height:.92;letter-spac
 button.primary{background:linear-gradient(135deg,#0775e9,#1298ff);border-color:#2da8ff;color:#fff}button:disabled{opacity:.55;cursor:wait}
 .summary{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}.summary-card{padding:18px;border:1px solid var(--line);border-radius:14px;background:linear-gradient(145deg,#091727,#040a12)}
 .summary-card span{display:block;color:#708daa;font-size:9px;font-weight:1000;letter-spacing:.13em}.summary-card strong{display:block;margin-top:7px;font-size:28px}
+.readiness{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:0 0 18px}.readiness-card{padding:16px;border:1px solid var(--line);border-radius:14px;background:#06111e}.readiness-card span{display:block;color:#708daa;font-size:9px;font-weight:1000;letter-spacing:.13em}.readiness-card strong{display:block;margin-top:6px;font-size:17px}.readiness-card small{display:block;margin-top:5px;color:var(--muted);font-size:10px;line-height:1.45}.readiness-card.ok{border-color:#246b4c}.readiness-card.warn{border-color:#7b6229}.readiness-card.bad{border-color:#7f3543}
 .panel{border:1px solid var(--line);border-radius:18px;overflow:hidden;background:linear-gradient(145deg,#091727,#040a12)}
 .panel-head{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:17px 18px;border-bottom:1px solid var(--line)}.panel-head h2{margin:0;font-size:18px}.panel-head small{color:var(--muted)}
 .checks{display:grid}.check{display:grid;grid-template-columns:34px minmax(0,1fr) auto;gap:12px;align-items:center;padding:15px 18px;border-bottom:1px solid rgba(23,54,87,.7)}.check:last-child{border-bottom:0}
@@ -26,7 +27,7 @@ button.primary{background:linear-gradient(135deg,#0775e9,#1298ff);border-color:#
 .check.ok .status{color:var(--ok)}.check.warn .status{color:var(--warn)}.check.bad .status{color:var(--danger)}
 .note{margin-top:18px;padding:14px 16px;border:1px solid #27547f;border-radius:12px;background:#071729;color:#9fc9ee;font-size:12px;line-height:1.6}
 code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
-@media(max-width:760px){.summary{grid-template-columns:repeat(2,1fr)}.check{grid-template-columns:32px 1fr}.status{grid-column:2}}
+@media(max-width:760px){.summary,.readiness{grid-template-columns:repeat(2,1fr)}.check{grid-template-columns:32px 1fr}.status{grid-column:2}}
 </style>
   <meta name="robots" content="noindex,nofollow,noarchive">
   <link rel="stylesheet" href="/assets/css/cfs-theme-v3.css">
@@ -35,9 +36,9 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
 <body>
 <header class="top"><a class="brand" href="/">cfs_<span>zockt</span></a><a class="back" href="/">← ZUR STARTSEITE</a></header>
 <main class="wrap">
-<div class="eyebrow">cfs_zockt SYSTEM CHECK V2</div>
-<h1>PRE-DEPLOY & BACKEND TEST.</h1>
-<p class="intro">Prüft die komplette Website-Struktur sowie die neuen Backend-v3-Endpunkte für Account, Creator Settings, Module, Launcher-State, NEXUS und TikTok.</p>
+<div class="eyebrow">cfs_zockt SYSTEM CHECK V3</div>
+<h1>CREATOR SUITE READINESS.</h1>
+<p class="intro">Prüft Website, Backend, Creator-APIs und den aktuellen Release-Vertrag. Lokale Produktbereitschaft und echte externe Acceptance werden dabei bewusst getrennt angezeigt.</p>
 
 <div class="toolbar">
 <button class="primary" id="runButton" type="button">SYSTEM CHECK STARTEN</button>
@@ -51,13 +52,21 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
 <div class="summary-card"><span>FEHLER</span><strong id="badCount">0</strong></div>
 </section>
 
+
+<section class="readiness" aria-label="Release Readiness">
+<div class="readiness-card" id="backendReadiness"><span>BACKEND</span><strong id="backendReadinessTitle">PRÜFEN</strong><small id="backendReadinessMeta">Erwartet 3.12.0 · Schema 68</small></div>
+<div class="readiness-card" id="launcherReadiness"><span>LAUNCHER</span><strong id="launcherReadinessTitle">PRÜFEN</strong><small id="launcherReadinessMeta">Build-Ziel 0.47.7</small></div>
+<div class="readiness-card" id="creatorReadiness"><span>CREATOR SUITE</span><strong id="creatorReadinessTitle">PRÜFEN</strong><small id="creatorReadinessMeta">Games · Stream · CUT · NEXUS</small></div>
+<div class="readiness-card warn" id="externalReadiness"><span>EXTERNE ACCEPTANCE</span><strong>OFFEN</strong><small>Windows · OBS/LIVE · TikTok LIVE · Production Evidence</small></div>
+</section>
+
 <section class="panel">
 <div class="panel-head"><h2>Prüfungen</h2><small id="lastRun">Noch nicht gestartet</small></div>
 <div class="checks" id="checks"></div>
 </section>
 
 <div class="note">
-Ein <strong>401</strong> bei geschützten Creator-APIs bedeutet meist nur, dass keine aktive Session vorhanden ist.
+Lokale Code-/Contract-Bereitschaft ist nicht dasselbe wie echte Windows-/LIVE-/Production-Abnahme. Ein <strong>401</strong> bei geschützten Creator-APIs bedeutet meist nur, dass keine aktive Session vorhanden ist.
 Ein <strong>403</strong> bei NEXUS/Games/Audio kann bei FREE ebenfalls korrekt sein, wenn der Server die Plan-Sperre durchsetzt.
 </div>
 </main>
