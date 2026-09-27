@@ -1,3 +1,13 @@
+# v194 — Render Runtime Module Repair
+
+**Launcher: 0.47.12**
+
+- Re-delivers the required CUT runtime modules `lib/cut-candidate-engine.js`, `lib/cut-reference-provider.js`, and `lib/game-profile-portability.js` because the deployed GitHub/Render tree can otherwise start without files required by `lib/creator-cut-studio.js`.
+- Adds a startup-oriented runtime module contract that verifies all three files exist and that the full `creator-cut-studio` require chain resolves before deployment.
+- This is a repair delta: the three runtime module files are intentionally shipped even though their contents already exist in the local v193 reference tree. No Launcher or database schema bump.
+- Local contract: Render Runtime Module Repair v194: 10/10 PASS; Release Readiness 20/20 PASS; backend syntax PASS.
+- Backend remains **3.12.0**, Launcher remains **0.47.12**, Schema Generation remains **68**. External acceptance remains OPEN.
+
 # v193 — Recording Handoff Initial Clip Idempotency / Launcher 0.47.12
 
 **Launcher: 0.47.12**

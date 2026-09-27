@@ -286,7 +286,8 @@
     "proof190:check": "node tools/stream-runtime-local-readiness-proof-trend-v190-test.mjs",
     "decision191:check": "node tools/stream-runtime-local-readiness-decision-v191-test.mjs",
     "heartbeat192:check": "node tools/stream-heartbeat-serialization-v192-test.mjs",
-    "recording193:check": "node tools/recording-initial-clip-idempotency-v193-test.mjs"
+    "recording193:check": "node tools/recording-initial-clip-idempotency-v193-test.mjs",
+    "render194:check": "node tools/render-runtime-module-repair-v194-test.mjs"
   },
   "engines": {
     "node": ">=22"
