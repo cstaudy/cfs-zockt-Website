@@ -49,6 +49,7 @@ const { createTotpSecret, verifyTotp, createRecoveryCodes, recoveryCodeHash, otp
 const { simpleWebAuthn, webauthnUserID, normalizePasskeyName, passkeyReference, validChallengeId } = require("./lib/account-passkey-security");
 const { DEVICE_LINK_DELIVERY_LEGACY, DEVICE_LINK_DELIVERY_POLL_V2, normalizeCredentialDelivery, validDeviceSecret, normalizeDeviceCode, deriveBridgeToken, shouldDeliverPollCredential } = require("./lib/launcher-device-link-security");
 const { monitorAlertConfig, validateMonitorAlertConfig, sendProductionMonitorAlert, evaluateProductionMonitor } = require("./lib/production-monitor-security");
+const { fetchPublicPlayStationRecentGames } = require("./lib/playstation-public-games");
 
 const app = express();
 
@@ -463,6 +464,15 @@ const PUBLIC_COMMUNITY_STATS_CACHE_TTL_MS =
 
 const PUBLIC_COMMUNITY_STATS_PROVIDER_TIMEOUT_MS =
     7 * 1000;
+
+const PUBLIC_PLAYSTATION_ENABLED =
+    String(process.env.CFS_PLAYSTATION_ENABLED || "false").trim().toLowerCase() === "true";
+
+const PUBLIC_PLAYSTATION_NPSSO =
+    String(process.env.CFS_PLAYSTATION_NPSSO || "").trim();
+
+const PUBLIC_PLAYSTATION_RECENT_LIMIT =
+    Math.max(3, Math.min(8, Math.round(Number(process.env.CFS_PLAYSTATION_RECENT_LIMIT || 6))));
 
 const PUBLIC_GAME_ACTIVITY_MODULE_KEY =
     "community_game_activity";
@@ -21592,6 +21602,35 @@ async function getPublicRecentGames(creatorId,{days=PUBLIC_GAME_ACTIVITY_WINDOW_
     };
 }
 
+async function getPreferredPublicRecentGames(creatorId,{days=PUBLIC_GAME_ACTIVITY_WINDOW_DAYS,limit=6}={}) {
+    const wantsPlayStation =
+        String(creatorId) === String(DEFAULT_CREATOR_ID) &&
+        PUBLIC_PLAYSTATION_ENABLED &&
+        Boolean(PUBLIC_PLAYSTATION_NPSSO);
+
+    if (!wantsPlayStation) {
+        return getPublicRecentGames(creatorId,{days,limit});
+    }
+
+    try {
+        return await fetchPublicPlayStationRecentGames({
+            npsso: PUBLIC_PLAYSTATION_NPSSO,
+            limit: Math.min(PUBLIC_PLAYSTATION_RECENT_LIMIT, Math.max(3, Number(limit) || 6)),
+            timeoutMs: PUBLIC_COMMUNITY_STATS_PROVIDER_TIMEOUT_MS
+        });
+    } catch (error) {
+        safeLogError("public-community-playstation", error);
+        const launcherFallback = await getPublicRecentGames(creatorId,{days,limit});
+        if (launcherFallback?.available) {
+            return {
+                ...launcherFallback,
+                fallback_from: "playstation_network"
+            };
+        }
+        throw error;
+    }
+}
+
 function creatorGameIdentity(gameName="",platform="unknown") {
     const normalizedTitle=String(gameName||"").replace(/[™®©]/g,"").normalize("NFKC").replace(/[\u0000-\u001f\u007f]/g," ").replace(/[^a-z0-9äöüß]+/gi," ").replace(/\s+/g," ").trim().toLowerCase().slice(0,120);
     const safePlatform=["playstation_5","playstation_4","pc","xbox_series","xbox_one","switch","unknown"].includes(String(platform||""))?String(platform):"unknown";
@@ -21718,7 +21757,7 @@ async function refreshPublicCommunityStats() {
     const [discordResult, tiktokResult, gamesResult] = await Promise.allSettled([
         fetchPublicDiscordCommunityStats(),
         fetchPublicTikTokCommunityStats(),
-        getPublicRecentGames(DEFAULT_CREATOR_ID)
+        getPreferredPublicRecentGames(DEFAULT_CREATOR_ID)
     ]);
 
     let discord;
@@ -21748,7 +21787,7 @@ async function refreshPublicCommunityStats() {
         safeLogError("public-community-games", gamesResult.reason);
         recentGames = previous?.recent_games?.available
             ? { ...previous.recent_games, stale:true }
-            : { available:false, window_days:PUBLIC_GAME_ACTIVITY_WINDOW_DAYS, source:"cfs_launcher_opt_in", updated_at:null, games:[] };
+            : { available:false, window_days:PUBLIC_PLAYSTATION_ENABLED?null:PUBLIC_GAME_ACTIVITY_WINDOW_DAYS, source:PUBLIC_PLAYSTATION_ENABLED?"playstation_network":"cfs_launcher_opt_in", playtime_scope:PUBLIC_PLAYSTATION_ENABLED?"lifetime":"rolling_window", updated_at:null, games:[], recent:[] };
     }
 
     const payload = {
@@ -21796,7 +21835,7 @@ app.get(
                 generated_at:new Date().toISOString(),
                 discord:{available:false,members:null,online:null,url:PUBLIC_DISCORD_INVITE_URL},
                 tiktok:{available:false,followers:null,url:PUBLIC_TIKTOK_PROFILE_URL},
-                recent_games:{available:false,window_days:PUBLIC_GAME_ACTIVITY_WINDOW_DAYS,source:"cfs_launcher_opt_in",updated_at:null,games:[]}
+                recent_games:{available:false,window_days:PUBLIC_PLAYSTATION_ENABLED?null:PUBLIC_GAME_ACTIVITY_WINDOW_DAYS,source:PUBLIC_PLAYSTATION_ENABLED?"playstation_network":"cfs_launcher_opt_in",playtime_scope:PUBLIC_PLAYSTATION_ENABLED?"lifetime":"rolling_window",updated_at:null,games:[],recent:[]}
             });
         }
     }

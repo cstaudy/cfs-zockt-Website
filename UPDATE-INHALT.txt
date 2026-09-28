@@ -1,0 +1,19 @@
+cfs_zockt v119 – Update-Dateien
+===============================
+
+Diese Dateien in dein bestehendes Projekt übernehmen/ersetzen:
+
+ERSETZEN:
+- server.js
+- .env.example
+- public/index.html
+- public/assets/js/cfs-gaming-home-v112.js
+
+NEU EINFÜGEN:
+- lib/playstation-public-games.js
+
+ANLEITUNG:
+- PLAYSTATION-SETUP.txt
+
+Wichtig: Dieses Paket ist für die zuvor erstellte v118-Version gedacht.
+Die v118 CSS-Datei bleibt unverändert und ist deshalb nicht erneut enthalten.

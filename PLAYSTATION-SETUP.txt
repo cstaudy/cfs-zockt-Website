@@ -1,0 +1,52 @@
+cfs_zockt v119 – PlayStation „Zuletzt gespielt"
+================================================
+
+Dieses Update bindet deine echten PS4-/PS5-Spieldaten serverseitig an die Startseite an.
+Die Startseite zeigt bis zu 3 zuletzt gespielte Titel mit:
+- Spielname
+- PS5 / PS4
+- letzter Spielzeitpunkt
+- Gesamtspielzeit (soweit PSN liefert)
+- Anzahl der Starts (soweit PSN liefert)
+- originalem PlayStation-Spielbild (soweit PSN liefert)
+
+WICHTIG ZUR SICHERHEIT
+----------------------
+Der NPSSO-Wert ist ein Geheimnis und praktisch wie ein Passwort zu behandeln.
+- NICHT in index.html oder JavaScript eintragen.
+- NICHT in Git/GitHub committen.
+- NICHT per Chat verschicken.
+- Nur als geheime Server-Umgebungsvariable speichern.
+
+EINRICHTUNG
+-----------
+1. Bei https://www.playstation.com/ im Browser mit deinem eigenen PSN-Konto anmelden.
+2. Im selben Browser öffnen:
+   https://ca.account.sony.com/api/v1/ssocookie
+3. Aus der JSON-Antwort nur den Wert von "npsso" kopieren.
+4. In deinem Hosting/Server folgende Environment-Variablen setzen:
+
+   CFS_PLAYSTATION_ENABLED=true
+   CFS_PLAYSTATION_NPSSO=<DEIN_NPSSO_WERT>
+   CFS_PLAYSTATION_RECENT_LIMIT=6
+
+5. Server neu deployen / neu starten.
+6. Danach /api/public/community-stats prüfen.
+   Unter recent_games sollte stehen:
+
+   "source": "playstation_network"
+
+   und unter "recent" sollten deine zuletzt gespielten Titel erscheinen.
+
+FALLBACK
+--------
+Wenn PlayStation temporär nicht erreichbar ist, wird automatisch versucht,
+die bestehende CFS-Launcher-Spielaktivität zu verwenden. Wenn auch dort keine
+Daten vorhanden sind, behält die vorhandene Community-Stats-Cache-Logik den
+zuletzt verfügbaren öffentlichen Stand, sofern vorhanden.
+
+HINWEIS
+-------
+Die hierfür verwendeten PSN-Endpunkte sind Community-dokumentiert und keine
+stabile öffentliche Sony-Developer-API. Deshalb kann Sony das Verhalten ändern.
+Der Launcher-Fallback bleibt absichtlich erhalten.

@@ -39,6 +39,7 @@
       <a class="active" href="#start">Home</a>
       <a href="#streams">Streams</a>
       <a href="#community">Community</a>
+      <a href="/pages/creator-suite.html">Creator Suite</a>
       <a href="#games">Games</a>
       <a href="#about">Über uns</a>
       <a href="/pages/support.html">Kontakt</a>
@@ -56,12 +57,12 @@
     <div class="container gaming-hero-grid">
       <div class="gaming-hero-copy">
         <div class="gaming-kicker">GAMING · COMMUNITY · PASSION</div>
-        <h1>KURZE<br><span>PAUSE</span></h1>
+        <h1>CFS<br><span>ZOCKT</span></h1>
         <div class="gaming-hero-subline"><i></i><strong>MEHR ALS NUR GAMES</strong><i></i></div>
-        <p>Gaming, Streams und eine Community, die zusammenhält. <strong>cfs_zockt</strong> steht für Leidenschaft, ehrliche Unterhaltung und unvergessliche Momente – gemeinsam, immer stärker.</p>
+        <p>Gaming, Streams, Community und die <strong>Creator Suite</strong> an einem Ort. <strong>cfs_zockt</strong> steht für Leidenschaft, ehrliche Unterhaltung und echte Aktivität – von Livestreams bis zu deinen letzten gespielten Titeln.</p>
         <div class="gaming-hero-actions">
           <a class="gaming-btn gaming-btn-primary" href="https://www.tiktok.com/@cfs_zockt" target="_blank" rel="noopener noreferrer"><span class="gaming-btn-icon">♪</span> JETZT LIVE DABEI SEIN <b>→</b></a>
-          <a class="gaming-btn" href="#community"><span class="gaming-btn-icon">●●●</span> ZUR COMMUNITY <b>→</b></a>
+          <a class="gaming-btn" href="/pages/creator-suite.html"><span class="gaming-btn-icon">◫</span> ZUR CREATOR SUITE <b>→</b></a>
         </div>
         <div class="gaming-hero-values" aria-label="cfs_zockt Werte">
           <div><span class="gaming-value-icon">⌁</span><strong>SPIELEN</strong><small>GEMEINSAM</small></div>
@@ -131,20 +132,25 @@
 
   <section class="gaming-section gaming-games" id="games">
     <div class="container">
-      <div class="gaming-section-head">
-        <div><span class="gaming-kicker gaming-kicker-line">UNSERE GAMES</span><h2>BELIEBTE GAMES &amp; CONTENT</h2></div>
-        <a class="gaming-section-action" href="/pages/games.html"><span>🎮</span> ALLE GAMES &amp; FORMATE ANSEHEN <b>→</b></a>
+      <div class="gaming-section-head gaming-games-head">
+        <div><span class="gaming-kicker gaming-kicker-line">MEINE GAMES</span><h2>ZULETZT GESPIELT</h2></div>
+        <div class="gaming-games-meta" id="recentGamesMeta" aria-live="polite">Echte CFS-Spielaktivität wird geladen …</div>
       </div>
-      <div class="gaming-games-grid">
-        <article class="gaming-game-card"><img src="/assets/img/home-v116/game-warzone.webp" alt="Call of Duty Warzone"><span>WARZONE</span></article>
-        <article class="gaming-game-card"><img src="/assets/img/home-v116/game-cs2.webp" alt="Counter-Strike 2"><span>COUNTER-STRIKE 2</span></article>
-        <article class="gaming-game-card"><img src="/assets/img/home-v116/game-fc25.webp" alt="EA SPORTS FC 25"><span>FC 25</span></article>
-        <article class="gaming-game-card"><img src="/assets/img/home-v116/game-fortnite.webp" alt="Fortnite"><span>FORTNITE</span></article>
-        <article class="gaming-game-card"><img src="/assets/img/home-v116/game-minecraft.webp" alt="Minecraft"><span>MINECRAFT</span></article>
-        <article class="gaming-game-card"><img src="/assets/img/home-v116/game-valorant.webp" alt="Valorant"><span>VALORANT</span></article>
-        <a class="gaming-game-card gaming-game-more" href="/pages/games.html"><strong>＋</strong><span>UND VIELE<br>WEITERE</span></a>
+      <div class="gaming-games-grid" id="recentGamesGrid" aria-live="polite" aria-busy="true">
+        <article class="gaming-game-card gaming-game-card-empty" data-game-slot="0">
+          <div class="gaming-game-card-media"><span class="gaming-game-rank">01</span><span class="gaming-game-placeholder">CFS</span></div>
+          <div class="gaming-game-card-copy"><strong>SPIELDATEN WERDEN GELADEN</strong><p>Der letzte bestätigte Spielkontext wird aus der CFS-Spielaktivität geladen.</p><small>ECHTE DATEN · KEINE DEMO-WERTE</small></div>
+        </article>
+        <article class="gaming-game-card gaming-game-card-empty" data-game-slot="1">
+          <div class="gaming-game-card-media"><span class="gaming-game-rank">02</span><span class="gaming-game-placeholder">CFS</span></div>
+          <div class="gaming-game-card-copy"><strong>ZULETZT GESPIELT</strong><p>Hier erscheint automatisch der zweitletzte erfasste Titel.</p><small>SPIELZEIT · SESSIONS · PLATTFORM</small></div>
+        </article>
+        <article class="gaming-game-card gaming-game-card-empty" data-game-slot="2">
+          <div class="gaming-game-card-media"><span class="gaming-game-rank">03</span><span class="gaming-game-placeholder">CFS</span></div>
+          <div class="gaming-game-card-copy"><strong>ZULETZT GESPIELT</strong><p>Hier erscheint automatisch der drittletzte erfasste Titel.</p><small>LETZTER ZEITPUNKT · DATENQUELLE</small></div>
+        </article>
       </div>
-      <div class="gaming-recent-note" id="recentGamesMeta" aria-live="polite">Aktuelle Community- und Spieldaten werden geladen …</div>
+      <div class="gaming-recent-note"><strong>DATENQUELLE:</strong> Wenn PlayStation serverseitig verbunden ist, kommen die drei zuletzt gespielten PS4-/PS5-Titel direkt aus dem PlayStation-Network-Konto. Ohne PlayStation-Verbindung bleibt die CFS-Launcher-Spielaktivität als Fallback aktiv.</div>
     </div>
   </section>
 
@@ -187,8 +193,13 @@
 <footer class="gaming-footer">
   <div class="container gaming-footer-main">
     <div class="gaming-footer-brand"><img src="/assets/img/brand/cfs-zockt-logo.png" alt="cfs_zockt"><span>GAMING · COMMUNITY · PASSION</span></div>
-    <nav aria-label="Footer Navigation"><a href="#start">Home</a><a href="#streams">Streams</a><a href="#community">Community</a><a href="#games">Games</a><a href="#about">Über uns</a><a href="/pages/support.html">Kontakt</a></nav>
+    <nav aria-label="Footer Navigation"><a href="#start">Home</a><a href="#streams">Streams</a><a href="#community">Community</a><a href="/pages/creator-suite.html">Creator Suite</a><a href="#games">Games</a><a href="#about">Über uns</a><a href="/pages/support.html">Kontakt</a></nav>
     <div class="gaming-footer-social"><a href="https://www.tiktok.com/@cfs_zockt" target="_blank" rel="noopener noreferrer" aria-label="TikTok">♪</a><a href="https://discord.gg/3bfAkcJTp" target="_blank" rel="noopener noreferrer" aria-label="Discord">◉</a></div>
+    </div>
+  <div class="container gaming-footer-live" aria-label="Community Zahlen im Footer">
+    <div class="gaming-footer-live-item"><strong id="footerTikTokFollowers">—</strong><span>TikTok Follower</span></div>
+    <div class="gaming-footer-live-item"><strong id="footerDiscordMembers">—</strong><span>Discord Mitglieder</span></div>
+    <div class="gaming-footer-live-item"><strong id="footerRecentGames">—</strong><span>Letzte Games im Blick</span></div>
   </div>
   <div class="container gaming-footer-bottom"><span>© 2026 cfs_zockt. Mehr als nur Games. Gemeinsam stärker.</span><div><a href="/pages/impressum.html">Impressum</a><a href="/pages/datenschutz.html">Datenschutz</a><a href="/pages/nutzungsbedingungen.html">Nutzungsbedingungen</a></div></div>
 </footer>
