@@ -1,19 +1,21 @@
-# HANDOFF v194
+# HANDOFF v193
 
-Apply after v193.
+Apply after v192.
 
 ## Delivered
-- Repair delivery of the three CUT runtime modules required by `lib/creator-cut-studio.js`.
-- Predeploy runtime-module contract covering file presence and CommonJS require resolution.
-- No Launcher version bump and no database schema bump.
-
-## Why this repair exists
-The deployed GitHub/Render tree reported `Cannot find module './cut-candidate-engine'`. The local v193 reference tree contains the required modules, so v194 intentionally re-ships them to restore the deployed tree.
+- Idempotent initial Recording→CUT clip materialization under server-side Creator/project locking.
+- `source_handoff_id` is validated against project provenance before initial clip reuse/creation.
+- Launcher uses the dedicated initial-recording bridge endpoint instead of generic clip creation.
+- Launcher active release contract bumped to 0.47.12.
+- Local contract: Recording Initial Clip Idempotency v193: 15/15 PASS.
 
 ## Local verification
-- Render Runtime Module Repair v194: 10/10 PASS
+- v193 contract: PASS
+- v192 heartbeat serialization: PASS
+- Launcher static check: PASS
+- BridgeClient integration: PASS
 - Release Readiness: 20/20 PASS
-- Backend syntax: PASS
+- Backend / Launcher syntax: PASS
 
 Backend 3.12.0 · Launcher 0.47.12 · Schema Generation 68.
 External Windows/LIVE/Production acceptance remains OPEN.
