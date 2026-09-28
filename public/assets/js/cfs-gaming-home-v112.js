@@ -1,6 +1,9 @@
 (() => {
   "use strict";
 
+  let latestRecentGames = [];
+  let latestLiveSession = null;
+
   const GAME_ART = [
     { match: /call[- ]of[- ]duty|warzone|\bcod\b/i, src: "/assets/img/home-v116/game-warzone.webp", alt: "Call of Duty" },
     { match: /counter[- ]strike|\bcs2\b/i, src: "/assets/img/home-v116/game-cs2.webp", alt: "Counter-Strike 2" },
@@ -119,7 +122,7 @@
     const facts = element("div", "gaming-game-facts");
     facts.appendChild(element("span", "", platformLabel(game?.platform)));
     const lifetimePlaytime = game?.source === "playstation_network" || game?.playtime_scope === "lifetime";
-    facts.appendChild(element("span", "", lifetimePlaytime ? `${formatMinutes(game?.minutes)} gesamt` : `${formatMinutes(game?.minutes)} / ${windowDays} Tage`));
+    facts.appendChild(element("span", "", lifetimePlaytime ? `GESAMT · ${formatMinutes(game?.minutes)}` : `${formatMinutes(game?.minutes)} · ${windowDays} TAGE`));
     const sessions = Math.max(0, Math.round(Number(game?.sessions) || 0));
     const sessionLabel = game?.source === "playstation_network" ? (sessions === 1 ? "Start" : "Starts") : (sessions === 1 ? "Session" : "Sessions");
     facts.appendChild(element("span", "", `${sessions} ${sessionLabel}`));
@@ -210,17 +213,116 @@
       meta.classList.remove("is-active");
     }
   }
+  const normalizeGameTitle = value => String(value || "")
+    .replace(/[™®©]/g, "")
+    .toLocaleLowerCase("de-DE")
+    .replace(/[^a-z0-9äöüß]+/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  const formatLiveDuration = startedAt => {
+    const started = new Date(String(startedAt || "")).getTime();
+    if (!Number.isFinite(started) || started <= 0) return "—";
+    const seconds = Math.max(0, Math.floor((Date.now() - started) / 1000));
+    return formatElapsed(seconds);
+  };
+
+  function liveCoverForGame(gameName) {
+    const normalized = normalizeGameTitle(gameName);
+    if (!normalized) return "";
+    const match = latestRecentGames.find(game => normalizeGameTitle(game?.name) === normalized);
+    return /^https:\/\//i.test(String(match?.image_url || "")) ? String(match.image_url) : "";
+  }
+
+  function renderLiveSession(payload) {
+    latestLiveSession = payload && typeof payload === "object" ? payload : null;
+    const session = latestLiveSession || {};
+    const isLive = session.live === true;
+    const current = session?.current_game?.name ? session.current_game : null;
+    const fallback = latestRecentGames[0] || null;
+    const displayedGame = current?.name || fallback?.name || "Aktuell kein Stream aktiv";
+    const platform = current?.platform ? platformLabel(current.platform) : (fallback?.platform ? platformLabel(fallback.platform) : "");
+
+    const badge = document.getElementById("liveStatusBadge");
+    const previewBadge = document.getElementById("livePreviewBadge");
+    const game = document.getElementById("liveStatusGame");
+    const previewGame = document.getElementById("livePreviewGame");
+    const statusText = document.getElementById("liveStatusText");
+    const meta = document.getElementById("liveStatusMeta");
+    const previewViewers = document.getElementById("livePreviewViewers");
+    const viewers = document.getElementById("liveViewers");
+    const likes = document.getElementById("liveLikes");
+    const shares = document.getElementById("liveShares");
+    const duration = document.getElementById("liveDuration");
+    const previewImage = document.getElementById("livePreviewImage");
+    const liveDot = document.querySelector(".gaming-live-title .gaming-live-dot");
+
+    [badge, previewBadge].forEach(node => {
+      if (!node) return;
+      node.textContent = isLive ? "LIVE" : "OFFLINE";
+      node.classList.toggle("is-live", isLive);
+      node.classList.toggle("is-offline", !isLive);
+    });
+    if (liveDot) liveDot.classList.toggle("is-offline", !isLive);
+    if (game) game.textContent = isLive && current ? current.name : (isLive ? "LIVE · Game wird gerade erkannt" : displayedGame);
+    if (previewGame) previewGame.textContent = isLive && current ? current.name : (isLive ? "LIVE auf TikTok" : displayedGame);
+
+    if (statusText) {
+      statusText.textContent = isLive
+        ? (current
+          ? `cfs_zockt ist gerade live und spielt ${current.name}${platform ? ` auf ${platform}` : ""}.`
+          : "cfs_zockt ist gerade live. Das aktuelle Game wird vom Launcher noch nicht gemeldet.")
+        : (fallback
+          ? `Aktuell nicht live. Zuletzt gespielt: ${fallback.name}.`
+          : "Aktuell ist keine Live-Session aktiv.");
+    }
+
+    if (meta) {
+      meta.replaceChildren();
+      const left = element("span", "", isLive ? "TikTok LIVE · verbunden" : "TikTok LIVE · offline");
+      const right = element("span", "", isLive
+        ? (current ? `${platform || "Game"} · ${formatElapsed(current.elapsed_seconds)}` : "Session aktiv")
+        : (fallback?.last_played_at ? `Zuletzt aktiv: ${formatLastPlayed(fallback.last_played_at)}` : "Standby"));
+      meta.append(left, right);
+    }
+
+    if (previewViewers) previewViewers.textContent = isLive ? `${compactNumber(session.viewers)} Zuschauer` : "offline";
+    if (viewers) viewers.textContent = isLive ? compactNumber(session.viewers) : "—";
+    if (likes) likes.textContent = isLive ? compactNumber(session.likes) : "—";
+    if (shares) shares.textContent = isLive ? compactNumber(session.shares) : "—";
+    if (duration) duration.textContent = isLive ? formatLiveDuration(session.started_at) : "—";
+
+    if (previewImage) {
+      const remoteCover = current ? liveCoverForGame(current.name) : "";
+      const fallbackCover = /^https:\/\//i.test(String(fallback?.image_url || "")) ? String(fallback.image_url) : "";
+      const nextSrc = remoteCover || fallbackCover || "/assets/img/home-v116/stream-warzone.webp";
+      if (previewImage.getAttribute("src") !== nextSrc) previewImage.src = nextSrc;
+    }
+  }
+
+  async function loadLiveSession() {
+    try {
+      const response = await fetch("/api/public/live-session", { headers: { Accept: "application/json" }, cache: "no-store" });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      renderLiveSession(await response.json());
+    } catch {
+      renderLiveSession({ live:false });
+    }
+  }
 
   async function loadCommunityStats() {
     const tiktok = document.getElementById("statTikTok");
     const discord = document.getElementById("statDiscord");
+    const discordOnline = document.getElementById("statDiscordOnline");
     const gameTime = document.getElementById("statGameTime");
-    const gameSessions = document.getElementById("statGameSessions");
+    const latestGame = document.getElementById("statLatestGame");
+    const gameTimeLabel = document.getElementById("statGameTimeLabel");
+    const latestGameLabel = document.getElementById("statLatestGameLabel");
     const footerTikTok = document.getElementById("footerTikTokFollowers");
     const footerDiscord = document.getElementById("footerDiscordMembers");
     const footerRecentGames = document.getElementById("footerRecentGames");
     const recentGrid = document.getElementById("recentGamesGrid");
-    if (!tiktok && !discord && !gameTime && !gameSessions && !footerTikTok && !footerDiscord && !footerRecentGames && !recentGrid) return;
+    if (!tiktok && !discord && !gameTime && !latestGame && !footerTikTok && !footerDiscord && !footerRecentGames && !recentGrid) return;
 
     try {
       const response = await fetch("/api/public/community-stats", { headers: { Accept: "application/json" }, cache: "no-store" });
@@ -229,25 +331,39 @@
 
       const tiktokFollowers = data?.tiktok?.available ? compactNumber(data.tiktok.followers) : "—";
       const discordMembers = data?.discord?.available ? compactNumber(data.discord.members) : "—";
+      const discordOnlineMembers = data?.discord?.available && Number.isFinite(Number(data.discord.online))
+        ? `${compactNumber(data.discord.online)} online`
+        : "— online";
       if (tiktok) tiktok.textContent = tiktokFollowers;
       if (discord) discord.textContent = discordMembers;
+      if (discordOnline) discordOnline.textContent = discordOnlineMembers;
       if (footerTikTok) footerTikTok.textContent = tiktokFollowers;
       if (footerDiscord) footerDiscord.textContent = discordMembers;
 
       const games = Array.isArray(data?.recent_games?.games) ? data.recent_games.games : [];
-      const visibleRecentGames = Math.min(3, games.filter(game => game?.name).length);
+      const recent = Array.isArray(data?.recent_games?.recent)
+        ? data.recent_games.recent.filter(game => game?.name).slice(0, 3)
+        : games.filter(game => game?.name).slice(0, 3);
+      latestRecentGames = recent;
+      const visibleRecentGames = recent.length;
       if (footerRecentGames) footerRecentGames.textContent = visibleRecentGames ? String(visibleRecentGames) : "—";
-      const minutes = games.reduce((sum, game) => sum + Math.max(0, Number(game?.minutes) || 0), 0);
-      const sessions = games.reduce((sum, game) => sum + Math.max(0, Number(game?.sessions) || 0), 0);
-      if (gameTime) gameTime.textContent = games.length ? formatMinutes(minutes) : "—";
-      if (gameSessions) gameSessions.textContent = sessions ? compactNumber(sessions) : "—";
+      const minutes = recent.reduce((sum, game) => sum + Math.max(0, Number(game?.minutes) || 0), 0);
+      const playStation = data?.recent_games?.source === "playstation_network";
+      if (gameTime) gameTime.textContent = recent.length ? formatMinutes(minutes) : "—";
+      if (latestGame) latestGame.textContent = recent[0]?.name || data?.recent_games?.active?.game_name || "—";
+      if (gameTimeLabel) gameTimeLabel.textContent = playStation ? "Gesamtspielzeit · letzte 3" : "Spielzeit · letzte 3";
+      if (latestGameLabel) latestGameLabel.textContent = data?.recent_games?.active?.game_name ? "gerade aktiv" : "zuletzt gespielt";
 
       renderRecentGames(data?.recent_games || {});
+      if (latestLiveSession) renderLiveSession(latestLiveSession);
     } catch {
       if (footerTikTok) footerTikTok.textContent = "—";
       if (footerDiscord) footerDiscord.textContent = "—";
+      if (discordOnline) discordOnline.textContent = "— online";
       if (footerRecentGames) footerRecentGames.textContent = "—";
+      if (latestGame) latestGame.textContent = "—";
       renderGamesError();
+      if (!latestLiveSession) renderLiveSession({ live:false });
     }
   }
 
@@ -273,6 +389,8 @@
 
   function init() {
     loadCommunityStats();
+    loadLiveSession();
+    window.setInterval(loadLiveSession, 15000);
     initSectionNavigation();
   }
 

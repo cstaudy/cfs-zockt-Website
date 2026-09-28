@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#030711"><title>TikTok | cfs_zockt</title><link rel="stylesheet" href="/assets/css/styles.css">  <meta name="robots" content="noindex,nofollow,noarchive">
   <link rel="stylesheet" href="/assets/css/cfs-theme-v3.css">
+  <link rel="stylesheet" href="/assets/css/cfs-tiktok-status-v122.css">
   <script src="/assets/js/cfs-shell-v3.js" defer></script>
 </head>
 <body class="creator-workspace"><header class="site-header creator-site-header">
@@ -38,6 +39,39 @@
   </div>
 </header>
 <main class="container"><section class="page-hero"><div class="eyebrow">DEIN TIKTOK PROFIL</div><h1>DEINE DATEN.<br>DEINE WIDGETS.</h1><p>Jeder Creator verbindet seinen eigenen TikTok-Account. Profilwerte werden ausschließlich diesem Creator-Konto zugeordnet.</p></section>
+
+<section class="tiktok-confirmation" id="ttConfirmation" aria-live="polite" aria-labelledby="ttConfirmationTitle">
+  <div class="tiktok-confirmation-head">
+    <div class="tiktok-confirmation-title">
+      <span class="tiktok-confirmation-icon" id="ttConfirmationIcon" aria-hidden="true">…</span>
+      <div class="tiktok-confirmation-copy">
+        <div class="meta">VERBINDUNGSBESTÄTIGUNG</div>
+        <h2 id="ttConfirmationTitle">TikTok-Verbindung wird geprüft</h2>
+        <p id="ttConfirmationText">Wir prüfen dein verbundenes Creator-Profil, die Statistik-Berechtigung und die letzte Synchronisierung.</p>
+      </div>
+    </div>
+    <span class="tiktok-confirmation-badge" id="ttConfirmationBadge">PRÜFE …</span>
+  </div>
+  <div class="tiktok-confirmation-grid">
+    <article class="tiktok-proof">
+      <div class="tiktok-proof-top"><span class="tiktok-proof-label">TikTok Konto</span><span class="tiktok-proof-state" id="ttProofAccount">PRÜFE</span></div>
+      <strong id="ttProofName">–</strong><small>Persönliche Profil-Verbindung</small>
+    </article>
+    <article class="tiktok-proof">
+      <div class="tiktok-proof-top"><span class="tiktok-proof-label">Follower-Daten</span><span class="tiktok-proof-state" id="ttProofStats">PRÜFE</span></div>
+      <strong id="ttProofFollowers">–</strong><small>Über user.info.stats synchronisiert</small>
+    </article>
+    <article class="tiktok-proof">
+      <div class="tiktok-proof-top"><span class="tiktok-proof-label">Profil-Sync</span><span class="tiktok-proof-state" id="ttProofSync">PRÜFE</span></div>
+      <strong id="ttProofUpdated">–</strong><small>Letzte bestätigte Synchronisierung</small>
+    </article>
+    <article class="tiktok-proof">
+      <div class="tiktok-proof-top"><span class="tiktok-proof-label">LIVE-Daten</span><span class="tiktok-proof-state ok">SEPARAT</span></div>
+      <strong>Launcher &amp; LIVE-Schicht</strong><small>Gifts, Likes, Viewer und Shares</small>
+    </article>
+  </div>
+  <div class="tiktok-confirmation-note"><span aria-hidden="true">ℹ</span><span><b>Wichtig:</b> Profil-Verbindung und LIVE-Verbindung sind getrennt. Ein bestätigtes TikTok-Profil bedeutet, dass Follower/Profilwerte verbunden sind. LIVE-Events laufen weiterhin separat über Launcher und Bridge.</span></div>
+</section>
 
 <section class="creator-tool-entry" data-tool-entry="tiktok" aria-label="TikTok Einstieg">
   <div class="creator-tool-entry-head">

@@ -450,6 +450,17 @@ const TIKTOK_TIMEOUT_MS =
 const PUBLIC_TIKTOK_PROFILE_URL =
     "https://www.tiktok.com/@cfs_zockt";
 
+// Optionaler manueller Fallback fuer die oeffentliche TikTok-Followerzahl.
+// Wird nur verwendet, wenn fuer den Default-Creator keine TikTok-Statistik
+// ueber OAuth (user.info.stats) verfuegbar ist. Dadurch bleibt die Startseite
+// sauber, ohne TikTok-Seiten im Browser zu scrapen oder Tokens auszugeben.
+const PUBLIC_TIKTOK_FOLLOWERS_FALLBACK = (() => {
+    const raw=String(process.env.CFS_PUBLIC_TIKTOK_FOLLOWERS || "").trim().replace(/[._\s]/g,"");
+    if(!raw) return null;
+    const value=Number(raw);
+    return Number.isFinite(value) && value >= 0 ? Math.floor(value) : null;
+})();
+
 const PUBLIC_DISCORD_INVITE_CODE =
     String(process.env.CFS_PUBLIC_DISCORD_INVITE_CODE || "3bfAkcJTp")
         .trim()
@@ -21710,18 +21721,53 @@ async function fetchPublicDiscordCommunityStats() {
     }
 }
 
+async function resolvePublicTikTokProfileConnection() {
+    // Prefer the Creator-Suite account that owns the legacy/public CFS TikTok slot.
+    // This keeps the public homepage on the same TikTok profile already connected
+    // inside the Creator Suite instead of requiring a second OAuth connection.
+    try {
+        const owner = await pool.query(
+            `SELECT creator_id FROM creator_tiktok_legacy_owner WHERE slot='default' LIMIT 1`
+        );
+        const ownerId = owner.rows[0]?.creator_id ? String(owner.rows[0].creator_id) : "";
+        if (ownerId) {
+            const ownerConnection = await getConnection(ownerId);
+            if (ownerConnection?.connected) {
+                return { creatorId: ownerId, connection: ownerConnection, source:"creator_suite_owner" };
+            }
+        }
+    } catch (error) {
+        safeLogError("public-community-tiktok-owner", error);
+    }
+
+    const legacyConnection = await getConnection(DEFAULT_CREATOR_ID);
+    return { creatorId: DEFAULT_CREATOR_ID, connection: legacyConnection, source:"legacy_default" };
+}
+
 async function fetchPublicTikTokCommunityStats() {
-    const connection = await getConnection(DEFAULT_CREATOR_ID);
+    const resolved = await resolvePublicTikTokProfileConnection();
+    const creatorId = resolved.creatorId;
+    const connection = resolved.connection;
     const scopes = String(connection?.scope || "")
         .split(/[\s,]+/)
         .map(value => value.trim())
         .filter(Boolean);
 
     if (!connection?.connected || !scopes.includes("user.info.stats")) {
+        if (PUBLIC_TIKTOK_FOLLOWERS_FALLBACK !== null) {
+            return {
+                available:true,
+                followers:PUBLIC_TIKTOK_FOLLOWERS_FALLBACK,
+                stale:false,
+                source:"environment_fallback",
+                updated_at:null
+            };
+        }
         return {
             available:false,
             followers:null,
             stale:false,
+            source:"unavailable",
             updated_at:connection?.updated_at || null
         };
     }
@@ -21736,7 +21782,7 @@ async function fetchPublicTikTokCommunityStats() {
 
     if (!storedFresh) {
         try {
-            profile = await fetchTikTokProfile(DEFAULT_CREATOR_ID);
+            profile = await fetchTikTokProfile(creatorId);
         } catch (error) {
             stale = true;
             safeLogError("public-community-tiktok-refresh", error);
@@ -21744,11 +21790,66 @@ async function fetchPublicTikTokCommunityStats() {
     }
 
     const followers = publicCommunityCount(profile?.follower_count);
+    if (followers === null && PUBLIC_TIKTOK_FOLLOWERS_FALLBACK !== null) {
+        return {
+            available:true,
+            followers:PUBLIC_TIKTOK_FOLLOWERS_FALLBACK,
+            stale:false,
+            source:"environment_fallback",
+            updated_at:null
+        };
+    }
     return {
         available:followers !== null,
         followers,
         stale,
+        source:resolved.source === "creator_suite_owner" ? "creator_suite_tiktok" : "tiktok_oauth",
         updated_at:profile?.updated_at || connection?.updated_at || null
+    };
+}
+
+async function getPublicLiveSessionSnapshot() {
+    const resolved = await resolvePublicTikTokProfileConnection();
+    const creatorIds = [...new Set([resolved?.creatorId, DEFAULT_CREATOR_ID].filter(Boolean).map(String))];
+    const states = await Promise.all(creatorIds.map(async creatorId => {
+        const [liveResult, gameResult] = await Promise.allSettled([
+            getStudioLiveState(creatorId),
+            getPublicRecentGames(creatorId,{limit:3})
+        ]);
+        return {
+            creatorId,
+            live: liveResult.status === "fulfilled" ? liveResult.value : emptyStudioLiveState(),
+            games: gameResult.status === "fulfilled" ? gameResult.value : {active:null,recent:[]}
+        };
+    }));
+
+    const activeLive = states.find(entry => entry.live?.connected === true) || states[0] || {
+        creatorId:String(DEFAULT_CREATOR_ID),
+        live:emptyStudioLiveState(),
+        games:{active:null,recent:[]}
+    };
+    const activeGameEntry = states.find(entry => entry.games?.active?.game_name) || activeLive;
+    const live = activeLive.live || emptyStudioLiveState();
+    const activeGame = activeGameEntry.games?.active?.game_name ? activeGameEntry.games.active : null;
+
+    return {
+        ok:true,
+        live:Boolean(live.connected),
+        profile_name:String(resolved?.connection?.display_name || "cfs_zockt").slice(0,120),
+        profile_url:PUBLIC_TIKTOK_PROFILE_URL,
+        viewers:publicCommunityCount(live.viewers) || 0,
+        likes:publicCommunityCount(live.likes) || 0,
+        shares:publicCommunityCount(live.shares) || 0,
+        followers_gained:publicCommunityCount(live.followers_gained) || 0,
+        started_at:live.connected ? (live.started_at || null) : null,
+        updated_at:live.updated_at || live.last_event_at || null,
+        current_game:activeGame ? {
+            name:String(activeGame.game_name || "").slice(0,160),
+            platform:String(activeGame.platform || "unknown"),
+            started_at:activeGame.started_at || null,
+            elapsed_seconds:Math.max(0,Number(activeGame.elapsed_seconds)||0),
+            source:String(activeGame.source || "launcher_manual")
+        } : null
     };
 }
 
@@ -21836,6 +21937,32 @@ app.get(
                 discord:{available:false,members:null,online:null,url:PUBLIC_DISCORD_INVITE_URL},
                 tiktok:{available:false,followers:null,url:PUBLIC_TIKTOK_PROFILE_URL},
                 recent_games:{available:false,window_days:PUBLIC_PLAYSTATION_ENABLED?null:PUBLIC_GAME_ACTIVITY_WINDOW_DAYS,source:PUBLIC_PLAYSTATION_ENABLED?"playstation_network":"cfs_launcher_opt_in",playtime_scope:PUBLIC_PLAYSTATION_ENABLED?"lifetime":"rolling_window",updated_at:null,games:[],recent:[]}
+            });
+        }
+    }
+);
+
+
+app.get(
+    "/api/public/live-session",
+    async (_req, res) => {
+        res.set("Cache-Control", "no-store");
+        try {
+            return res.json(await getPublicLiveSessionSnapshot());
+        } catch (error) {
+            safeLogError("public-live-session", error);
+            return res.status(503).json({
+                ok:false,
+                live:false,
+                profile_name:"cfs_zockt",
+                profile_url:PUBLIC_TIKTOK_PROFILE_URL,
+                viewers:0,
+                likes:0,
+                shares:0,
+                followers_gained:0,
+                started_at:null,
+                updated_at:null,
+                current_game:null
             });
         }
     }
@@ -22091,6 +22218,7 @@ app.post(
             const connection=await getConnection(req.creatorAccount.id);
             if(!connection?.connected)return res.status(409).json({ok:false,error:"TikTok ist noch nicht verbunden."});
             const profile=await fetchTikTokProfile(req.creatorAccount.id);
+            if (await canUseLegacyDefaultTikTok(req.creatorAccount.id)) publicCommunityStatsCache.expires_at=0;
             return res.json({ok:true,connected:true,profile,updated_at:profile.updated_at});
         } catch (error) {
             const diagnostic=getSafeDiagnostic(error,"creator_profile_sync");
@@ -22118,6 +22246,7 @@ app.post(
             }
             await pool.query(`DELETE FROM tiktok_connections WHERE creator_id=$1`,[creatorId]);
             await pool.query(`DELETE FROM tiktok_oauth_states WHERE creator_id=$1`,[creatorId]);
+            if (await canUseLegacyDefaultTikTok(creatorId)) publicCommunityStatsCache.expires_at=0;
             await recordSecurityEvent(creatorId,"tiktok_disconnected");
             return res.json({ok:true,connected:false});
         } catch (error) {

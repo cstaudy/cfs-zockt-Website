@@ -1,0 +1,26 @@
+Geänderte / neue Projektdateien in diesem Paket
+================================================
+
+server.js
+.env.example
+lib/playstation-public-games.js
+public/index.html
+public/assets/css/cfs-gaming-home-v112.css
+public/assets/css/cfs-public-suite-v120.css
+public/assets/css/cfs-tiktok-status-v122.css
+public/assets/js/cfs-gaming-home-v112.js
+public/assets/js/page-tiktok.js
+public/pages/creator-suite.html
+public/pages/login.html
+public/pages/tiktok.html
+public/assets/img/home-v116/game-cs2.webp
+public/assets/img/home-v116/game-fc25.webp
+public/assets/img/home-v116/game-fortnite.webp
+public/assets/img/home-v116/game-minecraft.webp
+public/assets/img/home-v116/game-valorant.webp
+public/assets/img/home-v116/game-warzone.webp
+public/assets/img/home-v116/hero-stage.webp
+public/assets/img/home-v116/stream-cs2.webp
+public/assets/img/home-v116/stream-fc25.webp
+public/assets/img/home-v116/stream-warzone-small.webp
+public/assets/img/home-v116/stream-warzone.webp

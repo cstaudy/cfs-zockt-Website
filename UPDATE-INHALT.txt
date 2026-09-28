@@ -1,19 +1,37 @@
-cfs_zockt v119 – Update-Dateien
-===============================
+CFS_ZOCKT v124 – Update-only
+==============================
 
-Diese Dateien in dein bestehendes Projekt übernehmen/ersetzen:
+Ziel
+----
+Die öffentliche Startseite, Creator-Suite-Landingpage und Login/Registrierung
+verwenden jetzt dieselbe dunkelblaue / cyanfarbene Neon-Designlinie.
+Die bestehende PlayStation-, Discord- und TikTok-Logik bleibt erhalten.
 
-ERSETZEN:
-- server.js
-- .env.example
-- public/index.html
-- public/assets/js/cfs-gaming-home-v112.js
+Enthaltene Änderungen
+---------------------
+- Persönliche Startseite mit Über mich, Streams, PlayStation-Games, Community
+  und Creator-Angebot.
+- Echte PlayStation-Cover / letzte PSN-Games bleiben angebunden.
+- TikTok-Follower und Discord-Zahlen bleiben über /api/public/community-stats
+  dynamisch angebunden.
+- Creator Suite: gleiche Farben, Header, Logo, Typografie, Karten, CTA-Buttons
+  und Abschnittsstruktur wie die Startseite.
+- Login / Registrierung: gleiche Designlinie und klare Zweiteilung.
+- TikTok-Seite: Verbindungsbestätigungen aus v122 bleiben enthalten.
+- Benötigte home-v116 Bildassets sind im Update enthalten.
 
-NEU EINFÜGEN:
-- lib/playstation-public-games.js
+Wichtig
+-------
+Es sind KEINE neuen Render-Environment-Variablen notwendig.
+Bestehende PlayStation-Variablen nicht ändern:
+  CFS_PLAYSTATION_ENABLED
+  CFS_PLAYSTATION_NPSSO
+  CFS_PLAYSTATION_RECENT_LIMIT
 
-ANLEITUNG:
-- PLAYSTATION-SETUP.txt
+Die öffentliche TikTok-Followerzahl nutzt weiterhin die bestehende
+Creator-Suite-TikTok-Verbindung; es wird keine zweite OAuth-Verbindung benötigt.
 
-Wichtig: Dieses Paket ist für die zuvor erstellte v118-Version gedacht.
-Die v118 CSS-Datei bleibt unverändert und ist deshalb nicht erneut enthalten.
+Installation
+------------
+Den Inhalt dieses ZIPs in das bestehende Projekt kopieren und vorhandene
+Dateien ersetzen. Danach normal deployen.
