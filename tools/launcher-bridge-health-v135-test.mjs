@@ -1,0 +1,13 @@
+import assert from 'node:assert/strict';
+import healthModule from '../lib/launcher-bridge-health.js';
+const { launcherBridgeHealth, launcherBridgeTiming } = healthModule;
+const now = Date.parse('2026-09-28T20:00:00.000Z');
+const timing = launcherBridgeTiming({ heartbeat_after_ms:10000 });
+assert.equal(timing.heartbeatAfterMs, 10000);
+assert.ok(timing.onlineWindowMs >= 30000);
+assert.ok(timing.graceWindowMs >= timing.onlineWindowMs);
+assert.equal(launcherBridgeHealth(new Date(now-10000).toISOString(),{},now).state,'online');
+assert.equal(launcherBridgeHealth(new Date(now-60000).toISOString(),{},now).state,'degraded');
+assert.equal(launcherBridgeHealth(new Date(now-120000).toISOString(),{},now).state,'offline');
+assert.equal(launcherBridgeHealth(null,{},now).state,'offline');
+console.log('launcher bridge health v135: 7/7');

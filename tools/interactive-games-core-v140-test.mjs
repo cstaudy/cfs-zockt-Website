@@ -1,0 +1,37 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import net from 'node:net';
+import {createRequire} from 'node:module';
+const require=createRequire(import.meta.url);
+const root=path.resolve(process.argv[2]||'.');
+let pass=0,fail=0;
+async function check(name,fn){try{await fn();pass++;console.log('PASS ',name)}catch(error){fail++;console.error('FAIL ',name,'-',error.message)}}
+async function freePort(){return new Promise((resolve,reject)=>{const s=net.createServer();s.listen(0,'127.0.0.1',()=>{const p=s.address().port;s.close(()=>resolve(p))});s.on('error',reject)})}
+const catalog=require(path.join(root,'lib/interactive-game-catalog.js'));
+const games=require(path.join(root,'lib/creator-games.js'));
+const portability=require(path.join(root,'lib/game-profile-portability.js'));
+const {InteractiveGameServiceManager}=require(path.join(root,'launcher/src/interactive-game-service-manager.js'));
+const {BridgeClient}=require(path.join(root,'launcher/src/bridge-client.js'));
+const serviceRoot=path.join(root,'launcher/resources/interactive-games-terminal');
+await check('server resource exists',()=>assert.ok(fs.existsSync(path.join(serviceRoot,'server.js'))));
+await check('core catalog exposes 7 local modules',()=>assert.equal(catalog.publicGameCatalog().length,7));
+await check('creator games exports server contract',()=>{for(const key of ['publicGameCatalog','isLauncherLocalGame','gameDefinition','dynamicLocalGameKey','isDynamicLocalGameKey'])assert.equal(typeof games[key],'function')});
+await check('core game runtime resolves local overlay',()=>assert.match(games.publicGameRuntime({creator_id:'1',public_token:'x',status:'idle',game_type:'chat_battle',title:'Chat Battle',config:{game_type:'chat_battle'},state:{},version:1},'https://example.test').source_url,/^http:\/\/127\.0\.0\.1:8787\/overlay\.html$/));
+await check('profile bundle accepts known local game',()=>{const b=portability.buildGameProfileBundle({profile:{game_type:'nexus',title:'Nexus'},rules:[]});assert.equal(portability.parseGameProfileBundle(b).profile.game_type,'nexus')});
+const tmp=fs.mkdtempSync(path.join(os.tmpdir(),'cfs-games-v140-'));const port=await freePort();const manager=new InteractiveGameServiceManager({serviceRoot,userDataPath:tmp,port});
+await check('manager sees packaged game catalog',()=>assert.equal(manager.snapshot().modules.length,7));
+await check('manager catalog hash is sha256',()=>assert.match(manager.catalogHash(),/^[a-f0-9]{64}$/));
+await check('manager starts underscore server key through terminal alias',async()=>{const snap=await manager.selectGame('chat_battle','chat-battle');assert.equal(snap.running,true);assert.equal(snap.activeGame,'chat-battle')});
+await check('local event forwarding succeeds',async()=>{const r=await manager.pushEvent({type:'like',provider:'tiktool',username:'test-user',like_count:4});assert.equal(r.ok,true);assert.equal(manager.snapshot().forwarded,1)});
+await check('manager snapshot never exposes local token',()=>assert.equal(JSON.stringify(manager.snapshot()).includes(manager.token),false));
+const snapshot=manager.snapshot();const client=new BridgeClient({settings:{provider:'tiktool',backendUrl:'https://example.test'},token:'bridge',logger:{},version:'0.47.17',interactiveGamesProvider:()=>snapshot});const caps=client.capabilities;
+await check('bridge advertises interactive game service v1',()=>assert.equal(caps.interactive_games_service_v1,true));
+await check('bridge advertises catalog v1',()=>assert.equal(caps.interactive_games_catalog_v1,true));
+await check('bridge catalog hash matches manager',()=>assert.equal(caps.interactive_games_catalog_hash,snapshot.catalogHash));
+await check('bridge module catalog contains no secret fields',()=>assert.ok(caps.interactive_game_modules.every(row=>!('token' in row)&&!('secret' in row))));
+await manager.stop();
+await check('manager stops cleanly',()=>assert.equal(manager.snapshot().running,false));
+fs.rmSync(tmp,{recursive:true,force:true});
+console.log(`\nInteractive Games Core v140: ${pass}/${pass+fail} PASS`);if(fail)process.exit(1);

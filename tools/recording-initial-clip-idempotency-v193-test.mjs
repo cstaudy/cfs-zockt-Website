@@ -20,9 +20,9 @@ check('launcher materializer uses idempotent endpoint',main.includes('bridge.cre
 check('launcher forwards source handoff id',main.includes('source_handoff_id:String(handoff.id||"")'));
 const materialize=main.slice(main.indexOf('async function materializeRecordingHandoff'),main.indexOf('\nfunction recordingHandoffProjectTracks'));
 check('materializer no longer calls generic clip creation',!materialize.includes('bridge.createCutClip('));
-check('launcher version bumped to 0.47.12',pkg.version==='0.47.12');
-check('system contract expects 0.47.12',read('public/assets/js/page-system-check.js').includes('launcher:"0.47.12"'));
-check('release readiness contract targets 0.47.12',read('tools/release-readiness-finish-v88-test.mjs').includes("launcher.version==='0.47.12'"));
+check('launcher version bumped to 0.47.17',pkg.version==='0.47.17');
+check('system contract expects 0.47.17',read('public/assets/js/page-system-check.js').includes('launcher:"0.47.17"'));
+check('release readiness contract targets 0.47.17',read('tools/release-readiness-finish-v88-test.mjs').includes("launcher.version==='0.47.17'"));
 const failed=checks.filter(([,ok])=>!ok);
 console.log(`\nRecording Initial Clip Idempotency v193: ${checks.length-failed.length}/${checks.length} PASS`);
 if(failed.length)process.exit(1);

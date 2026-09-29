@@ -67,7 +67,7 @@ await ok('Audition poller checks queued audition jobs',()=>assert.ok(main.includ
 await ok('Audition poll interval is 1500 ms',()=>assert.ok(main.includes('setInterval(()=>pollCutAuditionJobs().catch(()=>{}),1500)')));
 await ok('Audition loop starts with Launcher',()=>assert.ok(main.includes('startCutAuditionLoop()')));
 await ok('Audition loop stops before quit',()=>assert.ok(main.includes('stopCutAuditionLoop()')));
-await ok('Normal Launcher Cut library filters audition jobs',()=>assert.ok(main.includes('filter(job=>!isCutAuditionJob(job))')));
+await ok('Normal Launcher Cut library filters audition jobs',()=>assert.ok(main.includes('filter(job=>!isCutAuditionJob(job)&&!isCutAnalysisJob(job))')));
 await ok('Preload exposes local audition event only as callback',()=>assert.ok(preload.includes('onCutAudition: callback')&&preload.includes('launcher:cut-audition')));
 await ok('Launcher renderer plays local preview with Audio',()=>assert.ok(renderer.includes('new Audio(localFileUrl(previewPath))')&&renderer.includes('onCutAudition')));
 await ok('Launcher renderer replaces prior audition playback',()=>assert.ok(renderer.includes('cutAuditionAudio?.pause?.()')));

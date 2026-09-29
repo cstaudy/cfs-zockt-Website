@@ -114,7 +114,7 @@ check('Game source requires a local game/window binding when no native helper bi
 yes('Native scene graph module is connected to StreamEngine',engineText.includes('require("./native-scene-graph")'));
 yes('Launcher forwards published program scene into StreamEngine',main.includes('scene:cloud.program_scene||null'));
 yes('Bridge advertises evolved local scene graph',server.includes('scene_graph:"hybrid_offscreen"'));
-yes('Bridge protocol advanced beyond native foundation',server.includes('protocol:4'));
+yes('Bridge protocol advanced beyond native foundation',server.includes('protocol:6'));
 yes('Pass 21.10.13 still defines Game as a native Scene Graph source type',graphText.includes('game:{key:"game"'));
 yes('Native graph does not contain stream keys',!graphText.includes('streamKey')&&!graphText.includes('stream_key'));
 yes('New repository check is registered',pkg.scripts?.['studio-native-scene21:check']?.includes('stream-studio-native-scene-graph-pass21-10-13-test.mjs'));

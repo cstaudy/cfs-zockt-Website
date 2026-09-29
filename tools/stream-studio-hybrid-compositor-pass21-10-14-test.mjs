@@ -123,7 +123,7 @@ yes('Launcher creates WidgetLayerRenderer',main.includes('new WidgetLayerRendere
 yes('Launcher injects widget renderer into StreamEngine',main.includes('widgetFrameSourceManager:widgetLayerRenderer'));
 yes('Bridge hydrates program scene runtime layouts',server.includes('runtime_layouts:runtime?.layouts||{}'));
 yes('Bridge advertises hybrid offscreen scene graph',server.includes('scene_graph:"hybrid_offscreen"'));
-yes('Bridge protocol advanced to v4',server.includes('protocol:4'));
+yes('Bridge protocol advanced to current v6 contract',server.includes('protocol:6'));
 yes('Runtime summary does not expose widget source URLs',!graphApi.graphSummary(graph).widgetSources.some(row=>'url' in row||'sourceUrl' in row));
 yes('Graph source code never references stream keys',!graphText.includes('streamKey')&&!graphText.includes('stream_key'));
 yes('Hybrid repository check is registered',pkg.scripts?.['studio-hybrid21:check']?.includes('stream-studio-hybrid-compositor-pass21-10-14-test.mjs'));

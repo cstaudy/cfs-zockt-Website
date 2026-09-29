@@ -73,7 +73,7 @@ await ok('Server public runtime exposes loop flag',()=>assert.ok(server.includes
 await ok('Runtime upsert persists loop metadata',()=>assert.ok(server.includes('loop_enabled,loop_start_ms,loop_end_ms,revision')));
 await ok('Audition jobs accept loop_start',()=>assert.ok(server.includes('"loop_start"')));
 await ok('Audition jobs accept loop_seek',()=>assert.ok(server.includes('"loop_seek"')));
-await ok('Audition protocol remains schema 11+',()=>{const m=server.match(/schema:(\d+)/);assert.ok(m&&Number(m[1])>=11)});
+await ok('Audition protocol remains schema 11+',()=>{const m=server.match(/schema:(\d+),\s*kind:"cut_audition"/);assert.ok(m&&Number(m[1])>=11)});
 await ok('Server rejects A/B loop shorter than 500ms',()=>assert.ok(server.includes('A/B Loop benötigt mindestens 0,5 Sekunden Auswahl.')));
 await ok('Server loop job stores start boundary only as milliseconds',()=>assert.ok(server.includes('loop_start_ms:["loop_start","loop_seek"].includes(action)?loopStartMs:0')));
 await ok('Server loop job stores end boundary only as milliseconds',()=>assert.ok(server.includes('loop_end_ms:["loop_start","loop_seek"].includes(action)?loopEndMs:0')));

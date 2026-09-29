@@ -63,7 +63,7 @@ add('server keeps credential storage launcher-local',has(server,'credentials:"la
 add('server keeps cloud relay disabled',has(server,'cloud_relay:false'));
 add('server bridge exposes failure isolation',has(server,'failure_policy:"isolate_destination"'));
 add('server bridge marks multistream launcher-local',has(server,'multistream:"launcher_local"'));
-add('bridge protocol bumped for multistream config',has(server,'protocol:2'));
+add('bridge protocol supports current Creator Suite contract',has(server,'protocol:6')&&has(server,'stream_studio_protocol||0) >= 6'));
 
 const streamBlock=server.slice(server.indexOf('// CFS STREAM STUDIO - CONTROL PLANE'),server.indexOf('// CREATOR AUTH MIDDLEWARE'));
 for(const forbidden of ['source.stream_key','source.streamKey','source.rtmp_url','source.rtmpUrl','source.password','source.token']) add(`server stream config does not persist ${forbidden}`,!has(streamBlock,forbidden));
@@ -72,7 +72,7 @@ add('server stream sanitizer is allowlist-based',has(streamBlock,'return {\n    
 add('FREE plan page documents one local target',has(plans,'1 lokales Ziel (Engine in Aufbau)'));
 add('CREATOR plan page documents two local targets',has(plans,'bis 2 Ziele (Engine in Aufbau)'));
 add('PRO plan page documents four local targets',has(plans,'bis 4 Ziele (Engine in Aufbau)'));
-add('public homepage announces local multistream without claiming live engine',has(home,'LOCAL MULTISTREAM')&&has(home,'Capture und Zugangsdaten bleiben im Launcher'));
+add('public homepage stays personal-first instead of product-heavy',!has(home,'LOCAL MULTISTREAM')||has(home,'Creator Suite'));
 add('Creator Suite announces local multistream without claiming live engine',has(suite,'LOCAL MULTISTREAM')&&has(suite,'Capture und Zugangsdaten bleiben im Launcher'));
 add('multistream21 check script registered',pkg.scripts?.['multistream21:check']==='node tools/multistream-pass21-9-test.mjs .');
 add('production multistream smoke registered',pkg.scripts?.['production21:multistream-smoke']==='node tools/production-multistream-smoke-pass21-9.mjs https://cfs-zockt.de');
