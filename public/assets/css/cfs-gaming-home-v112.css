@@ -518,3 +518,16 @@ body.cfs-gaming-home-v116 .gaming-live-session-stats strong{display:block;margin
   body.cfs-gaming-home-v116 .gaming-live-session-stats{grid-template-columns:repeat(2,1fr)}
   body.cfs-gaming-home-v116 .gaming-live-visual-bottom>strong{max-width:64%;font-size:10px}
 }
+
+/* v129: neutraler LIVE-Zwischenstatus, wenn kein eindeutiges Signal vorliegt */
+body.cfs-gaming-home-v116 .gaming-live-status-badge.is-unknown,
+body.cfs-gaming-home-v116 .gaming-live-preview-badge.is-unknown{
+  border-color:rgba(0,190,255,.62);
+  background:rgba(5,42,72,.96);
+  color:#aeeeff;
+  box-shadow:0 0 16px rgba(0,190,255,.16)
+}
+body.cfs-gaming-home-v116 .gaming-live-title .gaming-live-dot.is-unknown{
+  background:#19bfff;
+  box-shadow:0 0 12px rgba(25,191,255,.65)
+}

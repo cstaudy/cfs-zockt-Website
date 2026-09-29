@@ -8,13 +8,14 @@
   <meta name="robots" content="noindex,nofollow,noarchive">
   <link rel="stylesheet" href="/assets/css/cfs-theme-v3.css">
   <link rel="stylesheet" href="/assets/css/cfs-onboarding-v4.css">
+  <link rel="stylesheet" href="/assets/css/cfs-dashboard-neon-v128.css" data-cfs-dashboard-neon>
   <script src="/assets/js/cfs-shell-v3.js" defer></script>
 </head>
 <body class="creator-workspace">
 <header class="site-header creator-site-header">
   <div class="container header-inner creator-header-inner">
     <a class="creator-brand" href="/pages/dashboard.html" aria-label="cfs_zockt Creator Suite Dashboard">
-      <img class="creator-brand-logo" src="/assets/img/logo-header.png" alt="cfs_zockt">
+      <img class="creator-brand-logo" src="/assets/img/brand/cfs-zockt-logo.png" alt="cfs_zockt">
       <span>CREATOR SUITE</span>
     </a>
     <button class="mobile-toggle creator-mobile-toggle" data-mobile-toggle id="mobileNavToggle" type="button">MENÜ</button>
@@ -29,6 +30,7 @@
       <details class="creator-nav-more" data-creator-more>
         <summary>MEHR</summary>
         <div class="creator-nav-more-menu">
+          <a data-creator-link href="/pages/technical-status.html">TECHNIK STATUS</a>
           <a data-creator-link href="/pages/scene-studio.html">SCENE STUDIO</a>
 <a data-creator-link href="/pages/editor.html">CREATOR EDITOR</a>
 <a data-creator-link href="/pages/games.html">GAMES</a>
@@ -54,6 +56,19 @@
   <p id="dashboardGreeting" class="creator-dashboard-greeting">Willkommen zurück. Dein Workspace wird geladen.</p>
   <p>Ein Blick reicht: Was ist verbunden, was ist bereit und was solltest du als Nächstes machen?</p>
   <div class="access-badges" id="accessBadges"></div>
+</section>
+
+<section class="cfs-public-live-control" id="cfsPublicLiveControl" aria-live="polite">
+  <div class="cfs-public-live-control-copy">
+    <span>WEBSITE LIVE-STATUS</span>
+    <strong id="cfsPublicLiveHeadline">Status wird geladen …</strong>
+    <p id="cfsPublicLiveText">Wenn TikTok LIVE nicht automatisch erkannt wird, kannst du die öffentliche Website hier zuverlässig auf LIVE setzen.</p>
+  </div>
+  <div class="cfs-public-live-control-actions">
+    <span class="cfs-public-live-pill is-unknown" id="cfsPublicLivePill">PRÜFEN</span>
+    <button class="btn primary" id="cfsPublicLiveStart" type="button">WEBSITE AUF LIVE SETZEN</button>
+    <button class="btn" id="cfsPublicLiveStop" type="button" hidden>LIVE BEENDEN</button>
+  </div>
 </section>
 
 <section class="beginner-status" aria-label="Stream Status">
@@ -172,5 +187,6 @@
 <script src="/assets/js/app.js?v=v42-r9"></script>
 <script src="/assets/js/cfs-onboarding-v4.js"></script>
 <script src="/assets/js/page-dashboard.js"></script>
+<script src="/assets/js/cfs-dashboard-neon-v128.js"></script>
 </body>
 </html>
