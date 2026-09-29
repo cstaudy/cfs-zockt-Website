@@ -48,8 +48,8 @@ Empfohlen:
 - `CFS_ACCOUNT_MAIL_MODE=disabled` oder `webhook`
 - bei `webhook`: `CFS_ACCOUNT_MAIL_WEBHOOK_URL=https://...`
 - `CFS_EMAIL_VERIFICATION_REQUIRED=false` bis der Mail-Relay real geprüft ist
-- `CFS_LAUNCHER_BUILD_TARGET_VERSION=0.42.0`
-- `CFS_RELEASE_EVIDENCE_VERSION=0.42.0`
+- `CFS_LAUNCHER_BUILD_TARGET_VERSION=0.47.17`
+- `CFS_RELEASE_EVIDENCE_VERSION=0.47.17`
 - `CFS_LAUNCHER_RELEASE_REPO=cstaudy/CFS-TikTok-Backend`
 
 ## Legacy Verification Flags

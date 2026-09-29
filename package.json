@@ -287,7 +287,12 @@
     "decision191:check": "node tools/stream-runtime-local-readiness-decision-v191-test.mjs",
     "heartbeat192:check": "node tools/stream-heartbeat-serialization-v192-test.mjs",
     "recording193:check": "node tools/recording-initial-clip-idempotency-v193-test.mjs",
-    "render194:check": "node tools/render-runtime-module-repair-v194-test.mjs"
+    "release:v138": "node tools/creator-suite-release-gate-v138.mjs .",
+    "release:v139": "node tools/creator-suite-core-v139-test.mjs && node tools/creator-suite-release-gate-v138.mjs .",
+    "widget140:check": "node tools/widget-studio-completion-v140-test.mjs .",
+    "launcher140:check": "node launcher/tools/launcher-completion-v140-test.mjs launcher",
+    "creator-suite140:check": "npm run widget140:check && npm run launcher140:check && node tools/interactive-games-core-v140-test.mjs . && npm run scene21:check && npm run stream21:check && npm run multistream21:check && npm run provider-adapters21:check && npm run stream-health21:check",
+    "release:v140": "npm run creator-suite140:check && npm run release:v139"
   },
   "engines": {
     "node": ">=22"

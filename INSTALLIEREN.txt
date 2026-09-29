@@ -1,37 +1,49 @@
-CFS_ZOCKT v126 – ALLE NEUEN DATEIEN (kumulatives Update-Paket)
-================================================================
+cfs_zockt v140 – kumulatives Updatepaket
+=========================================
 
-Dieses Paket ist KEIN komplettes Website-Projekt.
-Es enthält alle Dateien, die für den aktuellen Stand der von v116 bis v126
-umgebauten Startseite / Creator Suite / TikTok-Status / PlayStation- und
-Live-Session-Anzeige neu hinzugekommen oder geändert wurden.
+WAS DIESES PAKET IST
+--------------------
+Dieses ZIP ist KEIN vollständiger Projekt-Export.
+Es enthält alle bisher neu angelegten oder geänderten Update-Dateien in ihrer
+jeweils neuesten Fassung und baut auf deinem bestehenden cfs_zockt Projekt auf.
+
+V140 SCHWERPUNKT
+----------------
+- Widget Studio Code-Audit abgeschlossen.
+- Launcher-Kern Code-Audit abgeschlossen.
+- Launcher auf 0.47.17 synchronisiert.
+- fehlende Launcher-Runtime-Bausteine ergänzt/gefestigt.
+- Widget Runtime / OBS Browser-Source-Pfad geprüft.
+- Stream-Studio-/Scene-Studio-Testverträge auf aktuellen Protokollstand gebracht.
+- kompletter lokaler Stream-Studio-Aggregatcheck läuft durch.
+- Creator-Suite Release Gate auf v140 aktualisiert.
 
 INSTALLATION
 ------------
-1. Inhalt dieses Ordners in dein bestehendes Projekt kopieren.
-2. Vorhandene Dateien ersetzen.
-3. Deine echten Render-Secrets NICHT aus .env.example übernehmen/überschreiben.
-4. Normal deployen.
+1. ZIP entpacken.
+2. Den INHALT des Ordners in dein bestehendes Projekt kopieren.
+3. Vorhandene Dateien ersetzen.
+4. Keine Secrets aus Render in Dateien eintragen.
+5. Erst committen/deployen, wenn wir den gemeinsamen Release-Stand freigeben.
 
 WICHTIG
 -------
-Die bestehende Render-Konfiguration für PlayStation bleibt unverändert:
-  CFS_PLAYSTATION_ENABLED=true
-  CFS_PLAYSTATION_NPSSO=<dein geheimer Wert>
-  CFS_PLAYSTATION_RECENT_LIMIT=6
+- Keine neuen Render-Secrets für v140 notwendig.
+- Für den späteren echten Launcher-Release müssen die bestehenden Release-Werte
+  auf 0.47.17 zeigen:
+  CFS_LAUNCHER_BUILD_TARGET_VERSION=0.47.17
+  CFS_RELEASE_EVIDENCE_VERSION=0.47.17
+- CFS_PLAYSTATION_NPSSO bleibt ausschließlich als Secret in Render.
+- Stream-/Provider-Credentials bleiben Launcher-lokal; nicht in GitHub oder Render kopieren.
 
-NPSSO niemals in Git oder in .env.example eintragen.
+STATUS
+------
+Widget Studio: FEATURE FROZEN / bereit für reale OBS-/Creator-Abnahme.
+Launcher Core: FEATURE FROZEN / bereit für reale Windows-Abnahme.
+Gesamte Creator Suite: noch nicht final; OBS WebSocket und Twitch OAuth sind die
+nächsten echten Feature-Blöcke. Multistream-Core ist lokal implementiert, braucht
+später reale Provider-/Reconnect-/Lasttests.
 
-TikTok / Discord verwenden die bereits vorhandenen Verbindungen.
-Für das v126 Live-Session-Panel sind keine neuen Environment-Variablen nötig.
-
-AKTUELLER FUNKTIONSUMFANG
--------------------------
-- persönliche cfs_zockt Startseite im Blau/Cyan-Gaming-Design
-- echte letzte PlayStation-Games mit PSN-Covern
-- TikTok-Follower aus vorhandener Creator-Suite-Verbindung
-- Discord Mitglieder + online
-- Creator Suite / Login / Registrierung im gleichen Design
-- klare TikTok-Verbindungsbestätigung
-- Live-Session-Bereich mit LIVE/OFFLINE, aktuellem Game und Live-Kennzahlen
-- weniger doppelte Kanal-Buttons / aufgeräumte Startseite
+DETAILS
+-------
+Siehe TECHNIK-v140.md und CREATOR-SUITE-COMPLETION-v140.md.

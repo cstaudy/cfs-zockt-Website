@@ -6,7 +6,7 @@ Apply after v192.
 - Idempotent initial Recording→CUT clip materialization under server-side Creator/project locking.
 - `source_handoff_id` is validated against project provenance before initial clip reuse/creation.
 - Launcher uses the dedicated initial-recording bridge endpoint instead of generic clip creation.
-- Launcher active release contract bumped to 0.47.12.
+- Launcher active release contract bumped to 0.47.15.
 - Local contract: Recording Initial Clip Idempotency v193: 15/15 PASS.
 
 ## Local verification
@@ -17,5 +17,5 @@ Apply after v192.
 - Release Readiness: 20/20 PASS
 - Backend / Launcher syntax: PASS
 
-Backend 3.12.0 · Launcher 0.47.12 · Schema Generation 68.
+Backend 3.12.0 · Launcher 0.47.15 · Schema Generation 68.
 External Windows/LIVE/Production acceptance remains OPEN.

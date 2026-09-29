@@ -91,7 +91,11 @@ const DEFAULTS = {
   streamWatchdogEnabled: true,
   streamWatchdogTimeoutSec: 18,
   streamDrawMouse: true,
-  streamRecordingEnabled: false
+  streamRecordingEnabled: false,
+  gameActivityEnabled: false,
+  gameActivitySource: "launcher_manual",
+  gameActivityGameName: "",
+  gameActivityPlatform: "unknown"
 };
 
 class ConfigStore {
@@ -217,7 +221,11 @@ class ConfigStore {
       streamWatchdogEnabled: typeof input.streamWatchdogEnabled === "boolean" ? input.streamWatchdogEnabled : current.streamWatchdogEnabled !== false,
       streamWatchdogTimeoutSec: Math.max(10, Math.min(60, Math.round(Number(input.streamWatchdogTimeoutSec ?? current.streamWatchdogTimeoutSec ?? 18) || 18))),
       streamDrawMouse: typeof input.streamDrawMouse === "boolean" ? input.streamDrawMouse : current.streamDrawMouse !== false,
-      streamRecordingEnabled: typeof input.streamRecordingEnabled === "boolean" ? input.streamRecordingEnabled : current.streamRecordingEnabled === true
+      streamRecordingEnabled: typeof input.streamRecordingEnabled === "boolean" ? input.streamRecordingEnabled : current.streamRecordingEnabled === true,
+      gameActivityEnabled: typeof input.gameActivityEnabled === "boolean" ? input.gameActivityEnabled : current.gameActivityEnabled === true,
+      gameActivitySource: ["launcher_manual","stream_capture"].includes(String(input.gameActivitySource ?? current.gameActivitySource ?? "")) ? String(input.gameActivitySource ?? current.gameActivitySource) : "launcher_manual",
+      gameActivityGameName: String(input.gameActivityGameName ?? current.gameActivityGameName ?? "").replace(/[\u0000-\u001f\u007f]/g," ").replace(/\s+/g," ").trim().slice(0,80),
+      gameActivityPlatform: ["playstation_5","playstation_4","pc","xbox_series","xbox_one","switch","unknown"].includes(String(input.gameActivityPlatform ?? current.gameActivityPlatform ?? "")) ? String(input.gameActivityPlatform ?? current.gameActivityPlatform) : "unknown"
     };
 
     const bridgeToken = String(input.bridgeToken || "").trim();

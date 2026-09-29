@@ -7,7 +7,7 @@ const fail = m => { console.error("FAIL:", m); process.exitCode = 1; };
 const ok = m => console.log("OK:", m);
 
 const pkg = JSON.parse(read("package.json"));
-pkg.version === "0.47.7" ? ok("launcher version 0.47.7") : fail(`version ${pkg.version}`);
+pkg.version === "0.47.17" ? ok("launcher version 0.47.17") : fail(`version ${pkg.version}`);
 pkg.dependencies?.["electron-updater"] ? ok("electron-updater dependency") : fail("electron-updater missing");
 pkg.build?.publish?.[0]?.provider === "github" ? ok("GitHub publish provider") : fail("publish provider missing");
 
@@ -168,4 +168,4 @@ for (const feature of [
 const ffmpegResource=(pkg.build?.extraResources||[]).find(x=>x.from==="vendor/ffmpeg"&&x.to==="ffmpeg");
 ffmpegResource ? ok("optional FFmpeg extraResources prepared") : fail("FFmpeg extraResources missing");
 
-if (!process.exitCode) console.log("\nLauncher V0.42 release checks passed.");
+if (!process.exitCode) console.log(`\nLauncher ${pkg.version} release checks passed.`);

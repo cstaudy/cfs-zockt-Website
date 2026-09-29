@@ -5,7 +5,7 @@ Aktueller kumulativer Projektstand der cfs_zockt Website, Creator Suite und des 
 ## Aktuelle Versionen
 
 - Backend: **3.12.0**
-- Launcher: **0.42.0**
+- Launcher: **0.47.17**
 - Automatisierte Release-/Acceptance-/Stress-/OBS-Simulationen: **bestanden**
 - Externe Production-/TLS-/Hardware-/echte LIVE-Gates: **noch offen**
 

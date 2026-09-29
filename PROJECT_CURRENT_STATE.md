@@ -1,20 +1,38 @@
-# v194 — Render Runtime Module Repair
+# v140 — Widget Studio & Launcher Code Completion / Launcher 0.47.17
 
-**Launcher: 0.47.12**
+**Launcher: 0.47.17**
 
-- Re-delivers the required CUT runtime modules `lib/cut-candidate-engine.js`, `lib/cut-reference-provider.js`, and `lib/game-profile-portability.js` because the deployed GitHub/Render tree can otherwise start without files required by `lib/creator-cut-studio.js`.
-- Adds a startup-oriented runtime module contract that verifies all three files exist and that the full `creator-cut-studio` require chain resolves before deployment.
-- This is a repair delta: the three runtime module files are intentionally shipped even though their contents already exist in the local v193 reference tree. No Launcher or database schema bump.
-- Local contract: Render Runtime Module Repair v194: 10/10 PASS; Release Readiness 20/20 PASS; backend syntax PASS.
-- Backend remains **3.12.0**, Launcher remains **0.47.12**, Schema Generation remains **68**. External acceptance remains OPEN.
+- Widget Studio and the Launcher core were audited file-by-file against the current cumulative state.
+- Missing Launcher runtime modules were restored/implemented: game activity tracking, interactive-game service manager, NEXUS action receipts, runtime failure classification and stream game-context persistence.
+- Renderer ↔ preload ↔ IPC coverage is complete for currently used Launcher methods.
+- Game activity settings are now persisted safely; sync/clear controls are exposed through preload and privacy-clear resumes tracking without silently disabling the loop.
+- Provider selection now fails closed instead of silently falling back to the simulator for unsupported providers. Managed LIVE provider control uses the actually implemented TikTool adapter.
+- Widget Studio runtime QA was updated for the external renderer/runtime architecture; OBS runtime stays published-only, no-store and token-in-fragment. Optimistic version conflict protection remains active.
+- Code-side status: **Widget Studio FEATURE FROZEN / READY_FOR_REAL_WORLD_ACCEPTANCE**. **Launcher core FEATURE FROZEN / READY_FOR_WINDOWS_ACCEPTANCE**.
+- Not claimed as production acceptance: clean Windows installer/code-signing/SmartScreen test, real OBS Browser Source field test, sustained real TikTok LIVE/reconnect soak, and optional Interactive Games runtime bundle acceptance.
+- v140 Creator Suite local aggregate gates now pass, including the complete Stream Studio local aggregate. The remaining gaps for Widget Studio/Launcher are real-world acceptance, while OBS WebSocket and Twitch OAuth remain subsequent Creator Suite feature work.
 
-# v193 — Recording Handoff Initial Clip Idempotency / Launcher 0.47.12
+# v139 — Creator Suite Core Contract / Launcher 0.47.16
 
-**Launcher: 0.47.12**
+**Launcher: 0.47.16 · Stream Studio Protocol: 6**
+
+- Creator Suite core is now treated as the primary release path: Widget Studio → Launcher Bridge → local Stream Engine → provider integrations.
+- Launcher now reports a non-secret integration-health summary for LIVE provider, Interactive Games, local encrypted stream credentials and OBS browser-source diagnostics.
+- Stream Studio config now carries an explicit compatibility contract. The launcher rejects missing/unsupported contracts, missing required capabilities and any cloud/unsecured stream-key policy.
+- Stream keys remain launcher-local and encrypted; the backend contract explicitly sets `cloud_stream_keys=false`.
+- Multistream failure policy remains `isolate_destination`, so a failed output is not allowed to become the policy for all other outputs.
+- New protected `/api/creator/suite-readiness` endpoint exposes the Creator Suite core readiness without secrets.
+- Technical status now includes a Creator Suite core card.
+- OBS WebSocket control, Twitch account connection and full Multistream production acceptance remain staged next steps; they are not claimed complete in v139.
+- Local contract: Creator Suite Core v139 14/14 PASS; v138 Release Gate 14/14 PASS; Technical Foundation 19/19 PASS; syntax checks PASS. External acceptance remains OPEN.
+
+# v193 — Recording Handoff Initial Clip Idempotency / Launcher 0.47.16
+
+**Launcher: 0.47.16**
 
 - Adds a dedicated idempotent bridge endpoint for the initial Recording→CUT clip. The server locks the Creator resource and Cut project, validates `source_handoff_id`, reuses the existing first clip when present, and only inserts a new initial clip when the project is still empty.
 - Launcher `materializeRecordingHandoff()` now uses the idempotent initial-recording endpoint instead of generic clip creation, closing the duplicate “Gesamte Aufnahme” race under concurrent/retried handoff materialization.
-- Launcher executable code changed, so active release contracts are synchronized from 0.47.11 to **0.47.12**. Backend remains **3.12.0**, Schema Generation remains **68**. External acceptance remains OPEN.
+- Launcher executable code changed, so active release contracts are synchronized from 0.47.11 to **0.47.16**. Backend remains **3.12.0**, Schema Generation remains **68**. External acceptance remains OPEN.
 - Local contract: Recording Initial Clip Idempotency v193: 15/15 PASS; Launcher static check PASS; BridgeClient integration PASS; Release Readiness 20/20 PASS.
 
 # v192 — Transactional Stream Heartbeat Serialization

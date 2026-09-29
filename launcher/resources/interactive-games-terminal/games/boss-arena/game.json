@@ -1,0 +1,15 @@
+{
+  "id": "boss-arena",
+  "name": "Boss Arena",
+  "label": "Boss Arena",
+  "version": "1.0.0",
+  "category": "battle",
+  "events": [
+    "gift",
+    "like",
+    "chat"
+  ],
+  "runtime": "local",
+  "network": "loopback_only",
+  "secrets_required": false
+}

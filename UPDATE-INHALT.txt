@@ -1,37 +1,15 @@
-CFS_ZOCKT v124 – Update-only
-==============================
+cfs_zockt – kumulativer Update-Stand v140
 
-Ziel
-----
-Die öffentliche Startseite, Creator-Suite-Landingpage und Login/Registrierung
-verwenden jetzt dieselbe dunkelblaue / cyanfarbene Neon-Designlinie.
-Die bestehende PlayStation-, Discord- und TikTok-Logik bleibt erhalten.
+Dieser Stand führt alle bisherigen neu erstellten/geänderten Update-Dateien in
+aktueller Fassung weiter.
 
-Enthaltene Änderungen
----------------------
-- Persönliche Startseite mit Über mich, Streams, PlayStation-Games, Community
-  und Creator-Angebot.
-- Echte PlayStation-Cover / letzte PSN-Games bleiben angebunden.
-- TikTok-Follower und Discord-Zahlen bleiben über /api/public/community-stats
-  dynamisch angebunden.
-- Creator Suite: gleiche Farben, Header, Logo, Typografie, Karten, CTA-Buttons
-  und Abschnittsstruktur wie die Startseite.
-- Login / Registrierung: gleiche Designlinie und klare Zweiteilung.
-- TikTok-Seite: Verbindungsbestätigungen aus v122 bleiben enthalten.
-- Benötigte home-v116 Bildassets sind im Update enthalten.
+v140 ergänzt insbesondere:
+- Widget Studio Completion Audit + Tests
+- Launcher 0.47.17 + Completion Audit
+- Game Activity / Interactive Games / Runtime Failure / Game Context Bausteine
+- aktuelle Stream-Studio-Testverträge
+- Creator-Suite v140 Release Gate
+- Completion Matrix und Technik-Dokumentation
 
-Wichtig
--------
-Es sind KEINE neuen Render-Environment-Variablen notwendig.
-Bestehende PlayStation-Variablen nicht ändern:
-  CFS_PLAYSTATION_ENABLED
-  CFS_PLAYSTATION_NPSSO
-  CFS_PLAYSTATION_RECENT_LIMIT
-
-Die öffentliche TikTok-Followerzahl nutzt weiterhin die bestehende
-Creator-Suite-TikTok-Verbindung; es wird keine zweite OAuth-Verbindung benötigt.
-
-Installation
-------------
-Den Inhalt dieses ZIPs in das bestehende Projekt kopieren und vorhandene
-Dateien ersetzen. Danach normal deployen.
+Es handelt sich weiterhin um ein kumulatives Updatepaket und nicht um das
+vollständige ursprüngliche Repository.

@@ -109,4 +109,4 @@ const logger={info(){},warn(){},error(){}};
   await manager.stop();
 }
 
-console.log(JSON.stringify({ok:true,checks:4,launcher_version:"0.47.7",areas:["settings_atomicity","live_settings_guard","action_poll_serialization","output_crash_recovery"]}));
+console.log(JSON.stringify({ok:true,checks:4,launcher_version:"0.47.17",areas:["settings_atomicity","live_settings_guard","action_poll_serialization","output_crash_recovery"]}));

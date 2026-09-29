@@ -84,7 +84,18 @@ class ProviderManager extends EventEmitter {
   }
 
   async use(key) {
-    const target = key === "tiktool" ? "tiktool" : "mock";
+    const target = String(key || "mock").trim().toLowerCase();
+    if (!Object.prototype.hasOwnProperty.call(this.factories,target)) {
+      const error = new Error(`LIVE Provider "${target}" ist in diesem Launcher nicht implementiert.`);
+      error.code = "provider_not_implemented";
+      throw error;
+    }
+    const catalog = ADAPTER_CATALOG[target];
+    if (!catalog || catalog.implemented !== true) {
+      const error = new Error(`LIVE Provider "${target}" ist noch nicht freigegeben.`);
+      error.code = "provider_not_implemented";
+      throw error;
+    }
     const switchProvider = async () => {
       if (this.provider && this.key === target) return this.info();
       if (this.provider) await this.provider.stop?.();

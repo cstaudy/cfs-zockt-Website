@@ -50,6 +50,8 @@ const { simpleWebAuthn, webauthnUserID, normalizePasskeyName, passkeyReference, 
 const { DEVICE_LINK_DELIVERY_LEGACY, DEVICE_LINK_DELIVERY_POLL_V2, normalizeCredentialDelivery, validDeviceSecret, normalizeDeviceCode, deriveBridgeToken, shouldDeliverPollCredential } = require("./lib/launcher-device-link-security");
 const { monitorAlertConfig, validateMonitorAlertConfig, sendProductionMonitorAlert, evaluateProductionMonitor } = require("./lib/production-monitor-security");
 const { fetchPublicPlayStationRecentGames } = require("./lib/playstation-public-games");
+const { buildPublicCreatorState, buildCreatorTechnicalState } = require("./lib/creator-state-snapshot");
+const { DEFAULT_HEARTBEAT_INTERVAL_MS, DEFAULT_ONLINE_WINDOW_MS, DEFAULT_GRACE_WINDOW_MS, launcherBridgeHealth } = require("./lib/launcher-bridge-health");
 
 const app = express();
 
@@ -284,7 +286,7 @@ const PRODUCTION_VERIFICATION_FLAGS = Object.freeze(ALLOW_LEGACY_PRODUCTION_FLAG
     canary_verified:process.env.CFS_CANARY_VERIFIED,
     rollback_verified:process.env.CFS_ROLLBACK_VERIFIED
 } : {});
-const PRODUCTION_EVIDENCE_RELEASE_VERSION = String(process.env.CFS_RELEASE_EVIDENCE_VERSION || "0.42.0").trim();
+const PRODUCTION_EVIDENCE_RELEASE_VERSION = String(process.env.CFS_RELEASE_EVIDENCE_VERSION || "0.47.17").trim();
 
 
 let stripeClientCache=null;
@@ -762,8 +764,14 @@ const PUBLIC_RUNTIME_IP_RATE_MAX =
 const WIDGET_BRIDGE_TOKEN_BYTES =
     32;
 
+const WIDGET_BRIDGE_HEARTBEAT_AFTER_MS =
+    DEFAULT_HEARTBEAT_INTERVAL_MS;
+
 const WIDGET_BRIDGE_HEARTBEAT_STALE_MS =
-    30 * 1000;
+    DEFAULT_ONLINE_WINDOW_MS;
+
+const WIDGET_BRIDGE_HEARTBEAT_GRACE_MS =
+    DEFAULT_GRACE_WINDOW_MS;
 
 const WIDGET_BRIDGE_HEARTBEAT_RATE_WINDOW_MS =
     60 * 1000;
@@ -3990,6 +3998,29 @@ async function initDatabase() {
     `);
 
     // --------------------------------------------------------
+    // CREATOR SUITE V137 - SIGNED BRIDGE REQUEST REPLAY GUARD
+    //
+    // Nonces are short-lived and scoped to one bridge. They contain no
+    // secret material. The unique key prevents a captured signed mutation
+    // from being accepted twice inside the validity window.
+    // --------------------------------------------------------
+
+    await pool.query(`
+        CREATE TABLE IF NOT EXISTS creator_bridge_request_nonces (
+            bridge_id TEXT NOT NULL,
+            nonce TEXT NOT NULL,
+            expires_at TIMESTAMPTZ NOT NULL,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            PRIMARY KEY (bridge_id, nonce)
+        )
+    `);
+
+    await pool.query(`
+        CREATE INDEX IF NOT EXISTS idx_creator_bridge_request_nonces_expires
+        ON creator_bridge_request_nonces (expires_at)
+    `);
+
+    // --------------------------------------------------------
     // CREATOR SUITE V23 - LAUNCHER DEVICE LINK
     //
     // Klartext-Device-Secret und Bridge-Key werden niemals in
@@ -6954,15 +6985,15 @@ async function creatorLiveReadiness(creatorId, accountOrId=null){
     return {schema:1,status,ready:blockers.length===0,checks,blockers:blockers.map(row=>row.key),provider:{key:providerKey,status:providerStatus,ready:providerReady,last_event_at:studioText(caps.tikfinity_last_event_at,60,"")},launcher:{online:bridge.online===true,client_version:bridge.client_version||"",machine_name:bridge.machine_name||"",last_seen_at:bridge.last_seen_at||null},live:{active:live.connected===true,provider:live.provider||"none",session_id:live.session_id||null,last_event_at:live.last_event_at||null},release_policy:release.policy,server_time:new Date().toISOString()};
 }
 
-async function queueLiveProviderLauncherAction(creatorId,{command,provider="tikfinity"}={}){
+async function queueLiveProviderLauncherAction(creatorId,{command,provider="tiktool"}={}){
     const cmd=String(command||"");
-    const target=String(provider||"tikfinity");
-    if(!["connect","disconnect","reconnect"].includes(cmd)||target!=="tikfinity")throw new Error("Unbekannter LIVE-Provider-Befehl.");
+    const target=String(provider||"tiktool");
+    if(!["connect","disconnect","reconnect"].includes(cmd)||target!=="tiktool")throw new Error("Unbekannter oder noch nicht implementierter LIVE-Provider-Befehl.");
     const bridge=await getStudioBridgeStatus(creatorId);
     if(!bridge.online){const error=new Error("Der CFS Launcher muss für die LIVE-Provider-Steuerung online sein.");error.code="live_provider_launcher_offline";throw error;}
     if(bridge.capabilities?.live_provider_control_v1!==true){const error=new Error("Der verbundene Launcher unterstützt die LIVE-Provider-Steuerung noch nicht. Bitte Launcher aktualisieren.");error.code="live_provider_launcher_upgrade_required";throw error;}
     const payload={schema:1,command:cmd,provider:target};
-    const result=await pool.query(`INSERT INTO creator_live_actions(id,creator_id,action_type,action_text,payload,status,attempts,expires_at,created_at) VALUES($1,$2,'live_provider_command',$3,$4::jsonb,'pending',0,NOW()+INTERVAL '1 minute',NOW()) RETURNING *`,[crypto.randomUUID(),creatorId,`LIVE Provider · TikFinity · ${cmd.toUpperCase()}`,JSON.stringify(payload)]);
+    const result=await pool.query(`INSERT INTO creator_live_actions(id,creator_id,action_type,action_text,payload,status,attempts,expires_at,created_at) VALUES($1,$2,'live_provider_command',$3,$4::jsonb,'pending',0,NOW()+INTERVAL '1 minute',NOW()) RETURNING *`,[crypto.randomUUID(),creatorId,`LIVE Provider · TikTool · ${cmd.toUpperCase()}`,JSON.stringify(payload)]);
     return publicStudioAction(result.rows[0]);
 }
 
@@ -11451,6 +11482,11 @@ async function studioCreatorIdentity(creatorId) {
 }
 
 
+function widgetExpectedVersion(value) {
+    const parsed = Number(value);
+    return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
+}
+
 function sanitizeStudioWidgetConfig(input, widgetTypeHint = null) {
     const source = input && typeof input === "object" && !Array.isArray(input) ? input : {};
     const candidate = String(widgetTypeHint || source.widgetType || "follower_goal");
@@ -11584,8 +11620,13 @@ function studioBridgeTokenFromRequest(req) {
 
 function publicStudioBridgeRow(row) {
     if (!row) return null;
-    const lastSeen = row.last_seen_at ? new Date(row.last_seen_at).getTime() : 0;
-    const online = row.status === "active" && Boolean(lastSeen) && Date.now() - lastSeen <= WIDGET_BRIDGE_HEARTBEAT_STALE_MS;
+    const health = launcherBridgeHealth(row.last_seen_at, {
+        heartbeat_after_ms:WIDGET_BRIDGE_HEARTBEAT_AFTER_MS,
+        online_window_ms:WIDGET_BRIDGE_HEARTBEAT_STALE_MS,
+        grace_window_ms:WIDGET_BRIDGE_HEARTBEAT_GRACE_MS
+    });
+    const active = row.status === "active";
+    const connectionState = active ? health.state : "offline";
     const capabilities = row.capabilities && typeof row.capabilities === "object" && !Array.isArray(row.capabilities) ? row.capabilities : {};
     return {
         id: String(row.id || ""),
@@ -11594,7 +11635,14 @@ function publicStudioBridgeRow(row) {
         status: row.status || "active",
         auth_method: studioText(row.auth_method, 40, "legacy_key"),
         device_link_id: studioText(row.device_link_id, 80, ""),
-        online,
+        online: active && health.online,
+        reachable: active && health.reachable,
+        connection_state:connectionState,
+        heartbeat_age_seconds:health.age_seconds,
+        heartbeat_after_ms:health.heartbeatAfterMs,
+        heartbeat_online_window_ms:health.onlineWindowMs,
+        heartbeat_grace_ms:health.graceWindowMs,
+        protocol:Math.max(1, Math.min(3, Number(capabilities.protocol_version) || 1)),
         client_version: studioText(row.client_version, 80, ""),
         machine_name: studioText(row.machine_name, 120, ""),
         capabilities,
@@ -11635,6 +11683,13 @@ async function getStudioBridgeStatus(creatorId) {
             client_version: "",
             machine_name: "",
             capabilities: {},
+            reachable:false,
+            connection_state:"offline",
+            heartbeat_age_seconds:null,
+            heartbeat_after_ms:WIDGET_BRIDGE_HEARTBEAT_AFTER_MS,
+            heartbeat_online_window_ms:WIDGET_BRIDGE_HEARTBEAT_STALE_MS,
+            heartbeat_grace_ms:WIDGET_BRIDGE_HEARTBEAT_GRACE_MS,
+            protocol:3,
             last_seen_at: null,
             last_connected_at: null
         };
@@ -12057,6 +12112,71 @@ function publicBetaFeedback(row){
     return {id:String(row.id),creator_id:String(row.creator_id),bridge_id:row.bridge_id?String(row.bridge_id):null,session_id:row.session_id?String(row.session_id):null,kind:row.kind||"bug",severity:row.severity||"medium",category:row.category||"launcher",title:row.title||"",description:row.description||"",repro_steps:row.repro_steps||"",expected:row.expected||"",actual:row.actual||"",launcher_version:row.launcher_version||"",platform:row.platform||"",provider:row.provider||"",diagnostics:row.diagnostics||{},status:row.status||"new",admin_notes:row.admin_notes||"",created_at:row.created_at||null,updated_at:row.updated_at||null};
 }
 
+const BRIDGE_SIGNED_REQUEST_MAX_SKEW_MS = 2 * 60 * 1000;
+const BRIDGE_SIGNED_NONCE_TTL_MS = 5 * 60 * 1000;
+
+function bridgeRequestBodyHash(req) {
+    const method = String(req.method || "GET").toUpperCase();
+    const bodyText = ["GET","HEAD","OPTIONS"].includes(method) ? "" : JSON.stringify(req.body ?? {});
+    return crypto.createHash("sha256").update(bodyText).digest("hex");
+}
+
+function bridgeRequestCanonical(req, timestamp, nonce) {
+    const method = String(req.method || "GET").toUpperCase();
+    const path = String(req.originalUrl || req.url || req.path || "");
+    return [method, path, String(timestamp), String(nonce), bridgeRequestBodyHash(req)].join("\n");
+}
+
+function bridgeMutationMethod(req) {
+    return !["GET","HEAD","OPTIONS"].includes(String(req.method || "GET").toUpperCase());
+}
+
+async function consumeBridgeRequestNonce(bridgeId, nonce) {
+    const cleanBridgeId = String(bridgeId || "");
+    const cleanNonce = String(nonce || "");
+    if (!cleanBridgeId || !/^[A-Za-z0-9_-]{16,80}$/.test(cleanNonce)) return false;
+    const expiresAt = new Date(Date.now() + BRIDGE_SIGNED_NONCE_TTL_MS);
+    const result = await pool.query(
+        `INSERT INTO creator_bridge_request_nonces(bridge_id,nonce,expires_at,created_at)
+         VALUES($1,$2,$3,NOW())
+         ON CONFLICT (bridge_id,nonce) DO NOTHING
+         RETURNING nonce`,
+        [cleanBridgeId, cleanNonce, expiresAt]
+    );
+    // Keep the replay table bounded. This cleanup is cheap with the expiry index.
+    await pool.query(`DELETE FROM creator_bridge_request_nonces WHERE expires_at < NOW()`);
+    return Boolean(result.rows[0]);
+}
+
+async function verifySignedBridgeMutation(req, bridge, rawToken) {
+    if (!bridgeMutationMethod(req)) return { ok:true, signed:false, required:false };
+    const capabilities = bridge?.capabilities && typeof bridge.capabilities === "object" && !Array.isArray(bridge.capabilities) ? bridge.capabilities : {};
+    const protocolHeader = Number(req.get("X-CFS-Bridge-Protocol") || 0);
+    const required = capabilities.signed_requests_v1 === true || protocolHeader >= 3;
+    if (!required) return { ok:true, signed:false, required:false, legacy:true };
+
+    const timestampText = String(req.get("X-CFS-Timestamp") || "").trim();
+    const nonce = String(req.get("X-CFS-Nonce") || "").trim();
+    const signatureHeader = String(req.get("X-CFS-Signature") || "").trim();
+    const timestamp = Number(timestampText);
+    if (!Number.isFinite(timestamp) || Math.abs(Date.now() - timestamp) > BRIDGE_SIGNED_REQUEST_MAX_SKEW_MS) {
+        return { ok:false, code:"bridge_signature_timestamp", error:"Bridge-Anfrage ist zeitlich ungültig." };
+    }
+    if (!/^[A-Za-z0-9_-]{16,80}$/.test(nonce)) {
+        return { ok:false, code:"bridge_signature_nonce", error:"Bridge-Anfrage enthält keine gültige Nonce." };
+    }
+    const match = /^v1=([A-Za-z0-9_-]{32,128})$/.exec(signatureHeader);
+    if (!match) return { ok:false, code:"bridge_signature_missing", error:"Signatur der Bridge-Anfrage fehlt." };
+    const expected = crypto.createHmac("sha256", String(rawToken)).update(bridgeRequestCanonical(req, timestampText, nonce)).digest("base64url");
+    if (!safeEqualText(match[1], expected)) {
+        return { ok:false, code:"bridge_signature_invalid", error:"Signatur der Bridge-Anfrage ist ungültig." };
+    }
+    if (!(await consumeBridgeRequestNonce(bridge.id, nonce))) {
+        return { ok:false, code:"bridge_request_replay", error:"Diese Bridge-Anfrage wurde bereits verarbeitet." };
+    }
+    return { ok:true, signed:true, required:true };
+}
+
 async function requireStudioBridge(req, res, next) {
     try {
         const rawToken = studioBridgeTokenFromRequest(req);
@@ -12064,7 +12184,12 @@ async function requireStudioBridge(req, res, next) {
         if (!bridge) {
             return res.status(401).json({ ok:false, error:"Bridge-Schlüssel ungültig oder widerrufen." });
         }
+        const signedRequest = await verifySignedBridgeMutation(req, bridge, rawToken);
+        if (!signedRequest.ok) {
+            return res.status(401).json({ ok:false, code:signedRequest.code, error:signedRequest.error });
+        }
         req.studioBridge = bridge;
+        req.studioBridgeSecurity = signedRequest;
         next();
     } catch (error) {
         safeLogError("Widget Studio Bridge Auth Fehler:",error);
@@ -13401,7 +13526,8 @@ async function getStudioLiveState(creatorId) {
     const updated = row.updated_at ? new Date(row.updated_at).getTime() : 0;
     const heartbeat = row.bridge_heartbeat_at ? new Date(row.bridge_heartbeat_at).getTime() : 0;
     const freshness = provider === "launcher_bridge" ? heartbeat : updated;
-    const stale = !freshness || Date.now() - freshness > WIDGET_BRIDGE_HEARTBEAT_STALE_MS;
+    const freshnessLimit = provider === "launcher_bridge" ? WIDGET_BRIDGE_HEARTBEAT_GRACE_MS : WIDGET_BRIDGE_HEARTBEAT_STALE_MS;
+    const stale = !freshness || Date.now() - freshness > freshnessLimit;
     return {
         connected: Boolean(row.connected) && !stale,
         provider,
@@ -13727,6 +13853,28 @@ function sanitizeStudioBridgeEventPayload(source = {}) {
     const valueUnit=studioText(input.provider_value_unit,24,"").toLowerCase();
     if(["diamonds","bits","stars","currency","points"].includes(valueUnit)) out.provider_value_unit=valueUnit;
     return out;
+}
+
+const BRIDGE_EVENT_MAX_AGE_MS = Object.freeze({
+    viewer_update: 2 * 60 * 1000,
+    chat: 5 * 60 * 1000,
+    like: 10 * 60 * 1000,
+    follow: 60 * 60 * 1000,
+    share: 60 * 60 * 1000,
+    gift: 60 * 60 * 1000
+});
+const BRIDGE_EVENT_FUTURE_SKEW_MS = 2 * 60 * 1000;
+function bridgeEventFreshness(event = {}, nowMs = Date.now()) {
+    const type = String(event?.event_type || "");
+    const raw = String(event?.client_created_at || "").trim();
+    if (!raw) return { ok:true, age_ms:null, reason:"legacy_no_timestamp" };
+    const when = Date.parse(raw);
+    if (!Number.isFinite(when)) return { ok:false, age_ms:null, reason:"invalid_timestamp" };
+    const age = nowMs - when;
+    if (age < -BRIDGE_EVENT_FUTURE_SKEW_MS) return { ok:false, age_ms:age, reason:"future_event" };
+    const maxAge = Number(BRIDGE_EVENT_MAX_AGE_MS[type] || 15 * 60 * 1000);
+    if (age > maxAge) return { ok:false, age_ms:age, reason:"stale_event" };
+    return { ok:true, age_ms:Math.max(0,age), reason:"fresh" };
 }
 
 const WIDGET_STUDIO_LIVE_EVENT_TYPES = new Set([
@@ -17378,15 +17526,18 @@ app.put(
                         updated_at = NOW()
                     WHERE creator_id = $1
                       AND id = $2
+                      AND ($5::int IS NULL OR version = $5)
                     RETURNING *
                     `,
                     [
                         req.creatorAccount.id,
                         current.id,
                         name,
-                        JSON.stringify(config)
+                        JSON.stringify(config),
+                        widgetExpectedVersion(req.body?.expected_version)
                     ]
                 );
+            if (!result.rows[0]) return res.status(409).json({ok:false,code:"widget_version_conflict",error:"Dieses Widget wurde inzwischen in einem anderen Tab oder Gerät geändert. Bitte neu laden, damit keine Änderungen überschrieben werden."});
 
             return res.json({
                 ok: true,
@@ -17494,9 +17645,11 @@ app.post(
                      version = version + 1,
                      updated_at = NOW()
                  WHERE creator_id = $1 AND id = $2
+                   AND ($5::int IS NULL OR version = $5)
                  RETURNING *`,
-                [req.creatorAccount.id, current.id, JSON.stringify(draft), published ? JSON.stringify(published) : null]
+                [req.creatorAccount.id, current.id, JSON.stringify(draft), published ? JSON.stringify(published) : null, widgetExpectedVersion(req.body?.expected_version)]
             );
+            if (!result.rows[0]) return res.status(409).json({ok:false,code:"widget_version_conflict",error:"Der Widget-Stand hat sich inzwischen geändert. Bitte neu laden, bevor du die Live-Steuerung fortsetzt."});
             return res.json({ok:true,value:next,running,widget:publicStudioWidgetRow(result.rows[0])});
         } catch (error) {
             safeLogError("Widget Studio Counter Steuerung Fehler:",error);
@@ -17553,14 +17706,17 @@ app.post(
                         published_at = NOW()
                     WHERE creator_id = $1
                       AND id = $2
+                      AND ($4::int IS NULL OR version = $4)
                     RETURNING *
                     `,
                     [
                         req.creatorAccount.id,
                         current.id,
-                        JSON.stringify(clean)
+                        JSON.stringify(clean),
+                        widgetExpectedVersion(req.body?.expected_version)
                     ]
                 );
+            if (!result.rows[0]) return res.status(409).json({ok:false,code:"widget_version_conflict",error:"Vor dem Veröffentlichen wurde das Widget an anderer Stelle geändert. Bitte neu laden, damit du nicht versehentlich einen neueren Stand überschreibst."});
 
             return res.json({
                 ok: true,
@@ -17872,7 +18028,7 @@ app.post("/api/creator/live-provider/:command",requireCreatorAccount,creatorWrit
     try{
         await requireCreatorFeatureAccess(req.creatorAccount,"live_bridge","creator");
         const command=String(req.params.command||"").toLowerCase();
-        const action=await queueLiveProviderLauncherAction(req.creatorAccount.id,{command,provider:"tikfinity"});
+        const action=await queueLiveProviderLauncherAction(req.creatorAccount.id,{command,provider:"tiktool"});
         return res.json({ok:true,action,readiness:await creatorLiveReadiness(req.creatorAccount.id,req.creatorAccount)});
     }catch(error){const status=error?.code==="creator_feature_locked"?403:400;return res.status(status).json(clientSafeErrorPayload(req,error,status,"LIVE-Provider-Aktion konnte nicht gestartet werden."));}
 });
@@ -19688,8 +19844,16 @@ app.get(
                 config,
                 program_scene:programScene,
                 overlays:config.overlay_widget_ids.map(id=>sourceMap.get(id)).filter(Boolean).map(publicStreamStudioSource),
-                multistream:{max_destinations:multistreamLimit,mode:"launcher_local",failure_policy:"isolate_destination",credentials:"launcher_local_only",cloud_relay:false},
-                engine:{capture:"launcher_local",stream_keys:"launcher_only",multistream:"launcher_local",scene_graph:"hybrid_offscreen",protocol:5,interactive_games:"launcher_local"},
+                multistream:{max_destinations:multistreamLimit,mode:"launcher_local",failure_policy:"isolate_destination",credentials:"launcher_local_encrypted",cloud_relay:false},
+                engine:{capture:"launcher_local",stream_keys:"launcher_only",multistream:"launcher_local",scene_graph:"hybrid_offscreen",protocol:6,interactive_games:"launcher_local"},
+                contract:{
+                    protocol:6,
+                    bridge_protocol_min:3,
+                    credentials:"launcher_local_encrypted",
+                    cloud_stream_keys:false,
+                    failure_policy:"isolate_destination",
+                    required_launcher_capabilities:["signed_requests_v1","replay_guard_v1","secure_transport_guard_v1","creator_suite_runtime_v1","stream_engine_v1","multistream_local_v1","local_stream_credentials_v1"]
+                },
                 interactive_game: context.access.entitlements.games ? await getCreatorGameRuntimePublic(creatorId,{ensure:true}) : null,
                 server_time:new Date().toISOString()
             });
@@ -19719,7 +19883,15 @@ app.get(
             release_policy: release.policy,
             release_catalog: release.catalog,
             server_time: new Date().toISOString(),
-            protocol: 1
+            heartbeat_after_ms: WIDGET_BRIDGE_HEARTBEAT_AFTER_MS,
+            heartbeat_online_window_ms: WIDGET_BRIDGE_HEARTBEAT_STALE_MS,
+            heartbeat_grace_ms: WIDGET_BRIDGE_HEARTBEAT_GRACE_MS,
+            protocol: 3,
+            security: {
+                signed_requests: req.studioBridgeSecurity?.signed === true || req.studioBridge?.capabilities?.signed_requests_v1 === true,
+                replay_guard: true,
+                transport: "https_required_remote"
+            }
         });
     }
 );
@@ -19751,8 +19923,15 @@ app.post(
                 release_policy: release.policy,
                 release_catalog: release.catalog,
                 server_time: new Date().toISOString(),
-                heartbeat_after_ms: 10000,
-                protocol: 1
+                heartbeat_after_ms: WIDGET_BRIDGE_HEARTBEAT_AFTER_MS,
+                heartbeat_online_window_ms: WIDGET_BRIDGE_HEARTBEAT_STALE_MS,
+                heartbeat_grace_ms: WIDGET_BRIDGE_HEARTBEAT_GRACE_MS,
+                protocol: 3,
+                security: {
+                    signed_requests: req.studioBridgeSecurity?.signed === true || bridge?.capabilities?.signed_requests_v1 === true,
+                    replay_guard: true,
+                    transport: "https_required_remote"
+                }
             });
         } catch (error) {
             safeLogError("Widget Studio Bridge Heartbeat Fehler:",error);
@@ -19975,18 +20154,38 @@ app.post(
             const events = incoming.filter(Boolean).slice(0, WIDGET_BRIDGE_MAX_BATCH);
             if (!events.length) return res.status(400).json({ ok:false, error:"Keine Events übergeben." });
             const results = [];
+            let accepted = 0;
+            let dropped = 0;
+            const currentLive = await getStudioLiveState(creatorId);
+            const currentSessionId = String(currentLive?.session_id || "");
+            const nowMs = Date.now();
             for (const event of events) {
                 const type = String(event?.event_type || "");
                 if (["live_start","live_end","reset"].includes(type)) {
                     return res.status(400).json({ ok:false, error:"LIVE Start/Ende bitte über die Session-Endpunkte senden." });
                 }
+                const eventSessionId = studioText(event?.session_id,80,"");
+                if (eventSessionId && currentSessionId && eventSessionId !== currentSessionId) {
+                    dropped += 1;
+                    results.push({event_key:event?.event_key||null,event_type:type,dropped:true,reason:"session_mismatch"});
+                    continue;
+                }
+                const freshness = bridgeEventFreshness(event, nowMs);
+                if (!freshness.ok) {
+                    dropped += 1;
+                    results.push({event_key:event?.event_key||null,event_type:type,dropped:true,reason:freshness.reason});
+                    continue;
+                }
                 const live = await applyStudioLiveEvent(creatorId, event || {}, "launcher_bridge");
+                accepted += 1;
                 results.push({ event_key:event?.event_key || null, event_type:type, live });
             }
             await pool.query(`UPDATE creator_live_state SET bridge_heartbeat_at=NOW() WHERE creator_id=$1`, [creatorId]);
             return res.json({
                 ok:true,
-                accepted:results.length,
+                accepted,
+                dropped,
+                results,
                 live:await getStudioLiveState(creatorId),
                 bridge:await getStudioBridgeStatus(creatorId)
             });
@@ -21808,41 +22007,202 @@ async function fetchPublicTikTokCommunityStats() {
     };
 }
 
+const PUBLIC_LIVE_EVENT_FRESH_MS = 10 * 60 * 1000;
+const PUBLIC_LIVE_SESSION_FRESH_MS = 20 * 60 * 1000;
+const PUBLIC_LIVE_OVERRIDE_MAX_MS = 12 * 60 * 60 * 1000;
+const PUBLIC_LIVE_OVERRIDE_MODULE_KEY = "public_live_control";
+const PUBLIC_LIVE_PROVIDER_ACTIVE_STATES = new Set(["live","active","connected","online","ready","streaming"]);
+
+async function getCreatorPublicLiveControl(creatorId) {
+    const result = await pool.query(
+        `SELECT state,updated_at
+         FROM creator_module_state
+         WHERE creator_id=$1 AND module_key=$2
+         LIMIT 1`,
+        [creatorId,PUBLIC_LIVE_OVERRIDE_MODULE_KEY]
+    );
+    const raw = result.rows[0]?.state && typeof result.rows[0].state === "object" ? result.rows[0].state : {};
+    const startedAt = raw.started_at ? new Date(raw.started_at).getTime() : 0;
+    const expiresAt = raw.expires_at ? new Date(raw.expires_at).getTime() : 0;
+    const active = raw.active === true && Number.isFinite(expiresAt) && expiresAt > Date.now();
+    return {
+        active,
+        started_at:active && Number.isFinite(startedAt) ? new Date(startedAt).toISOString() : null,
+        expires_at:active ? new Date(expiresAt).toISOString() : null,
+        updated_at:result.rows[0]?.updated_at || null,
+        expired:raw.active === true && !active
+    };
+}
+
+async function setCreatorPublicLiveControl(creatorId, active) {
+    const now = new Date();
+    const state = active === true ? {
+        version:1,
+        active:true,
+        started_at:now.toISOString(),
+        expires_at:new Date(now.getTime()+PUBLIC_LIVE_OVERRIDE_MAX_MS).toISOString(),
+        source:"creator_dashboard"
+    } : {
+        version:1,
+        active:false,
+        started_at:null,
+        expires_at:null,
+        stopped_at:now.toISOString(),
+        source:"creator_dashboard"
+    };
+    const result = await pool.query(
+        `INSERT INTO creator_module_state (creator_id,module_key,state,updated_at)
+         VALUES ($1,$2,$3::jsonb,NOW())
+         ON CONFLICT (creator_id,module_key)
+         DO UPDATE SET state=EXCLUDED.state,updated_at=NOW()
+         RETURNING state,updated_at`,
+        [creatorId,PUBLIC_LIVE_OVERRIDE_MODULE_KEY,JSON.stringify(state)]
+    );
+    return {
+        active:state.active === true,
+        started_at:state.started_at,
+        expires_at:state.expires_at,
+        updated_at:result.rows[0]?.updated_at || now.toISOString()
+    };
+}
+
+async function getPublicLiveEvidence(creatorId) {
+    const [live, bridge, latestEventResult, liveSessionResult, manualControl] = await Promise.all([
+        getStudioLiveState(creatorId),
+        getStudioBridgeStatus(creatorId),
+        pool.query(
+            `SELECT event_type,provider,created_at
+             FROM creator_live_events
+             WHERE creator_id=$1
+             ORDER BY created_at DESC,id DESC
+             LIMIT 1`,
+            [creatorId]
+        ),
+        pool.query(
+            `SELECT id,provider,status,started_at,updated_at,ended_at
+             FROM creator_live_sessions
+             WHERE creator_id=$1
+             ORDER BY started_at DESC
+             LIMIT 1`,
+            [creatorId]
+        ),
+        getCreatorPublicLiveControl(creatorId)
+    ]);
+
+    const now = Date.now();
+    const latestEvent = latestEventResult.rows[0] || null;
+    const latestEventAt = latestEvent?.created_at ? new Date(latestEvent.created_at).getTime() : 0;
+    const recentEvent = Boolean(latestEventAt) && now - latestEventAt <= PUBLIC_LIVE_EVENT_FRESH_MS;
+    const latestEventType = String(latestEvent?.event_type || "");
+    const explicitEnd = recentEvent && latestEventType === "live_end";
+    const liveTraffic = recentEvent && !["live_end"].includes(latestEventType);
+
+    const session = liveSessionResult.rows[0] || null;
+    const sessionUpdatedAt = session?.updated_at ? new Date(session.updated_at).getTime() : 0;
+    const recentOpenSession = Boolean(session && session.status === "live" && !session.ended_at && sessionUpdatedAt && now - sessionUpdatedAt <= PUBLIC_LIVE_SESSION_FRESH_MS);
+
+    const caps = bridge?.capabilities && typeof bridge.capabilities === "object" ? bridge.capabilities : {};
+    const providerStatus = String(caps.live_provider_status || caps.tikfinity_status || "").toLowerCase();
+    const providerReady = bridge?.online === true && (
+        (caps.live_provider_health_v1 === true && caps.live_provider_ready === true) ||
+        caps.tikfinity_healthy === true
+    );
+    const providerLive = providerReady && (!providerStatus || PUBLIC_LIVE_PROVIDER_ACTIVE_STATES.has(providerStatus));
+
+    const manualLive = manualControl?.active === true;
+    const positiveSignal = live?.connected === true || liveTraffic || recentOpenSession || providerLive || manualLive;
+    const detectedLive = positiveSignal;
+
+    let status = "unknown";
+    let source = "none";
+    if (detectedLive) {
+        status = "live";
+        if (manualLive) source = "creator_dashboard";
+        else if (live?.connected === true) source = "live_state";
+        else if (liveTraffic) source = "recent_live_event";
+        else if (providerLive) source = "launcher_provider";
+        else if (recentOpenSession) source = "open_live_session";
+    } else if (explicitEnd) {
+        // Ein altes live_end darf ein neueres positives Signal nicht mehr überschreiben.
+        // Ohne positives Signal ist das Ende dagegen eine belastbare OFFLINE-Aussage.
+        status = "offline";
+        source = "live_end";
+    }
+
+    return {
+        live,
+        bridge,
+        manual_control:manualControl,
+        status,
+        source,
+        latest_event_at: latestEvent?.created_at || null,
+        latest_event_type: latestEventType || null,
+        session: session ? {
+            id:String(session.id || ""),
+            provider:String(session.provider || "none"),
+            status:String(session.status || ""),
+            started_at:session.started_at || null,
+            updated_at:session.updated_at || null,
+            ended_at:session.ended_at || null
+        } : null
+    };
+}
+
 async function getPublicLiveSessionSnapshot() {
     const resolved = await resolvePublicTikTokProfileConnection();
     const creatorIds = [...new Set([resolved?.creatorId, DEFAULT_CREATOR_ID].filter(Boolean).map(String))];
     const states = await Promise.all(creatorIds.map(async creatorId => {
-        const [liveResult, gameResult] = await Promise.allSettled([
-            getStudioLiveState(creatorId),
+        const [evidenceResult, gameResult] = await Promise.allSettled([
+            getPublicLiveEvidence(creatorId),
             getPublicRecentGames(creatorId,{limit:3})
         ]);
         return {
             creatorId,
-            live: liveResult.status === "fulfilled" ? liveResult.value : emptyStudioLiveState(),
+            evidence: evidenceResult.status === "fulfilled" ? evidenceResult.value : {
+                live:emptyStudioLiveState(),
+                bridge:{online:false,capabilities:{}},
+                status:"unknown",
+                source:"error",
+                latest_event_at:null,
+                latest_event_type:null,
+                session:null
+            },
             games: gameResult.status === "fulfilled" ? gameResult.value : {active:null,recent:[]}
         };
     }));
 
-    const activeLive = states.find(entry => entry.live?.connected === true) || states[0] || {
+    const liveEntry = states.find(entry => entry.evidence?.status === "live") || states[0] || {
         creatorId:String(DEFAULT_CREATOR_ID),
-        live:emptyStudioLiveState(),
+        evidence:{live:emptyStudioLiveState(),bridge:{online:false,capabilities:{}},status:"unknown",source:"none",latest_event_at:null,latest_event_type:null,session:null},
         games:{active:null,recent:[]}
     };
-    const activeGameEntry = states.find(entry => entry.games?.active?.game_name) || activeLive;
-    const live = activeLive.live || emptyStudioLiveState();
+    const activeGameEntry = states.find(entry => entry.games?.active?.game_name) || liveEntry;
+    const evidence = liveEntry.evidence || {};
+    const live = evidence.live || emptyStudioLiveState();
     const activeGame = activeGameEntry.games?.active?.game_name ? activeGameEntry.games.active : null;
+    const detectedLive = evidence.status === "live";
 
     return {
         ok:true,
-        live:Boolean(live.connected),
+        live:detectedLive,
+        status:evidence.status || "unknown",
+        live_source:evidence.source || "none",
         profile_name:String(resolved?.connection?.display_name || "cfs_zockt").slice(0,120),
         profile_url:PUBLIC_TIKTOK_PROFILE_URL,
         viewers:publicCommunityCount(live.viewers) || 0,
         likes:publicCommunityCount(live.likes) || 0,
         shares:publicCommunityCount(live.shares) || 0,
         followers_gained:publicCommunityCount(live.followers_gained) || 0,
-        started_at:live.connected ? (live.started_at || null) : null,
-        updated_at:live.updated_at || live.last_event_at || null,
+        started_at:detectedLive ? (evidence.manual_control?.started_at || live.started_at || evidence.session?.started_at || null) : null,
+        updated_at:live.updated_at || live.last_event_at || evidence.latest_event_at || evidence.session?.updated_at || null,
+        signal:{
+            launcher_online:evidence.bridge?.online === true,
+            launcher_reachable:evidence.bridge?.reachable === true,
+            launcher_state:evidence.bridge?.connection_state || "offline",
+            heartbeat_age_seconds:Number.isFinite(Number(evidence.bridge?.heartbeat_age_seconds)) ? Number(evidence.bridge.heartbeat_age_seconds) : null,
+            latest_event_at:evidence.latest_event_at || null,
+            latest_event_type:evidence.latest_event_type || null
+        },
         current_game:activeGame ? {
             name:String(activeGame.game_name || "").slice(0,160),
             platform:String(activeGame.platform || "unknown"),
@@ -21851,6 +22211,313 @@ async function getPublicLiveSessionSnapshot() {
             source:String(activeGame.source || "launcher_manual")
         } : null
     };
+}
+
+async function getPublicCreatorStateSnapshot() {
+    const [communityResult, liveResult] = await Promise.allSettled([
+        getPublicCommunityStats(),
+        getPublicLiveSessionSnapshot()
+    ]);
+
+    const community = communityResult.status === "fulfilled"
+        ? communityResult.value
+        : {
+            ok:false,
+            generated_at:new Date().toISOString(),
+            refresh_seconds:Math.round(PUBLIC_COMMUNITY_STATS_CACHE_TTL_MS / 1000),
+            discord:{available:false,members:null,online:null,stale:false,updated_at:null,url:PUBLIC_DISCORD_INVITE_URL},
+            tiktok:{available:false,followers:null,stale:false,updated_at:null,url:PUBLIC_TIKTOK_PROFILE_URL},
+            recent_games:{available:false,window_days:PUBLIC_PLAYSTATION_ENABLED?null:PUBLIC_GAME_ACTIVITY_WINDOW_DAYS,source:PUBLIC_PLAYSTATION_ENABLED?"playstation_network":"cfs_launcher_opt_in",playtime_scope:PUBLIC_PLAYSTATION_ENABLED?"lifetime":"rolling_window",updated_at:null,games:[],recent:[]}
+        };
+    const liveSession = liveResult.status === "fulfilled"
+        ? liveResult.value
+        : {
+            ok:false,
+            live:false,
+            status:"unknown",
+            live_source:"error",
+            profile_name:"cfs_zockt",
+            profile_url:PUBLIC_TIKTOK_PROFILE_URL,
+            viewers:0,
+            likes:0,
+            shares:0,
+            followers_gained:0,
+            started_at:null,
+            updated_at:null,
+            signal:{launcher_online:false,latest_event_at:null,latest_event_type:null},
+            current_game:null
+        };
+
+    if (communityResult.status === "rejected") safeLogError("public-creator-state-community", communityResult.reason);
+    if (liveResult.status === "rejected") safeLogError("public-creator-state-live", liveResult.reason);
+
+    return buildPublicCreatorState({
+        community,
+        liveSession,
+        generatedAt:new Date().toISOString()
+    });
+}
+
+function creatorSecurityReadinessSnapshot(bridge = {}) {
+    const production = NODE_ENV === "production";
+    const checks = [];
+    const add = (key, ok, {required=true, warning=false} = {}) => checks.push({key, ok:ok === true, required, warning:warning === true});
+
+    add("https_origin", !production || APP_BASE.protocol === "https:");
+    add("csrf_secret", !production || CSRF_SIGNING_SECRET.length >= 32);
+    add("token_encryption", !production || Boolean(TOKEN_ENCRYPTION_KEY));
+    add("mfa_recovery_secret", !production || MFA_RECOVERY_HASH_SALT.length >= 32);
+    add("account_elevation_secret", !production || ACCOUNT_ELEVATION_SECRET.length >= 32);
+    add("admin_audit_secret", !production || ADMIN_AUDIT_HMAC_SECRET.length >= 32);
+    add("webauthn_origin", !production || (PASSKEY_EXPECTED_ORIGINS.length === 1 && PASSKEY_EXPECTED_ORIGINS[0] === APP_CANONICAL_ORIGIN && APP_CANONICAL_ORIGIN.startsWith("https://")));
+    add("csp_enforced", CONTENT_SECURITY_POLICY.includes("default-src 'self'") && CONTENT_SECURITY_POLICY.includes("object-src 'none'"));
+    add("hsts_enabled", !production || true);
+    add("widget_conflict_guard", true);
+
+    const bridgeConfigured = bridge?.configured === true;
+    const bridgeCaps = bridge?.capabilities && typeof bridge.capabilities === "object" && !Array.isArray(bridge.capabilities) ? bridge.capabilities : {};
+    const signed = bridgeConfigured && Number(bridge?.protocol || 0) >= 3 && bridgeCaps.signed_requests_v1 === true;
+    const replay = signed && bridgeCaps.replay_guard_v1 === true;
+    add("launcher_signed_requests", !bridgeConfigured || signed, {required:bridgeConfigured, warning:!bridgeConfigured});
+    add("launcher_replay_guard", !bridgeConfigured || replay, {required:bridgeConfigured, warning:!bridgeConfigured});
+
+    const failedRequired = checks.filter(row => row.required && !row.ok);
+    const warnings = checks.filter(row => row.warning || (!row.required && !row.ok)).length;
+    const passed = checks.filter(row => row.ok).length;
+    return {
+        ready:failedRequired.length === 0 && (!bridgeConfigured || (signed && replay)),
+        blocked:failedRequired.length > 0,
+        passed,
+        total:checks.length,
+        warnings,
+        launcher_signed_requests:signed,
+        launcher_replay_guard:replay,
+        widget_conflict_guard:true,
+        detail:failedRequired.length
+            ? `${failedRequired.length} sicherheitsrelevante Prüfung(en) benötigen Aufmerksamkeit.`
+            : (bridgeConfigured && signed && replay ? "Sicherheitsgrundstufe aktiv; Launcher-Anfragen werden signiert und gegen Replay geschützt." : "Server-Sicherheitsgrundstufe aktiv; Launcher-Signierung wird nach dem nächsten aktuellen Launcher-Heartbeat aktiv."),
+        checks
+    };
+}
+
+
+function creatorReleaseReadinessSnapshot({ database = {}, bridge = {}, security = {} } = {}) {
+    const checks = [];
+    const add = (key, ok, detail, { required = true } = {}) => checks.push({
+        key,
+        ok:ok === true,
+        required,
+        detail:String(detail || "").slice(0, 220)
+    });
+
+    const caps = bridge?.capabilities && typeof bridge.capabilities === "object" && !Array.isArray(bridge.capabilities)
+        ? bridge.capabilities
+        : {};
+    const protocol = Number(bridge?.protocol || 0);
+    const bridgeConfigured = bridge?.configured === true;
+    const signed = bridgeConfigured && protocol >= 3 && caps.signed_requests_v1 === true;
+    const replay = signed && caps.replay_guard_v1 === true;
+
+    add("database_reachable", database?.ok === true, database?.ok === true ? "Datenbank erreichbar." : "Datenbank ist nicht erreichbar.");
+    add("security_baseline", security?.ready === true, security?.detail || "Security Baseline ist noch nicht vollständig bereit.");
+    add("widget_conflict_guard", security?.widget_conflict_guard !== false, "Widget Studio schützt Entwürfe/Publishes vor stillen Versionsüberschreibungen.");
+    add("launcher_connected", bridgeConfigured, bridgeConfigured ? "Launcher ist mit dem Creator-Konto gekoppelt." : "Für die Release-Abnahme muss mindestens ein Launcher gekoppelt sein.");
+    add("launcher_protocol_v3", bridgeConfigured && protocol >= 3, bridgeConfigured ? `Bridge-Protokoll ${protocol || 0}; erforderlich ist mindestens 3.` : "Launcher noch nicht gekoppelt.");
+    add("launcher_signed_requests", signed, signed ? "Mutierende Launcher-Anfragen sind signiert." : "Signierte Launcher-Anfragen sind noch nicht nachgewiesen.");
+    add("launcher_replay_guard", replay, replay ? "Replay-Schutz ist aktiv." : "Replay-Schutz ist noch nicht nachgewiesen.");
+
+    const failed = checks.filter(row => row.required && !row.ok);
+    const passed = checks.filter(row => row.ok).length;
+    const externalGates = [
+        {key:"external_penetration_test",status:"open",label:"Unabhängiger Penetrationstest"},
+        {key:"dependency_advisory_audit",status:"open",label:"Online Dependency-/Supply-Chain-Audit"},
+        {key:"windows_signed_installer",status:"open",label:"Signierter Windows-Installer + Update-Abnahme"},
+        {key:"production_restore_drill",status:"open",label:"Produktiver Backup-/Restore-Drill"},
+        {key:"multi_creator_soak",status:"open",label:"Mehraccount-/Reconnect-/Soak-Test"}
+    ];
+
+    return {
+        local_ready:failed.length === 0,
+        production_ready:false,
+        state:failed.length === 0 ? "local_ready" : "blocked",
+        passed,
+        total:checks.length,
+        blocking_internal:failed.length,
+        external_acceptance:"open",
+        detail:failed.length
+            ? `${failed.length} interne Release-Prüfung(en) blockieren die lokale Freigabe.`
+            : "Interne Release-Basis erfüllt. Externe Release-Gates bleiben vor Production verpflichtend offen.",
+        checks,
+        external_gates:externalGates
+    };
+}
+
+function creatorSuiteCoreReadinessSnapshot({ bridge = {}, streamConfig = null } = {}) {
+    const caps = bridge?.capabilities && typeof bridge.capabilities === "object" && !Array.isArray(bridge.capabilities) ? bridge.capabilities : {};
+    const integration = caps.integration_health && typeof caps.integration_health === "object" && !Array.isArray(caps.integration_health) ? caps.integration_health : {};
+    const checks = [];
+    const add = (key, ok, state, detail) => checks.push({key,ok:ok===true,state,detail:String(detail||"").slice(0,240)});
+    const bridgeOnline = bridge?.online === true || bridge?.reachable === true || bridge?.connection_state === "online";
+    add("launcher_bridge", bridge?.configured === true && bridgeOnline, bridgeOnline ? "ready" : (bridge?.configured ? "degraded" : "setup_required"), bridgeOnline ? "Launcher ist mit dem Creator-Konto verbunden und erreichbar." : "Launcher muss gekoppelt und online sein.");
+    add("bridge_security", Number(bridge?.protocol||0) >= 3 && caps.signed_requests_v1 === true && caps.replay_guard_v1 === true, "required", "Bridge-Protokoll v3, Signaturen und Replay-Schutz sind für den Produktionsbetrieb Pflicht.");
+    add("widget_studio", true, "ready", "Widget Studio nutzt serverseitige Creator-Isolation, Sanitizing und Versionskonfliktschutz.");
+    add("stream_studio_contract", Number(caps.stream_studio_protocol||0) >= 6, Number(caps.stream_studio_protocol||0) >= 6 ? "ready" : "update_required", `Launcher Stream-Studio-Protokoll ${Number(caps.stream_studio_protocol||0) || 0}; benötigt wird 6.`);
+    add("stream_engine", caps.stream_engine_v1 === true, caps.stream_engine_v1 === true ? "ready" : "update_required", "Lokale Capture-/Encoding-Engine muss vom Launcher gemeldet werden.");
+    add("local_credentials", caps.local_stream_credentials_v1 === true && integration?.stream_credentials?.encryption_available === true, integration?.stream_credentials?.encryption_available === true ? "ready" : "blocked", "Stream-Keys bleiben ausschließlich lokal und müssen über den Betriebssystem-Secret-Speicher verschlüsselt sein.");
+    add("multistream", caps.multistream_local_v1 === true, caps.multistream_local_v1 === true ? "foundation_ready" : "update_required", "Multistream läuft lokal im Launcher; ein fehlerhaftes Ziel darf andere Ziele nicht mitreißen.");
+    add("obs", caps.obs_browser_source_doctor_v1 === true, caps.obs_browser_source_doctor_v1 === true ? "foundation_ready" : "planned", "OBS-Browser-Source-Prüfung ist vorbereitet; eine tiefere OBS-WebSocket-Integration bleibt ein separater Ausbauschritt.");
+    add("live_provider", caps.live_provider_health_v1 === true, caps.live_provider_health_v1 === true ? "foundation_ready" : "update_required", `LIVE Provider: ${String(integration?.live_provider?.key||"unbekannt")} · ${String(integration?.live_provider?.status||"unknown")}.`);
+    add("interactive_games", caps.interactive_games_v1 === true, caps.interactive_games_v1 === true ? "ready" : "update_required", "Interactive Games werden vom Launcher als eigener Runtime-Baustein gemeldet.");
+    const failed = checks.filter(row=>!row.ok && ["required","blocked","update_required","setup_required"].includes(row.state));
+    return {
+        ready:failed.length===0,
+        state:failed.length===0?"core_ready":"attention",
+        passed:checks.filter(row=>row.ok).length,
+        total:checks.length,
+        blocking:failed.length,
+        checks,
+        roadmap:{
+            current:["widget_studio","launcher_bridge","stream_engine","interactive_games"],
+            next:["obs_websocket","twitch_connection","multistream_acceptance"],
+            later:["additional_stream_providers","production_soak"]
+        },
+        policy:{
+            stream_credentials:"launcher_local_encrypted",
+            cloud_stream_keys:false,
+            multistream_failure_policy:"isolate_destination",
+            stream_studio_protocol:6
+        },
+        config_present:Boolean(streamConfig)
+    };
+}
+
+
+async function getCreatorTechnicalStatusSnapshot(creatorId) {
+    const dbStarted = Date.now();
+    let database = {ok:false,latency_ms:null,detail:"Datenbankprüfung fehlgeschlagen."};
+    try {
+        await pool.query("SELECT 1");
+        database = {ok:true,latency_ms:Date.now()-dbStarted,detail:"Datenbank erreichbar."};
+    } catch (error) {
+        safeLogError("creator-technical-database", error);
+    }
+
+    const [connectionResult, bridgeResult, evidenceResult, gameResult, publicStateResult, incidentResult] = await Promise.allSettled([
+        pool.query(
+            `SELECT connected,scope,display_name,follower_count,updated_at
+             FROM tiktok_connections
+             WHERE creator_id=$1
+             LIMIT 1`,
+            [normalizeCreatorId(creatorId)]
+        ),
+        getStudioBridgeStatus(creatorId),
+        getPublicLiveEvidence(creatorId),
+        getPublicRecentGames(creatorId,{limit:3}),
+        getPublicCreatorStateSnapshot(),
+        getWebsiteIncidentState()
+    ]);
+
+    const connection = connectionResult.status === "fulfilled" ? (connectionResult.value?.rows?.[0] || null) : null;
+    const bridge = bridgeResult.status === "fulfilled" ? bridgeResult.value : {configured:false,online:false,client_version:"",machine_name:"",last_seen_at:null,capabilities:{}};
+    const evidence = evidenceResult.status === "fulfilled" ? evidenceResult.value : {status:"unknown",source:"error",live:emptyStudioLiveState(),latest_event_at:null};
+    const activity = gameResult.status === "fulfilled" ? gameResult.value : {available:false,active:null,recent:[]};
+    const publicState = publicStateResult.status === "fulfilled" ? publicStateResult.value : null;
+    const incident = incidentResult.status === "fulfilled" ? incidentResult.value : {mode:"unknown"};
+
+    if (connectionResult.status === "rejected") safeLogError("creator-technical-tiktok", connectionResult.reason);
+    if (bridgeResult.status === "rejected") safeLogError("creator-technical-launcher", bridgeResult.reason);
+    if (evidenceResult.status === "rejected") safeLogError("creator-technical-live", evidenceResult.reason);
+    if (gameResult.status === "rejected") safeLogError("creator-technical-game", gameResult.reason);
+    if (publicStateResult.status === "rejected") safeLogError("creator-technical-public-state", publicStateResult.reason);
+
+    const scopes = String(connection?.scope || "")
+        .split(/[\s,]+/)
+        .map(value=>value.trim())
+        .filter(Boolean);
+    const gameContext = creatorGameContextFromActivity(activity);
+    const publicGame = publicState?.game || {};
+    const publicDiscord = publicState?.social?.discord || {};
+    const playstationConfigured = PUBLIC_PLAYSTATION_ENABLED && Boolean(PUBLIC_PLAYSTATION_NPSSO);
+    const playstationAvailable = publicGame.source === "playstation_network" && Array.isArray(publicGame.recent) && publicGame.recent.length > 0;
+    const securitySnapshot = creatorSecurityReadinessSnapshot(bridge);
+    const suiteSnapshot = creatorSuiteCoreReadinessSnapshot({bridge,streamConfig:null});
+    const releaseSnapshot = creatorReleaseReadinessSnapshot({database, bridge, security:securitySnapshot});
+
+    return buildCreatorTechnicalState({
+        generatedAt:new Date().toISOString(),
+        website:{
+            ok:incident?.mode === "normal",
+            status:incident?.mode === "normal" ? "online" : String(incident?.mode || "unknown"),
+            detail:incident?.mode === "normal" ? "Website läuft im Normalbetrieb." : `Website-Modus: ${String(incident?.mode || "unknown")}`
+        },
+        database,
+        tiktok:{
+            configured:Boolean(connection),
+            connected:connection?.connected === true,
+            stats_scope:scopes.includes("user.info.stats"),
+            display_name:connection?.display_name || "",
+            followers:Number.isFinite(Number(connection?.follower_count)) ? Number(connection.follower_count) : null,
+            updated_at:connection?.updated_at || null,
+            stale:false,
+            detail:connection?.connected === true
+                ? (scopes.includes("user.info.stats") ? "TikTok verbunden, Statistik-Scope vorhanden." : "TikTok verbunden, Statistik-Scope fehlt.")
+                : "TikTok ist für diesen Creator nicht verbunden."
+        },
+        launcher:{
+            configured:bridge?.configured === true,
+            online:bridge?.online === true,
+            reachable:bridge?.reachable === true,
+            connection_state:bridge?.connection_state || "offline",
+            client_version:bridge?.client_version || "",
+            machine_name:bridge?.machine_name || "",
+            last_seen_at:bridge?.last_seen_at || null,
+            heartbeat_age_seconds:Number.isFinite(Number(bridge?.heartbeat_age_seconds)) ? Number(bridge.heartbeat_age_seconds) : null,
+            heartbeat_after_ms:Number(bridge?.heartbeat_after_ms || WIDGET_BRIDGE_HEARTBEAT_AFTER_MS),
+            heartbeat_grace_ms:Number(bridge?.heartbeat_grace_ms || WIDGET_BRIDGE_HEARTBEAT_GRACE_MS),
+            protocol:Number(bridge?.protocol || 1),
+            detail:bridge?.connection_state === "online"
+                ? "Launcher-Bridge ist stabil online."
+                : (bridge?.connection_state === "degraded"
+                    ? "Launcher-Heartbeat ist verspätet; Verbindung bleibt innerhalb der Grace-Periode erhalten."
+                    : (bridge?.configured ? "Launcher konfiguriert, aktuell aber nicht erreichbar." : "Noch kein Launcher verbunden."))
+        },
+        live:{
+            active:evidence?.status === "live",
+            status:evidence?.status || "unknown",
+            source:evidence?.source || "none",
+            viewers:Number(evidence?.live?.viewers || 0),
+            last_event_at:evidence?.latest_event_at || evidence?.live?.last_event_at || null,
+            detail:evidence?.status === "live" ? `LIVE-Signal aktiv (${evidence?.source || "unbekannt"}).` : (evidence?.status === "offline" ? "LIVE-Ende wurde bestätigt." : "LIVE-Status ist aktuell nicht eindeutig.")
+        },
+        game:{
+            active:gameContext?.mode === "active",
+            available:gameContext?.mode !== "none",
+            name:gameContext?.game_name || "",
+            platform:gameContext?.platform || "unknown",
+            source:gameContext?.source || "",
+            updated_at:gameContext?.observed_at || gameContext?.last_played_at || null,
+            detail:gameContext?.mode === "active" ? "Aktive Game-Präsenz vom Creator-System erkannt." : (gameContext?.mode === "recent" ? "Keine aktive Präsenz; letzter Titel ist verfügbar." : "Noch keine Game-Präsenz erkannt.")
+        },
+        playstation:{
+            configured:playstationConfigured,
+            available:playstationAvailable,
+            recent_count:Array.isArray(publicGame.recent) ? publicGame.recent.length : 0,
+            updated_at:publicGame.updated_at || null,
+            stale:false,
+            detail:playstationAvailable ? "PlayStation-Network-Daten werden öffentlich geladen." : (playstationConfigured ? "PlayStation ist konfiguriert, liefert aktuell aber keine bestätigten Daten." : "PlayStation ist nicht konfiguriert.")
+        },
+        discord:{
+            available:publicDiscord.available === true,
+            members:publicDiscord.members,
+            online:publicDiscord.online,
+            updated_at:publicDiscord.updated_at || null,
+            stale:publicDiscord.stale === true,
+            detail:publicDiscord.available === true ? "Discord-Invite liefert Mitglieder- und Onlinezahlen." : "Discord-Zahlen sind aktuell nicht verfügbar."
+        },
+        security:securitySnapshot,
+        suite:suiteSnapshot,
+        release:releaseSnapshot
+    });
 }
 
 async function refreshPublicCommunityStats() {
@@ -21954,6 +22621,8 @@ app.get(
             return res.status(503).json({
                 ok:false,
                 live:false,
+                status:"unknown",
+                live_source:"error",
                 profile_name:"cfs_zockt",
                 profile_url:PUBLIC_TIKTOK_PROFILE_URL,
                 viewers:0,
@@ -21964,6 +22633,151 @@ app.get(
                 updated_at:null,
                 current_game:null
             });
+        }
+    }
+);
+
+app.get(
+    "/api/public/creator-state",
+    async (_req, res) => {
+        res.set("Cache-Control", "no-store");
+        try {
+            return res.json(await getPublicCreatorStateSnapshot());
+        } catch (error) {
+            safeLogError("public-creator-state", error);
+            return res.status(503).json({
+                ok:false,
+                schema:1,
+                generated_at:new Date().toISOString(),
+                creator:{name:"cfs_zockt",profile_url:PUBLIC_TIKTOK_PROFILE_URL},
+                live:{active:false,status:"unknown",source:"error",viewers:0,likes:0,shares:0,followers_gained:0,started_at:null,updated_at:null,signal:{launcher_online:false,launcher_reachable:false,launcher_state:"offline",heartbeat_age_seconds:null,latest_event_at:null,latest_event_type:""}},
+                game:{current:null,source:"",playtime_scope:"",window_days:null,updated_at:null,recent:[],games:[]},
+                social:{
+                    tiktok:{available:false,followers:null,stale:false,source:"",updated_at:null,url:PUBLIC_TIKTOK_PROFILE_URL},
+                    discord:{available:false,members:null,online:null,stale:false,updated_at:null,url:PUBLIC_DISCORD_INVITE_URL}
+                }
+            });
+        }
+    }
+);
+
+app.get(
+    "/api/creator/public-live-control",
+    requireCreatorAccount,
+    async (req, res) => {
+        res.set("Cache-Control", "no-store");
+        try {
+            const state = await getCreatorPublicLiveControl(req.creatorAccount.id);
+            return res.json({ok:true,...state,max_hours:12});
+        } catch (error) {
+            safeLogError("creator-public-live-control-read", error);
+            return res.status(500).json({ok:false,error:"Website-LIVE-Status konnte nicht geladen werden."});
+        }
+    }
+);
+
+app.post(
+    "/api/creator/public-live-control",
+    requireCreatorAccount,
+    async (req, res) => {
+        res.set("Cache-Control", "no-store");
+        try {
+            if (typeof req.body?.active !== "boolean") {
+                return res.status(400).json({ok:false,error:"active muss true oder false sein."});
+            }
+            const state = await setCreatorPublicLiveControl(req.creatorAccount.id, req.body.active === true);
+            return res.json({ok:true,...state,max_hours:12});
+        } catch (error) {
+            safeLogError("creator-public-live-control-write", error);
+            return res.status(500).json({ok:false,error:"Website-LIVE-Status konnte nicht gespeichert werden."});
+        }
+    }
+);
+
+app.get(
+    "/api/creator/technical-status",
+    requireCreatorAccount,
+    async (req, res) => {
+        res.set("Cache-Control", "no-store");
+        try {
+            return res.json(await getCreatorTechnicalStatusSnapshot(req.creatorAccount.id));
+        } catch (error) {
+            safeLogError("creator-technical-status", error);
+            return res.status(500).json({
+                ok:false,
+                schema:1,
+                overall:"attention",
+                generated_at:new Date().toISOString(),
+                error:"Technischer Status konnte nicht geladen werden."
+            });
+        }
+    }
+);
+
+app.get(
+    "/api/creator/security-readiness",
+    requireCreatorAccount,
+    async (req, res) => {
+        res.set("Cache-Control", "no-store");
+        try {
+            const bridge = await getStudioBridgeStatus(req.creatorAccount.id);
+            return res.json({ok:true,schema:1,generated_at:new Date().toISOString(),security:creatorSecurityReadinessSnapshot(bridge)});
+        } catch (error) {
+            safeLogError("creator-security-readiness", error);
+            return res.status(500).json({ok:false,error:"Sicherheitsstatus konnte nicht geladen werden."});
+        }
+    }
+);
+
+
+app.get(
+    "/api/creator/suite-readiness",
+    requireCreatorAccount,
+    async (req, res) => {
+        res.set("Cache-Control", "no-store");
+        try {
+            const creatorId = req.creatorAccount.id;
+            const [bridge, settingsData] = await Promise.all([
+                getStudioBridgeStatus(creatorId),
+                getCreatorSettings(creatorId)
+            ]);
+            const suite = creatorSuiteCoreReadinessSnapshot({bridge,streamConfig:settingsData?.settings?.stream_studio||null});
+            return res.status(suite.ready ? 200 : 409).json({ok:suite.ready,schema:1,generated_at:new Date().toISOString(),creator:{name:"cfs_zockt"},suite});
+        } catch (error) {
+            safeLogError("creator-suite-readiness", error);
+            return res.status(500).json({ok:false,error:"Creator-Suite-Readiness konnte nicht geladen werden."});
+        }
+    }
+);
+
+
+app.get(
+    "/api/creator/release-readiness",
+    requireCreatorAccount,
+    async (req, res) => {
+        res.set("Cache-Control", "no-store");
+        try {
+            const dbStarted = Date.now();
+            let database = {ok:false,latency_ms:null};
+            try {
+                await pool.query("SELECT 1");
+                database = {ok:true,latency_ms:Date.now()-dbStarted};
+            } catch (error) {
+                safeLogError("creator-release-readiness-database", error);
+            }
+            const bridge = await getStudioBridgeStatus(req.creatorAccount.id);
+            const security = creatorSecurityReadinessSnapshot(bridge);
+            const release = creatorReleaseReadinessSnapshot({database, bridge, security});
+            return res.status(release.local_ready ? 200 : 409).json({
+                ok:release.local_ready,
+                schema:1,
+                generated_at:new Date().toISOString(),
+                creator:{name:"cfs_zockt"},
+                release
+            });
+        } catch (error) {
+            safeLogError("creator-release-readiness", error);
+            return res.status(500).json({ok:false,error:"Release-Readiness konnte nicht geladen werden."});
         }
     }
 );

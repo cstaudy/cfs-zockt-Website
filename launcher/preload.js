@@ -11,6 +11,8 @@ contextBridge.exposeInMainWorld("CFSLauncher", {
   cancelDeviceLink: () => ipcRenderer.invoke("launcher:device-link-cancel"),
   logoutDevice: () => ipcRenderer.invoke("launcher:device-logout"),
   refreshCreatorLibrary: () => ipcRenderer.invoke("launcher:creator-library"),
+  syncGameActivity: () => ipcRenderer.invoke("launcher:game-activity-sync"),
+  clearGameActivity: () => ipcRenderer.invoke("launcher:game-activity-clear"),
   getStreamBot: () => ipcRenderer.invoke("launcher:stream-bot-get"),
   saveStreamBot: streamBot => ipcRenderer.invoke("launcher:stream-bot-save", streamBot),
   startLive: () => ipcRenderer.invoke("launcher:live-start"),

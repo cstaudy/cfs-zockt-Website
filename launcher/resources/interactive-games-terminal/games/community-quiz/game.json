@@ -1,0 +1,14 @@
+{
+  "id": "community-quiz",
+  "name": "Community Quiz",
+  "label": "Community Quiz",
+  "version": "1.0.0",
+  "category": "quiz",
+  "events": [
+    "chat",
+    "like"
+  ],
+  "runtime": "local",
+  "network": "loopback_only",
+  "secrets_required": false
+}

@@ -1436,7 +1436,7 @@ function render(next) {
   $("#autoUpdate").checked = settings.autoUpdate !== false;
   $("#autoRecoverLive").checked = settings.autoRecoverLive !== false;
   $("#updateChannel").value = settings.updateChannel === "beta" ? "beta" : "stable";
-  $("#appVersion").textContent = state.appVersion || "0.47.7";
+  $("#appVersion").textContent = state.appVersion || "0.47.17";
   loadVoices();
   $("#ttsVoiceName").value = settings.ttsVoiceName || "";
   renderUpdate(state.update || {});

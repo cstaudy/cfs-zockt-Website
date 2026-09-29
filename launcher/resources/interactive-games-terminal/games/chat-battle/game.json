@@ -1,0 +1,15 @@
+{
+  "id": "chat-battle",
+  "name": "Chat Battle",
+  "label": "Chat Battle",
+  "version": "1.0.0",
+  "category": "battle",
+  "events": [
+    "chat",
+    "like",
+    "gift"
+  ],
+  "runtime": "local",
+  "network": "loopback_only",
+  "secrets_required": false
+}

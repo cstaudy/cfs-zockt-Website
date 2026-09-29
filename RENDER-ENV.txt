@@ -1,0 +1,15 @@
+Render Environment – v120
+=========================
+
+Bereits fuer PlayStation gesetzt lassen:
+CFS_PLAYSTATION_ENABLED=true
+CFS_PLAYSTATION_NPSSO=<bereits vorhandener geheimer Wert>
+CFS_PLAYSTATION_RECENT_LIMIT=6
+
+Neu, nur solange TikTok OAuth keine Statistik liefert:
+CFS_PUBLIC_TIKTOK_FOLLOWERS=<aktuelle Followerzahl als Zahl>
+
+Beispiel:
+CFS_PUBLIC_TIKTOK_FOLLOWERS=12500
+
+Den NPSSO niemals in Dateien, Git oder Chats kopieren.

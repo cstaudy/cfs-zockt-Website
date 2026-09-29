@@ -1,0 +1,15 @@
+{
+  "id": "gift-rush",
+  "name": "Gift Rush",
+  "label": "Gift Rush",
+  "version": "1.0.0",
+  "category": "reaction",
+  "events": [
+    "gift",
+    "like",
+    "share"
+  ],
+  "runtime": "local",
+  "network": "loopback_only",
+  "secrets_required": false
+}

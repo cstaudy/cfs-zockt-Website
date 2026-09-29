@@ -1,0 +1,15 @@
+{
+  "id": "reaction-race",
+  "name": "Reaction Race",
+  "label": "Reaction Race",
+  "version": "1.0.0",
+  "category": "race",
+  "events": [
+    "chat",
+    "like",
+    "gift"
+  ],
+  "runtime": "local",
+  "network": "loopback_only",
+  "secrets_required": false
+}

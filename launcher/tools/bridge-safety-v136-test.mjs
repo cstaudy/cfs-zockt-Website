@@ -1,0 +1,14 @@
+import assert from 'node:assert/strict';
+import http from 'node:http';
+import crypto from 'node:crypto';
+import {createRequire} from 'node:module';
+const require=createRequire(import.meta.url);const {BridgeClient}=require('../src/bridge-client.js');
+const token='cfsb_'+crypto.randomBytes(24).toString('base64url');let seen=null;
+const server=http.createServer((req,res)=>{let body='';req.on('data',c=>body+=c);req.on('end',()=>{seen={method:req.method,url:req.url,headers:req.headers,body};res.writeHead(200,{'content-type':'application/json'});res.end(JSON.stringify({ok:true}))})});
+await new Promise(r=>server.listen(0,'127.0.0.1',r));const port=server.address().port;
+const client=new BridgeClient({settings:{backendUrl:`http://127.0.0.1:${port}`,machineName:'QA'},token,logger:{warn(){},info(){}},version:'0.47.17'});
+assert.equal(client.capabilities.protocol_version,3);assert.equal(client.capabilities.signed_requests_v1,true);assert.equal(client.capabilities.replay_guard_v1,true);
+await client.request('/api/test',{method:'POST',body:{ok:true},timeoutMs:3000});
+assert.ok(seen.headers['x-cfs-timestamp']);assert.ok(seen.headers['x-cfs-nonce']);assert.match(seen.headers['x-cfs-signature'],/^v1=/);
+const bodyHash=crypto.createHash('sha256').update(seen.body).digest('hex');const canonical=[seen.method,seen.url,seen.headers['x-cfs-timestamp'],seen.headers['x-cfs-nonce'],bodyHash].join('\n');const expected='v1='+crypto.createHmac('sha256',token).update(canonical).digest('base64url');assert.equal(seen.headers['x-cfs-signature'],expected);
+await new Promise(r=>server.close(r));console.log(JSON.stringify({ok:true,checks:7,protocol:3,signed:true,replay_guard:true}));

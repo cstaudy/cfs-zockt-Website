@@ -1,0 +1,17 @@
+{
+  "id": "nexus",
+  "name": "NEXUS",
+  "label": "NEXUS",
+  "version": "1.0.0",
+  "category": "control",
+  "events": [
+    "chat",
+    "gift",
+    "like",
+    "share",
+    "follow"
+  ],
+  "runtime": "local",
+  "network": "loopback_only",
+  "secrets_required": false
+}

@@ -1306,9 +1306,9 @@ async function executeLiveProviderCommandAction(action){
   const id=String(action?.id||"");
   const payload=action?.payload&&typeof action.payload==="object"?action.payload:{};
   const command=String(payload.command||"");
-  const provider=String(payload.provider||"tikfinity");
+  const provider=String(payload.provider||"tiktool");
   if(!id)throw new Error("LIVE Provider Action-ID fehlt.");
-  if(provider!=="tikfinity"||!["connect","disconnect","reconnect"].includes(command))throw new Error("LIVE Provider Aktion ist im Launcher nicht freigegeben.");
+  if(provider!=="tiktool"||!["connect","disconnect","reconnect"].includes(command))throw new Error("LIVE Provider Aktion ist im Launcher nicht freigegeben oder noch nicht implementiert.");
   assertFeature(creatorFeatures(),"live_bridge","LIVE Bridge");
   const existing=nexusActionReceiptStore?.get?.(id);
   if(existing){await bridge.ackActions([id]);return existing.result||{ok:true,replayed:true};}
@@ -1666,7 +1666,22 @@ function rebuildBridge() {
   bridge?.stop?.();
   const settings = configStore.publicSettings();
   const token = configStore.getToken();
-  bridge = new BridgeClient({ settings, token, logger, version: pkg.version, spool: eventSpool, streamHealthProvider:()=>{const telemetry=streamEngine?.telemetry?.()||null;if(!telemetry)return null;return{...telemetry,runtimeFailures:currentRuntimeFailures()}}, interactiveGamesProvider:()=>interactiveGameService?.snapshot?.() || null, liveProviderHealthProvider:()=>providers?.info?.() || {key:settings.provider||"mock",ready:false,status:"idle"} });
+  bridge = new BridgeClient({
+    settings,
+    token,
+    logger,
+    version: pkg.version,
+    spool: eventSpool,
+    streamHealthProvider:()=>{
+      const telemetry=streamEngine?.telemetry?.()||null;
+      if(!telemetry)return null;
+      return {...telemetry,runtimeFailures:currentRuntimeFailures()};
+    },
+    interactiveGamesProvider:()=>interactiveGameService?.snapshot?.() || null,
+    liveProviderHealthProvider:()=>providers?.info?.() || {key:settings.provider||"mock",ready:false,status:"idle"},
+    streamCredentialsProvider:()=>streamCredentialStore?.snapshot?.() || {encryptionAvailable:safeStorage.isEncryptionAvailable(),targets:{}},
+    obsIntegrationProvider:()=>({available:true,mode:"browser_source_doctor"})
+  });
 
   bridge.on("state", state => {
     send("launcher:state", appState({ bridge: state }));
@@ -1933,9 +1948,17 @@ function registerIpc() {
   });
 
   ipcMain.handle("launcher:game-activity-clear", async () => {
-    gameActivityTracker?.stop?.("privacy_clear");
-    await publishGameActivityPresence(gameActivityTracker?.snapshot?.()||null);
+    const before=gameActivityTracker?.snapshot?.()||null;
+    if (before?.active) {
+      gameActivityTracker?.clearHistory?.({resume:false});
+      await publishGameActivityPresence(gameActivityTracker?.snapshot?.()||null);
+    } else {
+      gameActivityTracker?.clearHistory?.({resume:false});
+    }
     if (bridge?.snapshot?.().connected) await bridge.clearGameActivity();
+    const restored=gameActivityTracker?.configure?.(currentGameActivityTarget())||null;
+    gameActivityTracker?.startLoop?.();
+    await publishGameActivityPresence(restored);
     return appState();
   });
 

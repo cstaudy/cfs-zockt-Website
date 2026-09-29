@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>cfs_zockt Interactive Game</title>
+  <style>
+    :root{font-family:Inter,system-ui,sans-serif;color:#f6fbff;background:transparent}
+    *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent}
+    .stage{position:absolute;inset:0;display:grid;place-items:center;padding:4vw}
+    .card{width:min(900px,92vw);min-height:240px;padding:28px;border:1px solid rgba(26,224,255,.72);border-radius:18px;background:linear-gradient(145deg,rgba(3,15,28,.94),rgba(4,27,48,.90));box-shadow:0 0 45px rgba(0,170,255,.16);backdrop-filter:blur(8px)}
+    .brand{font-weight:950;letter-spacing:.06em;color:#2aa9ff}.tag{float:right;color:#83eaff;font-size:12px;letter-spacing:.14em}.title{margin:28px 0 8px;font-size:clamp(34px,6vw,70px);font-weight:950;line-height:.95;text-transform:uppercase}.event{margin-top:24px;padding:18px;border-left:4px solid #1adfff;background:rgba(3,18,32,.7)}.event strong{display:block;font-size:22px}.event span{display:block;margin-top:6px;color:#b8c9d8}.muted{color:#7f99ae}.empty{margin-top:26px;color:#91a8ba}
+  </style>
+</head>
+<body>
+  <main class="stage"><section class="card" aria-live="polite">
+    <div><span class="brand">cfs_zockt</span><span class="tag" id="status">LOCAL RUNTIME</span></div>
+    <h1 class="title" id="game">INTERACTIVE GAME</h1>
+    <div class="event" id="event" hidden><strong id="eventTitle"></strong><span id="eventText"></span></div>
+    <p class="empty" id="empty">Warte auf Community-Events …</p>
+  </section></main>
+  <script src="/overlay.js"></script>
+</body>
+</html>

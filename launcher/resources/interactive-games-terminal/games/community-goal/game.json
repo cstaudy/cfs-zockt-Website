@@ -1,0 +1,16 @@
+{
+  "id": "community-goal",
+  "name": "Community Goal",
+  "label": "Community Goal",
+  "version": "1.0.0",
+  "category": "goal",
+  "events": [
+    "follow",
+    "gift",
+    "like",
+    "share"
+  ],
+  "runtime": "local",
+  "network": "loopback_only",
+  "secrets_required": false
+}
