@@ -5,6 +5,7 @@ const root=path.resolve(process.argv[2]||'.');
 const read=p=>fs.readFileSync(path.join(root,p),'utf8');
 const json=p=>JSON.parse(read(p));
 const launcher=json('launcher/package.json');
+const backend=json('package.json');
 const env=read('.env.example');
 const render=read('render.blueprint.example.yaml');
 const recovery=json('ops/application-recovery-policy.json');
@@ -15,19 +16,22 @@ const suite=read('public/pages/creator-suite.html');
 const system=read('public/pages/system-check.html');
 const systemJs=read('public/assets/js/page-system-check.js');
 const dashboardJs=read('public/assets/js/page-dashboard.js');
+const currentLauncher=String(launcher.version||'');
+const currentBackend=String(backend.version||'');
+const currentSchema=Number((read('lib/database-schema-contract.js').match(/DATABASE_SCHEMA_VERSION\s*=\s*(\d+)/)||[])[1]||0);
 const checks=[
-  ['launcher package 0.47.17',launcher.version==='0.47.17'],
-  ['project current header 0.47.17',state.includes('**Launcher: 0.47.17**')],
-  ['env build target 0.47.17',env.includes('CFS_LAUNCHER_BUILD_TARGET_VERSION=0.47.17')],
-  ['env evidence version 0.47.17',env.includes('CFS_RELEASE_EVIDENCE_VERSION=0.47.17')],
-  ['render build target 0.47.17',render.includes('CFS_LAUNCHER_BUILD_TARGET_VERSION')&&render.includes('value: 0.47.17')],
-  ['recovery policy 0.47.17',recovery.launcher_version==='0.47.17'],
-  ['homepage current launcher copy',index.includes('Launcher 0.47.17')],
-  ['roadmap current launcher copy',roadmap.includes('Launcher 0.47.17')],
-  ['creator suite current launcher copy',suite.includes('Launcher 0.47.17')&&suite.includes('LAUNCHER 0.47.17')],
+  ['launcher package has semver',/^\d+\.\d+\.\d+$/.test(currentLauncher)],
+  ['project current header matches launcher',state.includes(`**Launcher: ${currentLauncher}**`)],
+  ['env build target matches launcher',env.includes(`CFS_LAUNCHER_BUILD_TARGET_VERSION=${currentLauncher}`)],
+  ['env evidence version matches launcher',env.includes(`CFS_RELEASE_EVIDENCE_VERSION=${currentLauncher}`)],
+  ['render build target matches launcher',render.includes('CFS_LAUNCHER_BUILD_TARGET_VERSION')&&render.includes(`value: ${currentLauncher}`)],
+  ['recovery policy matches launcher',recovery.launcher_version===currentLauncher],
+  ['homepage current launcher copy',index.includes(`Launcher ${currentLauncher}`)],
+  ['roadmap current launcher copy',roadmap.includes(`Launcher ${currentLauncher}`)],
+  ['creator suite current launcher copy',suite.includes(`Launcher ${currentLauncher}`)&&suite.includes(`LAUNCHER ${currentLauncher}`)],
   ['system check v3 title',system.includes('System Check v3')&&system.includes('SYSTEM CHECK V3')],
   ['system check readiness cards',system.includes('backendReadiness')&&system.includes('launcherReadiness')&&system.includes('creatorReadiness')&&system.includes('externalReadiness')],
-  ['system check expected contract',systemJs.includes('backend:"3.12.0"')&&systemJs.includes('schema:68')&&systemJs.includes('launcher:"0.47.17"')],
+  ['system check expected contract',systemJs.includes(`backend:"${currentBackend}"`)&&systemJs.includes(`schema:${currentSchema}`)&&systemJs.includes(`launcher:"${currentLauncher}"`)],
   ['system check backend health',systemJs.includes('/api/health')&&systemJs.includes('VERSION DRIFT')],
   ['system check launcher policy',systemJs.includes('/api/creator/launcher/releases?channel=stable')&&systemJs.includes('TARGET DRIFT')],
   ['system check games runtime',systemJs.includes('/api/creator/games/runtime')],

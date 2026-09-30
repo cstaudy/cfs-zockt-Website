@@ -1,0 +1,52 @@
+import fs from 'node:fs';
+import path from 'node:path';
+
+const root=path.resolve(process.argv[2]||'.');
+const read=f=>fs.readFileSync(path.join(root,f),'utf8');
+const results=[];
+const check=(name,ok,detail='')=>results.push({name,ok:Boolean(ok),detail:String(detail||'')});
+
+const server=read('server.js');
+const login=read('public/pages/login.html');
+const loginJs=read('public/assets/js/page-login.js');
+const privacy=read('public/pages/datenschutz.html');
+const terms=read('public/pages/nutzungsbedingungen.html');
+const imprint=read('public/pages/impressum.html');
+const plans=read('public/pages/plans.html');
+const app=read('public/assets/js/app.js');
+const merch=read('public/assets/js/merch-feedback.js');
+const monetization=JSON.parse(read('public/config/monetization.json'));
+const env=read('.env.example');
+const doc=read('LEGAL-PRIVACY-PRIVATE-BETA.md');
+
+check('privacy version visible',privacy.includes('2026-09-30-beta-v1'));
+check('terms version visible',terms.includes('2026-09-30-beta-v1'));
+check('private non-commercial status disclosed',privacy.includes('nicht gewerbliches Privat-')&&terms.includes('nicht gewerbliches und kostenloses Beta-Projekt'));
+check('imprint private status disclosed',imprint.includes('privates, derzeit nicht gewerblich betriebenes Projekt'));
+check('privacy explains legal bases',privacy.includes('Art. 6 Abs. 1 lit. b DSGVO')&&privacy.includes('Art. 6 Abs. 1 lit. f DSGVO'));
+check('privacy explains browser storage',privacy.includes('Cookies und Browser-Speicher')&&privacy.includes('keine Werbe-, Analytics- oder Cross-Site-Tracking-Cookies'));
+check('privacy explains provider connections',privacy.includes('TikTok, Twitch, YouTube und weitere Provider'));
+check('privacy explains export and deletion',privacy.includes('Self-Service: Sessions, TikTok, Export und Löschung'));
+check('terms are 18+ beta',terms.includes('nur für Personen ab 18 Jahren'));
+check('terms preserve mandatory liability',terms.includes('Zwingende gesetzliche Haftungsregeln bleiben unberührt'));
+check('terms separate future commercial use',terms.includes('Bezahl-Abos, Werbung oder andere kommerzielle Leistungen sind nicht Bestandteil'));
+check('registration requires terms',/id="termsAccepted"[^>]+required/.test(login));
+check('registration requires privacy notice acknowledgement',/id="privacyAcknowledged"[^>]+required/.test(login));
+check('registration requires beta acknowledgement',/id="betaAcknowledged"[^>]+required/.test(login));
+check('registration requires age 18 confirmation',/id="ageConfirmed"[^>]+required/.test(login));
+check('frontend sends legal flags',loginJs.includes('terms_accepted:Boolean')&&loginJs.includes('privacy_acknowledged:Boolean')&&loginJs.includes('beta_acknowledged:Boolean')&&loginJs.includes('age_18_confirmed:Boolean'));
+check('backend validates legal acceptance',server.includes('code:"legal_acceptance_required"')&&server.includes('code:"minimum_age_required"'));
+check('backend records legal versions',server.includes('legal_terms_${LEGAL_TERMS_VERSION}_accepted')&&server.includes('privacy_notice_${LEGAL_PRIVACY_NOTICE_VERSION}_acknowledged'));
+check('public legal status endpoint exists',server.includes('/api/public/legal/status')&&server.includes('optional_tracking_enabled:false'));
+check('commercial mode defaults off',server.includes('process.env.CFS_COMMERCIAL_MODE || "false"')&&env.includes('CFS_COMMERCIAL_MODE=false'));
+check('checkout blocked in private beta',server.includes('code:"private_beta_no_billing"')&&server.includes('Bezahlte Pläne sind während der privaten Beta nicht freigeschaltet'));
+check('plans clearly say no paid checkout',plans.includes('AKTUELL KEIN BEZAHLTER CHECKOUT')&&plans.includes('Bezahlter Checkout deaktiviert'));
+check('monetization config disabled',monetization.enabled===false);
+check('public funnel persistence removed',!app.includes('cfsTrafficSource')&&!app.includes('cfsFunnelLastAction'));
+check('merch persistent id removed',!merch.includes("localStorage.getItem(clientKey)")&&!merch.includes("localStorage.setItem(clientKey"));
+check('legal baseline document exists',doc.includes('CFS_COMMERCIAL_MODE=false')&&doc.includes('Vor einer späteren kommerziellen Freischaltung'));
+
+const failed=results.filter(x=>!x.ok);
+for(const r of results) console.log(`${r.ok?'PASS':'FAIL'} · ${r.name}${r.detail?` · ${r.detail}`:''}`);
+console.log(`\n${results.length-failed.length}/${results.length} PASS`);
+if(failed.length) process.exit(1);

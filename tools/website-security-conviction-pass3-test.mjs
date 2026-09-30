@@ -15,6 +15,10 @@ const renderSetup=read('RENDER_SETUP_V40.md');
 const securityTxt=read('public/.well-known/security.txt');
 const pkg=JSON.parse(read('package.json'));
 
+function versionAtLeast(current, minimum){
+  const a=String(current||"0").split(".").map(Number),b=String(minimum||"0").split(".").map(Number);
+  for(let i=0;i<3;i++){if((a[i]||0)>(b[i]||0))return true;if((a[i]||0)<(b[i]||0))return false;}return true;
+}
 const checks=[]; const check=(name,ok)=>checks.push({name,ok:Boolean(ok)});
 check('RFC9116 security.txt exists',fs.existsSync(path.join(root,'public/.well-known/security.txt')));
 check('security.txt has HTTPS Contact',/^Contact: https:\/\//m.test(securityTxt));
@@ -31,7 +35,7 @@ check('Operational health no longer exposes module map',!server.match(/"\/api\/h
 check('Operational health preserves canary fields',server.match(/"\/api\/health"[\s\S]{0,1800}version:[\s\S]{0,300}database:/));
 check('Production session cookie uses __Host prefix',server.includes(': "__Host-cfs_creator_session"'));
 check('Production TikTok state cookie uses __Secure prefix',server.includes(': "__Secure-cfs_tiktok_state"'));
-check('Session cookie remains HttpOnly Secure root scoped',server.includes('httpOnly:\n                true')&&server.includes('sameSite:\n                "lax"')&&server.includes('path:\n                "/"'));
+check('Session cookie remains HttpOnly Secure root scoped',/function creatorSessionCookieOptions[\s\S]{0,420}httpOnly:\s*true[\s\S]{0,180}secure:\s*NODE_ENV\s*!==\s*"development"[\s\S]{0,180}sameSite:\s*"lax"[\s\S]{0,220}path:\s*"\/"/.test(server));
 check('Production requires token encryption key',server.includes('"CFS_TOKEN_ENCRYPTION_KEY",\n            process.env.CFS_TOKEN_ENCRYPTION_KEY'));
 check('Production requires separate CSRF signing secret',server.includes('"CFS_CSRF_SIGNING_SECRET",\n            CSRF_SIGNING_SECRET'));
 check('Production requires separate review HMAC key',server.includes('"CFS_PUBLIC_REVIEW_HASH_SALT",\n            PUBLIC_REVIEW_HASH_SALT'));
@@ -46,10 +50,10 @@ check('Support receipt includes short reference',supportJs.includes('Referenz: $
 check('Support page explains reference and security.txt',support.includes('kurze Referenz für Rückfragen')&&support.includes('/.well-known/security.txt'));
 check('Security page documents host-bound sessions',security.includes('Host-gebundene Session-Cookies')&&security.includes('__Host-'));
 check('Security page documents fail-closed production secrets',security.includes('Fail-closed in Produktion')&&security.includes('startet das Backend nicht'));
-check('Homepage exposes verifiable security.txt path',home.includes('security.txt prüfen')&&home.includes('/.well-known/security.txt'));
-check('Homepage explains public status minimization',home.includes('Öffentlicher Status bleibt absichtlich knapp')&&home.includes('OAuth-Konfiguration'));
+check('Homepage exposes visible security/status trust links',home.includes('href="/pages/security.html">Sicherheit</a>')&&home.includes('href="/api/public/status">Status</a>'));
+check('Security page explains public status minimization',security.includes('knappe Systemstatus')&&!publicStatusRoute.includes('redirect_uri:')&&!publicStatusRoute.includes('modules:'));
 check('Package wires security3 regression check',pkg.scripts?.['security3:check']==='node tools/website-security-conviction-pass3-test.mjs .');
-check('Backend version remains 3.12.0',pkg.version==='3.12.0');
+check('Backend version is at least v150 baseline',versionAtLeast(pkg.version,'3.18.1'));
 
 const failed=checks.filter(x=>!x.ok);
 for(const item of checks) console.log(`${item.ok?'PASS':'FAIL'}  ${item.name}`);

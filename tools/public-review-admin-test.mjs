@@ -8,10 +8,11 @@ const html=read("public/pages/admin-creators.html");
 const js=read("public/assets/js/admin-creators.js");
 const css=read("public/assets/css/admin-creators.css");
 const pkg=JSON.parse(read("package.json"));
+function versionAtLeast(current,minimum){const a=String(current||"0").split(".").map(Number),b=String(minimum||"0").split(".").map(Number);for(let i=0;i<3;i++){if((a[i]||0)>(b[i]||0))return true;if((a[i]||0)<(b[i]||0))return false;}return true;}
 const checks=[];
 const check=(label,ok)=>checks.push({label,ok:Boolean(ok)});
 
-check("Backend-Version bleibt 3.12.0",pkg.version==="3.12.0");
+check("Backend-Version ist mindestens v150-Basis",versionAtLeast(pkg.version,"3.18.1"));
 check("Admin Review GET verlangt Account + Admin",/"\/api\/admin\/creator-suite\/public-reviews"[\s\S]{0,180}requireCreatorAccount,[\s\S]{0,80}requireCreatorAdmin/.test(server));
 check("Admin Review PUT verlangt Account + Admin + Trusted Write",/"\/api\/admin\/creator-suite\/public-reviews\/:id"[\s\S]{0,220}requireCreatorAccount,[\s\S]{0,80}requireCreatorAdmin,[\s\S]{0,80}requireTrustedPublicWrite/.test(server));
 check("Moderationsstatus bleibt auf pending/approved/rejected begrenzt",server.includes('new Set(["pending","approved","rejected"])'));

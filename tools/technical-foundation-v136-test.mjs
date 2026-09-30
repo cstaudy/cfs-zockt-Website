@@ -11,7 +11,7 @@ const launcherPkg = JSON.parse(read('launcher/package.json'));
 const env = read('.env.example');
 
 const checks = [
-  ['launcher version 0.47.17', launcherPkg.version === '0.47.17'],
+  ['launcher baseline version >= 0.47.17', (()=>{const p=String(launcherPkg.version).split('.').map(Number);return p[0]>0||p[1]>47||(p[1]===47&&p[2]>=17)})()],
   ['remote HTTP transport guard exists', bridge.includes('Unsichere Backend-URL blockiert') && bridge.includes('parsed.protocol !== "https:"')],
   ['localhost HTTP remains allowed for local QA', bridge.includes('host === "localhost"') && bridge.includes('127.0.0.1')],
   ['bridge protocol v3 advertised', bridge.includes('protocol_version: 3')],
@@ -29,7 +29,7 @@ const checks = [
   ['widget live control protected from stale tab overwrite', server.includes('bevor du die Live-Steuerung fortsetzt')],
   ['widget UI sends expected version on draft', widget.includes('config:state.config,expected_version:state.widget.version')],
   ['widget UI sends expected version on publish', widget.includes('expected_version:state.widget.version')],
-  ['release contract env bumped', env.includes('CFS_LAUNCHER_BUILD_TARGET_VERSION=0.47.17') && env.includes('CFS_RELEASE_EVIDENCE_VERSION=0.47.17')]
+  ['release contract env matches launcher package', env.includes(`CFS_LAUNCHER_BUILD_TARGET_VERSION=${launcherPkg.version}`) && env.includes(`CFS_RELEASE_EVIDENCE_VERSION=${launcherPkg.version}`)]
 ];
 for (const [label, ok] of checks) {
   assert.equal(Boolean(ok), true, label);

@@ -7,7 +7,7 @@ const fail = m => { console.error("FAIL:", m); process.exitCode = 1; };
 const ok = m => console.log("OK:", m);
 
 const pkg = JSON.parse(read("package.json"));
-pkg.version === "0.47.17" ? ok("launcher version 0.47.17") : fail(`version ${pkg.version}`);
+(() => { const parts=String(pkg.version||"").split(".").map(Number); return (parts[0]>0||parts[1]>47||(parts[1]===47&&parts[2]>=20)) ? ok(`launcher version ${pkg.version} (>= 0.47.20)`) : fail(`version ${pkg.version}`); })();
 pkg.dependencies?.["electron-updater"] ? ok("electron-updater dependency") : fail("electron-updater missing");
 pkg.build?.publish?.[0]?.provider === "github" ? ok("GitHub publish provider") : fail("publish provider missing");
 
@@ -19,6 +19,9 @@ for (const file of [
   "src/gift-streak-tracker.js",
   "src/event-monitor.js",
   "src/obs-doctor.js",
+  "src/obs-websocket-controller.js",
+  "tools/obs-websocket-controller-v141-test.mjs",
+  "tools/tiktok-live-health-v141-test.mjs",
   "src/support-bundle.js",
   "src/config-backup.js",
   "src/recovery-manager.js",
@@ -114,6 +117,10 @@ for (const feature of [
   "launcher:diagnostics-export",
   "bridge-self-test",
   "launcher:preflight",
+  "launcher:obs-websocket-connect",
+  "launcher:obs-websocket-disconnect",
+  "launcher:obs-websocket-scene",
+  "launcher:obs-websocket-browser-source",
   "launcher:spool-clear",
   "launcher:device-link-start",
   "launcher:device-logout",

@@ -1,0 +1,45 @@
+import fs from 'node:fs';
+import path from 'node:path';
+
+const root=path.resolve(process.argv[2]||'.');
+const read=rel=>fs.readFileSync(path.join(root,rel),'utf8');
+const server=read('server.js');
+const configDoctor=read('lib/config-doctor.js');
+const envExample=read('.env.example');
+const blueprint=read('render.blueprint.example.yaml');
+const adminHtml=read('public/pages/admin-creators.html');
+const adminJs=read('public/assets/js/admin-creators.js');
+const dashboardJs=read('public/assets/js/page-dashboard.js');
+const accountJs=read('public/assets/js/page-account.js');
+const tiktokJs=read('public/assets/js/page-tiktok.js');
+const integrationsJs=read('public/assets/js/page-integrations.js');
+const launcherJs=read('launcher/renderer/app.js');
+const checks=[];
+const check=(name,ok)=>checks.push({name,ok:Boolean(ok)});
+
+const adminFn=(server.match(/async function isCreatorSuiteAdmin\(account\) \{[\s\S]*?\n\}/)||[''])[0];
+check('admin control is email-only',adminFn.includes('CFS_ADMIN_EMAILS.has(email)')&&!adminFn.includes('CFS_ADMIN_CREATOR_IDS')&&!adminFn.includes('legacyOwner'));
+check('legacy creator-id admin env removed from runtime',!server.includes('process.env.CFS_ADMIN_CREATOR_IDS'));
+check('config doctor requires admin email',configDoctor.includes('{name:"CFS_ADMIN_EMAILS",required:true')&&configDoctor.includes('CFS_ADMIN_EMAILS ist v151 die einzige Admin-Control-Zuordnung'));
+check('provider beta defaults to TikTok and Twitch',server.includes('process.env.CFS_PROVIDER_BETA_REQUIRED ?? "true"')&&server.includes('process.env.CFS_PROVIDER_BETA_PROVIDERS || "tiktok,twitch"'));
+check('YouTube is not in closed provider beta allowlist',server.includes('filter(value => ["tiktok","twitch"].includes(value))'));
+check('new creators become pending beta candidates',server.includes("VALUES($1,'pending','',NOW(),NOW())")&&server.includes('await ensureCreatorBetaCandidate(account.id)'));
+check('beta activation requires verified email when verification is enabled',server.includes('code:"beta_email_not_verified"')&&server.includes('Beta kann erst nach bestätigter E-Mail-Adresse aktiviert werden.'));
+check('admin email does not need beta row',server.includes('code:"beta_not_needed_for_admin"')&&server.includes('über die Admin-E-Mail bereits vollständig freigeschaltet'));
+check('admin overview exposes pending beta count',server.includes('beta_pending:creators.filter(c=>c.beta.status==="pending").length')&&adminHtml.includes('id="kBetaPending"')&&adminJs.includes('s.beta_pending??0'));
+check('admin UI can approve TikTok plus Twitch beta',adminJs.includes('Beta aktiv · TikTok + Twitch testen')&&adminJs.includes('Wartet auf Freigabe')&&adminJs.includes('TIKTOK + TWITCH BETA FREIGEBEN'));
+check('TikTok OAuth and sync are beta-gated',server.includes('await requireProviderBetaAccess(req.creatorAccount,"tiktok")')&&server.includes('providerBetaDeniedPayload(error.access,"tiktok")'));
+check('Twitch OAuth and sync are beta-gated',server.includes('await requireProviderBetaAccess(req.creatorAccount,"twitch")')&&server.includes('providerBetaDeniedPayload(error.access,"twitch")'));
+check('Twitch runtime drops non-beta creators',server.includes('requireProviderBetaAccess(item.creator_id,"twitch").catch(()=>null)')&&server.includes('requireProviderBetaAccess(creatorId,"twitch").catch(()=>null)'));
+check('launcher provider handoff rechecks beta',server.includes('if(["tiktok","twitch"].includes(provider))await requireProviderBetaAccess(req.studioBridge.creator_id,provider)')&&server.includes('await requireProviderBetaAccess(row.creator_id,provider)'));
+check('provider widgets are blocked server-side without beta',server.includes('async function requireWidgetProviderBetaAccess')&&server.includes('Dieses Provider-Widget ist für diesen Creator derzeit nicht für die Beta freigeschaltet.'));
+check('launcher library filters beta provider widgets',server.includes('providerAccess[widget.provider]?.beta_access?.allowed!==false'));
+check('website shows beta pending state',tiktokJs.includes('BETA AUSSTEHEND')&&integrationsJs.includes('BETA AUSSTEHEND'));
+check('launcher disables provider connect until approval',launcherJs.includes('BETA FREIGABE AUSSTEHEND')&&launcherJs.includes('BETA FREIGABE NÖTIG')&&launcherJs.includes('button.disabled=!bridgeOnline||betaBlocked'));
+check('account surfaces pending and paused beta status',dashboardJs.includes('BETA FREIGABE AUSSTEHEND')&&accountJs.includes('Beta-Zugang bestätigt')&&accountJs.includes('BETA PAUSIERT'));
+check('deployment templates document email-only beta config',envExample.includes('CFS_ADMIN_EMAILS=')&&!envExample.includes('CFS_ADMIN_CREATOR_IDS=')&&envExample.includes('CFS_PROVIDER_BETA_REQUIRED=true')&&blueprint.includes('key: CFS_PROVIDER_BETA_REQUIRED'));
+
+const failed=checks.filter(x=>!x.ok);
+for(const item of checks)console.log(`${item.ok?'PASS':'FAIL'}  ${item.name}`);
+console.log(`\nProvider Beta Access v151: ${checks.length-failed.length}/${checks.length} PASS`);
+if(failed.length)process.exit(1);

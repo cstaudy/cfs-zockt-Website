@@ -32,6 +32,12 @@ class TikToolProvider extends EventEmitter {
     this.client = null;
     this.running = false;
     this.username = "";
+    this.status = "idle";
+    this.lastConnectedAt = null;
+    this.lastDisconnectedAt = null;
+    this.lastEventAt = null;
+    this.lastError = "";
+    this.metrics = {events:0,connectAttempts:0};
     this.giftTracker = new GiftStreakTracker({
       logger,
       timeoutMs: 1800,
@@ -46,12 +52,22 @@ class TikToolProvider extends EventEmitter {
       ready: true,
       connected: Boolean(this.client?.connected),
       username: this.username,
+      status: this.status,
+      lastConnectedAt: this.lastConnectedAt,
+      lastDisconnectedAt: this.lastDisconnectedAt,
+      lastEventAt: this.lastEventAt,
+      lastError: this.lastError,
+      reconnectManaged: true,
+      metrics: {...this.metrics},
       thirdParty: true,
+      official: false,
       capabilities: ["follow","like","gift","share","viewer_update","chat"]
     };
   }
 
   emitNormalized(event) {
+    this.lastEventAt = new Date().toISOString();
+    this.metrics.events += 1;
     this.emit("event", event);
   }
 
@@ -92,6 +108,9 @@ class TikToolProvider extends EventEmitter {
     }
 
     this.username = username;
+    this.status = "connecting";
+    this.lastError = "";
+    this.metrics.connectAttempts += 1;
     this.client = new TikTokLive(username, {
       apiKey,
       autoReconnect: true,
@@ -100,13 +119,18 @@ class TikToolProvider extends EventEmitter {
 
     this.client.on("connected", () => {
       this.running = true;
-      this.emit("state", { ready:true, connected:true, message:`Verbunden mit @${username}` });
+      this.status = "connected";
+      this.lastConnectedAt = new Date().toISOString();
+      this.lastError = "";
+      this.emit("state", { ready:true, connected:true, status:this.status, message:`Verbunden mit @${username}` });
       this.logger?.info("TikTool LIVE provider connected", `@${username}`);
     });
 
     this.client.on("disconnected", () => {
       this.running = false;
-      this.emit("state", { ready:true, connected:false, message:`LIVE Provider getrennt · @${username}` });
+      this.lastDisconnectedAt = new Date().toISOString();
+      this.status = this.client ? "reconnecting" : "idle";
+      this.emit("state", { ready:true, connected:false, status:this.status, message:`LIVE Provider getrennt · @${username}` });
       this.logger?.warn("TikTool LIVE provider disconnected", `@${username}`);
     });
 
@@ -160,12 +184,22 @@ class TikToolProvider extends EventEmitter {
     });
 
     this.client.on("status", e => {
-      this.emit("state", { ready:true, connected:Boolean(this.client?.connected), message:String(e?.message||e?.status||"Provider status") });
+      const message=String(e?.message||e?.status||"Provider status").slice(0,300);
+      this.emit("state", { ready:true, connected:Boolean(this.client?.connected), status:this.status, message });
     });
 
-    await this.client.connect();
-    this.running = true;
-    return this.info();
+    try {
+      await this.client.connect();
+      this.running = true;
+      if (this.status !== "connected") this.status = "connected";
+      return this.info();
+    } catch (error) {
+      this.running = false;
+      this.status = "error";
+      this.lastError = String(error?.message||error).slice(0,500);
+      this.emit("state", {ready:true,connected:false,status:this.status,message:this.lastError});
+      throw error;
+    }
   }
 
   async stop() {
@@ -173,10 +207,11 @@ class TikToolProvider extends EventEmitter {
     this.giftTracker.flushAll("provider_stop");
     this.client=null;
     this.running=false;
+    this.status="idle";
     if(current){
       try { await current.disconnect(); } catch {}
     }
-    this.emit("state",{ready:true,connected:false,message:"Provider gestoppt"});
+    this.emit("state",{ready:true,connected:false,status:this.status,message:"Provider gestoppt"});
     return this.info();
   }
 }

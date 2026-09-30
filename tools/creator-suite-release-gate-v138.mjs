@@ -20,7 +20,8 @@ check("release readiness endpoint", server.includes('"/api/creator/release-readi
 check("launcher signed requests", server.includes("signed_requests_v1") && bridge.includes("signed_requests_v1"));
 check("launcher replay guard", server.includes("creator_bridge_request_nonces") && server.includes("replay_guard_v1"));
 check("launcher protocol 3", /protocol[^\n]{0,120}3/i.test(bridge) || bridge.includes("protocol: 3") || bridge.includes("protocol:3"));
-check("launcher current version", String(launcherPkg.version || "") === "0.47.17", `launcher=${launcherPkg.version}`);
+const launcherParts=String(launcherPkg.version||"").split(".").map(Number);
+check("launcher baseline version >= 0.47.17", launcherParts[0]>0||launcherParts[1]>47||(launcherParts[1]===47&&launcherParts[2]>=17), `launcher=${launcherPkg.version}`);
 check("widget optimistic locking", server.includes("widget_version_conflict"));
 check("widget studio client optimistic version", widget.includes("expected_version"));
 check("technical release card", tech.includes('data-tech-card="release"'));

@@ -8,7 +8,7 @@ const root=path.resolve(process.argv[2]||'.');
 const read=rel=>fs.readFileSync(path.join(root,rel),'utf8');
 let pass=0,fail=0;const check=(name,fn)=>{try{fn();pass++;console.log('PASS ',name)}catch(e){fail++;console.error('FAIL ',name,'-',e.message)}};
 const pkg=JSON.parse(read('package.json'));
-check('launcher version 0.47.17',()=>assert.equal(pkg.version,'0.47.17'));
+check('launcher version is at least 0.47.17',()=>{const parts=String(pkg.version).split('.').map(Number);assert.ok(parts[0]>0||parts[1]>47||(parts[1]===47&&parts[2]>=17));});
 for(const rel of ['src/game-activity-tracker.js','src/interactive-game-service-manager.js','src/nexus-action-receipts.js','src/runtime-failure-codes.js','src/stream-game-context-store.js','src/bridge-client.js','src/config-store.js','src/provider-manager.js','preload.js','main.js'])check(`${rel} exists`,()=>assert.ok(fs.existsSync(path.join(root,rel))));
 for(const rel of ['resources/interactive-games-terminal/server.js','resources/interactive-games-terminal/public/overlay.html','resources/interactive-games-terminal/public/overlay.js'])check(`${rel} bundled`,()=>assert.ok(fs.existsSync(path.join(root,rel))));
 const gameRoot=path.join(root,'resources/interactive-games-terminal/games');

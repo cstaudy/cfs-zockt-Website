@@ -14,17 +14,21 @@
     <div class="product">CREATOR SUITE</div>
 
     <nav>
+      <div class="nav-group">START</div>
       <button class="nav active" data-view="live"><span>●</span> LIVE CONTROL</button>
       <button class="nav" data-view="deck"><span>▦</span> STREAM DECK</button>
       <button class="nav" data-view="tools"><span>◇</span> CREATOR TOOLS</button>
+      <div class="nav-group" data-experience="pro">LIVE & AUTOMATION</div>
       <button class="nav" data-view="bridge" data-experience="pro"><span>⌁</span> BRIDGE</button>
       <button class="nav" data-view="sync" data-experience="pro"><span>↻</span> SYNC STATUS</button>
       <button class="nav" data-view="audio" data-experience="pro"><span>♫</span> AUTOTHANKS</button>
       <button class="nav" data-view="events" data-experience="pro"><span>⌁</span> LIVE EVENTS</button>
       <button class="nav" data-view="bot" data-experience="pro"><span>⌘</span> STREAM BOT</button>
+      <div class="nav-group" data-experience="pro">PRODUKTION</div>
       <button class="nav" data-view="streamengine" data-experience="pro"><span>◉</span> STREAM ENGINE</button>
       <button class="nav" data-view="output" data-experience="pro"><span>◈</span> LIVE OUTPUT</button>
-      <button class="nav" data-view="obs" data-experience="pro"><span>▣</span> OBS DOCTOR</button>
+      <button class="nav" data-view="obs" data-experience="pro"><span>▣</span> OBS CONTROL</button>
+      <div class="nav-group">SYSTEM</div>
       <button class="nav" data-view="system" data-experience="pro"><span>◆</span> SYSTEM</button>
       <button class="nav" data-view="beta" data-experience="pro"><span>β</span> BETA TEST</button>
       <button class="nav" data-view="settings"><span>⚙</span> EINSTELLUNGEN</button>
@@ -98,6 +102,33 @@
           <button class="home-hub-card" type="button" data-hub-action="output" id="homeCardOutput">
             <span class="home-step">04</span><div><small>OBS / OUTPUT</small><strong id="homeOutputState">OFFEN</strong><p id="homeOutputMeta">Scene prüfen</p></div><b>›</b>
           </button>
+        </div>
+      </section>
+
+      <section class="provider-connect-panel" id="providerConnectPanel">
+        <div class="provider-connect-head">
+          <div><span>PLATTFORMEN & WIDGETS</span><h2>Accounts direkt im Launcher verbinden</h2><p>Verbinde deinen Provider einmal im Systembrowser. Danach synchronisiert der Launcher den Account-Status und deine veröffentlichte Widget-Bibliothek automatisch.</p></div>
+          <button class="btn" id="providerWidgetsOpen" type="button">WIDGET STUDIO ÖFFNEN</button>
+        </div>
+        <div class="provider-connect-grid">
+          <article class="provider-connect-card" id="providerTikTokCard">
+            <div class="provider-connect-icon">TT</div>
+            <div class="provider-connect-copy"><small>TIKTOK</small><strong id="providerTikTokTitle">NICHT VERBUNDEN</strong><p id="providerTikTokMeta">TikTok-Profil und Widget-Daten verbinden.</p></div>
+            <button class="btn primary" type="button" data-provider-connect="tiktok" id="providerTikTokButton">TIKTOK VERBINDEN</button>
+          </article>
+          <article class="provider-connect-card" id="providerTwitchCard">
+            <div class="provider-connect-icon">TW</div>
+            <div class="provider-connect-copy"><small>TWITCH</small><strong id="providerTwitchTitle">NICHT VERBUNDEN</strong><p id="providerTwitchMeta">Twitch-Account sicher per OAuth verbinden.</p></div>
+            <button class="btn primary" type="button" data-provider-connect="twitch" id="providerTwitchButton">TWITCH VERBINDEN</button>
+          </article>
+          <article class="provider-connect-card" id="providerYouTubeCard">
+            <div class="provider-connect-icon">YT</div>
+            <div class="provider-connect-copy"><small>YOUTUBE</small><strong id="providerYouTubeTitle">NICHT VERBUNDEN</strong><p id="providerYouTubeMeta">YouTube-Kanal sicher per Google OAuth verbinden.</p></div>
+            <button class="btn primary" type="button" data-provider-connect="youtube" id="providerYouTubeButton">YOUTUBE VERBINDEN</button>
+          </article>
+        </div>
+        <div class="provider-widget-readiness" id="providerWidgetReadiness">
+          <span>WIDGETS</span><strong id="providerWidgetCount">0 VERÖFFENTLICHT</strong><p id="providerWidgetHint">Nach dem Device-Link lädt der Launcher deine veröffentlichte Widget-Bibliothek automatisch.</p>
         </div>
       </section>
 
@@ -584,10 +615,41 @@
 
     <section class="view" data-page="obs">
       <div class="page-head">
-        <span class="eyebrow">BROWSER SOURCE</span>
-        <h1>OBS DOCTOR.</h1>
-        <p>Prüft eine veröffentlichte Widget-URL direkt von diesem PC: HTTPS, HTTP-Status, Antwortzeit, Runtime-Erkennung und Transparenz-Hinweise.</p>
+        <span class="eyebrow">OBS INTEGRATION</span>
+        <h1>OBS CONTROL.</h1>
+        <p>Lokale OBS-Steuerung über obs-websocket plus Browser-Source-Diagnose. Passwörter bleiben verschlüsselt auf diesem PC; der Launcher erlaubt nur den benötigten kleinen Request-Satz.</p>
       </div>
+
+      <section class="panel obs-control-panel">
+        <div class="panel-head"><div><span>OBS WEBSOCKET 5</span><h2>Verbinden & steuern</h2><p>Standard: <b>ws://127.0.0.1:4455</b>. Unverschlüsseltes ws:// ist nur lokal erlaubt; entfernte Hosts benötigen wss://.</p></div><span class="pill" id="obsWsStatus">OFFLINE</span></div>
+        <div class="form-grid obs-control-form">
+          <label><span>WEBSOCKET-ADRESSE</span><input id="obsWsUrl" type="text" value="ws://127.0.0.1:4455" autocomplete="off"></label>
+          <label><span>PASSWORT</span><input id="obsWsPassword" type="password" autocomplete="new-password" placeholder="OBS WebSocket Passwort"></label>
+          <label class="full obs-checkbox-label"><input id="obsWsAutoConnect" type="checkbox"><span>Beim Launcher-Start automatisch mit OBS verbinden</span></label>
+          <div class="full inline">
+            <button class="btn primary" id="obsWsConnect">VERBINDEN</button>
+            <button class="btn" id="obsWsDisconnect">TRENNEN</button>
+            <button class="btn" id="obsWsRefresh">AKTUALISIEREN</button>
+            <button class="btn danger" id="obsWsForgetPassword">PASSWORT VERGESSEN</button>
+          </div>
+        </div>
+        <div class="obs-control-meta" id="obsWsMeta">Noch keine OBS WebSocket-Verbindung.</div>
+        <div class="obs-control-grid">
+          <article>
+            <span>SZENE</span><strong id="obsCurrentScene">–</strong>
+            <select id="obsSceneSelect"><option value="">Keine Szenen geladen</option></select>
+            <button class="btn" id="obsSwitchScene">SZENE AKTIVIEREN</button>
+          </article>
+          <article>
+            <span>BROWSER SOURCE</span><strong id="obsBrowserSourceCount">0 Quellen</strong>
+            <select id="obsBrowserSourceSelect"><option value="">Keine Browser Sources geladen</option></select>
+            <input id="obsBrowserSourceUrl" type="url" placeholder="https://cfs-zockt.de/widgets/studio.html#token=…" autocomplete="off">
+            <button class="btn" id="obsUpdateBrowserSource">URL IN OBS AKTUALISIEREN</button>
+          </article>
+        </div>
+        <div class="notice">OBS WebSocket besitzt selbst keine feingranularen Scopes. cfs_zockt reduziert deshalb die Angriffsfläche im Launcher: nur Version/Status, Szenen lesen/wechseln und Browser-Source-Einstellungen lesen/aktualisieren sind freigegeben.</div>
+      </section>
+
       <section class="panel obs-doctor-panel">
         <div class="form-grid">
           <label class="full">
@@ -899,7 +961,7 @@
     <section class="view" data-page="beta">
       <div class="page-head"><span class="eyebrow">BETA TEST · RELEASE CANDIDATE</span><h1>TEST & FEEDBACK.</h1><p>Aktive Beta-Tester können reproduzierbare Test-Sessions starten und Feedback direkt mit einer sicheren Diagnose-Zusammenfassung senden.</p><div class="entitlement-banner" id="betaAccessBanner">Beta-Status wird geprüft…</div></div>
       <div class="beta-columns">
-        <section class="panel"><div class="panel-head"><div><span>TEST SESSION</span><h2>Aktueller Testlauf</h2><p>Version, Provider und Output-Gate werden automatisch mitprotokolliert.</p></div><span class="pill" id="betaSessionPill">OFF</span></div><div class="form-grid"><label class="full"><span>TESTBEZEICHNUNG</span><input id="betaSessionLabel" maxlength="120" value="Creator Suite Beta Test"></label><label class="full"><span>ERGEBNIS / NOTIZ BEIM BEENDEN</span><textarea id="betaSessionSummary" maxlength="2000" placeholder="Was wurde getestet? Was ist aufgefallen?"></textarea></label></div><div class="output-local-status"><div><span>SESSION</span><strong id="betaSessionId">–</strong></div><div><span>GESTARTET</span><strong id="betaSessionStarted">–</strong></div><div><span>FEEDBACK</span><strong id="betaRecentFeedback">0</strong></div><div><span>LAUNCHER</span><strong id="betaLauncherVersion">0.47.17</strong></div></div><div class="inline"><button class="btn primary" id="startBetaSession">TESTSESSION STARTEN</button><button class="btn danger" id="endBetaSession" disabled>TESTSESSION BEENDEN</button><button class="btn" id="refreshBetaCenter">STATUS LADEN</button></div></section>
+        <section class="panel"><div class="panel-head"><div><span>TEST SESSION</span><h2>Aktueller Testlauf</h2><p>Version, Provider und Output-Gate werden automatisch mitprotokolliert.</p></div><span class="pill" id="betaSessionPill">OFF</span></div><div class="form-grid"><label class="full"><span>TESTBEZEICHNUNG</span><input id="betaSessionLabel" maxlength="120" value="Creator Suite Beta Test"></label><label class="full"><span>ERGEBNIS / NOTIZ BEIM BEENDEN</span><textarea id="betaSessionSummary" maxlength="2000" placeholder="Was wurde getestet? Was ist aufgefallen?"></textarea></label></div><div class="output-local-status"><div><span>SESSION</span><strong id="betaSessionId">–</strong></div><div><span>GESTARTET</span><strong id="betaSessionStarted">–</strong></div><div><span>FEEDBACK</span><strong id="betaRecentFeedback">0</strong></div><div><span>LAUNCHER</span><strong id="betaLauncherVersion">0.47.18</strong></div></div><div class="inline"><button class="btn primary" id="startBetaSession">TESTSESSION STARTEN</button><button class="btn danger" id="endBetaSession" disabled>TESTSESSION BEENDEN</button><button class="btn" id="refreshBetaCenter">STATUS LADEN</button></div></section>
         <section class="panel"><div class="panel-head"><div><span>AUTOMATISCH ANGEHÄNGT</span><h2>Diagnose-Snapshot</h2></div></div><div class="beta-diagnostic-grid"><div><span>BRIDGE</span><strong id="betaDiagBridge">–</strong></div><div><span>LIVE</span><strong id="betaDiagLive">–</strong></div><div><span>LOCAL OUTPUT</span><strong id="betaDiagOutput">–</strong></div><div><span>OUTPUT GATE</span><strong id="betaDiagGate">–</strong></div></div><div class="notice compact">Es werden keine Bridge-Keys, Provider-Keys oder kompletten Logs an das Feedback angehängt. Gesendet wird nur eine begrenzte technische Zusammenfassung.</div></section>
       </div>
       <section class="panel beta-feedback-panel"><div class="panel-head"><div><span>FEEDBACK SENDEN</span><h2>Bug / Idee / UX</h2><p>Je genauer die Schritte, desto leichter lässt sich ein Problem reproduzieren.</p></div></div><div class="form-grid"><label><span>TYP</span><select id="betaFeedbackKind"><option value="bug">Bug</option><option value="ux">UX</option><option value="idea">Idee</option><option value="other">Sonstiges</option></select></label><label><span>PRIORITÄT</span><select id="betaFeedbackSeverity"><option value="low">Low</option><option value="medium" selected>Medium</option><option value="high">High</option><option value="critical">Critical</option></select></label><label><span>BEREICH</span><select id="betaFeedbackCategory"><option value="launcher">Launcher</option><option value="live">LIVE</option><option value="widgets">Widgets</option><option value="scenes">Scenes</option><option value="obs">OBS</option><option value="tiktok">TikTok</option><option value="games">Games</option><option value="cut_studio">Cut Studio</option><option value="account">Account</option><option value="other">Sonstiges</option></select></label><label class="full"><span>TITEL</span><input id="betaFeedbackTitle" maxlength="160" placeholder="Kurz und eindeutig"></label><label class="full"><span>BESCHREIBUNG</span><textarea id="betaFeedbackDescription" maxlength="5000" placeholder="Was ist passiert?"></textarea></label><label class="full"><span>SCHRITTE ZUM NACHSTELLEN</span><textarea id="betaFeedbackSteps" maxlength="5000" placeholder="1. ...&#10;2. ...&#10;3. ..."></textarea></label><label><span>ERWARTET</span><textarea id="betaFeedbackExpected" maxlength="3000"></textarea></label><label><span>TATSÄCHLICH</span><textarea id="betaFeedbackActual" maxlength="3000"></textarea></label></div><div class="inline"><button class="btn primary" id="submitBetaFeedback">FEEDBACK SENDEN</button></div></section>
@@ -960,7 +1022,7 @@
       </section>
 
       <section class="panel about">
-        <span>VERSION</span><strong id="appVersion">0.47.17</strong>
+        <span>VERSION</span><strong id="appVersion">0.47.18</strong>
         <p>Creator-Isolation- und Beta-Center-Version mit persönlichem TikTok-Sync und Tester-Status.</p>
       </section>
     </section>

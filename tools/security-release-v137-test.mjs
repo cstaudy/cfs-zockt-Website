@@ -15,7 +15,7 @@ const launcherPkg=JSON.parse(fs.readFileSync(path.join(root,'launcher/package.js
 const checks=[];
 const check=(name,fn)=>{fn();checks.push(name);};
 
-check('launcher version 0.47.17',()=>assert.equal(launcherPkg.version,'0.47.17'));
+check('launcher baseline version >= 0.47.17',()=>{const p=String(launcherPkg.version).split('.').map(Number);assert.ok(p[0]>0||p[1]>47||(p[1]===47&&p[2]>=17));});
 check('server protocol v3',()=>assert.match(serverSource,/protocol:\s*3/));
 check('server replay nonce table',()=>assert.match(serverSource,/creator_bridge_request_nonces/));
 check('server HMAC verification',()=>assert.match(serverSource,/createHmac\("sha256", String\(rawToken\)\)/));

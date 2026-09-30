@@ -95,7 +95,9 @@ const DEFAULTS = {
   gameActivityEnabled: false,
   gameActivitySource: "launcher_manual",
   gameActivityGameName: "",
-  gameActivityPlatform: "unknown"
+  gameActivityPlatform: "unknown",
+  obsWebSocketUrl: "ws://127.0.0.1:4455",
+  obsWebSocketAutoConnect: false
 };
 
 class ConfigStore {
@@ -132,6 +134,7 @@ class ConfigStore {
       ...raw,
       tokenStored: Boolean(raw.bridgeTokenEncrypted),
       tiktoolKeyStored: Boolean(raw.tiktoolApiKeyEncrypted),
+      obsWebSocketPasswordStored: Boolean(raw.obsWebSocketPasswordEncrypted),
       deviceLinkPending: Boolean(raw.deviceLinkId && raw.deviceLinkSecretEncrypted && raw.deviceLinkBridgeTokenEncrypted),
       deviceLink: raw.deviceLinkId ? {
         id: String(raw.deviceLinkId || ""),
@@ -147,6 +150,7 @@ class ConfigStore {
     const data = this.read();
     delete data.bridgeTokenEncrypted;
     delete data.tiktoolApiKeyEncrypted;
+    delete data.obsWebSocketPasswordEncrypted;
     delete data.deviceLinkSecretEncrypted;
     delete data.deviceLinkBridgeTokenEncrypted;
     return data;
@@ -174,6 +178,7 @@ class ConfigStore {
 
   getToken() { return this.decrypt("bridgeTokenEncrypted"); }
   getTikToolKey() { return this.decrypt("tiktoolApiKeyEncrypted"); }
+  getObsWebSocketPassword() { return this.decrypt("obsWebSocketPasswordEncrypted"); }
 
   save(input = {}) {
     const current = this.readRaw();
@@ -225,7 +230,9 @@ class ConfigStore {
       gameActivityEnabled: typeof input.gameActivityEnabled === "boolean" ? input.gameActivityEnabled : current.gameActivityEnabled === true,
       gameActivitySource: ["launcher_manual","stream_capture"].includes(String(input.gameActivitySource ?? current.gameActivitySource ?? "")) ? String(input.gameActivitySource ?? current.gameActivitySource) : "launcher_manual",
       gameActivityGameName: String(input.gameActivityGameName ?? current.gameActivityGameName ?? "").replace(/[\u0000-\u001f\u007f]/g," ").replace(/\s+/g," ").trim().slice(0,80),
-      gameActivityPlatform: ["playstation_5","playstation_4","pc","xbox_series","xbox_one","switch","unknown"].includes(String(input.gameActivityPlatform ?? current.gameActivityPlatform ?? "")) ? String(input.gameActivityPlatform ?? current.gameActivityPlatform) : "unknown"
+      gameActivityPlatform: ["playstation_5","playstation_4","pc","xbox_series","xbox_one","switch","unknown"].includes(String(input.gameActivityPlatform ?? current.gameActivityPlatform ?? "")) ? String(input.gameActivityPlatform ?? current.gameActivityPlatform) : "unknown",
+      obsWebSocketUrl: String(input.obsWebSocketUrl ?? current.obsWebSocketUrl ?? DEFAULTS.obsWebSocketUrl).trim().slice(0,500) || DEFAULTS.obsWebSocketUrl,
+      obsWebSocketAutoConnect: typeof input.obsWebSocketAutoConnect === "boolean" ? input.obsWebSocketAutoConnect : current.obsWebSocketAutoConnect === true
     };
 
     const bridgeToken = String(input.bridgeToken || "").trim();
@@ -238,6 +245,12 @@ class ConfigStore {
     if (providerKey) {
       if (providerKey.length < 12 || providerKey.length > 500) throw new Error("Der Provider API-Key hat kein gültiges Format.");
       next.tiktoolApiKeyEncrypted = this.encrypt(providerKey);
+    }
+
+    const obsPassword = String(input.obsWebSocketPassword || "");
+    if (obsPassword) {
+      if (obsPassword.length > 500) throw new Error("Das OBS WebSocket-Passwort ist zu lang.");
+      next.obsWebSocketPasswordEncrypted = this.encrypt(obsPassword);
     }
 
     this.writeRaw(next);
@@ -334,6 +347,12 @@ class ConfigStore {
   clearProviderKey() {
     const raw = this.readRaw();
     delete raw.tiktoolApiKeyEncrypted;
+    this.writeRaw(raw);
+  }
+
+  clearObsWebSocketPassword() {
+    const raw = this.readRaw();
+    delete raw.obsWebSocketPasswordEncrypted;
     this.writeRaw(raw);
   }
 }

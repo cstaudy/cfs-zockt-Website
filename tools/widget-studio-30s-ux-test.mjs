@@ -8,6 +8,7 @@ const js=read('public/assets/js/widget-studio.js');
 const css=read('public/assets/css/widget-studio.css');
 const server=read('server.js');
 const pkg=JSON.parse(read('package.json'));
+const versionAtLeast=(current,minimum)=>{const a=String(current||"0").split(".").map(Number),b=String(minimum||"0").split(".").map(Number);for(let i=0;i<3;i++){if((a[i]||0)>(b[i]||0))return true;if((a[i]||0)<(b[i]||0))return false;}return true};
 const checks=[];
 const check=(name,ok)=>{checks.push([name,Boolean(ok)]);if(!ok)process.exitCode=1};
 
@@ -28,7 +29,7 @@ check('Kamera Rezept',js.includes('if(kind==="camera")return"camera_soft"'));
 check('OBS Goal bleibt manuell',js.includes('state.platformFilter==="obs"?["manual_goal"]'));
 check('OBS Counter bleibt manuell',js.includes('state.platformFilter==="obs"?["manual_counter"]'));
 check('OBS Timer bleibt manuell',js.includes('state.platformFilter==="obs"?["stream_timer"]'));
-check('TikTok Kamera bevorzugt 9:16',js.includes('["camera_frame_portrait","camera_frame"]'));
+check('OBS Kamera bleibt providerfrei sortiert',js.includes('state.platformFilter==="obs"?["camera_frame","camera_frame_square"]:[]'));
 check('Plan-Sperre wird respektiert',js.includes('button.disabled=!d||d.available===false'));
 check('Keine Auto-Publish-Funktion im Quickstart',!js.match(/function createQuickStart[\s\S]{0,900}publishNow\(/));
 
@@ -41,7 +42,7 @@ for(const label of ['Klar & direkt','Clean Zahl','Clean Timer','Ausgewogen','Sof
 check('Sechs Einfach-Schritte bleiben erhalten',js.includes('const SIMPLE_EDITOR_ORDER=["template","content","design","position","effects","test"]'));
 check('Profi-Modus bleibt vorhanden',html.includes('data-experience-mode="pro"'));
 check('Responsive Quickstart CSS',css.includes('.ws-quickstart-30-grid')&&css.includes('@media(max-width:620px)'));
-check('Backend-Version unverändert 3.12.0',pkg.version==='3.12.0');
+check('Backend-Version ist mindestens v150-Basis',versionAtLeast(pkg.version,'3.18.1'));
 
 const failed=checks.filter(([,ok])=>!ok);
 for(const [name,ok] of checks)console.log(`${ok?'PASS':'FAIL'}  ${name}`);

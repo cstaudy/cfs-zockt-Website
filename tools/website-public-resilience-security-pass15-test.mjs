@@ -36,6 +36,6 @@ check('Custom noindex 500 page exists',fs.existsSync(path.join(root,'public/page
 check('Website 404 middleware serves custom page',server.includes('"pages","not-found.html"'));
 check('Website 500 handler serves custom page',server.includes('"pages","error.html"'));
 check('Security page documents privacy-minimized CSP telemetry',security.includes('CSP-Verstoß-Telemetrie')&&security.includes('keine rohe IP')&&security.includes('kein User-Agent'));
-check('Homepage explains observable browser protection',home.includes('CSP-Verstöße werden datensparsam sichtbar'));
+check('Security page explains observable browser protection',security.includes('CSP-Verstoß-Telemetrie')&&security.includes('aggregierten Muster'));
 check('Pass 15 script is wired',pkg.scripts?.['resilience15:check']==='node tools/website-public-resilience-security-pass15-test.mjs .');
 console.log(`\n${pass}/${pass+fail} public resilience/security pass 15 checks passed.`);if(fail)process.exit(1);

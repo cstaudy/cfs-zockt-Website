@@ -1,21 +1,25 @@
-# HANDOFF v193
+# HANDOFF v150 — cfs_zockt Creator Suite
 
-Apply after v192.
+## Aktiver Stand
+Backend **3.18.2** · Schema **72** · Launcher **0.47.24** · kumulativer Update-Stand **v151**.
 
-## Delivered
-- Idempotent initial Recording→CUT clip materialization under server-side Creator/project locking.
-- `source_handoff_id` is validated against project provenance before initial clip reuse/creation.
-- Launcher uses the dedicated initial-recording bridge endpoint instead of generic clip creation.
-- Launcher active release contract bumped to 0.47.16.
-- Local contract: Recording Initial Clip Idempotency v193: 15/15 PASS.
+## Schwerpunkt v150
+Website-/Backend-Härtung und Bereinigung der aktiven Test-Infrastruktur. Keine neuen YouTube-Funktionen in diesem Block. Die bestehenden TikTok-/Twitch-/YouTube-/OBS-Integrationen bleiben erhalten und provider-spezifisch getrennt.
 
-## Local verification
-- v193 contract: PASS
-- v192 heartbeat serialization: PASS
-- Launcher static check: PASS
-- BridgeClient integration: PASS
-- Release Readiness: 20/20 PASS
-- Backend / Launcher syntax: PASS
+## Härtung
+- TRACE/TRACK/CONNECT werden mit 405 abgewiesen.
+- HTTP-Header-Anzahl ist serverseitig begrenzt.
+- `X-DNS-Prefetch-Control: off` ergänzt.
+- Rate-Limit-429-Antworten werden nicht gecacht.
+- Homepage/öffentliche Merch-Seite haben vollständigere Social-/SEO-Metadaten; Sitemap und Canonical-Routen sind synchronisiert.
+- Öffentliche Links auf Sicherheit und Status sind sichtbar.
+- Aktiver Projekt-Regressionstest verwendet nur vorhandene aktuelle Prüfskripte statt fehlender Legacy-Dateien.
 
-Backend 3.12.0 · Launcher 0.47.16 · Schema Generation 68.
-External Windows/LIVE/Production acceptance remains OPEN.
+## Teststatus
+Lokale Security-/Auth-/Lifecycle-/Recovery-/Provider-/Widget-/Launcher-/Scene-/Stream-/Multistream-Gates werden über `release:v150` gebündelt. Externe Production-Smokes und Online-`npm audit` konnten in der isolierten Umgebung nicht belastbar ausgeführt werden und bleiben für die spätere Acceptance offen.
+
+## Entwicklungsreihenfolge
+Der Nutzer möchte zuerst die Plattform feature-seitig fertigstellen und anschließend reale Acceptance-/Soak-/Windows-/OBS-/Provider-Tests durchführen. YouTube-Konfiguration ist aktuell bewusst zurückgestellt. Nach v150 kann der noch offene Multistream-Zielblock fortgeführt werden.
+
+## Paketregel
+Jede neue Version bleibt ein **kumulatives Updatepaket, kein Full Project**. Bestehende kumulative Dateien müssen erhalten bleiben; neue/geänderte Dateien werden in aktueller Fassung ergänzt.

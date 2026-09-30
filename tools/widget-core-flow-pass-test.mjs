@@ -9,6 +9,7 @@ const server=fs.readFileSync(path.join(root,"server.js"),"utf8");
 const studio=fs.readFileSync(path.join(root,"public/assets/js/widget-studio.js"),"utf8");
 const pkg=JSON.parse(fs.readFileSync(path.join(root,"package.json"),"utf8"));
 
+const versionAtLeast=(current,minimum)=>{const a=String(current||"0").split(".").map(Number),b=String(minimum||"0").split(".").map(Number);for(let i=0;i<3;i++){if((a[i]||0)>(b[i]||0))return true;if((a[i]||0)<(b[i]||0))return false;}return true};
 const checks=[];
 function check(name,condition,detail=""){
   checks.push({name,ok:Boolean(condition),detail});
@@ -89,7 +90,7 @@ check("Live-Steuerung verschiebt published_at nicht",!server.includes("published
 check("Statische/manuelle Outputs ohne externe Snapshots",server.includes("const detachedData = staticObs || manualOnly")&&server.includes("const snapshot = detachedData"));
 check("Manueller Standard-Start ohne Plattformavatar",server.includes('if(def.source_kind === "manual") return {...common'));
 check("Studio Preview kennt LIVE-Freshness",studio.includes("bridge_heartbeat_at:state.live.bridge_heartbeat_at||null")&&studio.includes("updated_at:state.live.updated_at||null"));
-check("Backend-Version bleibt 3.12.0",pkg.version==="3.12.0",pkg.version);
+check("Backend-Version ist mindestens v150-Basis",versionAtLeast(pkg.version,"3.18.1"),pkg.version);
 
 for(const item of checks)console.log(`${item.ok?"PASS":"FAIL"}  ${item.name}${item.detail?` · ${item.detail}`:""}`);
 const passed=checks.filter(x=>x.ok).length;

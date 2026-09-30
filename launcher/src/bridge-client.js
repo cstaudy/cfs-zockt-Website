@@ -97,6 +97,7 @@ class BridgeClient extends EventEmitter {
       signed_requests_v1: true,
       replay_guard_v1: true,
       creator_suite_runtime_v1: true,
+      provider_oauth_handoff_v1: true,
       stream_engine_v1: Boolean(this.streamHealthProvider),
       multistream_local_v1: Boolean(this.streamHealthProvider),
       local_stream_credentials_v1: Boolean(this.streamCredentialsProvider),
@@ -142,7 +143,12 @@ class BridgeClient extends EventEmitter {
         },
         obs: {
           available:obs?.available !== false && Boolean(this.obsIntegrationProvider),
-          mode:String(obs?.mode || "browser_source_doctor").slice(0,40)
+          mode:String(obs?.mode || "browser_source_doctor").slice(0,40),
+          websocket_available:obs?.websocket_available === true,
+          websocket_connected:obs?.websocket_connected === true,
+          current_scene:String(obs?.current_scene || "").slice(0,180),
+          request_policy:String(obs?.request_policy || "allowlist").slice(0,40),
+          password_exposed:false
         }
       },
       protocol_version: 3
@@ -157,6 +163,16 @@ class BridgeClient extends EventEmitter {
   async fetchLibrary() {
     return this.request("/api/bridge/widget-studio/library", {
       method:"GET",
+      timeoutMs:8000
+    });
+  }
+
+  async beginProviderConnect(provider) {
+    const key=String(provider||"").trim().toLowerCase();
+    if(!["tiktok","twitch","youtube"].includes(key))throw new Error("Provider wird im Launcher noch nicht unterstützt.");
+    return this.request(`/api/bridge/integrations/${encodeURIComponent(key)}/connect`,{
+      method:"POST",
+      body:{},
       timeoutMs:8000
     });
   }

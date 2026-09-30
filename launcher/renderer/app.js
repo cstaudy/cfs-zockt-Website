@@ -443,6 +443,12 @@ async function runHomeHubAction(action){
   const key=String(action||"");
   if(key==="bridge"){showPage("bridge");return;}
   if(key==="tiktok"){
+    const linked=state?.creatorLibrary?.integrations?.tiktok?.connected===true;
+    if(!linked){
+      try{state=await window.CFSLauncher.connectProviderAccount("tiktok");render(state);toast("TikTok Login wurde im Browser geöffnet.");}
+      catch(error){toast(error.message,true)}
+      return;
+    }
     showPage("bridge");
     requestAnimationFrame(()=>$("#providerSelect")?.scrollIntoView({behavior:"smooth",block:"center"}));
     return;
@@ -465,6 +471,53 @@ async function runHomeHubAction(action){
   }
 }
 
+function renderProviderConnections(nextState=state){
+  if(!nextState)return;
+  const bridgeOnline=nextState?.bridge?.connected===true;
+  const library=nextState?.creatorLibrary||{};
+  const integrations=library.integrations||{};
+  const tiktok=integrations.tiktok||{};
+  const twitch=integrations.twitch||{};
+  const youtube=integrations.youtube||{};
+  const widgets=Array.isArray(library.widgets)?library.widgets:[];
+  const apply=(key,data)=>{
+    const cap=key==="tiktok"?"TikTok":key==="twitch"?"Twitch":"YouTube";
+    const suffix=key==="tiktok"?"TikTok":key==="twitch"?"Twitch":"YouTube";
+    const card=$(`#provider${suffix}Card`);
+    const title=$(`#provider${suffix}Title`);
+    const meta=$(`#provider${suffix}Meta`);
+    const button=$(`#provider${suffix}Button`);
+    const connected=data.connected===true;
+    const betaBlocked=data?.beta_access?.required===true&&data?.beta_access?.allowed!==true;
+    const liveReady=!betaBlocked&&data.live_events_ready===true;
+    card?.classList.toggle("connected",connected&&!betaBlocked);
+    card?.classList.toggle("ready",liveReady);
+    if(title)title.textContent=!bridgeOnline?"LAUNCHER NICHT VERBUNDEN":betaBlocked?"BETA FREIGABE AUSSTEHEND":liveReady?"ACCOUNT + LIVE BEREIT":connected?"ACCOUNT VERBUNDEN":"NICHT VERBUNDEN";
+    if(meta){
+      if(!bridgeOnline)meta.textContent="Verbinde zuerst diesen PC mit deinem Creator-Account.";
+      else if(betaBlocked)meta.textContent=data?.beta_access?.email_verified===false?"Bestätige zuerst deine E-Mail. Danach kann der Admin die Provider-Beta freigeben.":`${cap} wartet auf deine Beta-Freigabe im cfs_zockt Admin Control.`;
+      else if(key==="tiktok"&&liveReady)meta.textContent="Profil und TikTok LIVE-Events stehen für kompatible Widgets bereit.";
+      else if(key==="tiktok"&&connected)meta.textContent="Profil-Widgets sind bereit. Chat, Gifts und LIVE-Events benötigen zusätzlich einen aktiven TikTok LIVE-Provider.";
+      else if(key==="twitch"&&liveReady)meta.textContent="Twitch EventSub inklusive Chat ist bereit. Twitch Chat, LIVE-Timer, Follows, Subs und Cheers können Widgets auslösen.";
+      else if(key==="twitch"&&connected)meta.textContent="Twitch-Account ist verbunden. EventSub inklusive Chat wird eingerichtet; fehlende Berechtigungen werden beim erneuten Verbinden angefordert.";
+      else if(key==="youtube"&&liveReady)meta.textContent="YouTube-Kanal, LIVE-Status und Live-Chat sind für YouTube-Widgets vorbereitet.";
+      else if(key==="youtube"&&connected)meta.textContent="YouTube-Kanal verbunden. LIVE-/Chat-Runtime wird serverseitig synchronisiert.";
+      else meta.textContent=`${cap}-Account sicher per OAuth mit deinem Creator-Account verbinden.`;
+    }
+    if(button){
+      const needsReconnect=["twitch","youtube"].includes(key)&&connected&&data.scope_ready===false;
+      button.disabled=!bridgeOnline||betaBlocked;
+      button.textContent=!bridgeOnline?"PC ZUERST VERBINDEN":betaBlocked?"BETA FREIGABE NÖTIG":needsReconnect?`${cap.toUpperCase()} BERECHTIGEN`:connected?`${cap.toUpperCase()} WIDGETS`:`${cap.toUpperCase()} VERBINDEN`;
+      button.dataset.providerMode=needsReconnect||!connected?"connect":"widgets";
+    }
+  };
+  apply("tiktok",tiktok);apply("twitch",twitch);apply("youtube",youtube);
+  const counts=integrations.widgets?.by_provider||{};
+  const count=$("#providerWidgetCount"),hint=$("#providerWidgetHint");
+  if(count)count.textContent=`TT ${Number(counts.tiktok||0)} · TW ${Number(counts.twitch||0)} · YT ${Number(counts.youtube||0)} · OBS ${Number(counts.obs||0)}`;
+  if(hint)hint.textContent=!bridgeOnline?"Nach dem Device-Link lädt der Launcher deine veröffentlichte Widget-Bibliothek automatisch.":"Provider-Widgets bleiben getrennt: TikTok, Twitch und YouTube zeigen jeweils nur ihre eigenen Widgets; allgemeine OBS-Widgets bleiben providerfrei.";
+}
+
 function renderHomeHub(nextState=state){
   if(!nextState)return;
   const bridge=nextState.bridge||{},settings=nextState.settings||{},library=nextState.creatorLibrary||{};
@@ -472,7 +525,10 @@ function renderHomeHub(nextState=state){
   const creator=bridge.creator||library.creator||{},profile=creator.profile||{};
   const creatorName=profile.display_name||creator.display_name||"Creator Account";
   const provider=String(settings.provider||"mock");
-  const tiktokReady=provider==="tikfinity" ? Boolean(nextState?.provider?.ready) : provider==="tiktool"&&Boolean(String(settings.tiktokUsername||"").trim())&&Boolean(settings.tiktoolKeyStored);
+  const tiktokIntegration=library?.integrations?.tiktok||{};
+  const tiktokProviderReady=provider==="tikfinity" ? Boolean(nextState?.provider?.ready) : provider==="tiktool"&&Boolean(String(settings.tiktokUsername||"").trim())&&Boolean(settings.tiktoolKeyStored);
+  const tiktokReady=tiktokIntegration.live_events_ready===true||tiktokProviderReady;
+  const tiktokAccountConnected=tiktokIntegration.connected===true;
   const simulator=provider==="mock";
   const loaded=Boolean(library.loadedAt&&!library.error);
   const widgets=Array.isArray(library.widgets)?library.widgets:[];
@@ -480,7 +536,7 @@ function renderHomeHub(nextState=state){
   const output=nextState.localOutput||{};
 
   setHomeHubCard("#homeCardBridge",connected?"VERBUNDEN":"PC VERBINDEN",connected?`${creatorName} · Heartbeat ${fmtTime(bridge.lastHeartbeatAt)}`:(bridge.lastError||"Creator Account per Device-Link verbinden"),connected?"ok":"warn");
-  setHomeHubCard("#homeCardTikTok",tiktokReady?"BEREIT":simulator?"SIMULATOR":"EINRICHTEN",tiktokReady?`@${settings.tiktokUsername} · LIVE-Daten vorbereitet`:simulator?"Testmodus aktiv · echte TikTok-Daten noch nicht verbunden":"TikTok LIVE Provider und Username einrichten",tiktokReady?"ok":simulator?"work":"warn");
+  setHomeHubCard("#homeCardTikTok",tiktokReady?"LIVE BEREIT":tiktokAccountConnected?"ACCOUNT VERBUNDEN":simulator?"SIMULATOR":"VERBINDEN",tiktokReady?(tiktokIntegration.profile?.display_name?`${tiktokIntegration.profile.display_name} · LIVE-Daten vorbereitet`:`${settings.tiktokUsername?`@${settings.tiktokUsername} · `:""}LIVE-Daten vorbereitet`):tiktokAccountConnected?"Profil-Daten bereit · LIVE-Provider noch einrichten":simulator?"Testmodus aktiv · TikTok Account noch nicht verbunden":"TikTok Account verbinden",tiktokReady?"ok":tiktokAccountConnected?"work":simulator?"work":"warn");
   setHomeHubCard("#homeCardWidgets",loaded?(widgets.length?`${widgets.length} WIDGET${widgets.length===1?"":"S"}`:"NOCH LEER"):connected?"SYNC LÄUFT":"WARTET",loaded?(widgets.length?`${scenes.length} veröffentlichte Scene${scenes.length===1?"":"s"}`:"Erstelle dein erstes Widget im Widget Studio"):(library.error||"Nach Device-Link automatisch synchronisiert"),loaded&&widgets.length?"ok":connected?"work":"warn");
   setHomeHubCard("#homeCardOutput",output.running?(output.ready?"AKTIV":"LÄDT"):scenes.length?"BEREIT":"NOCH LEER",output.running?(output.ready?`${output.scene?.name||"Scene"} läuft als Local Output`:"Scene wird geladen"):scenes.length?`${scenes.length} Scene${scenes.length===1?"":"s"} für OBS / Output verfügbar`:"Zuerst eine Scene im Widget Studio veröffentlichen",output.running&&output.ready?"ok":scenes.length?"work":"warn");
 
@@ -776,6 +832,28 @@ function renderObsDoctor(result) {
         <div><strong>${escapeHtml(item.label)}</strong><small>${escapeHtml(item.detail || "")}</small></div>
       </div>`).join("")}</div>
     <div class="obs-doctor-meta"><span>${escapeHtml(result.url || "")}</span><b>${Number(result.latencyMs || 0)} ms</b></div>`;
+}
+
+function renderObsWebSocket(nextState=state) {
+  const obs=nextState?.obsWebSocket||{},settings=nextState?.settings||{};
+  const status=$("#obsWsStatus");if(!status)return;
+  const connected=obs.connected===true,connecting=obs.status==="connecting";
+  status.textContent=connected?"VERBUNDEN":connecting?"VERBINDET…":obs.lastError?"FEHLER":"OFFLINE";
+  status.className="pill "+(connected?"online":connecting?"connecting":obs.lastError?"fail":"");
+  const urlInput=$("#obsWsUrl");if(document.activeElement!==urlInput)urlInput.value=settings.obsWebSocketUrl||obs.url||"ws://127.0.0.1:4455";
+  const password=$("#obsWsPassword");password.placeholder=settings.obsWebSocketPasswordStored?"Sicher gespeichert · leer lassen zum Wiederverwenden":"OBS WebSocket Passwort";
+  $("#obsWsAutoConnect").checked=settings.obsWebSocketAutoConnect===true;
+  const details=[];if(obs.obsVersion)details.push(`OBS ${obs.obsVersion}`);if(obs.websocketVersion)details.push(`WebSocket ${obs.websocketVersion}`);if(obs.lastConnectedAt)details.push(`verbunden ${fmtTime(obs.lastConnectedAt)}`);if(obs.lastError)details.push(`Fehler: ${obs.lastError}`);
+  $("#obsWsMeta").textContent=details.join(" · ")||"Noch keine OBS WebSocket-Verbindung.";
+  $("#obsCurrentScene").textContent=obs.currentScene||"–";
+  const sceneSelect=$("#obsSceneSelect"),sceneValue=sceneSelect.value;
+  const scenes=Array.isArray(obs.scenes)?obs.scenes:[];sceneSelect.innerHTML=scenes.length?scenes.map(item=>`<option value="${escapeHtml(item.sceneName)}" ${item.sceneName===obs.currentScene?"selected":""}>${escapeHtml(item.sceneName)}</option>`).join(""):'<option value="">Keine Szenen geladen</option>';
+  if(sceneValue&&scenes.some(item=>item.sceneName===sceneValue))sceneSelect.value=sceneValue;
+  const sourceSelect=$("#obsBrowserSourceSelect"),sourceValue=sourceSelect.value,sources=Array.isArray(obs.browserSources)?obs.browserSources:[];
+  sourceSelect.innerHTML=sources.length?sources.map(item=>`<option value="${escapeHtml(item.inputName)}">${escapeHtml(item.inputName)}</option>`).join(""):'<option value="">Keine Browser Sources geladen</option>';
+  if(sourceValue&&sources.some(item=>item.inputName===sourceValue))sourceSelect.value=sourceValue;
+  $("#obsBrowserSourceCount").textContent=`${sources.length} ${sources.length===1?"Quelle":"Quellen"}`;
+  $("#obsWsConnect").disabled=connecting;$("#obsWsDisconnect").disabled=!connected&&!connecting;$("#obsWsRefresh").disabled=!connected;$("#obsSwitchScene").disabled=!connected||!scenes.length;$("#obsUpdateBrowserSource").disabled=!connected||!sources.length;
 }
 
 
@@ -1402,10 +1480,12 @@ function render(next) {
   renderCreatorTools(state);
   renderLocalOutput(state);
   renderStreamEngine(state);
+  renderObsWebSocket(state);
   renderOutputGate(state.outputGate);
   renderSystem(state);
   recordSyncState(state);
   renderSyncMonitor(state);
+  renderProviderConnections(state);
   renderHomeHub(state);
   const remoteLive = Boolean(bridge.live?.connected && bridge.live?.session_id && !bridge.liveActive);
   $("#recoverLive").hidden = !remoteLive;
@@ -1436,7 +1516,7 @@ function render(next) {
   $("#autoUpdate").checked = settings.autoUpdate !== false;
   $("#autoRecoverLive").checked = settings.autoRecoverLive !== false;
   $("#updateChannel").value = settings.updateChannel === "beta" ? "beta" : "stable";
-  $("#appVersion").textContent = state.appVersion || "0.47.17";
+  $("#appVersion").textContent = state.appVersion || "0.47.18";
   loadVoices();
   $("#ttsVoiceName").value = settings.ttsVoiceName || "";
   renderUpdate(state.update || {});
@@ -1532,7 +1612,7 @@ function audioAnalysisHtml(item){
 function showPage(name) {
   $$("[data-page]").forEach(v => v.classList.toggle("active", v.dataset.page === name));
   $$(".nav").forEach(v => v.classList.toggle("active", v.dataset.view === name));
-  $("#pageTitle").textContent = ({ live:"LIVE CONTROL", deck:"STREAM DECK", tools:"CREATOR TOOLS", bridge:"BRIDGE", sync:"SYNC STATUS", audio:"AUTOTHANKS", events:"LIVE EVENTS", bot:"STREAM BOT", streamengine:"STREAM ENGINE", output:"LIVE OUTPUT", obs:"OBS DOCTOR", system:"SYSTEM", beta:"BETA TEST", settings:"EINSTELLUNGEN" })[name] || "CREATOR SUITE";
+  $("#pageTitle").textContent = ({ live:"LIVE CONTROL", deck:"STREAM DECK", tools:"CREATOR TOOLS", bridge:"BRIDGE", sync:"SYNC STATUS", audio:"AUTOTHANKS", events:"LIVE EVENTS", bot:"STREAM BOT", streamengine:"STREAM ENGINE", output:"LIVE OUTPUT", obs:"OBS CONTROL", system:"SYSTEM", beta:"BETA TEST", settings:"EINSTELLUNGEN" })[name] || "CREATOR SUITE";
   renderExperienceHelp(name);
   if(window.matchMedia("(max-width: 900px)").matches)applyMenuState(false,{remember:false});
 }
@@ -1647,6 +1727,20 @@ async function init() {
     const button=event.target.closest("[data-hub-action]");
     if(button)runHomeHubAction(button.dataset.hubAction);
   });
+  $("#providerConnectPanel")?.addEventListener("click",async event=>{
+    const button=event.target.closest("[data-provider-connect]");
+    if(!button)return;
+    const provider=String(button.dataset.providerConnect||"");
+    const mode=String(button.dataset.providerMode||"connect");
+    if(mode==="widgets"){window.open(creatorToolUrl(`/pages/widget-studio.html?platform=${encodeURIComponent(provider)}`),"_blank","noopener");return;}
+    button.disabled=true;
+    try{
+      state=await window.CFSLauncher.connectProviderAccount(provider);
+      render(state);
+      toast(`${provider==="twitch"?"Twitch":provider==="youtube"?"YouTube":"TikTok"} Login wurde sicher im Browser geöffnet.`);
+    }catch(error){toast(error.message,true);render(state)}
+  });
+  $("#providerWidgetsOpen").onclick=()=>window.open(creatorToolUrl("/pages/widget-studio.html"),"_blank","noopener");
   $("#openSyncTerminal").onclick=()=>showPage("sync");
   $("#syncClear").onclick=()=>{syncHistory=[];addSyncLine("SYSTEM","Anzeige geleert. Neue Sync-Meldungen erscheinen automatisch.","info");renderSyncMonitor(state);};
   $("#syncRefresh").onclick=async()=>{
@@ -1905,6 +1999,15 @@ async function init() {
       }
     } catch (error) { toast(error.message, true); }
   };
+
+  $("#obsWsConnect").onclick = async () => {
+    try{state=await window.CFSLauncher.obsWebSocketConnect({url:$("#obsWsUrl").value,password:$("#obsWsPassword").value,autoConnect:$("#obsWsAutoConnect").checked});$("#obsWsPassword").value="";render(state);toast("OBS WebSocket ist verbunden.")}catch(error){toast(error.message,true)}
+  };
+  $("#obsWsDisconnect").onclick = async () => {try{state=await window.CFSLauncher.obsWebSocketDisconnect();render(state);toast("OBS WebSocket wurde getrennt.")}catch(error){toast(error.message,true)}};
+  $("#obsWsRefresh").onclick = async () => {try{state=await window.CFSLauncher.obsWebSocketRefresh();render(state);toast("OBS Szenen und Browser Sources aktualisiert.")}catch(error){toast(error.message,true)}};
+  $("#obsWsForgetPassword").onclick = async () => {if(!confirm("Gespeichertes OBS WebSocket-Passwort wirklich entfernen?"))return;try{state=await window.CFSLauncher.obsWebSocketForgetPassword();$("#obsWsPassword").value="";render(state);toast("OBS WebSocket-Passwort wurde lokal entfernt.")}catch(error){toast(error.message,true)}};
+  $("#obsSwitchScene").onclick = async () => {try{state=await window.CFSLauncher.obsWebSocketScene($("#obsSceneSelect").value);render(state);toast(`OBS Szene aktiv: ${$("#obsSceneSelect").value}`)}catch(error){toast(error.message,true)}};
+  $("#obsUpdateBrowserSource").onclick = async () => {try{state=await window.CFSLauncher.obsWebSocketBrowserSource({inputName:$("#obsBrowserSourceSelect").value,url:$("#obsBrowserSourceUrl").value});render(state);toast("OBS Browser Source wurde aktualisiert.")}catch(error){toast(error.message,true)}};
 
   $("#runObsDoctor").onclick = async () => {
     const host = $("#obsDoctorResult");

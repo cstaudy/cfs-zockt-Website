@@ -17,6 +17,18 @@ function redactUrl(url) {
   for (const key of [...copy.searchParams.keys()]) {
     if (/token|key|secret|auth/i.test(key)) copy.searchParams.set(key, "***");
   }
+  if (copy.hash) {
+    const fragment = copy.hash.slice(1);
+    if (/(?:^|&)(?:token|key|secret|auth)=/i.test(fragment)) {
+      const params = new URLSearchParams(fragment);
+      for (const key of [...params.keys()]) {
+        if (/token|key|secret|auth/i.test(key)) params.set(key, "***");
+      }
+      copy.hash = params.toString();
+    } else if (/token|key|secret|auth/i.test(fragment)) {
+      copy.hash = "redacted";
+    }
+  }
   return copy.toString();
 }
 

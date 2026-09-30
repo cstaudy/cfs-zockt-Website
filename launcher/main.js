@@ -17,6 +17,7 @@ const { EventSpool } = require("./src/event-spool");
 const { runPreflight } = require("./src/preflight");
 const { EventMonitor } = require("./src/event-monitor");
 const { runObsDoctor } = require("./src/obs-doctor");
+const { ObsWebSocketController, normalizeObsWebSocketUrl } = require("./src/obs-websocket-controller");
 const { createSupportBundle } = require("./src/support-bundle");
 const { createBackup, parseBackup } = require("./src/config-backup");
 const { RecoveryManager } = require("./src/recovery-manager");
@@ -57,6 +58,7 @@ let providers = null;
 let updates = null;
 let eventSpool = null;
 let eventMonitor = null;
+let obsWebSocket = null;
 let recoveringLive = false;
 let shutdownInProgress = false;
 let recoveryManager = null;
@@ -71,7 +73,8 @@ let gameActivityPresenceTimer = null;
 let deviceLinkClient = null;
 let deviceLinkPollTimer = null;
 let deviceLinkPolling = false;
-let creatorLibrary = {widgets:[],scenes:[],game:null,gameActivity:null,gameContext:{mode:"none"},gameRules:[],gameRuleHits:[],cutProjects:[],cutJobs:[],creator:null,loadedAt:null,error:""};
+let creatorLibrary = {widgets:[],scenes:[],game:null,gameActivity:null,gameContext:{mode:"none"},gameRules:[],gameRuleHits:[],cutProjects:[],cutJobs:[],creator:null,integrations:{},loadedAt:null,error:""};
+const providerIntegrationPollTimers = new Map();
 let outputManager = null;
 let outputGateStore = null;
 let outputGatePath = "";
@@ -148,6 +151,7 @@ function appState(extra = {}) {
     spool: eventSpool?.snapshot?.() || { persistent:false, pending:0, dropped:0 },
     preflight: currentPreflight(),
     monitor: eventMonitor?.snapshot?.() || {counts:{},coverage:{},recent:[]},
+    obsWebSocket: obsWebSocket?.snapshot?.() || {available:typeof WebSocket === "function",status:"idle",connected:false,desiredConnected:false,url:settings.obsWebSocketUrl||"ws://127.0.0.1:4455",scenes:[],browserSources:[],currentScene:"",lastError:"",passwordExposed:false,requestPolicy:"allowlist"},
     firstRun: Number(settings.setupVersion || 0) < 1,
     cloudHealth,
     creatorReady: creatorReady({
@@ -1335,6 +1339,37 @@ async function executeLiveProviderCommandAction(action){
   }
 }
 
+async function executeObsWidgetInstallAction(action){
+  const id=String(action?.id||"");
+  const payload=action?.payload&&typeof action.payload==="object"?action.payload:{};
+  if(!id)throw new Error("OBS Widget Action-ID fehlt.");
+  if(!obsWebSocket?.snapshot?.().connected)throw new Error("OBS WebSocket ist nicht verbunden.");
+  try{
+    const widgetId=String(payload.widget_id||"");
+    if(!widgetId)throw new Error("Widget-ID fehlt in der OBS-Aktion.");
+    const library=await bridge.fetchLibrary();
+    const widget=(Array.isArray(library?.widgets)?library.widgets:[]).find(item=>String(item?.id||"")===widgetId);
+    const sourceUrl=String(widget?.source_url||"");
+    if(!sourceUrl)throw new Error("Das veröffentlichte Widget ist im Creator-Katalog nicht verfügbar.");
+    const result=await obsWebSocket.installBrowserSource({
+      sceneName:String(payload.scene_name||""),
+      inputName:String(payload.input_name||"cfs_zockt Widget"),
+      url:sourceUrl,
+      width:Number(payload.width||600),
+      height:Number(payload.height||120)
+    });
+    await bridge.ackActions([id]);
+    logger?.info?.("OBS widget install completed",id,result?.inputName||"");
+    send("launcher:state",appState({obsWidgetInstall:{ok:true,id,result}}));
+    return result;
+  }catch(error){
+    try{await bridge.nackActions([id],String(error?.message||error||"obs_widget_install_failed").slice(0,300));}catch{}
+    logger?.warn?.("OBS widget install failed",id,error?.message);
+    send("launcher:state",appState({obsWidgetInstall:{ok:false,id,error:String(error?.message||error)}}));
+    throw error;
+  }
+}
+
 async function executeNexusCommandAction(action){
   const id=String(action?.id||"");
   const payload=action?.payload&&typeof action.payload==="object"?action.payload:{};
@@ -1462,9 +1497,54 @@ function configureDeviceLinkClient() {
   return deviceLinkClient;
 }
 
+function stopProviderIntegrationPoll(provider){
+  const key=String(provider||"").toLowerCase();
+  const timer=providerIntegrationPollTimers.get(key);
+  if(timer)clearTimeout(timer);
+  providerIntegrationPollTimers.delete(key);
+}
+
+function providerIntegrationConnected(provider){
+  return creatorLibrary?.integrations?.[String(provider||"").toLowerCase()]?.connected===true;
+}
+
+function scheduleProviderIntegrationPoll(provider,{startedAt=Date.now()}={}){
+  const key=String(provider||"").toLowerCase();
+  stopProviderIntegrationPoll(key);
+  if(!["tiktok","twitch","youtube"].includes(key))return;
+  if(providerIntegrationConnected(key))return;
+  const tick=async()=>{
+    if(Date.now()-startedAt>2*60*1000||!bridge?.snapshot?.().connected){stopProviderIntegrationPoll(key);return;}
+    try{
+      await refreshCreatorLibrary({notify:true});
+      if(providerIntegrationConnected(key)){stopProviderIntegrationPoll(key);logger?.info(`${key} account connected through launcher handoff`);return;}
+    }catch{}
+    providerIntegrationPollTimers.set(key,setTimeout(tick,3000));
+  };
+  providerIntegrationPollTimers.set(key,setTimeout(tick,2500));
+}
+
+async function connectProviderAccount(provider){
+  const key=String(provider||"").trim().toLowerCase();
+  if(!["tiktok","twitch","youtube"].includes(key))throw new Error("Provider wird im Launcher noch nicht unterstützt.");
+  if(!bridge?.snapshot?.().connected)throw new Error("Verbinde zuerst diesen Launcher mit deinem Creator-Account.");
+  if(providerIntegrationConnected(key))return appState({providerConnect:{provider:key,status:"already_connected"}});
+  const response=await bridge.beginProviderConnect(key);
+  const raw=String(response?.connect_url||"");
+  let target,base;
+  try{target=new URL(raw);base=new URL(configStore.publicSettings().backendUrl||"https://cfs-zockt.de")}catch{throw new Error("Provider-Verbindungslink ist ungültig.");}
+  if(target.protocol!=="https:"&&!(target.protocol==="http:"&&["localhost","127.0.0.1","::1"].includes(target.hostname)))throw new Error("Unsicherer Provider-Verbindungslink wurde blockiert.");
+  if(target.origin!==base.origin||target.pathname!=="/pages/launcher-provider-connect.html")throw new Error("Provider-Verbindungslink gehört nicht zur konfigurierten Creator Cloud.");
+  const hash=new URLSearchParams(String(target.hash||"").replace(/^#/,""));
+  if(hash.get("provider")!==key||!/^[A-Za-z0-9_-]{32,160}$/.test(String(hash.get("handoff")||"")))throw new Error("Provider-Verbindungslink ist unvollständig.");
+  await shell.openExternal(target.toString());
+  scheduleProviderIntegrationPoll(key);
+  return appState({providerConnect:{provider:key,status:"browser_opened"}});
+}
+
 async function refreshCreatorLibrary({notify=true} = {}) {
   if (!bridge?.snapshot?.().connected) {
-    creatorLibrary = {widgets:[],scenes:[],game:null,gameActivity:null,gameContext:{mode:"none"},gameRules:[],gameRuleHits:[],cutProjects:[],cutJobs:[],creator:null,loadedAt:null,error:"Bridge offline"};
+    creatorLibrary = {widgets:[],scenes:[],game:null,gameActivity:null,gameContext:{mode:"none"},gameRules:[],gameRuleHits:[],cutProjects:[],cutJobs:[],creator:null,integrations:{},loadedAt:null,error:"Bridge offline"};
     if (notify) send("launcher:state",appState());
     return creatorLibrary;
   }
@@ -1481,6 +1561,7 @@ async function refreshCreatorLibrary({notify=true} = {}) {
       cutProjects:Array.isArray(data?.cut_projects)?data.cut_projects:[],
       cutJobs:Array.isArray(data?.cut_jobs)?data.cut_jobs.filter(job=>!isCutAuditionJob(job)&&!isCutAnalysisJob(job)):[],
       creator:data?.creator || null,
+      integrations:data?.integrations&&typeof data.integrations==="object"?data.integrations:{},
       loadedAt:new Date().toISOString(),
       error:""
     };
@@ -1625,6 +1706,24 @@ async function logoutLauncherDevice() {
 }
 
 
+async function syncObsWebSocketFromSettings({forceReconnect=false}={}) {
+  if(!obsWebSocket)return null;
+  const settings=configStore.publicSettings();
+  const url=normalizeObsWebSocketUrl(settings.obsWebSocketUrl||"ws://127.0.0.1:4455");
+  if(settings.obsWebSocketAutoConnect!==true){
+    if(obsWebSocket.snapshot().desiredConnected||obsWebSocket.snapshot().connected)await obsWebSocket.disconnect();
+    return obsWebSocket.snapshot();
+  }
+  const password=configStore.getObsWebSocketPassword();
+  const current=obsWebSocket.snapshot();
+  if(forceReconnect||current.url!==url){
+    await obsWebSocket.disconnect();
+  }else if(current.connected){
+    return current;
+  }
+  return obsWebSocket.connect({url,password});
+}
+
 function currentGameActivityTarget(settings=configStore?.publicSettings?.() || {}) {
   const source=String(settings.gameActivitySource||"launcher_manual");
   const streamName=String(settings.streamGameProcessName||settings.streamGameWindowTitle||"").trim();
@@ -1680,7 +1779,7 @@ function rebuildBridge() {
     interactiveGamesProvider:()=>interactiveGameService?.snapshot?.() || null,
     liveProviderHealthProvider:()=>providers?.info?.() || {key:settings.provider||"mock",ready:false,status:"idle"},
     streamCredentialsProvider:()=>streamCredentialStore?.snapshot?.() || {encryptionAvailable:safeStorage.isEncryptionAvailable(),targets:{}},
-    obsIntegrationProvider:()=>({available:true,mode:"browser_source_doctor"})
+    obsIntegrationProvider:()=>{const o=obsWebSocket?.snapshot?.()||{};return{available:true,mode:"browser_source+websocket",websocket_available:o.available===true,websocket_connected:o.connected===true,current_scene:String(o.currentScene||"").slice(0,180),request_policy:"allowlist",password_exposed:false}}
   });
 
   bridge.on("state", state => {
@@ -1720,6 +1819,7 @@ function rebuildBridge() {
     if(actionType==="live_provider_command"){executeLiveProviderCommandAction(action).catch(()=>{});return;}
     if(actionType==="nexus_command"){executeNexusCommandAction(action).catch(()=>{});return;}
     if(actionType==="interactive_game_command"){executeInteractiveGameCommandAction(action).catch(()=>{});return;}
+    if(actionType==="obs_widget_install"){executeObsWidgetInstallAction(action).catch(()=>{});return;}
     send("launcher:action", action);
   });
 
@@ -1860,6 +1960,7 @@ async function gracefulShutdown(reason = "app_quit") {
   if (shutdownInProgress) return;
   shutdownInProgress = true;
   try { await outputManager?.stop?.(); } catch {}
+  try { await obsWebSocket?.disconnect?.({forget:true}); } catch {}
   stopStreamStudioRuntimeSync();
   try { await streamEngine?.stop?.(); } catch {}
   finishStreamRuntimeEvidence(reason);
@@ -1883,6 +1984,7 @@ async function gracefulShutdown(reason = "app_quit") {
     updates?.stop?.();
     clearInterval(cloudHealthTimer);
     clearInterval(gameActivityPresenceTimer);
+    for(const provider of [...providerIntegrationPollTimers.keys()])stopProviderIntegrationPoll(provider);
     stopDeviceLinkPolling();
     logger?.info("Graceful shutdown finished");
   }
@@ -1892,8 +1994,9 @@ function registerIpc() {
   ipcMain.handle("launcher:bootstrap", async () => appState());
 
   ipcMain.handle("launcher:settings-save", async (_event, settings) => {
-    const input=settings&&typeof settings==="object"?settings:{};
+    const input=settings&&typeof settings==="object"?{...settings}:{};
     const current=configStore.publicSettings();
+    if(Object.prototype.hasOwnProperty.call(input,"obsWebSocketUrl"))input.obsWebSocketUrl=normalizeObsWebSocketUrl(input.obsWebSocketUrl||current.obsWebSocketUrl);
     const transition=planSettingsTransition({
       current,
       input,
@@ -1914,6 +2017,8 @@ function registerIpc() {
       bridge?.connect?.().catch(error=>logger?.warn("Bridge reconnect after settings update failed",error?.message));
     }
     if(transition.backendChanged)refreshCloudHealth().catch(()=>{});
+    const obsTouched=Object.prototype.hasOwnProperty.call(input,"obsWebSocketUrl")||Object.prototype.hasOwnProperty.call(input,"obsWebSocketAutoConnect")||Boolean(String(input.obsWebSocketPassword||""));
+    if(obsTouched)await syncObsWebSocketFromSettings({forceReconnect:Boolean(String(input.obsWebSocketPassword||""))});
     return appState();
   });
 
@@ -1938,6 +2043,10 @@ function registerIpc() {
   ipcMain.handle("launcher:creator-library", async () => {
     await refreshCreatorLibrary({notify:false});
     return appState();
+  });
+
+  ipcMain.handle("launcher:provider-connect", async (_event, provider) => {
+    return connectProviderAccount(provider);
   });
 
   ipcMain.handle("launcher:game-activity-sync", async () => {
@@ -2257,6 +2366,46 @@ function registerIpc() {
     return appState({restoredPoint:meta});
   });
 
+  ipcMain.handle("launcher:obs-websocket-connect", async (_event, input) => {
+    const payload=input&&typeof input==="object"?input:{};
+    const current=configStore.publicSettings();
+    const url=normalizeObsWebSocketUrl(payload.url||current.obsWebSocketUrl||"ws://127.0.0.1:4455");
+    const password=String(payload.password||"");
+    const autoConnect=payload.autoConnect===true;
+    configStore.save({obsWebSocketUrl:url,obsWebSocketAutoConnect:autoConnect,...(password?{obsWebSocketPassword:password}:{})});
+    await obsWebSocket.disconnect();
+    await obsWebSocket.connect({url,password:password||configStore.getObsWebSocketPassword()});
+    return appState();
+  });
+
+  ipcMain.handle("launcher:obs-websocket-disconnect", async () => {
+    await obsWebSocket.disconnect();
+    return appState();
+  });
+
+  ipcMain.handle("launcher:obs-websocket-forget-password", async () => {
+    await obsWebSocket.disconnect({forget:true});
+    configStore.clearObsWebSocketPassword();
+    configStore.save({obsWebSocketAutoConnect:false});
+    return appState();
+  });
+
+  ipcMain.handle("launcher:obs-websocket-refresh", async () => {
+    await obsWebSocket.refresh();
+    return appState();
+  });
+
+  ipcMain.handle("launcher:obs-websocket-scene", async (_event, sceneName) => {
+    await obsWebSocket.switchScene(String(sceneName||""));
+    return appState();
+  });
+
+  ipcMain.handle("launcher:obs-websocket-browser-source", async (_event, input) => {
+    const payload=input&&typeof input==="object"?input:{};
+    const result=await obsWebSocket.updateBrowserSource(payload.inputName,payload.url);
+    return appState({obsBrowserSourceAction:result});
+  });
+
   ipcMain.handle("launcher:obs-doctor", async (_event, rawUrl) => {
     return runObsDoctor(String(rawUrl || ""));
   });
@@ -2472,6 +2621,8 @@ app.whenReady().then(async () => {
   });
   liveSessionStore = new LiveSessionStore(path.join(userData,"session","live-session.json"),logger);
   eventMonitor = new EventMonitor({ maxEvents: 200 });
+  obsWebSocket = new ObsWebSocketController({logger});
+  obsWebSocket.on("state", obsState => send("launcher:state",appState({obsWebSocket:obsState})));
   outputGatePath=path.join(userData,"output-tests","real-world-gate.json");
   outputGateStore=new OutputGateStore(outputGatePath,{version:pkg.version,platform:process.platform});
   streamDeckStore=new StreamDeckStore(path.join(userData,"stream-deck","layout.json"));
@@ -2503,6 +2654,9 @@ app.whenReady().then(async () => {
   configureDeviceLinkClient();
   await rebuildProvider();
   rebuildBridge();
+  if(configStore.publicSettings().obsWebSocketAutoConnect===true){
+    syncObsWebSocketFromSettings().catch(error=>logger?.warn("OBS WebSocket auto-connect failed",error?.message));
+  }
   syncGameActivityTracking();
   startGameActivityPresenceLoop();
   if (configStore.getPendingDeviceLink?.()) scheduleDeviceLinkPolling(1200);

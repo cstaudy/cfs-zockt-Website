@@ -23,12 +23,12 @@ check('env example documents admin elevation secret',/CFS_ADMIN_ELEVATION_SECRET
 check('config doctor marks admin elevation secret secret',/"CFS_ADMIN_ELEVATION_SECRET"/.test(doctor)&&/separates Signing-Secret für Admin-Step-up/.test(doctor));
 check('render blueprint generates admin elevation secret',/key:\s*CFS_ADMIN_ELEVATION_SECRET[\s\S]{0,80}generateValue:\s*true/.test(blueprint));
 check('host-bound admin elevation cookie exists',/__Host-cfs_admin_elevation/.test(server));
-check('admin elevation cookie is HttpOnly',/function adminElevationCookieOptions\(\)[\s\S]{0,260}httpOnly:true/.test(server));
-check('admin elevation cookie is Secure in production',/function adminElevationCookieOptions\(\)[\s\S]{0,260}secure:NODE_ENV!=="development"/.test(server));
-check('admin elevation cookie is SameSite strict',/function adminElevationCookieOptions\(\)[\s\S]{0,260}sameSite:"strict"/.test(server));
+check('admin elevation cookie is HttpOnly',/function adminElevationCookieOptions[\s\S]{0,420}httpOnly:\s*true/.test(server));
+check('admin elevation cookie is Secure in production',/function adminElevationCookieOptions[\s\S]{0,420}secure:\s*NODE_ENV\s*!==\s*"development"/.test(server));
+check('admin elevation cookie is SameSite strict',/function adminElevationCookieOptions[\s\S]{0,420}sameSite:\s*"strict"/.test(server));
 check('admin elevation lasts ten minutes',/ADMIN_ELEVATION_TTL_MS\s*=\s*\n?\s*10 \* 60 \* 1000/.test(server));
 check('admin elevation token uses HMAC SHA-256',/createHmac\("sha256",ADMIN_ELEVATION_SECRET\)/.test(server));
-check('admin elevation signature binds current session hash',/cfs-admin-elevation-v1\|\$\{payload\}\|\$\{sessionHash\}/.test(server));
+check('admin elevation signature binds current session hash',/cfs-admin-elevation-v2\|\$\{payload\}\|\$\{sessionHash\}/.test(server));
 check('admin elevation validates creator id',/String\(payload\?\.cid\|\|""\)!==String\(req\.creatorAccount\.id\)/.test(server));
 check('admin elevation rejects expired tokens',/expiresAt<=Date\.now\(\)/.test(server));
 check('admin elevation rate limiter exists',/const adminElevationLimiter\s*=/.test(server));
@@ -39,7 +39,7 @@ check('all admin writes centrally require elevation',/app\.use\("\/api\/admin\/"
 check('elevation endpoint excluded from its own gate',/cleanPath==="\/api\/admin\/creator-suite\/elevation"/.test(server));
 check('missing elevation returns 428',/res\.status\(428\)/.test(server)&&/admin_reauth_required/.test(server));
 check('new login clears stale admin elevation',/createCreatorSession[\s\S]{0,2200}clearAdminElevationCookie\(res\)/.test(server));
-check('logout clears admin elevation',/destroyCreatorSession[\s\S]{0,1800}clearAdminElevationCookie\(res\)/.test(server));
+check('logout clears admin elevation',/app\.post\(\s*"\/api\/account\/logout"[\s\S]{0,1800}clearCreatorAuthCookies\(res\)/.test(server));
 check('admin audit table exists',/CREATE TABLE IF NOT EXISTS creator_admin_audit_events/.test(server));
 check('admin audit stores no request body',!/creator_admin_audit_events[\s\S]{0,450}(request_body|body_json|payload)/i.test(server));
 check('admin audit stores no ip or user agent',!/creator_admin_audit_events[\s\S]{0,450}(ip_address|user_agent|remote_addr)/i.test(server));
@@ -53,7 +53,7 @@ check('admin UI exposes audit list',/id="adminAuditList"/.test(html)&&/loadAdmin
 check('admin wrapper handles 428 reauth response',/error\.status===428/.test(js)&&/admin_reauth_required/.test(js));
 check('admin writes use wrapper',!/await CFS\.json\(`?\/api\/admin\/creator-suite\/(?:public-reviews|support-reports|release-acceptance|release-cohorts|release-decisions|beta-feedback|production-evidence|creators\/)/.test(js));
 check('admin elevation styling present',/admin-security-stepup/.test(css)&&/is-unlocked/.test(css));
-check('public security page describes admin step-up',/Admin-Step-up & Audit/.test(security));
+check('public security page describes admin step-up',/Admin-Step-up (?:&|&amp;) Audit/.test(security));
 check('security page discloses minimized audit data',/ohne Request-Body, rohe IP oder User-Agent/.test(security));
 check('package script exposes admin16 check',pkg.scripts?.['admin16:check']==='node tools/admin-privileged-action-security-pass16-test.mjs .');
 

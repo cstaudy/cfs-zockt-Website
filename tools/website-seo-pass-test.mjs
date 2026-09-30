@@ -9,6 +9,7 @@ const BASE = "https://cfs-zockt.de";
 const INDEXABLE = new Map([
   ["index.html", `${BASE}/`],
   ["pages/creator-suite.html", `${BASE}/pages/creator-suite.html`],
+  ["pages/merch.html", `${BASE}/pages/merch.html`],
   ["pages/plans.html", `${BASE}/pages/plans.html`],
   ["pages/roadmap.html", `${BASE}/pages/roadmap.html`],
   ["pages/support.html", `${BASE}/pages/support.html`],
@@ -63,12 +64,19 @@ for (const file of walk(publicDir).filter(f => f.endsWith(".html"))) {
       "og:site_name":"cfs_zockt",
       "og:locale":"de_AT",
       "og:url":INDEXABLE.get(rel),
-      "og:image":`${BASE}/assets/img/social-preview.jpg`,
     };
     for (const [prop, expected] of Object.entries(expectedOg)) {
       const escaped = prop.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
       const val = one(html, new RegExp(`<meta\\s+property=["']${escaped}["'][^>]*content=["']([^"']+)["'][^>]*>`, "gi"), prop, rel);
       if (val !== expected) errors.push(`${rel}: ${prop} ist ${val || "leer"}, erwartet ${expected}.`);
+    }
+    const ogImage = one(html, /<meta\s+property=["']og:image["'][^>]*content=["']([^"']+)["'][^>]*>/gi, "og:image", rel);
+    if (!ogImage.startsWith(`${BASE}/assets/img/`)) errors.push(`${rel}: og:image muss ein eigenes HTTPS-Bild unter ${BASE}/assets/img/ verwenden.`);
+    else {
+      try {
+        const imagePath = path.join(publicDir, new URL(ogImage).pathname.replace(/^\//,""));
+        if (!fs.existsSync(imagePath)) errors.push(`${rel}: og:image Datei fehlt: ${ogImage}.`);
+      } catch { errors.push(`${rel}: og:image ist keine gültige URL.`); }
     }
     for (const prop of ["og:title","og:description","og:image:width","og:image:height","og:image:alt"]) {
       const escaped = prop.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -141,7 +149,7 @@ const social = path.join(publicDir,"assets/img/social-preview.jpg");
 if (!fs.existsSync(social) || fs.statSync(social).size < 10000) errors.push("Social Preview fehlt oder ist unerwartet klein.");
 
 const server = fs.readFileSync(path.join(root,"server.js"),"utf8");
-for (const route of ["/index.html","/pages/creator-suite","/pages/plans","/pages/roadmap","/pages/support","/pages/security","/pages/impressum","/pages/datenschutz","/pages/nutzungsbedingungen"]) {
+for (const route of ["/index.html","/pages/creator-suite","/pages/merch","/pages/plans","/pages/roadmap","/pages/support","/pages/security","/pages/impressum","/pages/datenschutz","/pages/nutzungsbedingungen"]) {
   if (!server.includes(`[\"${route}\"`)) errors.push(`server.js: Canonical-Redirect für ${route} fehlt.`);
 }
 if (!server.includes('"X-Robots-Tag"')) errors.push("server.js: X-Robots-Tag für Runtime/API fehlt.");

@@ -28,7 +28,7 @@ expect(home.includes('data-funnel-cta="tiktok-tools"'), "TikTok Tools CTA fehlt.
 expect(home.includes('data-funnel-cta="tiktok-community"'), "TikTok Community CTA fehlt.");
 expect(home.includes('data-funnel-cta="tiktok-register"'), "TikTok Registration CTA fehlt.");
 expect(app.includes('source === "tiktok"'), "Frontend erkennt TikTok-Traffic nicht.");
-expect(app.includes('sessionStorage.setItem("cfsTrafficSource"'), "Funnel Source wird nicht flüchtig in der Session erhalten.");
+expect(!app.includes('cfsTrafficSource') && !app.includes('cfsFunnelLastAction'), "Öffentliche Funnel-Attribution darf in der Privat-Beta nicht persistent im Browser gespeichert werden.");
 expect(app.includes('target.searchParams.set("source", "tiktok")'), "TikTok Source wird nicht bis zur Registrierung erhalten.");
 expect(login.includes("data-login-source-context hidden"), "Login/Registrierung braucht einen verborgenen TikTok-Kontext.");
 expect(loginJs.includes('source === "tiktok"'), "Login-Seite erkennt TikTok Source nicht.");
@@ -70,8 +70,8 @@ if (errors.length) {
 }
 
 console.log("MONETIZATION / TIKTOK FUNNEL PASS CHECK: OK");
-console.log("- TikTok Shortlinks + Source Attribution geprüft");
-console.log("- TikTok Landing-/Registrierungs-Kontext geprüft");
+console.log("- TikTok Shortlinks + URL-basierte Source Attribution geprüft");
+console.log("- TikTok Landing-/Registrierungs-Kontext ohne persistentes Funnel-Tracking geprüft");
 console.log("- Partnerfläche opt-in, standardmäßig leer und unsichtbar");
 console.log("- Affiliate-Kennzeichnung + HTTPS/sponsored Linkschutz geprüft");
 console.log("- keine externen Tracking-/Ad-Skripte hinzugefügt");
