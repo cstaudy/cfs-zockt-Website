@@ -14,22 +14,29 @@
     <div class="product">CREATOR SUITE</div>
 
     <nav>
-      <div class="nav-group">START</div>
+      <div class="nav-group">START & STATUS</div>
       <button class="nav active" data-view="live"><span>●</span> LIVE CONTROL</button>
-      <button class="nav" data-view="deck"><span>▦</span> STREAM DECK</button>
-      <button class="nav" data-view="tools"><span>◇</span> CREATOR TOOLS</button>
-      <div class="nav-group" data-experience="pro">LIVE & AUTOMATION</div>
+
+      <div class="nav-group" data-experience="pro">VERBINDEN</div>
       <button class="nav" data-view="bridge" data-experience="pro"><span>⌁</span> BRIDGE</button>
       <button class="nav" data-view="sync" data-experience="pro"><span>↻</span> SYNC STATUS</button>
-      <button class="nav" data-view="audio" data-experience="pro"><span>♫</span> AUTOTHANKS</button>
-      <button class="nav" data-view="events" data-experience="pro"><span>⌁</span> LIVE EVENTS</button>
-      <button class="nav" data-view="bot" data-experience="pro"><span>⌘</span> STREAM BOT</button>
-      <div class="nav-group" data-experience="pro">PRODUKTION</div>
+
+      <div class="nav-group">PRODUZIEREN</div>
+      <button class="nav" data-view="deck"><span>▦</span> STREAM DECK</button>
       <button class="nav" data-view="streamengine" data-experience="pro"><span>◉</span> STREAM ENGINE</button>
       <button class="nav" data-view="output" data-experience="pro"><span>◈</span> LIVE OUTPUT</button>
       <button class="nav" data-view="obs" data-experience="pro"><span>▣</span> OBS CONTROL</button>
-      <div class="nav-group">SYSTEM</div>
-      <button class="nav" data-view="system" data-experience="pro"><span>◆</span> SYSTEM</button>
+
+      <div class="nav-group" data-experience="pro">COMMUNITY</div>
+      <button class="nav" data-view="events" data-experience="pro"><span>⌁</span> LIVE EVENTS</button>
+      <button class="nav" data-view="audio" data-experience="pro"><span>♫</span> AUTOTHANKS</button>
+      <button class="nav" data-view="bot" data-experience="pro"><span>⌘</span> STREAM BOT</button>
+
+      <div class="nav-group">CREATOR TOOLS</div>
+      <button class="nav" data-view="tools"><span>◇</span> GAMES & CUT</button>
+
+      <div class="nav-group">SYSTEM & TESTS</div>
+      <button class="nav" data-view="system" data-experience="pro"><span>◆</span> SYSTEMCHECK</button>
       <button class="nav" data-view="beta" data-experience="pro"><span>β</span> BETA TEST</button>
       <button class="nav" data-view="settings"><span>⚙</span> EINSTELLUNGEN</button>
     </nav>
@@ -354,9 +361,9 @@
 
     <section class="view" data-page="tools">
       <div class="page-head">
-        <span class="eyebrow">GAMES + CUT STUDIO · V42</span>
-        <h1>CREATOR TOOLS.</h1>
-        <p>Game Runtime, LIVE-Regeln und echte lokale Cut-Exporte laufen jetzt über denselben Creator Account und dieselbe Launcher-Bridge.</p>
+        <span class="eyebrow">CREATOR TOOLS · COMMUNITY & CONTENT</span>
+        <h1>GAMES & CUT.</h1>
+        <p>Zwei klar getrennte Werkzeuge: Community-Games für den Stream und lokale Cut-Projekte für Content danach. Beide nutzen denselben Creator Account, bleiben aber funktional getrennt.</p>
       </div>
 
       <div class="tools-columns">
@@ -964,6 +971,7 @@
         <section class="panel"><div class="panel-head"><div><span>TEST SESSION</span><h2>Aktueller Testlauf</h2><p>Version, Provider und Output-Gate werden automatisch mitprotokolliert.</p></div><span class="pill" id="betaSessionPill">OFF</span></div><div class="form-grid"><label class="full"><span>TESTBEZEICHNUNG</span><input id="betaSessionLabel" maxlength="120" value="Creator Suite Beta Test"></label><label class="full"><span>ERGEBNIS / NOTIZ BEIM BEENDEN</span><textarea id="betaSessionSummary" maxlength="2000" placeholder="Was wurde getestet? Was ist aufgefallen?"></textarea></label></div><div class="output-local-status"><div><span>SESSION</span><strong id="betaSessionId">–</strong></div><div><span>GESTARTET</span><strong id="betaSessionStarted">–</strong></div><div><span>FEEDBACK</span><strong id="betaRecentFeedback">0</strong></div><div><span>LAUNCHER</span><strong id="betaLauncherVersion">0.47.18</strong></div></div><div class="inline"><button class="btn primary" id="startBetaSession">TESTSESSION STARTEN</button><button class="btn danger" id="endBetaSession" disabled>TESTSESSION BEENDEN</button><button class="btn" id="refreshBetaCenter">STATUS LADEN</button></div></section>
         <section class="panel"><div class="panel-head"><div><span>AUTOMATISCH ANGEHÄNGT</span><h2>Diagnose-Snapshot</h2></div></div><div class="beta-diagnostic-grid"><div><span>BRIDGE</span><strong id="betaDiagBridge">–</strong></div><div><span>LIVE</span><strong id="betaDiagLive">–</strong></div><div><span>LOCAL OUTPUT</span><strong id="betaDiagOutput">–</strong></div><div><span>OUTPUT GATE</span><strong id="betaDiagGate">–</strong></div></div><div class="notice compact">Es werden keine Bridge-Keys, Provider-Keys oder kompletten Logs an das Feedback angehängt. Gesendet wird nur eine begrenzte technische Zusammenfassung.</div></section>
       </div>
+      <section class="panel beta-handbook-panel"><div class="panel-head"><div><span>INTEGRIERTES BETA-TEST-HANDBUCH</span><h2>Schritt für Schritt testen</h2><p>Arbeite die Punkte der Reihe nach ab. Pro Schritt kannst du Erfolg, Fehler oder Überspringen speichern; Kommentar und sichere Diagnose sind optional.</p></div><span class="pill" id="betaHandbookProgress">0 / 0</span></div><div class="beta-handbook-summary"><span><b id="betaHandbookPass">0</b> GEKLAPPT</span><span><b id="betaHandbookFail">0</b> FEHLER</span><span><b id="betaHandbookSkipped">0</b> ÜBERSPRUNGEN</span><span><b id="betaHandbookOpen">0</b> OFFEN</span></div><div id="betaHandbookList" class="beta-handbook-list"><div class="notice compact">Testhandbuch wird geladen…</div></div><div class="notice compact">Technische Diagnose ist pro Schritt freiwillig. Es werden nur die begrenzten Beta-Diagnosefelder übertragen – keine Stream-Keys, Provider-Tokens, Bridge-Schlüssel oder kompletten Logs.</div></section>
       <section class="panel beta-feedback-panel"><div class="panel-head"><div><span>FEEDBACK SENDEN</span><h2>Bug / Idee / UX</h2><p>Je genauer die Schritte, desto leichter lässt sich ein Problem reproduzieren.</p></div></div><div class="form-grid"><label><span>TYP</span><select id="betaFeedbackKind"><option value="bug">Bug</option><option value="ux">UX</option><option value="idea">Idee</option><option value="other">Sonstiges</option></select></label><label><span>PRIORITÄT</span><select id="betaFeedbackSeverity"><option value="low">Low</option><option value="medium" selected>Medium</option><option value="high">High</option><option value="critical">Critical</option></select></label><label><span>BEREICH</span><select id="betaFeedbackCategory"><option value="launcher">Launcher</option><option value="live">LIVE</option><option value="widgets">Widgets</option><option value="scenes">Scenes</option><option value="obs">OBS</option><option value="tiktok">TikTok</option><option value="games">Games</option><option value="cut_studio">Cut Studio</option><option value="account">Account</option><option value="other">Sonstiges</option></select></label><label class="full"><span>TITEL</span><input id="betaFeedbackTitle" maxlength="160" placeholder="Kurz und eindeutig"></label><label class="full"><span>BESCHREIBUNG</span><textarea id="betaFeedbackDescription" maxlength="5000" placeholder="Was ist passiert?"></textarea></label><label class="full"><span>SCHRITTE ZUM NACHSTELLEN</span><textarea id="betaFeedbackSteps" maxlength="5000" placeholder="1. ...&#10;2. ...&#10;3. ..."></textarea></label><label><span>ERWARTET</span><textarea id="betaFeedbackExpected" maxlength="3000"></textarea></label><label><span>TATSÄCHLICH</span><textarea id="betaFeedbackActual" maxlength="3000"></textarea></label></div><div class="inline"><button class="btn primary" id="submitBetaFeedback">FEEDBACK SENDEN</button></div></section>
     </section>
 

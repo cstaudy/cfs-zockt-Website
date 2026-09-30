@@ -1,6 +1,6 @@
 {
   "name": "cfs-zockt-creator-suite-launcher",
-  "version": "0.47.25",
+  "version": "0.47.29",
   "private": true,
   "description": "Desktop Launcher / LIVE Bridge für die cfs_zockt Creator Suite.",
   "main": "main.js",
@@ -124,7 +124,8 @@
     "test:completion-v140": "node tools/launcher-completion-v140-test.mjs .",
     "test:obs-websocket-v141": "node tools/obs-websocket-controller-v141-test.mjs",
     "test:tiktok-health-v141": "node tools/tiktok-live-health-v141-test.mjs",
-    "test:obs-widget-install-v142": "node tools/obs-widget-install-v142-test.mjs"
+    "test:obs-widget-install-v142": "node tools/obs-widget-install-v142-test.mjs",
+    "test:stream-credential-store": "node tools/stream-credential-store-test.mjs"
   },
   "devDependencies": {
     "electron": "38.0.0",

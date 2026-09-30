@@ -2,8 +2,8 @@
   "schema": 1,
   "provider": "render",
   "canonical_origin": "https://cfs-zockt.de",
-  "backend_version": "3.19.0",
-  "launcher_version": "0.47.25",
+  "backend_version": "3.20.5",
+  "launcher_version": "0.47.29",
   "rollback": {
     "preferred_method": "render_artifact_rollback",
     "fallback_method": "specific_commit_redeploy",

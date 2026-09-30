@@ -99,6 +99,7 @@ class BridgeClient extends EventEmitter {
       creator_suite_runtime_v1: true,
       provider_oauth_handoff_v1: true,
       provider_stream_target_import_v1: true,
+      beta_test_handbook_v1: true,
       stream_engine_v1: Boolean(this.streamHealthProvider),
       multistream_local_v1: Boolean(this.streamHealthProvider),
       local_stream_credentials_v1: Boolean(this.streamCredentialsProvider),
@@ -257,6 +258,7 @@ class BridgeClient extends EventEmitter {
     });
   }
   async betaStatus(){return this.request("/api/bridge/beta/status",{method:"GET",timeoutMs:8000});}
+  async saveBetaHandbookStep(stepKey,payload={}){return this.request(`/api/bridge/beta/handbook/${encodeURIComponent(String(stepKey||""))}`,{method:"PUT",body:payload,timeoutMs:10000});}
   async startBetaSession(payload={}){return this.request("/api/bridge/beta/session/start",{method:"POST",body:payload,timeoutMs:10000});}
   async endBetaSession(payload={}){return this.request("/api/bridge/beta/session/end",{method:"POST",body:payload,timeoutMs:10000});}
   async submitBetaFeedback(payload={}){return this.request("/api/bridge/beta/feedback",{method:"POST",body:payload,timeoutMs:12000});}

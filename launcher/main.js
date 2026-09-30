@@ -105,7 +105,7 @@ let cutAuditionClockRevision = 0;
 let cutAuditionClockLastSentAt = 0;
 let cutAuditionClockTimer = null;
 let cutAuditionClockPending = null;
-let betaCloud = {beta:{status:"none",active:false},active_session:null,recent_feedback:[],loadedAt:null,error:""};
+let betaCloud = {beta:{status:"none",active:false},active_session:null,recent_feedback:[],handbook:{version:1,steps:[],summary:{}},loadedAt:null,error:""};
 
 
 
@@ -1472,8 +1472,8 @@ function betaDiagnosticSnapshot(){
   return{launcher_version:pkg.version,platform:process.platform,provider:providers?.info?.().key||configStore?.publicSettings?.().provider||"",bridge_connected:Boolean(b.connected),live_active:Boolean(b.liveActive),local_output_running:Boolean(o.running),local_output_ready:Boolean(o.ready),scene_id:String(o.scene?.id||""),scene_name:String(o.scene?.name||""),spool_pending:Number(eventSpool?.snapshot?.().pending||0),preflight:{ok:Boolean(pf.ok),blockers:(pf.blockers||[]).map(item=>({key:item.key,label:item.label,detail:item.detail}))},output_gate:{pass:Number(g.summary?.pass||0),fail:Number(g.summary?.fail||0),untested:Number(g.summary?.untested||0),total:Number(g.summary?.total||0),complete:Boolean(g.summary?.complete)}};
 }
 async function refreshBetaCenter({notify=true}={}){
-  if(!bridge?.snapshot?.().connected){betaCloud={beta:{status:"none",active:false},active_session:null,recent_feedback:[],loadedAt:null,error:"Bridge offline"};if(notify)send("launcher:state",appState());return betaCloud}
-  try{const d=await bridge.betaStatus();betaCloud={beta:d?.beta||{status:"none",active:false},active_session:d?.active_session||null,recent_feedback:Array.isArray(d?.recent_feedback)?d.recent_feedback:[],loadedAt:new Date().toISOString(),error:""};if(betaCloud.active_session&&!betaSessionStore?.snapshot?.().active)betaSessionStore?.start?.(betaCloud.active_session);if(!betaCloud.active_session&&betaSessionStore?.snapshot?.().active)betaSessionStore?.clear?.()}catch(e){betaCloud={...betaCloud,error:String(e?.message||e)}}if(notify)send("launcher:state",appState());return betaCloud
+  if(!bridge?.snapshot?.().connected){betaCloud={beta:{status:"none",active:false},active_session:null,recent_feedback:[],handbook:{version:1,steps:[],summary:{}},loadedAt:null,error:"Bridge offline"};if(notify)send("launcher:state",appState());return betaCloud}
+  try{const d=await bridge.betaStatus();betaCloud={beta:d?.beta||{status:"none",active:false},active_session:d?.active_session||null,recent_feedback:Array.isArray(d?.recent_feedback)?d.recent_feedback:[],handbook:d?.handbook&&typeof d.handbook==="object"?d.handbook:{version:1,steps:[],summary:{}},loadedAt:new Date().toISOString(),error:""};if(betaCloud.active_session&&!betaSessionStore?.snapshot?.().active)betaSessionStore?.start?.(betaCloud.active_session);if(!betaCloud.active_session&&betaSessionStore?.snapshot?.().active)betaSessionStore?.clear?.()}catch(e){betaCloud={...betaCloud,error:String(e?.message||e)}}if(notify)send("launcher:state",appState());return betaCloud
 }
 async function startBetaTestSession(input={}){
   if(!bridge?.snapshot?.().connected)throw new Error("Creator Bridge ist nicht verbunden.");
@@ -1486,6 +1486,17 @@ async function endBetaTestSession(input={}){
   const d=betaDiagnosticSnapshot();
   try{const r=await bridge.endBetaSession({session_id:sessionId,result_summary:String(input.resultSummary||"").slice(0,2000),output_gate:d.output_gate,diagnostics:d});betaSessionStore.clear();await refreshBetaCenter({notify:false});return appState({betaAction:{type:"session_end",session:r.session}})}
   catch(e){betaSessionStore.fail(e?.message||e);throw e}
+}
+async function saveBetaHandbookStep(input={}){
+  if(!bridge?.snapshot?.().connected)throw new Error("Creator Bridge ist nicht verbunden.");
+  if(!bridge.snapshot().creator?.beta?.active)throw new Error("Beta-Testhandbuch ist für diesen Creator nicht aktiv.");
+  const stepKey=String(input.stepKey||"").slice(0,100),result=String(input.result||"");
+  if(!stepKey)throw new Error("Testschritt fehlt.");
+  if(!["passed","failed","skipped"].includes(result))throw new Error("Ungültiges Testergebnis.");
+  const local=betaSessionStore?.snapshot?.()||{},d=betaDiagnosticSnapshot();
+  const r=await bridge.saveBetaHandbookStep(stepKey,{session_id:local.active?local.sessionId:null,result,comment:String(input.comment||"").slice(0,2000),include_diagnostics:input.includeDiagnostics===true,diagnostics:d});
+  if(r?.handbook)betaCloud={...betaCloud,handbook:r.handbook,loadedAt:new Date().toISOString(),error:""};else await refreshBetaCenter({notify:false});
+  return appState({betaAction:{type:"handbook_step",result:r?.result||null}});
 }
 async function submitBetaFeedback(input={}){
   if(!bridge?.snapshot?.().connected)throw new Error("Creator Bridge ist nicht verbunden.");
@@ -2326,6 +2337,7 @@ function registerIpc() {
   ipcMain.handle("launcher:beta-refresh", async () => {await refreshBetaCenter({notify:false});return appState();});
   ipcMain.handle("launcher:beta-session-start", async (_event,input) => startBetaTestSession(input||{}));
   ipcMain.handle("launcher:beta-session-end", async (_event,input) => endBetaTestSession(input||{}));
+  ipcMain.handle("launcher:beta-handbook-step", async (_event,input) => saveBetaHandbookStep(input||{}));
   ipcMain.handle("launcher:beta-feedback", async (_event,input) => submitBetaFeedback(input||{}));
 
   ipcMain.handle("launcher:output-start", async (_event,input) => {

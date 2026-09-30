@@ -71,6 +71,7 @@ contextBridge.exposeInMainWorld("CFSLauncher", {
   refreshBetaCenter: () => ipcRenderer.invoke("launcher:beta-refresh"),
   startBetaSession: input => ipcRenderer.invoke("launcher:beta-session-start", input),
   endBetaSession: input => ipcRenderer.invoke("launcher:beta-session-end", input),
+  saveBetaHandbookStep: input => ipcRenderer.invoke("launcher:beta-handbook-step", input),
   submitBetaFeedback: input => ipcRenderer.invoke("launcher:beta-feedback", input),
   runStreamDeckAction: buttonId => ipcRenderer.invoke("launcher:stream-deck-action", buttonId),
   saveStreamDeckButton: input => ipcRenderer.invoke("launcher:stream-deck-button-save", input),
