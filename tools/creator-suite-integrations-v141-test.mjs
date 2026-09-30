@@ -33,7 +33,7 @@ for(const needle of ['obsWebSocketConnect','obsWebSocketDisconnect','obsWebSocke
 assert(config.includes('obsWebSocketPasswordEncrypted')&&config.includes('getObsWebSocketPassword')&&config.includes('clearObsWebSocketPassword'),'OBS password is not handled through encrypted local settings');
 assert(obsDoctor.includes('copy.hash')&&obsDoctor.includes('token'),'OBS URL fragment token redaction missing');
 assert(main.includes('request_policy:"allowlist"')&&main.includes('password_exposed:false'),'OBS Bridge health must expose policy but no credential');
-assert(html.includes('LIVE & AUTOMATION')&&html.includes('PRODUKTION')&&html.includes('SYSTEM'),'Launcher navigation categorization missing');
+assert(html.includes('START & STATUS')&&html.includes('VERBINDEN')&&html.includes('PRODUZIEREN')&&html.includes('COMMUNITY')&&html.includes('SYSTEM & TESTS'),'Launcher navigation categorization missing');
 assert(html.includes('OBS WEBSOCKET')&&html.includes('obsWsUrl')&&renderer.includes('renderObsWebSocket'),'OBS control UI missing');
 assert(tiktool.includes('reconnectManaged: true')&&tiktool.includes('lastEventAt')&&tiktool.includes('connectAttempts'),'TikTok LIVE health/reconnect metadata missing');
 assert(server.includes('"/api/creator/integration-capabilities"')&&server.includes('publicProviderOAuthContracts'),'Integration capability endpoint missing');

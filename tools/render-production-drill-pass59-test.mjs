@@ -18,7 +18,7 @@ function check(name,fn){
 
 check('render drill npm script registered',()=>assert.equal(pkg.scripts?.['render:drill'],'node tools/render-production-drill-r59.mjs .'));
 check('security59 npm script registered',()=>assert.equal(pkg.scripts?.['security59:check'],'node tools/render-production-drill-pass59-test.mjs .'));
-check('security59 wired into project regression',()=>assert.match(project,/\['security59',\['npm','run','security59:check'\]\]/));
+check('security59 wired into project regression',()=>assert.match(project,/\[[\"']security59[\"'],\s*\[[\"']npm[\"'],[\"']run[\"'],[\"']security59:check[\"']\]\]/));
 check('drill requires HTTPS production target',()=>assert.match(drill,/Production target muss HTTPS verwenden/));
 check('drill supports explicit live mode',()=>assert.match(drill,/args\.includes\('--live'\)/));
 check('drill supports strict Render env mode',()=>assert.match(drill,/args\.includes\('--strict-env'\)/));

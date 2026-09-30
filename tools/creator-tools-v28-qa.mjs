@@ -6,6 +6,6 @@ must(s.includes('id=ANY($2::text[])'),"scene text query not fixed");
 must(s.includes('game_runtime')&&s.includes("getCreatorSceneSources"),"game scene source missing");
 must(g.includes("GAME CONTROL")&&g.includes('id="gameOutputUrl"'),"games UI");
 must((c.includes("CLIP QUEUE")||c.includes("TIMELINE"))&&c.includes('id="cutProjectList"'),"cut studio UI");
-must(launcher.includes('data-page="tools"')&&launcher.includes("CREATOR TOOLS."),"launcher tools");
+must(launcher.includes('data-page="tools"')&&launcher.includes("GAMES & CUT."),"launcher tools");
 must(scene.includes("widgetLibrary"),"scene studio regression");
 console.log(JSON.stringify({ok:true,routes:8,game_scene_layer:true,cut_projects:true,launcher_tools:true}));

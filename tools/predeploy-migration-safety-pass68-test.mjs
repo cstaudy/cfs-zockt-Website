@@ -20,7 +20,7 @@ const r67=read('tools/launch-production-gate-r67.mjs');
 let passed=0,total=0;
 function check(name,fn){total++;try{fn();passed++;console.log(`PASS ${name}`)}catch(error){console.error(`FAIL ${name}: ${error.message}`);process.exitCode=1}}
 
-check('schema contract version 68',()=>assert.equal(DATABASE_SCHEMA_VERSION,68));
+check('schema contract version 73',()=>assert.equal(DATABASE_SCHEMA_VERSION,73));
 check('schema contract production slot',()=>assert.equal(DATABASE_SCHEMA_SLOT,'production'));
 check('bootstrap lock namespace stable',()=>assert.equal(DEFAULT_LOCK_NAMESPACE,68068));
 check('bootstrap wait bounded to 45 seconds',()=>assert.equal(DEFAULT_TIMEOUT_MS,45_000));
@@ -107,7 +107,7 @@ check('Render health uses schema-aware health route',()=>assert.match(render,/he
 check('predeploy doctor script registered',()=>assert.equal(pkg.scripts['predeploy:doctor'],'node tools/predeploy-production-doctor-r68.mjs .'));
 check('security68 script registered',()=>assert.equal(pkg.scripts['security68:check'],'node tools/predeploy-migration-safety-pass68-test.mjs .'));
 check('full predeploy gate registered',()=>assert.equal(pkg.scripts['predeploy:gate'],'npm run predeploy:doctor && npm run release:preflight'));
-check('security68 wired into project check',()=>assert.match(project,/\['security68',\['npm','run','security68:check'\]\]/));
+check('security68 wired into project check',()=>assert.match(project,/\[[\"']security68[\"'],\s*\[[\"']npm[\"'],[\"']run[\"'],[\"']security68:check[\"']\]\]/));
 check('doctor verifies lockfile parity',()=>assert.match(doctor,/Locked root dependencies exactly match package\.json/));
 check('doctor verifies local runtime modules exist',()=>assert.match(doctor,/All local server runtime modules exist/));
 check('doctor scans merge conflicts',()=>assert.match(doctor,/No unresolved merge-conflict markers/));

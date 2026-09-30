@@ -1,0 +1,57 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import process from 'node:process';
+
+const root=path.resolve(process.argv[2]||'.');
+const read=rel=>fs.readFileSync(path.join(root,rel),'utf8');
+const json=rel=>JSON.parse(read(rel));
+const home=read('public/index.html');
+const homeJs=read('public/assets/js/cfs-gaming-home-v112.js');
+const homeCss=read('public/assets/css/cfs-gaming-home-v112.css');
+const suite=read('public/pages/creator-suite.html');
+const login=read('public/pages/login.html');
+const plans=read('public/pages/plans.html');
+const pkg=json('package.json');
+const launcherPkg=json('launcher/package.json');
+let passed=0,total=0;
+const check=(name,ok)=>{total++;console.log(`${ok?'PASS':'FAIL'} ${name}`);if(ok)passed++;};
+const versionAtLeast=(actual,minimum)=>{
+  const a=String(actual||'').split('.').map(Number),m=String(minimum||'').split('.').map(Number);
+  for(let i=0;i<3;i++){if((a[i]||0)>(m[i]||0))return true;if((a[i]||0)<(m[i]||0))return false;}return true;
+};
+
+check('backend >= 3.20.2',versionAtLeast(pkg.version,'3.20.2'));
+check('static CS2 stream image removed',!home.includes('stream-cs2.webp'));
+check('static FC25 stream image removed',!home.includes('stream-fc25.webp'));
+check('static Warzone stream image removed',!home.includes('stream-warzone-small.webp'));
+check('static Warzone live fallback removed from HTML',!home.includes('stream-warzone.webp'));
+check('static Warzone live fallback removed from JS',!homeJs.includes('stream-warzone.webp'));
+check('local static GAME_ART fallback removed',!homeJs.includes('const GAME_ART'));
+check('recent games still accept real remote cover',homeJs.includes('game?.image_url'));
+check('live preview starts without image src',/<img id="livePreviewImage" alt="" hidden>/.test(home));
+check('live preview only displays actual available cover',homeJs.includes('const nextSrc = remoteCover || (isLive ? fallbackCover : "")'));
+check('neutral live placeholder exists',home.includes('gaming-live-visual-placeholder'));
+check('neutral live placeholder styled',homeCss.includes('v156: ruhigerer, verständlicher Startseiten-Einstieg'));
+check('stream info cards use non-image icons',(home.match(/gaming-schedule-icon/g)||[]).length===3);
+check('stream info cards have no img elements',!/<div class="gaming-schedule-list"[\s\S]*?<img[\s\S]*?<\/div>\s*<\/div>\s*<\/div>\s*<\/section>/.test(home));
+check('hero first action leads to streams',home.includes('href="#streams"><span class="gaming-btn-icon">◉</span> STREAMS ANSEHEN'));
+check('hero second action leads to creator suite',home.includes('href="/pages/creator-suite.html"><span class="gaming-btn-icon">◇</span> CREATOR SUITE'));
+check('hero does not claim currently live',!home.includes('JETZT LIVE DABEI SEIN'));
+check('live button remains truth-neutral',home.includes('TIKTOK-KANAL ÖFFNEN'));
+check('stream section no longer claims schedule without dates',home.includes('STREAMS & CONTENT')&&!home.includes('STREAMS & STREAMPLAN'));
+check('offer section uses user-oriented heading',home.includes('DAS FINDEST DU HIER'));
+check('stream studio card points to tools section',home.includes('/pages/creator-suite.html#tools">TOOLS ENTDECKEN'));
+check('homepage explains closed beta',home.includes('kostenlose geschlossene Beta'));
+check('creator suite explains closed beta',suite.includes('kostenlose geschlossene Beta'));
+check('creator suite no longer advertises multistream as next block',!suite.includes('NÄCHSTER BLOCK')&&!suite.includes('<strong>Echte Multistream-Ziele</strong>'));
+check('creator suite identifies acceptance phase',suite.includes('TESTEN, STABILISIEREN, FREIGEBEN')&&suite.includes('Multistream &amp; Provider'));
+check('creator suite plans are not currently purchasable',suite.includes('aktuell nicht kaufbar'));
+check('login explains private beta',login.includes('kostenlos in der privaten Beta'));
+check('plans metadata explains private beta',plans.includes('kostenlose private Beta'));
+check('plans CTA no longer says free plan',plans.includes('STARTE IN DER PRIVATEN BETA')&&!plans.includes('STARTE IM FREE PLAN'));
+check('current launcher version remains visible',home.includes(`Launcher ${launcherPkg.version}`)&&suite.includes(`LAUNCHER ${launcherPkg.version}`));
+check('v156 gate registered',pkg.scripts?.['homepage156:check']==='node tools/homepage-clarity-v156-test.mjs .');
+check('v156 release chains v155 and homepage gate',pkg.scripts?.['release:v156']==='npm run release:v155 && npm run homepage156:check');
+
+console.log(`\nHomepage Clarity v156: ${passed}/${total} ${passed===total?'PASS':'FAIL'}`);
+if(passed!==total)process.exit(1);

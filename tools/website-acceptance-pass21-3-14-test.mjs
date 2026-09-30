@@ -131,7 +131,7 @@ check('all primary public pages exist', publicPages.every(exists));
 const home = read('public/index.html');
 for (const route of [
   '/pages/creator-suite.html', '/pages/creator-suite.html#widget-studio', '/pages/creator-suite.html#games',
-  '/pages/creator-suite.html#launcher', '/pages/plans.html', '/pages/roadmap.html', '/pages/security.html',
+  '/pages/launcher-download.html', '/pages/plans.html', '/pages/roadmap.html', '/pages/security.html',
   '/pages/support.html', '/pages/login.html', '/pages/login.html#regForm'
 ]) {
   check(`homepage exposes ${route}`, home.includes(`href="${route}"`));
