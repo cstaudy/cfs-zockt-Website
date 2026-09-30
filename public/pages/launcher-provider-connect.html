@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#020914">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<title>Provider verbinden | cfs_zockt</title>
+<link rel="stylesheet" href="/assets/css/styles.css">
+<link rel="stylesheet" href="/assets/css/cfs-theme-v3.css">
+<link rel="stylesheet" href="/assets/css/launcher-connect.css">
+</head>
+<body class="creator-workspace">
+<main class="container connect-shell launcher-connect-page">
+  <section class="connect-card" aria-live="polite">
+    <div class="internal-flow-head">
+      <div>
+        <span class="eyebrow">CREATOR SUITE · LAUNCHER</span>
+        <h1>ACCOUNT<br><span>VERBINDEN.</span></h1>
+        <p id="providerConnectCopy">Die sichere Provider-Verbindung wird vorbereitet.</p>
+      </div>
+      <span class="creator-tool-status available" id="providerConnectBadge">PRÜFE…</span>
+    </div>
+    <div class="device-link-safety">
+      <strong>Einmalige Launcher-Freigabe.</strong>
+      <span>Der Geräte-Schlüssel bleibt im Launcher. Diese Seite verwendet nur einen kurzlebigen Einmalcode und löscht ihn vor dem Weiterleiten aus der Browser-Adresse.</span>
+    </div>
+    <div class="connect-result" id="providerConnectResult">
+      <strong>Verbindung wird gestartet…</strong>
+      <p>Falls nichts passiert, kehre zum Launcher zurück und starte die Verbindung erneut.</p>
+    </div>
+    <form id="providerConnectForm" method="post" action="/auth/launcher/integrations/start" hidden>
+      <input type="hidden" name="provider" id="providerConnectProvider">
+      <input type="hidden" name="handoff" id="providerConnectHandoff">
+    </form>
+  </section>
+</main>
+<script src="/assets/js/launcher-provider-connect.js"></script>
+</body>
+</html>

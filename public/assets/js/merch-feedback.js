@@ -18,8 +18,9 @@
   const countNode = publicRoot?.querySelector('[data-review-count]');
   const listNode = publicRoot?.querySelector('[data-review-list]');
 
-  const localKey = 'cfs_zockt_merch_feedback_v3';
-  const clientKey = 'cfs_zockt_public_review_client_v1';
+  // Öffentliches Merch-Feedback bleibt absichtlich ohne persistente
+  // Browser-ID und ohne gespeicherten Entwurf. Ein Seitenaufruf erhält nur
+  // eine flüchtige, nicht persistierte Request-Kennung.
 
   const labels = {
     appeal: {
@@ -37,35 +38,18 @@
 
   const safeText = (value, fallback = '') => String(value ?? fallback);
 
-  const createClientToken = () => {
-    try {
-      const existing = localStorage.getItem(clientKey);
-      if (existing && /^[A-Za-z0-9_-]{20,120}$/.test(existing)) return existing;
-      const token = globalThis.crypto?.randomUUID
-        ? globalThis.crypto.randomUUID().replace(/-/g, '')
-        : `r${Date.now().toString(36)}${Math.random().toString(36).slice(2)}${Math.random().toString(36).slice(2)}`;
-      localStorage.setItem(clientKey, token);
-      return token;
-    } catch (_) {
-      return `r${Date.now().toString(36)}${Math.random().toString(36).slice(2)}${Math.random().toString(36).slice(2)}`;
-    }
-  };
+  const createClientToken = () => globalThis.crypto?.randomUUID
+    ? globalThis.crypto.randomUUID().replace(/-/g, '')
+    : `r${Date.now().toString(36)}${Math.random().toString(36).slice(2)}${Math.random().toString(36).slice(2)}`;
 
   const clientToken = createClientToken();
   let value = { appeal: '', rating: '', vote: '', display_name: '', comment: '' };
 
-  try {
-    const saved = JSON.parse(localStorage.getItem(localKey) || '{}');
-    value = { ...value, ...(saved && typeof saved === 'object' ? saved : {}) };
-  } catch (_) {}
-
-  if (reviewName) reviewName.value = safeText(value.display_name);
-  if (reviewComment) reviewComment.value = safeText(value.comment);
-
   const persist = () => {
+    // Nur In-Memory-State für den aktuellen Seitenaufruf; keine Speicherung
+    // in localStorage/sessionStorage.
     value.display_name = safeText(reviewName?.value).trim().slice(0, 40);
     value.comment = safeText(reviewComment?.value).trim().slice(0, 600);
-    try { localStorage.setItem(localKey, JSON.stringify(value)); } catch (_) {}
   };
 
   const applyGroup = (buttons, activeValue, attr) => {

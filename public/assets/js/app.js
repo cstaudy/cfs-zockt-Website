@@ -89,11 +89,10 @@ function initTrafficSourceExperience() {
     params.get("utm_source") || params.get("source") || params.get("src")
   );
 
-  let source = requestedSource;
-  try {
-    if (requestedSource) sessionStorage.setItem("cfsTrafficSource", requestedSource);
-    if (!source) source = normalizeTrafficSource(sessionStorage.getItem("cfsTrafficSource"));
-  } catch {}
+  // Datenschutzfreundlich: Attribution wird nur aus der aktuellen URL gelesen
+  // und nicht im Browser gespeichert. So gibt es auf der öffentlichen Website
+  // kein persistentes Funnel-/Marketing-Tracking.
+  const source = requestedSource;
 
   document.documentElement.dataset.trafficSource = source || "direct";
 
@@ -111,16 +110,9 @@ function initTrafficSourceExperience() {
     });
   }
 
-  // Kein Drittanbieter-Tracking: nur eine flüchtige Session-Notiz für den
-  // aktuellen Funnel-Kontext. Eine spätere Analytics-Lösung kann dieselben
-  // data-funnel-cta Marker nach einem eigenen Consent-Pass übernehmen.
-  document.querySelectorAll("[data-funnel-cta]").forEach(link => {
-    link.addEventListener("click", () => {
-      try {
-        sessionStorage.setItem("cfsFunnelLastAction", String(link.dataset.funnelCta || "").slice(0, 64));
-      } catch {}
-    });
-  });
+  // Keine lokale Speicherung von Funnel-Klicks. Falls später Analytics oder
+  // Werbung aktiviert wird, muss das separat und erst nach wirksamer
+  // Einwilligung eingebunden werden.
 }
 
 function safePartnerUrl(value) {
@@ -184,9 +176,6 @@ async function initPartnerRecommendations() {
       link.rel = "sponsored noopener noreferrer";
       link.textContent = `${item.cta} →`;
       link.dataset.funnelCta = "partner-outbound";
-      link.addEventListener("click", () => {
-        try { sessionStorage.setItem("cfsFunnelLastAction", "partner-outbound"); } catch {}
-      });
 
       card.append(badge, title, copy, link);
       grid.append(card);

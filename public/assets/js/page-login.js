@@ -110,7 +110,15 @@
       if(!updateRules()){message($("regMsg"),"Bitte die Passwort-Anforderungen erfüllen.",true);return;}
       $("regButton").disabled=true; $("regBusy").textContent="Konto wird sicher angelegt…";
       try {
-        const body={display_name:$("displayName").value.trim(),email:$("regEmail").value,password:$("regPassword").value};
+        const body={
+          display_name:$("displayName").value.trim(),
+          email:$("regEmail").value,
+          password:$("regPassword").value,
+          terms_accepted:Boolean($("termsAccepted")?.checked),
+          privacy_acknowledged:Boolean($("privacyAcknowledged")?.checked),
+          beta_acknowledged:Boolean($("betaAcknowledged")?.checked),
+          age_18_confirmed:Boolean($("ageConfirmed")?.checked)
+        };
         const result = await CFS.json("/api/account/register",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
         if (result?.verification_required) {
           try {
@@ -122,7 +130,10 @@
         } else {
           location.replace("/pages/dashboard.html");
         }
-      } catch (x) { message($("regMsg"),x.status===409?"Ein Konto mit diesen Daten kann nicht erstellt werden.":"Registrierung fehlgeschlagen. Bitte Eingaben prüfen und später erneut versuchen.",true); }
+      } catch (x) {
+        const known=x?.data?.code==="legal_acceptance_required"||x?.data?.code==="minimum_age_required";
+        message($("regMsg"),known?(x?.message||x?.data?.error):x.status===409?"Ein Konto mit diesen Daten kann nicht erstellt werden.":"Registrierung fehlgeschlagen. Bitte Eingaben prüfen und später erneut versuchen.",true);
+      }
       finally { $("regButton").disabled=false; $("regBusy").textContent=""; }
     });
   });

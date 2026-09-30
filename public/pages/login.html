@@ -95,9 +95,9 @@
         <p>Ein Account öffnet den Zugang zum Creator Dashboard. Der Start erfolgt im FREE Plan.</p>
       </div>
       <div class="signup-facts" aria-label="Was bei der Registrierung gilt">
-        <div><strong>FREE PLAN</strong><small>Neue Creator-Konten starten im FREE Plan.</small></div>
-        <div><strong>KEINE ZAHLUNGSDATEN</strong><small>Beim Anlegen des Accounts werden keine Zahlungsdaten abgefragt. Keine Zahlungsdaten für die Registrierung.</small></div>
-        <div><strong>KEIN AUTO-UPGRADE</strong><small>Die Registrierung löst keinen kostenpflichtigen Plan aus.</small></div>
+        <div><strong>KOSTENLOSE PRIVAT-BETA</strong><small>Der aktuelle Testbetrieb ist kostenlos und nicht gewerblich.</small></div>
+        <div><strong>18+ BETA</strong><small>Die geschlossene Beta ist vorerst nur für volljährige Tester freigegeben.</small></div>
+        <div><strong>KEINE ZAHLUNGSDATEN</strong><small>Bei Registrierung und Beta-Nutzung werden keine Zahlungsdaten abgefragt.</small></div>
         <div><strong>DATENKONTROLLE</strong><small>Sessions, Datenexport und Kontolöschung bleiben im Account-Bereich erreichbar.</small></div>
       </div>
       <form id="regForm" class="form-grid" novalidate>
@@ -112,10 +112,16 @@
             <li>Lange Passphrasen mit Leerzeichen sind erlaubt; keine künstliche Sonderzeichenpflicht.</li>
           </ul>
         </div>
+        <div class="field full legal-consent-list" aria-label="Rechtliche Bestätigungen zur Registrierung">
+          <label class="legal-consent"><input id="termsAccepted" name="terms_accepted" type="checkbox" required value="true"><span>Ich akzeptiere die <a href="/pages/nutzungsbedingungen.html" target="_blank" rel="noopener">Nutzungsbedingungen</a> (Beta-Fassung vom 30.09.2026).</span></label>
+          <label class="legal-consent"><input id="privacyAcknowledged" name="privacy_acknowledged" type="checkbox" required value="true"><span>Ich habe die <a href="/pages/datenschutz.html" target="_blank" rel="noopener">Datenschutzhinweise</a> zur Kenntnis genommen. Das ist keine pauschale Werbe- oder Tracking-Einwilligung.</span></label>
+          <label class="legal-consent"><input id="betaAcknowledged" name="beta_acknowledged" type="checkbox" required value="true"><span>Ich nehme an einer kostenlosen Beta teil und weiß, dass Funktionen sich ändern, vorübergehend ausfallen oder zurückgesetzt werden können.</span></label>
+          <label class="legal-consent"><input id="ageConfirmed" name="age_18_confirmed" type="checkbox" required value="true"><span>Ich bestätige, dass ich mindestens 18 Jahre alt bin.</span></label>
+        </div>
         <div class="field full submit-row"><button id="regButton" class="btn primary" type="submit">KONTO ERSTELLEN</button><span id="regBusy" class="small-status" aria-live="polite"></span></div>
       </form>
       <div id="regMsg" class="notice hidden" role="status" aria-live="polite"></div>
-      <div class="auth-entry-note">Passwörter werden serverseitig mit versioniertem scrypt und individuellem Salt verarbeitet. Typische bzw. vorhersehbare Passwörter werden serverseitig abgewiesen.</div>
+      <div class="auth-entry-note">Passwörter werden serverseitig mit versioniertem scrypt und individuellem Salt verarbeitet. Typische bzw. vorhersehbare Passwörter werden serverseitig abgewiesen. Die Registrierung ist derzeit ausschließlich für die kostenlose Privat-Beta vorgesehen; kostenpflichtige Verträge werden dadurch nicht abgeschlossen.</div>
       <div class="auth-entry-links"><a href="/pages/security.html">SICHERHEIT</a><a href="/pages/datenschutz.html">DATENSCHUTZ</a><a href="/pages/nutzungsbedingungen.html">NUTZUNGSBEDINGUNGEN</a></div>
     </article>
   </section>

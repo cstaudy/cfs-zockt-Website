@@ -52,7 +52,7 @@
   <div>
     <div class="eyebrow">cfs_zockt CREATOR SUITE</div>
     <h1>WIDGET STUDIO</h1>
-    <p>Wähle zuerst deinen Stream-Bereich: TikTok LIVE oder OBS. Gemeinsame Widgets erscheinen in beiden Bereichen, TikTok-Daten bleiben klar gekennzeichnet.</p>
+    <p>Wähle zuerst deinen Stream-Bereich: TikTok LIVE, Twitch oder OBS / Allgemein. Provider-Daten und Widgets bleiben strikt getrennt.</p>
   </div>
   <div class="ws-topbar-side">
     <div class="ws-experience-switch ws-experience-switch-top" role="group" aria-label="Widget Studio Modus">
@@ -99,7 +99,7 @@
       <div>
         <div class="eyebrow">DEIN CREATOR WORKSPACE</div>
         <h2>DEINE STREAM-WIDGETS.</h2>
-        <p>TikTok-LIVE-Daten, manuelle Stream-Widgets und freie Overlays sind klar gekennzeichnet. So siehst du sofort, was wo funktioniert.</p>
+        <p>TikTok-, Twitch- und providerfreie OBS-Widgets sind klar getrennt. So siehst du sofort, welche Datenquelle jedes Widget wirklich verwendet.</p>
       </div>
       <div class="ws-dashboard-head-actions">
         <button class="btn ws-assets-open" type="button" data-action="open-assets">
@@ -199,6 +199,8 @@
               <div class="ws-platform-mini-filter" role="tablist" aria-label="Plattform Filter">
                 <button class="active" type="button" data-dashboard-platform="all">ALLE</button>
                 <button type="button" data-dashboard-platform="tiktok">TIKTOK</button>
+                <button type="button" data-dashboard-platform="twitch">TWITCH</button>
+                <button type="button" data-dashboard-platform="youtube">YOUTUBE</button>
                 <button type="button" data-dashboard-platform="obs">OBS</button>
               </div>
               <div class="ws-filter-tabs" role="tablist" aria-label="Widget Filter">
@@ -303,22 +305,32 @@
     <section class="ws-platform-picker">
       <div class="ws-section-label">1 · STREAM-BEREICH</div>
       <h3>Wo möchtest du das Widget einsetzen?</h3>
-      <p class="ws-platform-intro">TikTok LIVE zeigt echte TikTok-Daten und gemeinsame Stream-Widgets. OBS enthält nur Widgets, die ohne fertige Twitch-Anbindung bereits zuverlässig funktionieren.</p>
+      <p class="ws-platform-intro">Es werden nur die Provider-Bereiche angeboten, die mit deinem Creator-Account verbunden sind. OBS / Allgemein bleibt für plattformunabhängige Widgets verfügbar.</p>
       <div class="ws-platform-cards">
         <button class="ws-platform-card active" type="button" data-platform-filter="tiktok">
           <span class="ws-platform-logo">TT</span>
           <div><strong>TikTok LIVE</strong><small>Follower, Likes, Gifts, Shares, Viewer, Alerts + manuelle Widgets</small></div>
           <b>LIVE-DATEN</b>
         </button>
+        <button class="ws-platform-card" type="button" data-platform-filter="twitch">
+          <span class="ws-platform-logo">TW</span>
+          <div><strong>Twitch</strong><small>LIVE Timer, Chat, Follows, Subs/Gift-Subs, Cheers/Bits und Twitch Alerts</small></div>
+          <b>EVENTSUB</b>
+        </button>
+        <button class="ws-platform-card" type="button" data-platform-filter="youtube">
+          <span class="ws-platform-logo">YT</span>
+          <div><strong>YouTube</strong><small>Abonnenten, LIVE Timer, Live Chat, Mitgliedschaften und Super Chats</small></div>
+          <b>LIVE API</b>
+        </button>
         <button class="ws-platform-card" type="button" data-platform-filter="obs">
           <span class="ws-platform-logo obs">OBS</span>
-          <div><strong>OBS Streaming</strong><small>Counter, Timer, manuelle Goals, Text, Bilder und Branding</small></div>
-          <b>OHNE TWITCH-DATEN</b>
+          <div><strong>OBS / Allgemein</strong><small>Counter, Timer, manuelle Goals, Text, Bilder und Branding</small></div>
+          <b>PROVIDER-FREI</b>
         </button>
       </div>
       <div class="ws-platform-rule">
         <span>KLARE TRENNUNG</span>
-        <p><strong>TikTok LIVE</strong> enthält echte TikTok-Daten. <strong>OBS</strong> enthält aktuell allgemeine und manuelle Stream-Widgets. Twitch-Follower, Subs und Twitch-Alerts werden erst angezeigt, wenn die Anbindung wirklich vorhanden ist.</p>
+        <p><strong>TikTok verbunden → TikTok Widgets.</strong> <strong>Twitch verbunden → Twitch Widgets.</strong> <strong>YouTube verbunden → YouTube Widgets.</strong> Allgemeine OBS-Widgets bleiben davon getrennt. Kein Provider-Widget wird angezeigt, solange der zugehörige Account nicht verbunden ist.</p>
       </div>
       <div id="wsPlatformNotice" class="ws-platform-notice"></div>
     </section>
@@ -348,14 +360,14 @@
             <button type="button" data-type-filter="goals"><b>◎</b><span><strong>Goals</strong><small>Ziele &amp; Fortschritt</small></span></button>
             <button type="button" data-type-filter="counter"><b>#</b><span><strong>Counter</strong><small>Zahlen &amp; Stats</small></span></button>
             <button type="button" data-type-filter="timer"><b>◷</b><span><strong>Timer</strong><small>Zeit &amp; Sessions</small></span></button>
-            <button type="button" data-type-filter="chat"><b>⌁</b><span><strong>Chat</strong><small>TikTok LIVE Chat</small></span></button>
+            <button type="button" data-type-filter="chat"><b>⌁</b><span><strong>Chat</strong><small>Provider-Chat</small></span></button>
             <button type="button" data-type-filter="latest"><b>↗</b><span><strong>Latest</strong><small>Letzte Events</small></span></button>
             <button type="button" data-type-filter="manual"><b>＋</b><span><strong>Manuell</strong><small>Gaming &amp; eigene Werte</small></span></button>
             <button type="button" data-type-filter="overlay"><b>▣</b><span><strong>Overlays</strong><small>Rahmen, Kamera &amp; Szenen</small></span></button>
           </div>
           <label class="ws-simple-type-search">
             <span aria-hidden="true">⌕</span>
-            <input id="wsSimpleTypeSearch" type="search" placeholder="Direkt suchen: z. B. Kamera, Timer, Gift oder Social Bar" autocomplete="off">
+            <input id="wsSimpleTypeSearch" type="search" placeholder="Widgets im gewählten Stream-Bereich suchen" autocomplete="off">
             <small>Durchsucht alle passenden Widget-Typen in deinem gewählten Stream-Bereich.</small>
           </label>
           <small>Wähle nur die Kategorie, die du brauchst. Kamera-Rahmen, Szenen, Branding und freie Overlays findest du gesammelt unter „Overlays“.</small>
@@ -364,7 +376,7 @@
         <div class="ws-widget-finder" data-experience-scope="pro" aria-label="Widget-Bibliothek filtern">
           <label class="ws-type-search">
             <span>WIDGET SUCHEN</span>
-            <input id="wsTypeSearch" type="search" placeholder="z. B. Kamera 9:16, Halloween, Timer, Social Bar oder Gift" autocomplete="off">
+            <input id="wsTypeSearch" type="search" placeholder="Widgets im gewählten Stream-Bereich suchen" autocomplete="off">
           </label>
           <div class="ws-type-filter" id="wsTypeFilter" aria-label="Widget-Kategorien">
             <button class="active" type="button" data-type-filter="all">ALLE</button>
@@ -911,10 +923,11 @@
             <div class="ws-obs-live-row"><span class="ws-live-dot"></span><strong>Widget ist live</strong></div>
             <input id="wsObsUrl" aria-label="OBS Browser Source URL" class="ws-obs-url" readonly>
             <div class="ws-inline-actions">
+              <button class="btn primary" type="button" data-action="install-obs">IN AKTUELLE OBS-SZENE EINFÜGEN</button>
               <button class="btn" type="button" data-action="copy-obs">URL KOPIEREN</button>
               <a class="btn" id="wsOpenObs" target="_blank" rel="noopener">ÖFFNEN</a>
             </div>
-            <small class="muted">Die URL bleibt stabil. Änderungen werden erst nach „Veröffentlichen“ für OBS übernommen.</small>
+            <small class="muted">Mit verbundenem CFS Launcher + OBS WebSocket kann das Widget automatisch als Browser Source in die aktuelle OBS-Szene eingefügt werden. Die URL bleibt stabil.</small>
           </section>
         </div>
       </aside>

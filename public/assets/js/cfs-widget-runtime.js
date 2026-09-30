@@ -75,7 +75,7 @@ async function tick(){
     const definition=payload.widget.definition||{};
     const mode=definition.mode||"counter";
     const behavior=payload.widget.config.settings?.offlineBehavior||"hold";
-    const liveOffline=definition.source_kind==="live_bridge"&&(!payload.data?.live?.connected||payload.data?.live?.stale);
+    const liveOffline=(definition.source_kind==="live_bridge"||definition.source_kind==="live_provider")&&(!payload.data?.live?.connected||payload.data?.live?.stale);
     const events=Array.isArray(payload.events)?payload.events:[];
 
     if(liveOffline&&behavior==="hide"){clear();return}

@@ -101,6 +101,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   const badges = [`<span class="access-badge ${a.plan === "pro" ? "pro" : ""}">${CFS.planLabel(a.plan)} PLAN</span>`];
   if (me.access?.beta?.active) badges.push('<span class="access-badge beta">✓ BETA TESTER</span>');
+  else if (me.access?.provider_beta?.enabled && me.access?.provider_beta?.status === "pending") badges.push('<span class="access-badge beta">BETA FREIGABE AUSSTEHEND</span>');
+  else if (me.access?.provider_beta?.enabled && me.access?.provider_beta?.status === "paused") badges.push('<span class="access-badge beta">BETA PAUSIERT</span>');
   if (me.access?.effective_plan && me.access.effective_plan !== a.plan) {
     badges.push(`<span class="access-badge pro">ZUGRIFF: ${CFS.planLabel(me.access.effective_plan)}</span>`);
   }
@@ -109,6 +111,38 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   let moduleData = {modules: me.modules || [], entitlements: me.entitlements || {}, access: me.access || {}};
   try { moduleData = await CFS.json("/api/creator/modules"); } catch {}
+
+  const renderStreamReady = async () => {
+    const host=document.getElementById("streamReadySteps"),headline=document.getElementById("streamReadyHeadline"),nextTitle=document.getElementById("streamReadyNextTitle"),nextText=document.getElementById("streamReadyNextText"),nextAction=document.getElementById("streamReadyNextAction");
+    if(!host||!headline||!nextTitle||!nextText||!nextAction)return;
+    try{
+      const data=await CFS.json("/api/creator/stream-ready");
+      host.innerHTML=(data.steps||[]).map((step,index)=>`<article class="creator-stream-ready-step ${step.ready?"ready":"wait"}"><span>${String(index+1).padStart(2,"0")}</span><div><strong>${CFS.escape(step.label||step.key||"Schritt")}</strong><small>${CFS.escape(step.detail||"")}</small></div><b>${step.ready?"✓ BEREIT":"OFFEN"}</b></article>`).join("");
+      if(data.ready){
+        headline.textContent="Dein Basis-Stream ist startklar";
+        nextTitle.textContent="TikTok, Launcher, OBS und Widget sind bereit";
+        nextText.textContent="Du kannst dein veröffentlichtes Widget jetzt direkt aus dem Widget Studio in die aktuelle OBS-Szene einfügen.";
+        nextAction.textContent="WIDGET STUDIO ÖFFNEN";
+        nextAction.href="/pages/widget-studio.html";
+      }else{
+        const next=data.next||{};
+        headline.textContent="Noch ein paar Schritte bis streambereit";
+        nextTitle.textContent=next.label?`${next.label} fertig einrichten`:"Stream-Setup vervollständigen";
+        nextText.textContent=next.detail||"Öffne den nächsten noch fehlenden Schritt.";
+        nextAction.textContent="JETZT ERLEDIGEN";
+        nextAction.href=next.href||"/pages/dashboard.html";
+      }
+      nextAction.removeAttribute("aria-disabled");
+    }catch{
+      headline.textContent="Stream-Startcheck nicht verfügbar";
+      nextTitle.textContent="Status konnte nicht geladen werden";
+      nextText.textContent="Lade die Seite neu oder prüfe TikTok, Launcher und Widget Studio einzeln.";
+      nextAction.textContent="STATUS NEU LADEN";
+      nextAction.href="/pages/dashboard.html";
+      nextAction.removeAttribute("aria-disabled");
+    }
+  };
+  renderStreamReady();
 
   const liveReady = Boolean(moduleData.entitlements?.live_bridge);
   connection.live = liveReady;
@@ -188,7 +222,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     dashboard:"/pages/dashboard.html", editor:"/pages/editor.html", widget_studio:"/pages/widget-studio.html",
     tiktok:"/pages/tiktok.html", launcher:"/pages/launcher.html", cut_studio:"/pages/cut-studio.html",
     games:"/pages/games.html", nexus:"/pages/nexus.html", audio_studio:"/pages/audio-studio.html",
-    twitch:"/pages/integrations.html", obs:"/pages/integrations.html", scene_studio:"/pages/scene-studio.html"
+    twitch:"/pages/integrations.html", youtube:"/pages/integrations.html", obs:"/pages/integrations.html", scene_studio:"/pages/scene-studio.html"
   };
   const descriptions = {
     widget_studio:"Widgets bauen, testen und OBS-URLs veröffentlichen.",
@@ -200,12 +234,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     editor:"Creator-Inhalte mit den erweiterten Editor-Werkzeugen bearbeiten.",
     nexus:"Creator Control Plane für Status, sichere Launcher-Aktionen und Event→Action-Automationen.",
     audio_studio:"Vorbereiteter Bereich auf der Roadmap.",
-    twitch:"Geplante Integration auf der Roadmap.",
+    twitch:"Twitch Konto, EventSub und Twitch-Widgets verwalten.",
+    youtube:"YouTube Kanal, LIVE/Chat und YouTube-Widgets verwalten.",
     obs:"Geplante tiefere OBS-Integration auf der Roadmap."
   };
   const kinds = {
     widget_studio:"BAUEN", scene_studio:"BAUEN", editor:"BAUEN",
-    tiktok:"VERBINDEN", launcher:"VERBINDEN", twitch:"VERBINDEN", obs:"VERBINDEN",
+    tiktok:"VERBINDEN", launcher:"VERBINDEN", twitch:"VERBINDEN", youtube:"VERBINDEN", obs:"VERBINDEN",
     games:"ERWEITERN", cut_studio:"ERWEITERN", nexus:"ERWEITERN", audio_studio:"ERWEITERN"
   };
   const statusLabel = status => ({active:"VERFÜGBAR", beta:"BETA", preview:"PREVIEW", roadmap:"ROADMAP"}[String(status || "").toLowerCase()] || String(status || "STATUS").toUpperCase());

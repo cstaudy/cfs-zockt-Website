@@ -49,7 +49,7 @@
   <section class="page-hero">
     <div class="eyebrow">INTEGRATIONS HUB</div>
     <h1>VERBINDUNGEN, DIE DU KONTROLLIERST.</h1>
-    <p>TikTok ist der aktive Plattform-Weg. Launcher und Geräteanbindung ergänzen den lokalen Workflow. Twitch und OBS bleiben sichtbar als Roadmap – ohne vorgetäuschte Freigabe.</p>
+    <p>TikTok LIVE bleibt vom Profil-OAuth getrennt. OBS WebSocket ist code-seitig integriert. Twitch und YouTube können pro Creator sicher verbunden werden; ihre LIVE-/Chat-Daten und Widgets bleiben strikt nach Provider getrennt. Reale Provider-Abnahmen folgen erst nach dem Feature-Abschluss.</p>
   </section>
 
   <section class="management-hub" aria-label="Creator Verwaltung">
@@ -70,13 +70,19 @@
 
   <section class="management-overview" aria-label="Integrationsstatus">
     <article class="management-overview-card">
-      <span class="management-status-dot ready"></span><div><strong>TIKTOK · VERFÜGBAR</strong><p>OAuth, Creator-Profil und freigegebene LIVE-Funktionen.</p></div>
+      <span class="management-status-dot ready"></span><div><strong>TIKTOK · GETRENNT ANGEBUNDEN</strong><p>Profil-OAuth und LIVE-Events sind getrennte Pfade; reale LIVE-Abnahme bleibt offen.</p></div>
     </article>
     <article class="management-overview-card">
       <span class="management-status-dot ready"></span><div><strong>LAUNCHER · VERFÜGBAR</strong><p>Lokaler Desktop-Weg für Creator Suite und Gerätefluss.</p></div>
     </article>
     <article class="management-overview-card">
-      <span class="management-status-dot roadmap"></span><div><strong>TWITCH / OBS · ROADMAP</strong><p>Werden erst als aktiv dargestellt, wenn die Integration real freigegeben ist.</p></div>
+      <span class="management-status-dot ready"></span><div><strong>TWITCH · OAUTH + EVENTSUB + CHAT</strong><p>Account-Link, Token-Refresh/Validierung, EventSub und Chat sind implementiert; reale Twitch-Abnahme folgt.</p></div>
+    </article>
+    <article class="management-overview-card">
+      <span class="management-status-dot ready"></span><div><strong>YOUTUBE · OAUTH + LIVE + CHAT</strong><p>Kanal-Link, Token-Refresh, LIVE-Erkennung, Live-Chat, Mitgliedschaften und Super Chats sind code-seitig integriert.</p></div>
+    </article>
+    <article class="management-overview-card">
+      <span class="management-status-dot roadmap"></span><div><strong>OBS · CODE READY</strong><p>WebSocket-Steuerung ist im Launcher implementiert; reale OBS-Abnahme bleibt offen.</p></div>
     </article>
   </section>
 
@@ -98,18 +104,35 @@
       </div>
     </article>
 
-    <article class="management-summary-card is-roadmap">
-      <span class="badge lock">ROADMAP</span>
+    <article class="management-summary-card" id="twitchIntegrationCard">
+      <span class="badge" id="twitchIntegrationBadge">PRÜFE…</span>
       <h2>Twitch</h2>
-      <p>OAuth, Chat, Events und Stream-Informationen werden später als eigene Integration angebunden.</p>
-      <div class="card-actions"><button class="btn ghost" type="button" disabled>NOCH NICHT AKTIV</button></div>
+      <p id="twitchIntegrationStatus">Twitch-Verbindung wird geprüft.</p>
+      <div class="card-actions">
+        <a class="btn primary" id="twitchConnect" href="/auth/creator/twitch">TWITCH VERBINDEN</a>
+        <button class="btn ghost" id="twitchSync" type="button" hidden>PROFIL SYNCHRONISIEREN</button>
+        <button class="btn ghost" id="twitchDisconnect" type="button" hidden>VERBINDUNG TRENNEN</button>
+      </div>
+      <p class="muted small">Account-Link, Token-Lifecycle, LIVE-Events und Chat über EventSub sind implementiert. Produktionsbereit wird Twitch erst nach realer Provider-Abnahme markiert.</p>
+    </article>
+
+    <article class="management-summary-card" id="youtubeIntegrationCard">
+      <span class="badge" id="youtubeIntegrationBadge">PRÜFE…</span>
+      <h2>YouTube</h2>
+      <p id="youtubeIntegrationStatus">YouTube-Verbindung wird geprüft.</p>
+      <div class="card-actions">
+        <a class="btn primary" id="youtubeConnect" href="/auth/creator/youtube">YOUTUBE VERBINDEN</a>
+        <button class="btn ghost" id="youtubeSync" type="button" hidden>KANAL + LIVE SYNCHRONISIEREN</button>
+        <button class="btn ghost" id="youtubeDisconnect" type="button" hidden>VERBINDUNG TRENNEN</button>
+      </div>
+      <p class="muted small">Nur lesende YouTube-Berechtigung: Kanal, LIVE-Status und Live-Chat. YouTube-Widgets bleiben von TikTok/Twitch getrennt; reale Provider-Abnahme folgt später.</p>
     </article>
 
     <article class="management-summary-card is-roadmap">
-      <span class="badge lock">ROADMAP</span>
+      <span class="badge lock">CODE READY</span>
       <h2>OBS</h2>
-      <p>Geplant ist OBS WebSocket für Szenen, Quellen und sichere lokale Steuerung über Launcher/NEXUS.</p>
-      <div class="card-actions"><button class="btn ghost" type="button" disabled>NOCH NICHT AKTIV</button></div>
+      <p id="obsIntegrationStatus">OBS WebSocket ist im Launcher für Szenen und Browser Sources implementiert. Reale Windows-/OBS-Abnahme bleibt offen.</p>
+      <div class="card-actions"><a class="btn ghost" href="/pages/launcher.html">LAUNCHER ÖFFNEN</a></div>
     </article>
   </section>
 

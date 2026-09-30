@@ -409,13 +409,19 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     const badges = [`<span class="access-badge">${CFS.planLabel(account.plan || "free")} PLAN</span>`];
     if (access.beta?.active) badges.push('<span class="access-badge beta">✓ BETA TESTER</span>');
+    else if (access.provider_beta?.enabled && access.provider_beta?.status === "pending") badges.push('<span class="access-badge beta">BETA FREIGABE AUSSTEHEND</span>');
+    else if (access.provider_beta?.enabled && access.provider_beta?.status === "paused") badges.push('<span class="access-badge beta">BETA PAUSIERT</span>');
     if (access.effective_plan && access.effective_plan !== account.plan) {
       badges.push(`<span class="access-badge pro">ZUGRIFF: ${CFS.planLabel(access.effective_plan)}</span>`);
     }
     badgeHost.innerHTML = badges.join("");
     accessText.textContent = access.beta?.active
-      ? "Beta-Freigabe erweitert deinen normalen Plan für die aktuelle Testphase."
-      : "Deine Funktionen richten sich nach deinem aktiven Plan.";
+      ? "Beta-Freigabe aktiv: TikTok und Twitch dürfen in der aktuellen Testphase verbunden und mit Provider-Widgets verwendet werden."
+      : access.provider_beta?.enabled && access.provider_beta?.status === "pending"
+        ? "Dein Konto ist registriert. TikTok und Twitch werden freigeschaltet, sobald der cfs_zockt Admin deinen Beta-Zugang bestätigt."
+        : access.provider_beta?.enabled && access.provider_beta?.status === "paused"
+          ? "Dein Provider-Beta-Zugang ist derzeit pausiert. Dein cfs_zockt Konto bleibt bestehen."
+          : "Deine Funktionen richten sich nach deinem aktiven Plan.";
 
     const featureLabels = [
       ["live_bridge","Creator LIVE"],

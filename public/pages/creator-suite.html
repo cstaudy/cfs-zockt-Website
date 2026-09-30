@@ -102,7 +102,10 @@
       <div class="marketing-status-grid">
         <article><span class="marketing-state ready">VERFÜGBAR</span><strong>Widget Studio</strong><p>Widgets gestalten, testen und veröffentlichen.</p></article>
         <article><span class="marketing-state ready">VERFÜGBAR</span><strong>Scene Studio</strong><p>Stream-Szenen, Ebenen und Übergänge für stabile Outputs.</p></article>
-        <article><span class="marketing-state ready">VERFÜGBAR</span><strong>TikTok Creator Hub</strong><p>Verbindung und Creator-Workflow für TikTok.</p></article>
+        <article><span class="marketing-state beta">CODE READY</span><strong>TikTok Creator Hub</strong><p>Creator-Verbindung, TikTok-spezifische Widgets und LIVE-Provider-Pfad; reale Provider-Abnahme folgt gesammelt.</p></article>
+        <article><span class="marketing-state beta">CODE READY</span><strong>Twitch Creator Hub</strong><p>OAuth, LIVE, Chat, Follow, Subs, Cheers und Twitch-spezifische Widgets; reale Provider-Abnahme folgt gesammelt.</p></article>
+        <article><span class="marketing-state beta">CODE READY</span><strong>YouTube Creator Hub</strong><p>OAuth, Kanal, LIVE, Chat, Mitgliedschaften, Super Chats und YouTube-spezifische Widgets; reale Provider-Abnahme folgt gesammelt.</p></article>
+        <article><span class="marketing-state beta">CODE READY</span><strong>OBS Integration</strong><p>WebSocket-Steuerung und One-Click Browser Source; reale Windows-/OBS-Abnahme folgt gesammelt.</p></article>
         <article><span class="marketing-state ready">VERFÜGBAR</span><strong>Launcher</strong><p>Desktop-Bridge und lokale Creator-Werkzeuge.</p></article>
         <article><span class="marketing-state ready">VERFÜGBAR</span><strong>Creator Editor</strong><p>Basis für Creator-Inhalte und Konfiguration.</p></article>
         <article><span class="marketing-state ready">VERFÜGBAR</span><strong>Interactive Games</strong><p>Community-Interaktion mit eigener Runtime.</p></article>
@@ -127,7 +130,7 @@
         <article><strong>Chat</strong><span>Chat-Overlay</span></article>
         <article><strong>Kamera</strong><span>Statisches Overlay</span></article>
       </div>
-      <div class="marketing-note"><strong>Wichtig:</strong> Manuelle Widgets funktionieren auch ohne TikTok-Verbindung. Schnellstarts veröffentlichen niemals automatisch.</div>
+      <div class="marketing-note"><strong>Wichtig:</strong> Manuelle/OBS-Widgets funktionieren ohne Provider-Verbindung; TikTok-, Twitch- und YouTube-Widgets erscheinen nur nach der jeweils passenden Verbindung. Schnellstarts veröffentlichen niemals automatisch.</div>
     </div>
   </section>
 
@@ -140,7 +143,9 @@
         <article><strong>Widget Studio</strong><span>FREE</span><p>Widgets erstellen und verwalten.</p></article>
         <article><strong>Scene Studio</strong><span>FREE</span><p>Widgets zu Szenen kombinieren und Übergänge konfigurieren.</p></article>
         <article><strong>CFS Stream Studio</strong><span>LOCAL MULTISTREAM</span><p>Scenes, Widgets, Overlays, Audio-Zielwerte und mehrere lokale Streaming-Ziele in einem eigenen Streaming-Cockpit. Capture und Zugangsdaten bleiben im Launcher.</p></article>
-        <article><strong>TikTok Hub</strong><span>FREE</span><p>TikTok-Verbindung und Creator-Kontext.</p></article>
+        <article><strong>TikTok Hub</strong><span>PROVIDER</span><p>TikTok-Verbindung und ausschließlich TikTok-spezifische LIVE-Widgets.</p></article>
+        <article><strong>Twitch Hub</strong><span>PROVIDER</span><p>Twitch-Verbindung mit Chat, Follow, Sub und Cheer Widgets.</p></article>
+        <article><strong>YouTube Hub</strong><span>PROVIDER</span><p>YouTube-Kanalverbindung mit LIVE-Chat, Mitgliedschaft und Super-Chat Widgets.</p></article>
         <article><strong>Launcher</strong><span>FREE</span><p>Desktop-Verbindung und lokale Bridge.</p></article>
         <article><strong>Games</strong><span>CREATOR</span><p>Interaktive Community-Games.</p></article>
         <article><strong>Cut Studio</strong><span>BETA · CREATOR</span><p>Clips und Media-Workflow.</p></article>
@@ -151,8 +156,8 @@
 
   <section class="marketing-section marketing-section-alt" id="launcher">
     <div class="container marketing-split">
-      <div><span class="marketing-kicker">LAUNCHER 0.47.17</span><h2>WEBSITE UND DESKTOP ARBEITEN ZUSAMMEN.</h2><p>Der Launcher bündelt lokale Verbindung, Creator-Status und die Bridge für Funktionen, die direkt am PC laufen müssen. Veröffentlichte Widgets und Szenen können so in den Stream-Workflow eingebunden werden.</p><div class="marketing-bullets"><span>Creator verbinden</span><span>Widget- und Scene-Output</span><span>LIVE-Bridge vorbereiten</span><span>OBS-Workflow unterstützen</span></div><a class="btn" href="/pages/login.html" data-login-link>ANMELDEN UND LAUNCHER ÖFFNEN</a></div>
-      <div class="marketing-version-card"><span>AKTUELLER STAND</span><strong>Launcher 0.47.17</strong><p>Interactive Games Service, dynamische lokale Game-Module, sichere Creator-Bridge und lokale Studio-Werkzeuge.</p></div>
+      <div><span class="marketing-kicker">LAUNCHER 0.47.24</span><h2>WEBSITE UND DESKTOP ARBEITEN ZUSAMMEN.</h2><p>Der Launcher bündelt lokale Verbindung, Creator-Status und die Bridge für Funktionen, die direkt am PC laufen müssen. Veröffentlichte Widgets und Szenen können so in den Stream-Workflow eingebunden werden.</p><div class="marketing-bullets"><span>Creator verbinden</span><span>Widget- und Scene-Output</span><span>LIVE-Bridge vorbereiten</span><span>OBS-Workflow unterstützen</span></div><a class="btn" href="/pages/login.html" data-login-link>ANMELDEN UND LAUNCHER ÖFFNEN</a></div>
+      <div class="marketing-version-card"><span>AKTUELLER STAND</span><strong>Launcher 0.47.24</strong><p>Interactive Games Service, dynamische lokale Game-Module, sichere Creator-Bridge und lokale Studio-Werkzeuge.</p></div>
     </div>
   </section>
 
@@ -169,7 +174,7 @@
       <div class="marketing-security-grid">
         <article><strong>Passkeys &amp; 2FA</strong><p>TOTP, Recovery-Codes und WebAuthn als zusätzliche Schutzebenen.</p></article>
         <article><strong>Session-Verwaltung</strong><p>Aktive Sitzungen anzeigen, einzeln widerrufen oder vollständig beenden.</p></article>
-        <article><strong>TikTok trennen</strong><p>Verbundene TikTok-Autorisierung im Account kontrollieren und entfernen.</p></article>
+        <article><strong>Provider kontrollieren</strong><p>TikTok-, Twitch- und YouTube-Autorisierungen creator-spezifisch verbinden, synchronisieren und wieder trennen.</p></article>
         <article><strong>Daten &amp; Account</strong><p>Datenexport anfordern und Account über den geschützten Lifecycle löschen.</p></article>
       </div>
       <div class="actions"><a class="btn" href="/pages/security.html">MEHR ÜBER SICHERHEIT</a></div>
@@ -194,7 +199,7 @@
       <div class="marketing-roadmap-grid">
         <article><span class="marketing-state ready">VERFÜGBAR</span><strong>Widget Studio · Launcher · Games</strong><p>Die Kernbereiche stehen als nutzbare Produktmodule.</p></article>
         <article><span class="marketing-state beta">BETA / ABNAHME</span><strong>NEXUS</strong><p>Funktionaler Control-Plane-Stand; reale Windows-/Launcher-Abnahme bleibt separat.</p></article>
-        <article><span class="marketing-state roadmap">ROADMAP</span><strong>Audio Studio · Twitch · OBS</strong><p>Geplante Ausbaustufen ohne falsche Fertig-Versprechen.</p></article>
+        <article><span class="marketing-state roadmap">NÄCHSTER BLOCK</span><strong>Echte Multistream-Ziele</strong><p>TikTok, Twitch, YouTube und Custom RTMP mit Ziel-Isolation und Reconnect in den lokalen Multistream-Kern zusammenführen.</p></article>
       </div>
       <div class="actions"><a class="btn" href="/pages/roadmap.html">VOLLSTÄNDIGE ROADMAP</a></div>
     </div>

@@ -46,7 +46,7 @@ function clamp(value,min,max,fallback){
   return Number.isFinite(n)?Math.max(min,Math.min(max,n)):fallback;
 }
 function eventLabel(type){
-  return {follow:"Follow",gift:"Gift",share:"Share",chat:"Chat"}[type]||"LIVE Event";
+  return {follow:"Follow",gift:"Gift",share:"Share",chat:"Chat",subscribe:"Sub",cheer:"Cheer",membership:"Mitgliedschaft",super_chat:"Super Chat"}[type]||"LIVE Event";
 }
 function metric(metricKey,data){
   const [group,key]=String(metricKey||"").split(".");
@@ -66,7 +66,7 @@ function runtimeData(payload={},event=null){
   const manualTimerMode=definition.mode==="manual_timer";
   const manualMode=manualCounterMode||manualTimerMode||sourceKind==="manual";
   const liveTimerMode=definition.mode==="timer";
-  const offline=sourceKind==="live_bridge"&&(!live.connected||live.stale);
+  const offline=(sourceKind==="live_bridge"||sourceKind==="live_provider")&&(!live.connected||live.stale);
   const behavior=config.settings?.offlineBehavior||"hold";
 
   let raw=0;
@@ -136,7 +136,7 @@ function runtimeData(payload={},event=null){
             :sourceKind==="hybrid"
               ?"CREATOR SUITE"
               :(live.connected&&!live.stale
-                ?(live.provider==="simulator"?"SIMULATOR":"LIVE")
+                ?(live.provider==="simulator"?"SIMULATOR":live.provider==="twitch"?"TWITCH LIVE":live.provider==="youtube"?"YOUTUBE LIVE":"LIVE")
                 :(bridge.online?"BRIDGE READY":"OFFLINE / STALE")),
     timer:formatTimer(current),
     actor:staticMode?"Creator":(e.actor_name||"Creator"),
