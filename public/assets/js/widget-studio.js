@@ -32,7 +32,7 @@ function quickStartCandidates(kind){
  if(kind==="counter")return state.platformFilter==="obs"?["manual_counter"]:["follower_counter","manual_counter"];
  if(kind==="timer")return state.platformFilter==="obs"?["stream_timer"]:["live_timer","stream_timer"];
  if(kind==="chat")return ["chat_overlay"];
- if(kind==="camera")return state.platformFilter==="tiktok"?["camera_frame_portrait","camera_frame"]:["camera_frame","camera_frame_square"];
+ if(kind==="camera")return state.platformFilter==="tiktok"?["camera_frame_portrait","camera_frame"]:state.platformFilter==="obs"?["camera_frame","camera_frame_square"]:[];
  return[];
 }
 function quickStartDef(kind){

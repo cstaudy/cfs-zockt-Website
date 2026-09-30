@@ -4,14 +4,6 @@
   let latestRecentGames = [];
   let latestLiveSession = null;
 
-  const GAME_ART = [
-    { match: /call[- ]of[- ]duty|warzone|\bcod\b/i, src: "/assets/img/home-v116/game-warzone.webp", alt: "Call of Duty" },
-    { match: /counter[- ]strike|\bcs2\b/i, src: "/assets/img/home-v116/game-cs2.webp", alt: "Counter-Strike 2" },
-    { match: /ea[- ]sports[- ]fc[- ]25|\bfc[- ]?25\b/i, src: "/assets/img/home-v116/game-fc25.webp", alt: "EA SPORTS FC 25" },
-    { match: /fortnite/i, src: "/assets/img/home-v116/game-fortnite.webp", alt: "Fortnite" },
-    { match: /minecraft/i, src: "/assets/img/home-v116/game-minecraft.webp", alt: "Minecraft" },
-    { match: /valorant/i, src: "/assets/img/home-v116/game-valorant.webp", alt: "VALORANT" }
-  ];
 
   const PLATFORM_LABELS = {
     playstation_5: "PS5",
@@ -67,10 +59,6 @@
   const platformLabel = value => PLATFORM_LABELS[String(value || "unknown")] || PLATFORM_LABELS.unknown;
   const sourceLabel = value => SOURCE_LABELS[String(value || "")] || "CFS Spielaktivität";
 
-  const artForGame = game => {
-    const haystack = `${game?.key || ""} ${game?.name || ""}`;
-    return GAME_ART.find(entry => entry.match.test(haystack)) || null;
-  };
 
   const initialsForGame = name => {
     const words = String(name || "GAME").trim().split(/\s+/).filter(Boolean);
@@ -89,21 +77,14 @@
     card.dataset.gameSlot = String(index);
 
     const media = element("div", "gaming-game-card-media");
-    const art = artForGame(game);
     const remoteImage = /^https:\/\//i.test(String(game?.image_url || "")) ? String(game.image_url) : "";
-    if (remoteImage || art) {
+    if (remoteImage) {
       const image = document.createElement("img");
-      image.src = remoteImage || art.src;
-      image.alt = `${game.name || art?.alt || "Game"} Cover`;
+      image.src = remoteImage;
+      image.alt = `${game.name || "Game"} Cover`;
       image.loading = "lazy";
       image.referrerPolicy = "no-referrer";
-      let triedLocalFallback = false;
       const handleImageError = () => {
-        if (remoteImage && art && !triedLocalFallback) {
-          triedLocalFallback = true;
-          image.src = art.src;
-          return;
-        }
         image.removeEventListener("error", handleImageError);
         image.remove();
         media.appendChild(element("span", "gaming-game-placeholder", initialsForGame(game?.name)));
@@ -302,8 +283,16 @@
     if (previewImage) {
       const remoteCover = current ? liveCoverForGame(current.name) : "";
       const fallbackCover = /^https:\/\//i.test(String(fallback?.image_url || "")) ? String(fallback.image_url) : "";
-      const nextSrc = remoteCover || fallbackCover || "/assets/img/home-v116/stream-warzone.webp";
-      if (previewImage.getAttribute("src") !== nextSrc) previewImage.src = nextSrc;
+      const nextSrc = remoteCover || (isLive ? fallbackCover : "");
+      if (nextSrc) {
+        if (previewImage.getAttribute("src") !== nextSrc) previewImage.src = nextSrc;
+        previewImage.alt = `${current?.name || fallback?.name || "Aktuelles Game"} Cover`;
+        previewImage.hidden = false;
+      } else {
+        previewImage.hidden = true;
+        previewImage.removeAttribute("src");
+        previewImage.alt = "";
+      }
     }
   }
 

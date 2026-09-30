@@ -65,9 +65,12 @@ function renderTikTokConfirmation(d){
 
 async function loadTikTok(){
   const d=await CFS.json('/api/creator/tiktok/status');currentTikTok=d;
-  ttStatus.textContent=d.connected?'VERBUNDEN':'OFFLINE';
-  ttText.textContent=d.connected?'Dein persönlicher TikTok-Account ist mit diesem Creator-Konto verbunden.':'Verbinde deinen eigenen TikTok-Account.';
-  ttConnect.hidden=d.connected;ttSync.hidden=!d.connected;ttDisconnect.hidden=!d.connected;
+  const betaBlocked=d?.beta_access?.required===true&&d?.beta_access?.allowed!==true;
+  ttStatus.textContent=betaBlocked?'BETA AUSSTEHEND':(d.connected?'VERBUNDEN':'OFFLINE');
+  ttText.textContent=betaBlocked
+    ?(d?.beta_access?.email_verified===false?'E-Mail zuerst bestätigen; danach kann der cfs_zockt Admin TikTok freigeben.':'TikTok wartet auf deine Beta-Freigabe im Admin Control.')
+    :(d.connected?'Dein persönlicher TikTok-Account ist mit diesem Creator-Konto verbunden.':'Verbinde deinen eigenen TikTok-Account.');
+  ttConnect.hidden=d.connected||betaBlocked;ttSync.hidden=!d.connected;ttDisconnect.hidden=!d.connected;
   ttFollowers.textContent=d.connected?Number(d.profile?.follower_count||0).toLocaleString('de-DE'):'–';
   ttLikes.textContent=d.connected?Number(d.profile?.likes_count||0).toLocaleString('de-DE'):'–';
   ttVideos.textContent=d.connected?Number(d.profile?.video_count||0).toLocaleString('de-DE'):'–';

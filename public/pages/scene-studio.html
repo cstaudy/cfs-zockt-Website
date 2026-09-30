@@ -41,24 +41,37 @@
 </header>
 <main class="container scene-shell">
 
-<section class="creator-tool-entry" aria-label="Scene Composer Umzug">
-  <div class="creator-tool-entry-head"><div><span class="creator-tool-kicker">NEUER HAUPTARBEITSPLATZ</span><strong>Scene Composer ist jetzt direkt im CFS Stream Studio integriert.</strong><p>Diese Seite bleibt vorerst als kompatibler Editor erhalten. Neue Streams baust du am schnellsten im Stream Studio mit Scenes, Quellen, Übergängen, Preview und Program an einem Ort.</p></div><span class="creator-tool-status workspace">MIGRATION</span></div>
-  <div class="creator-tool-entry-actions"><a class="btn primary" href="/pages/stream-studio.html#scene-composer">SCENE COMPOSER IM STREAM STUDIO</a></div>
-</section>
-
-<section class="creator-tool-entry" data-tool-entry="scene-studio" aria-label="Scene Studio Einstieg">
+<section class="creator-tool-entry scene-routing-card" aria-label="Scene Studio Einordnung">
   <div class="creator-tool-entry-head">
-    <div><span class="creator-tool-kicker">DEIN EINSTIEG</span><strong>Mehrere veröffentlichte Widgets werden zu einer Stream-Szene.</strong><p>Baue zuerst deine Widgets, kombiniere sie hier für TikTok Vertical oder 16:9 und veröffentliche anschließend eine stabile Output-URL.</p></div>
-    <span class="creator-tool-status workspace">CREATOR TOOL</span>
+    <div>
+      <span class="creator-tool-kicker">02 · GESTALTEN · KOMPATIBILITÄT</span>
+      <strong>Neue Scenes baust du im CFS Stream Studio.</strong>
+      <p>Scene Composer ist jetzt direkt im CFS Stream Studio integriert. Dieses Scene Studio bleibt als kompatibler Direkt-Editor für bestehende Scene-Outputs erhalten.</p>
+    </div>
+    <span class="creator-tool-status workspace">DIREKT-EDITOR</span>
   </div>
   <div class="creator-tool-path">
     <article><b>01</b><span><strong>Widgets vorbereiten</strong><small>Nur veröffentlichte Widgets stehen in der Scene-Library bereit.</small></span></article>
-    <article><b>02</b><span><strong>Scene bauen</strong><small>Format, Position, Ebenen, Übergang, Skalierung und Sichtbarkeit festlegen.</small></span></article>
-    <article><b>03</b><span><strong>Output veröffentlichen</strong><small>Eine stabile Scene-URL für deinen Stream erzeugen.</small></span></article>
+    <article><b>02</b><span><strong>Normaler Weg: Stream Studio</strong><small>Scenes, Quellen, Ebenen, Übergang, Skalierung, Preview und Program an einem Ort.</small></span></article>
+    <article><b>03</b><span><strong>Direkt-Editor nur bei Bedarf</strong><small>Bestehende Scene-Outputs hier gezielt bearbeiten oder veröffentlichen.</small></span></article>
   </div>
-  <div class="creator-tool-entry-actions"><a class="btn primary" href="/pages/widget-studio.html">WIDGETS ÖFFNEN</a><a class="btn" href="/pages/launcher.html">LAUNCHER</a></div>
+  <div class="creator-tool-entry-actions">
+    <a class="btn primary" href="/pages/stream-studio.html#scene-composer">ZUM SCENE COMPOSER</a>
+    <a class="btn" href="/pages/widget-studio.html">WIDGETS ÖFFNEN</a>
+  </div>
 </section>
-<section class="scene-hero"><div><div class="scene-kicker">UNIVERSAL OUTPUT · V20</div><h1>BAU DEINEN<br><span>STREAM.</span></h1><p>Kombiniere veröffentlichte Widgets zu einer kompletten TikTok- oder 16:9-Szene. Wähle Schnitt, Fade, Dissolve, Slide oder Zoom und veröffentliche anschließend eine stabile Output-URL.</p></div><div class="scene-hero-actions"><button class="btn primary" id="newVerticalScene">+ TIKTOK SCENE</button><button class="btn" id="newLandscapeScene">+ 16:9 SCENE</button></div></section>
+
+<section class="scene-hero scene-hero-compact">
+  <div>
+    <div class="scene-kicker">SCENE STUDIO · DIREKT-EDITOR</div>
+    <h1>SCENES DIREKT<br><span>BEARBEITEN.</span></h1>
+    <p>Für bestehende Scene-Outputs: Widget-Positionen, Format, Ebenen und Übergänge ändern und anschließend bewusst veröffentlichen.</p>
+  </div>
+  <div class="scene-hero-actions">
+    <button class="btn primary" id="newVerticalScene">+ VERTIKALE SCENE</button>
+    <button class="btn" id="newLandscapeScene">+ 16:9 SCENE</button>
+  </div>
+</section>
 <section class="scene-workspace">
 <aside class="scene-sidebar panel"><div class="scene-side-head"><div><span>MEINE SCENES</span><strong id="sceneCount">0</strong></div><button id="refreshScenes">↻</button></div><div id="sceneList" class="scene-list"></div></aside>
 <section class="scene-editor panel"><div class="scene-empty" id="sceneEmpty"><strong>NOCH KEINE SCENE AUSGEWÄHLT.</strong><p>Erstelle eine TikTok-Vertical- oder Landscape-Scene und füge veröffentlichte Widgets hinzu.</p></div><div id="sceneEditor" hidden>

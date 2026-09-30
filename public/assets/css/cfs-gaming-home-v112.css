@@ -531,3 +531,51 @@ body.cfs-gaming-home-v116 .gaming-live-title .gaming-live-dot.is-unknown{
   background:#19bfff;
   box-shadow:0 0 12px rgba(25,191,255,.65)
 }
+
+/* v156: ruhigerer, verständlicher Startseiten-Einstieg ohne statische Game-Werbebilder */
+body.cfs-gaming-home-v116 .gaming-live-visual-session{
+  isolation:isolate;
+  background:
+    radial-gradient(circle at 50% 38%,rgba(0,181,255,.16),transparent 34%),
+    linear-gradient(145deg,#061a2d,#020914 72%);
+}
+body.cfs-gaming-home-v116 .gaming-live-visual-placeholder{
+  position:absolute;inset:0;z-index:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+  color:#dff8ff;text-align:center;text-shadow:0 0 24px rgba(0,203,255,.28)
+}
+body.cfs-gaming-home-v116 .gaming-live-visual-placeholder:before{
+  content:"";position:absolute;width:118px;height:118px;border:1px solid rgba(39,203,255,.22);border-radius:50%;
+  box-shadow:0 0 40px rgba(0,145,255,.08),inset 0 0 32px rgba(0,174,255,.06)
+}
+body.cfs-gaming-home-v116 .gaming-live-visual-placeholder span{position:relative;font-family:Impact,"Arial Black",sans-serif;font-size:42px;font-style:italic;letter-spacing:.08em;color:#19aaff}
+body.cfs-gaming-home-v116 .gaming-live-visual-placeholder strong{position:relative;color:#8fcce6;font-size:8px;letter-spacing:.22em}
+body.cfs-gaming-home-v116 .gaming-live-visual-session>img{position:absolute;inset:0;z-index:1;width:100%;height:100%;object-fit:cover}
+body.cfs-gaming-home-v116 .gaming-live-visual-session>img[hidden]{display:none!important}
+body.cfs-gaming-home-v116 .gaming-live-visual-session:after{z-index:2}
+
+body.cfs-gaming-home-v116 .gaming-schedule-card{display:flex;flex-direction:column;min-height:190px}
+body.cfs-gaming-home-v116 .gaming-schedule-icon{
+  min-height:74px;display:grid;place-items:center;margin:12px 12px 0;border:1px solid rgba(14,158,212,.28);border-radius:8px;
+  background:radial-gradient(circle at 50% 45%,rgba(0,183,255,.14),transparent 55%),rgba(4,21,36,.74);
+  color:#53e7ff;font-size:30px;line-height:1;text-shadow:0 0 16px rgba(0,210,255,.32)
+}
+body.cfs-gaming-home-v116 .gaming-schedule-copy{padding:12px 13px 13px}
+body.cfs-gaming-home-v116 .gaming-schedule-copy>strong{font-size:10px;letter-spacing:.02em}
+body.cfs-gaming-home-v116 .gaming-schedule-copy p{min-height:0;margin:6px 0 8px;color:#c4d2dd;font-size:9px;line-height:1.5}
+body.cfs-gaming-home-v116 .gaming-schedule-note{margin-top:0;color:#79c9f0;font-size:7.5px;line-height:1.45}
+body.cfs-gaming-home-v116 .gaming-schedule-top{height:34px;padding-inline:12px;font-size:7.5px}
+body.cfs-gaming-home-v116 .gaming-schedule-top strong{font-size:7.5px}
+
+/* Textlesbarkeit der wichtigsten Einstiegsbereiche leicht anheben. */
+body.cfs-gaming-home-v116 .gaming-hero-copy>p{font-size:13.5px;line-height:1.58}
+body.cfs-gaming-home-v116 .gaming-section-head-split>p{font-size:12.5px;line-height:1.58}
+body.cfs-gaming-home-v116 .gaming-offer-grid p{font-size:10px;line-height:1.6}
+body.cfs-gaming-home-v116 .gaming-access-copy p{font-size:11px;line-height:1.58}
+
+@media(max-width:680px){
+  body.cfs-gaming-home-v116 .gaming-schedule-card{display:grid;grid-template-columns:82px 1fr;grid-template-rows:34px 1fr;min-height:0}
+  body.cfs-gaming-home-v116 .gaming-schedule-top{grid-column:1/-1}
+  body.cfs-gaming-home-v116 .gaming-schedule-icon{grid-column:1;grid-row:2;min-height:100%;margin:0;border-width:0 1px 0 0;border-radius:0;font-size:26px}
+  body.cfs-gaming-home-v116 .gaming-schedule-copy{grid-column:2;grid-row:2;padding:13px}
+  body.cfs-gaming-home-v116 .gaming-schedule-copy p{font-size:9.5px}
+}
