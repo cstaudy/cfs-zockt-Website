@@ -1,3 +1,131 @@
+# PROJECT CURRENT STATE — v152
+
+Aktiver kumulativer Stand: **v152**. v152 konsolidiert den vollständigen v151-Updatebestand mit der Private-Beta Legal-/Privacy-Härtung. Backend **3.18.3**, Schema **72**, Launcher **0.47.24**. Das Paket ist ein kumulatives Updatepaket, kein Full Project.
+
+Wichtig: `CFS_COMMERCIAL_MODE=false` für den aktuellen privaten kostenlosen Beta-Betrieb gesetzt lassen.
+
+---
+
+# v151 — E-Mail-only Admin Control / geschlossene TikTok + Twitch Beta
+
+**Aktiver Stand: v151**
+**Backend: 3.18.2**
+**Schema Generation: 72**
+**Launcher: 0.47.24**
+
+- Admin Control wird ausschließlich über `CFS_ADMIN_EMAILS` zugeordnet. Der alte Creator-ID-/Legacy-Owner-Fallback erteilt keine Admin-Rechte mehr.
+- Das konfigurierte Admin-Konto kann TikTok/Twitch und die zugehörigen Widgets ohne Beta-Freigabe testen.
+- Neue Creator-Registrierungen werden während der geschlossenen Provider-Beta automatisch als `pending` geführt.
+- Im Admin Control kann nach frischer Passwort-Re-Authentifizierung direkt **TIKTOK + TWITCH BETA FREIGEBEN** gewählt werden.
+- Bei aktivierter E-Mail-Verifikation darf ein Creator erst nach bestätigter E-Mail als Beta `active` geschaltet werden.
+- TikTok/Twitch OAuth, Sync, Launcher-OAuth-Handoff, Widget-Erstellung/-Publish/-Duplikation, One-Click OBS-Install und öffentliche Provider-Widget-Runtime sind serverseitig Beta-gated.
+- Twitch EventSub-Reconcile und eingehende Twitch-Events ignorieren nicht freigeschaltete bzw. pausierte Creator.
+- Website, Account und Launcher zeigen `pending`/`paused` sichtbar; Provider-Connect-Buttons sind bis zur Freigabe deaktiviert.
+- YouTube bleibt in v151 bewusst außerhalb dieser geschlossenen Provider-Beta.
+- Automatisierter v151-Beta-Gate: **20/20 PASS**; kompletter `npm run release:v151`: **PASS**.
+- Reale TikTok-/Twitch-/OBS-/Windows-/Multi-Creator-/Soak-Abnahme bleibt wie geplant für die spätere gebündelte Acceptance offen.
+
+Render-Konfiguration für die Testphase:
+
+```env
+CFS_ADMIN_EMAILS=DEINE_LOGIN_EMAIL
+CFS_PROVIDER_BETA_REQUIRED=true
+CFS_PROVIDER_BETA_PROVIDERS=tiktok,twitch
+```
+
+Details: `TECHNIK-v151.md`, `CREATOR-SUITE-COMPLETION-v151.md` und `SECURITY-BASELINE-v151.md`.
+
+---
+
+# v150 — Website Hardening / Test-Infrastruktur-Festigung
+
+**Historischer Stand: v150**
+**Backend: 3.18.1**
+**Schema Generation: 72**
+**Launcher: 0.47.23**
+
+- Website-/Backend-Härtung ergänzt: TRACE/TRACK/CONNECT werden abgewiesen, Header-Anzahl begrenzt, DNS-Prefetch deaktiviert und Rate-Limit-Antworten sind explizit `no-store`.
+- SEO-/Social-Metadaten der Startseite und der öffentlichen Merch-Seite wurden vervollständigt; Sitemap und kanonische Route für Merch sind synchronisiert.
+- Sicherheit/Status sind auf der öffentlichen Startseite direkt erreichbar.
+- Aktive Regressionstests wurden von veralteten, fehlenden Legacy-Dateien entkoppelt und auf die aktuelle Sicherheits-/Funktionsbasis konsolidiert.
+- Bestehende Security-, Auth-, Session-, CSRF-, MFA-, Passkey-, Recovery-, Provider-, Widget-, Launcher-, Scene-, Stream- und Multistream-Gates bleiben Bestandteil der aktiven Prüfkette.
+- YouTube v149 bleibt code-seitig vorhanden, wird aber auf Wunsch aktuell nicht weiter ausgebaut.
+- Externe Live-Smokes gegen `cfs-zockt.de` und ein Online-`npm audit` konnten in der isolierten Arbeitsumgebung wegen fehlender externer Erreichbarkeit/DNS nicht verifiziert werden; diese Punkte bleiben für die spätere reale Acceptance offen.
+
+Details: `TECHNIK-v150.md`, `CREATOR-SUITE-COMPLETION-v150.md` und `SECURITY-BASELINE-v150.md`.
+
+# v149 — YouTube Creator Integration / Provider-Trennung
+
+**Aktiver Stand: v149**
+**Backend: 3.18.0**
+**Schema Generation: 72**
+**Launcher: 0.47.23**
+
+- YouTube ist jetzt als dritter creator-spezifischer Provider code-seitig integriert: OAuth, verschlüsselte Token, Kanalzuordnung, Refresh, Disconnect, aktiver LIVE-Broadcast, Live-Chat, Mitgliedschaften und Super Chats.
+- Es wird ausschließlich `youtube.readonly` angefordert; v149 besitzt keine schreibende YouTube-Broadcast-/Kanalsteuerung.
+- YouTube-Widgets sind strikt von TikTok- und Twitch-Widgets getrennt und erscheinen nur nach passender Provider-Verbindung.
+- Launcher und Integrations-Hub können YouTube verbinden/synchronisieren/trennen; Stream Startcheck akzeptiert TikTok ODER Twitch ODER YouTube.
+- TikTok, Twitch, YouTube und OBS bleiben code-seitig getrennt; reale Provider-/Windows-/OBS-/Soak-Abnahmen werden wie beschlossen erst nach Abschluss der Feature-Blöcke gebündelt durchgeführt.
+- Nächster Feature-Block: echte Multistream-Ziele an den vorhandenen lokalen Multistream-Kern anbinden, danach Creator-Suite Feature Freeze vorbereiten.
+
+Details: `TECHNIK-v149.md` und `CREATOR-SUITE-COMPLETION-v149.md`.
+
+---
+
+# v148 — Twitch Runtime Hardening / Acceptance Readiness
+
+**Aktiver Stand: v148**
+**Backend: 3.17.0**
+**Schema Generation: 71**
+**Launcher: 0.47.22**
+
+- Twitch ist code-seitig als eigener Provider bis zur realen Acceptance vorbereitet: OAuth, Token-Lifecycle, EventSub, Chat, LIVE/Offline, Follow, Subs/Gift-Subs, Cheers/Bits und providerreine Widgets.
+- EventSub wird jetzt mit Twitch remote reconciled; vorhandene aktive Abos werden übernommen, Duplikate und alte Callback-Abos bereinigt.
+- Twitch LIVE-State wird zusätzlich über die Streams API synchronisiert, sodass bereits laufende Streams beim Verbinden erkannt werden.
+- Revocations und Runtime-Fehler werden creator-spezifisch verarbeitet; Authorization-Revoke entfernt die gespeicherten Tokens.
+- Ein 15-Minuten-Self-Heal validiert verbundene Twitch-Creator und repariert fehlende EventSub-Subscriptions.
+- Twitch gilt erst nach echten Provider-/Windows-/OBS-/LIVE-/Soak-Tests als produktionsabgenommen.
+- YouTube bleibt in v148 unverändert und folgt erst nach Abschluss der Twitch-Acceptance.
+
+Details: `TECHNIK-v148.md` und `CREATOR-SUITE-COMPLETION-v148.md`.
+
+---
+
+# v143 — Twitch Creator OAuth & Token Lifecycle / Launcher 0.47.19
+
+**Launcher: 0.47.19**
+
+Neu: Twitch besitzt jetzt einen echten Creator-OAuth-Account-Link mit verschlüsseltem Token-Lifecycle, Refresh, regelmäßiger Validierung, Profil-Sync und Disconnect/Revoke. Twitch EventSub/Chat und echte Provider-Abnahme bleiben offen. Details: `TECHNIK-v143.md` und `CREATOR-SUITE-COMPLETION-v143.md`.
+
+---
+
+# v142 — Stream-Ready Setup & One-Click OBS Widget / Launcher 0.47.19
+
+**Launcher: 0.47.19**
+
+- Der Erstnutzer-Flow wurde gegen den realen Creator-Pfad auditiert: Account → TikTok → Launcher → OBS → veröffentlichtes Widget.
+- Neuer geschützter `/api/creator/stream-ready`-Status fasst diese fünf Voraussetzungen zusammen und liefert den nächsten konkreten Setup-Schritt.
+- Das Dashboard zeigt einen **STREAM STARTCHECK** statt den Creator nach dem ersten Widget ohne Integrationsstatus allein zu lassen.
+- Veröffentlichte Widgets können über **IN AKTUELLE OBS-SZENE EINFÜGEN** an den verbundenen Launcher übergeben werden; der Launcher legt/aktualisiert die OBS Browser Source über OBS WebSocket 5.
+- Die OBS-Aktion ist least-privilege: `CreateInput` ist explizit erlaubt, Streaming-Start-Kommandos wie `StartStream` bleiben gesperrt.
+- OBS-Passwort bleibt lokal verschlüsselt. Zusätzlich wird die private Widget-Source-URL **nicht** in der Cloud-Action-Queue persistiert; der authentifizierte Launcher löst sie erst aus seiner Creator-Bibliothek auf.
+- OBS Readiness wurde vom alten „späterer WebSocket-Ausbau“-Text auf **code-seitig vorhanden / reale Acceptance offen** korrigiert.
+- `creator-suite142:check` ist lokal grün. Reale Windows-/OBS-/TikTok-/Netz-/Soak-Abnahme bleibt weiterhin erforderlich und wird nicht als bestanden behauptet.
+
+# v141 — OBS WebSocket Integration / Launcher 0.47.18
+
+**Launcher: 0.47.18**
+
+- OBS WebSocket 5 is now implemented in the Launcher main process with password authentication, controlled reconnect and local-only plaintext WebSocket policy.
+- OBS credentials stay local and encrypted through Electron safeStorage; Bridge/renderer status contains no password value.
+- OBS control is restricted to an explicit request allowlist for version/scenes/browser-source settings; arbitrary remote OBS requests are not exposed.
+- Launcher can read/switch program scenes and update OBS Browser Source URLs; token-bearing fragment URLs are redacted in diagnostic/action output.
+- Launcher navigation is grouped into Start, LIVE & Automation, Produktion and System; OBS Control combines WebSocket control with the existing Browser Source Doctor.
+- TikTok LIVE keeps the existing third-party TikTool path and now exposes bounded connection/reconnect/event health metadata without inventing viewers/likes/shares.
+- Twitch and YouTube receive only an OAuth/token/security foundation. Both remain `oauth_implemented=false` and `production_ready=false`; no finished account connection is claimed.
+- New protected `/api/creator/integration-capabilities` keeps the Creator UI honest about code-ready vs. foundation-only integrations.
+- Local `creator-suite141:check` and `release:v141` pass. Real Windows/OBS/TikTok/Provider/Soak acceptance remains open.
+
 # v140 — Widget Studio & Launcher Code Completion / Launcher 0.47.17
 
 **Launcher: 0.47.17**
@@ -1585,3 +1713,6 @@ Status: `CODE_COMPLETE / LOCAL_CONTRACTS_PASS / EXTERNAL_ACCEPTANCE_OPEN`
 - Recovered incidents must cross-link to the current evidence snapshot and latest recovery history row.
 - Support exports carry the correlation verdict; export integrity recomputes it and the export seal binds it. Missing live evidence is explicit `unavailable`.
 - Local contract: Support Correlation v158: 12/12 PASS
+
+## v147
+Provider-Widget-Taxonomie gehärtet: TikTok/Twitch/OBS werden in Katalog, Suche, Kategorien und serverseitiger Definition strikt getrennt. Backend 3.16.1, Launcher 0.47.22, Schema 70. YouTube folgt separat.

@@ -1,14 +1,119 @@
+# cfs_zockt — Creator Suite v152
+
+Aktiver Schwerpunkt: **konsolidierte Private-Beta Legal-/Privacy-Härtung auf dem v151-Code-Stand**. Das Paket enthält den kompletten kumulativen v151-Updatebestand plus die neuesten Legal-/Privacy-Dateien jeweils nur einmal.
+
+- Backend: **3.18.3**
+- Schema Generation: **72**
+- Launcher: **0.47.24**
+- Admin-Zuordnung: **nur `CFS_ADMIN_EMAILS`**
+- Geschlossene Provider-Beta: **TikTok + Twitch**
+- Kommerzieller Modus: **standardmäßig aus (`CFS_COMMERCIAL_MODE=false`)**
+- Legal/Privacy Gate: `npm run legalbeta:check`
+- Release Gate: `npm run release:v152`
+
+Registrierung dokumentiert Nutzungsbedingungen, Datenschutzhinweis, Beta-Hinweis und 18+-Bestätigung. Bezahlte Checkouts bleiben in der privaten Beta serverseitig deaktiviert.
+
+Siehe `TECHNIK-v152.md`, `CREATOR-SUITE-COMPLETION-v152.md`, `SECURITY-BASELINE-v152.md` und `LEGAL-PRIVACY-PRIVATE-BETA.md`.
+
+---
+
+# cfs_zockt — Creator Suite v151
+
+Aktiver Schwerpunkt: **geschlossene TikTok-/Twitch-Provider-Beta mit E-Mail-only Admin Control**. Der eigene cfs_zockt Admin-Account darf Provider und Widgets direkt testen; andere registrierte Creator warten zunächst auf eine explizite Beta-Freigabe.
+
+- Backend: **3.18.2**
+- Schema Generation: **72**
+- Launcher: **0.47.24**
+- Admin-Zuordnung: **nur `CFS_ADMIN_EMAILS`**
+- Geschlossene Provider-Beta: **TikTok + Twitch**
+- Provider Beta Gate: `npm run provider-beta151:check` → **20/20 PASS**
+- Release Gate: `npm run release:v151` → **PASS**
+
+Neue Creator werden automatisch als Beta `pending` geführt. Nach frischer Admin-Passwortbestätigung kann im Admin Control **TIKTOK + TWITCH BETA FREIGEBEN** gewählt werden. Bis dahin blockiert das Backend OAuth, Sync, Launcher-Handoff und providergebundene Widget-Runtime; reine UI-Manipulation kann die Sperre nicht umgehen.
+
+YouTube bleibt in diesem Block unverändert und gehört nicht zur geschlossenen v151-Provider-Beta. Reale Provider-/Windows-/OBS-/Soak-Tests folgen weiterhin gesammelt nach Abschluss der Feature-Blöcke.
+
+Siehe `TECHNIK-v151.md`, `CREATOR-SUITE-COMPLETION-v151.md` und `SECURITY-BASELINE-v151.md`.
+
+---
+
+# cfs_zockt — Creator Suite v150
+
+Historischer Schwerpunkt: Website Hardening und belastbare aktive Testkette.
+
+- Backend: **3.18.1**
+- Schema Generation: **72**
+- Launcher: **0.47.23**
+- Website Hardening Gate: `npm run website150:check`
+- Aktiver Projekt-Regressionstest: `npm run project:check`
+- Release Gate: `npm run release:v150`
+
+Siehe `TECHNIK-v150.md`, `CREATOR-SUITE-COMPLETION-v150.md` und `SECURITY-BASELINE-v150.md`.
+
+# cfs_zockt — Creator Suite v149
+
+Aktiver Integrationsstand: TikTok, Twitch, YouTube und OBS sind code-seitig als getrennte Creator-Provider/Integrationen vorhanden. **YouTube v149** ergänzt OAuth mit Offline-Refresh, verschlüsselte Tokens, Kanalzuordnung, LIVE-/Live-Chat-Runtime, Mitgliedschafts-/Super-Chat-Events und einen strikt YouTube-spezifischen Widget-Katalog.
+
+Der YouTube-Block fordert nur `youtube.readonly`. Stream-/Broadcast-Management und echte Multistream-Ziele folgen als eigener nächster Feature-Block. Reale Provider-, Windows-, OBS-, Reconnect- und Soak-Abnahmen werden erst nach dem Feature-Freeze gebündelt durchgeführt; `production_ready` bleibt bis dahin bewusst `false`.
+
+- Backend: **3.18.0**
+- Schema Generation: **72**
+- Launcher: **0.47.23**
+- YouTube Integration Gate: `npm run youtube149:check`
+- Creator Suite Aggregate: `npm run creator-suite149:check`
+- Release Gate: `npm run release:v149`
+
+Siehe `TECHNIK-v149.md` und `CREATOR-SUITE-COMPLETION-v149.md`.
+
+---
+
+# cfs_zockt — Creator Suite v148
+
+## Aktueller Integrationsstand
+
+Twitch ist code-seitig bis zur realen Provider-Acceptance vorbereitet: creator-spezifischer OAuth-/Token-Lifecycle, EventSub für LIVE/Offline, Follow, Subs/Gift-Subs, Cheer/Bits und Chat, providerreine Widgets, Remote-Reconciliation, Revocation-Handling, initialer LIVE-State-Sync und periodischer Self-Heal.
+
+`production_ready` bleibt bewusst false, bis reale Twitch-Accounts, echte LIVE-Events, OBS/Windows und Soak-Tests bestanden sind. YouTube wird in v148 noch nicht funktional erweitert.
+
+Siehe `TECHNIK-v148.md` und `CREATOR-SUITE-COMPLETION-v148.md`.
+
+---
+
 # cfs_zockt Creator Suite
 
 Aktueller kumulativer Projektstand der cfs_zockt Website, Creator Suite und des Windows Launchers.
 
 ## Aktuelle Versionen
 
-- Backend: **3.12.0**
-- Launcher: **0.47.17**
-- Automatisierte Release-/Acceptance-/Stress-/OBS-Simulationen: **bestanden**
-- Externe Production-/TLS-/Hardware-/echte LIVE-Gates: **noch offen**
+- Backend: **3.17.0**
+- Schema: **71**
+- Launcher: **0.47.22**
+- Automatisierte lokale Release-/Regression-/Security-Gates: **bestanden**
+- Externe Production-/Windows-/OBS-/echte LIVE-/Multi-Creator-Gates: **noch offen**
 
+## Provider Widgets + Twitch Chat v146
+
+- TikTok verbunden → TikTok-Widget-Katalog.
+- Twitch verbunden → Twitch-Widget-Katalog.
+- Beide verbunden → beide Provider-Bereiche.
+- Kein Provider verbunden → nur providerunabhängige OBS-/allgemeine Widgets.
+- Launcher öffnet `TIKTOK WIDGETS` bzw. `TWITCH WIDGETS` direkt im passenden gefilterten Studio-Bereich.
+- Server erzwingt dieselbe Provider-Zuordnung auch bei direkten API-Requests.
+- Twitch EventSub speist LIVE-/Follow-/Sub-/Cheer- und Chat-Widgets; echte Provider-Abnahme bleibt erforderlich.
+- Multi-Chat führt aktuelle TikTok- und Twitch-Session-Events providergekennzeichnet zusammen.
+
+## Stream-Ready Creator Flow v142
+
+Launcher **0.47.19** schließt zwei konkrete UX-Lücken im Erstnutzer-Flow: Das Dashboard prüft jetzt Account, TikTok, Launcher, OBS WebSocket und ein veröffentlichtes Widget als gemeinsamen **STREAM STARTCHECK**. Im Widget Studio kann ein veröffentlichtes Widget anschließend per **IN AKTUELLE OBS-SZENE EINFÜGEN** direkt als OBS Browser Source angelegt bzw. aktualisiert werden.
+
+Die private Widget-Source-URL wird dabei nicht in der Cloud-Action-Queue gespeichert. Der authentifizierte Launcher löst sie aus der Creator-Bibliothek auf und übergibt sie lokal an OBS. OBS-Credentials bleiben weiterhin ausschließlich lokal. Reale Windows-/OBS-/TikTok-Acceptance bleibt offen. Details: `TECHNIK-v142.md` und `CREATOR-SUITE-COMPLETION-v142.md`.
+
+
+## Creator Suite Integration Pass v141
+
+Launcher **0.47.18** ergänzt den geplanten OBS-WebSocket-Integrationspunkt: lokale verschlüsselte OBS-Credentials, kontrollierter Reconnect, Szenen lesen/wechseln und Browser-Source-URLs aktualisieren. Der Launcher begrenzt OBS-Kommandos auf eine feste Allowlist; reale Windows-/OBS-Abnahme bleibt offen.
+
+TikTok LIVE besitzt zusätzliche Health-/Reconnect-Sichtbarkeit. Twitch und YouTube sind in v141 ausschließlich als OAuth-/Token-**Foundation** vorbereitet und werden nicht als fertig verbunden dargestellt. Details: `TECHNIK-v141.md` und `CREATOR-SUITE-COMPLETION-v141.md`.
 
 
 ## CUT Reference Learning Foundation v47
@@ -45,7 +150,7 @@ Vor der echten R59–R67-Abnahme wird der Release jetzt auf einen explizit verif
 
 ## Aktueller Schwerpunkt
 
-Der aktuelle Ausbau arbeitet die Produktbereiche **nacheinander bis zum Feature-Freeze** ab. Widget Studio, Launcher, Admin und CFS Stream Studio sind abgeschlossen und feature-frozen. CUT Studio ist jetzt im v47-Reference-Learning-Ausbau; der Lernkern ist multi-game und provider-neutral. Sicherheit, klare Zustände und bestehende Backend-/Runtime-Verträge haben dabei Vorrang vor parallelen neuen Feature-Baustellen.
+Der aktuelle Creator-Suite-Ausbau arbeitet die noch offenen Integrationen nacheinander bis zum Feature-Freeze ab: OBS WebSocket ist code-seitig integriert, TikTok LIVE wird real abgenommen, danach folgen Twitch OAuth, YouTube OAuth und die echten Multistream-Ziele. Widget Studio und Launcher Core bleiben feature-frozen; Sicherheit, klare Zustände und bestehende Backend-/Runtime-Verträge haben Vorrang vor zusätzlichem Feature-Ausbau.
 
 Bereits kumulativ enthalten:
 
@@ -298,3 +403,6 @@ npm run github:push-plan
 Der aktuelle Bootstrap steht in `GITHUB_REPOSITORY_BOOTSTRAP_PASS21.md`. Die älteren V40/V41-GitHub-Dokumente bleiben als historische Milestone-Dokumente erhalten.
 
 Sicherheitsprobleme sollen nicht als öffentliche Issues gepostet werden; siehe `.github/SECURITY.md`.
+
+### v147 Provider-Sortierung
+Widget Studio trennt TikTok-, Twitch- und allgemeine OBS-Widgets jetzt auch in sichtbaren Kategorien/Suchhilfen strikt. Ein serverseitiger Taxonomie-Guard blockiert falsche Provider-Metriken/Eventtypen.

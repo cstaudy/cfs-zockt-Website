@@ -39,9 +39,9 @@ services:
       - key: CFS_BILLING_GRACE_DAYS
         value: "3"
       - key: CFS_LAUNCHER_BUILD_TARGET_VERSION
-        value: 0.47.17
+        value: 0.47.24
       - key: CFS_RELEASE_EVIDENCE_VERSION
-        value: 0.47.17
+        value: 0.47.24
       - key: CFS_LAUNCHER_RELEASE_REPO
         value: cstaudy/CFS-TikTok-Backend
       - key: CFS_ALLOW_LEGACY_VERIFICATION_FLAGS
@@ -53,12 +53,26 @@ services:
         sync: false
       - key: TIKTOK_CLIENT_SECRET
         sync: false
-      - key: CFS_LAUNCHER_API_KEY
+      - key: TWITCH_CLIENT_ID
         sync: false
-      - key: CFS_ADMIN_CREATOR_IDS
+      - key: TWITCH_CLIENT_SECRET
+        sync: false
+      - key: TWITCH_REDIRECT_URI
+        value: https://cfs-zockt.de/auth/twitch/callback
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: YOUTUBE_REDIRECT_URI
+        value: https://cfs-zockt.de/auth/youtube/callback
+      - key: CFS_LAUNCHER_API_KEY
         sync: false
       - key: CFS_ADMIN_EMAILS
         sync: false
+      - key: CFS_PROVIDER_BETA_REQUIRED
+        value: "true"
+      - key: CFS_PROVIDER_BETA_PROVIDERS
+        value: tiktok,twitch
       # Independent security secrets. Generate once and keep stable.
       - key: CFS_TOKEN_ENCRYPTION_KEY
         generateValue: true

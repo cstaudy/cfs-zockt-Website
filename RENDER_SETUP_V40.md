@@ -40,17 +40,46 @@ Empfohlen:
 - `APP_BASE_URL=https://...`
 - optional `CFS_WEBAUTHN_RP_ID=cfs-zockt.de` (ohne Protokoll; standardmäßig Host aus `APP_BASE_URL`)
 - `TIKTOK_REDIRECT_URI=https://.../auth/tiktok/callback`
+- `TWITCH_CLIENT_ID=...`
+- `TWITCH_CLIENT_SECRET=...`
+- `TWITCH_REDIRECT_URI=https://cfs-zockt.de/auth/twitch/callback`
+
+Ab v146 fordert die Twitch-Verbindung nur die benoetigten Read-/Event-Rechte an: `moderator:read:followers`, `channel:read:subscriptions`, `bits:read`, `user:read:chat`, `user:bot`, `channel:bot`. `user:write:chat` wird fuer den reinen Chat-Leseweg nicht angefordert. Bereits verbundene Twitch-Creator muessen einmal `TWITCH BERECHTIGEN` ausfuehren, damit die neuen Chat-Rechte erteilt werden.
 - `CFS_STRIPE_PRICE_CREATOR_MONTHLY=price_...`
 - `CFS_STRIPE_PRICE_PRO_MONTHLY=price_...`
 - `CFS_BILLING_GRACE_DAYS=3`
-- `CFS_ADMIN_CREATOR_IDS=...`
-- `CFS_ADMIN_EMAILS=...`
+- `CFS_ADMIN_EMAILS=deine-login-email@example.com`
+- `CFS_PROVIDER_BETA_REQUIRED=true`
+- `CFS_PROVIDER_BETA_PROVIDERS=tiktok,twitch`
+- `CFS_COMMERCIAL_MODE=false` – Privat-Beta: verhindert kostenpflichtigen Checkout, auch wenn Stripe-Secrets versehentlich gesetzt sind
 - `CFS_ACCOUNT_MAIL_MODE=disabled` oder `webhook`
 - bei `webhook`: `CFS_ACCOUNT_MAIL_WEBHOOK_URL=https://...`
 - `CFS_EMAIL_VERIFICATION_REQUIRED=false` bis der Mail-Relay real geprüft ist
-- `CFS_LAUNCHER_BUILD_TARGET_VERSION=0.47.17`
-- `CFS_RELEASE_EVIDENCE_VERSION=0.47.17`
+- `CFS_LAUNCHER_BUILD_TARGET_VERSION=0.47.24`
+- `CFS_RELEASE_EVIDENCE_VERSION=0.47.24`
 - `CFS_LAUNCHER_RELEASE_REPO=cstaudy/CFS-TikTok-Backend`
+
+
+### v151 Admin-Control und geschlossene Provider-Beta
+
+Für die Testphase wird Admin Control ausschließlich über die Login-E-Mail zugeordnet.
+Es gibt keinen Creator-ID-Fallback mehr. Setze auf Render genau deine eigene Login-Adresse:
+
+```env
+CFS_ADMIN_EMAILS=deine-login-email@example.com
+CFS_PROVIDER_BETA_REQUIRED=true
+CFS_PROVIDER_BETA_PROVIDERS=tiktok,twitch
+```
+
+Neue Creator-Registrierungen werden automatisch als `pending` in die Provider-Beta aufgenommen.
+Im Admin Control kann der Admin nach frischer Passwort-Re-Authentifizierung den Status auf
+`active` setzen. Erst dann dürfen diese Creator TikTok/Twitch verbinden, synchronisieren und
+die jeweiligen Provider-Widgets verwenden. `paused` sperrt die Provider-Runtime wieder, ohne
+das Creator-Konto zu löschen. YouTube gehört in v151 bewusst nicht zu dieser geschlossenen
+Provider-Beta.
+
+Wenn E-Mail-Verifikation aktiviert ist, kann eine Beta-Freigabe erst nach bestätigter Creator-
+E-Mail erfolgen; auch die Admin-E-Mail muss dann verifiziert sein.
 
 ## Legacy Verification Flags
 
@@ -160,3 +189,24 @@ npm run deployment:doctor
 ```
 
 `deployment13:check` prüft die Repository-/Blueprint-Struktur. `deployment:doctor` bewertet Lockfiles und – wenn echte Production-Environment-Variablen vorhanden sind – die Laufzeitkonfiguration, ohne Secret-Werte in Reports auszugeben.
+
+
+## YouTube Creator OAuth (v149)
+
+Für die YouTube-Verbindung zusätzlich als Render Environment Variables setzen:
+
+- `GOOGLE_CLIENT_ID` — OAuth 2.0 Web Client ID aus der Google Cloud Console
+- `GOOGLE_CLIENT_SECRET` — ausschließlich als serverseitiges Render Secret
+- `YOUTUBE_REDIRECT_URI=https://cfs-zockt.de/auth/youtube/callback`
+
+In Google Cloud muss dieselbe Redirect-URI exakt beim OAuth Web Client hinterlegt sein. Die Creator Suite fordert für Kanal-, LIVE- und Live-Chat-Widgets nur `https://www.googleapis.com/auth/youtube.readonly` an. Schreib-/Broadcast-Management-Scopes bleiben für diesen Block deaktiviert.
+
+Für externe Creator darf das Google-OAuth-Projekt nicht dauerhaft im Status **Testing** bleiben. Im Testing-Status sind externe Nutzer auf die eingetragenen Testnutzer beschränkt und Refresh-Tokens für nicht nur Profil-/OpenID-Scopes laufen typischerweise nach 7 Tagen ab. Vor einer öffentlichen Creator-Freigabe den OAuth Consent Screen deshalb auf **In Production** stellen und – falls Google es für die verwendeten Scopes verlangt – die OAuth-App-Verifizierung abschließen.
+
+
+
+### v152 Private-Beta Legal / Privacy
+
+Für den aktuellen privaten, kostenlosen Beta-Betrieb muss `CFS_COMMERCIAL_MODE=false` gesetzt bleiben. Damit werden kostenpflichtige Checkouts serverseitig blockiert. Die Registrierung dokumentiert Nutzungsbedingungen, Datenschutzhinweis, Beta-Hinweis und 18+-Bestätigung. Nicht notwendige Funnel-/Merch-Tracking-Speicherungen sind deaktiviert.
+
+Vor einer späteren kommerziellen Freischaltung müssen Preise, Vertragsinformationen, Kündigung/Widerruf, Zahlungsanbieter und die dann zutreffenden Unternehmens-/Impressumsangaben bewusst neu freigegeben werden.

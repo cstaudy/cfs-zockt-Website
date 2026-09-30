@@ -22,3 +22,9 @@ Vor einer breiten Creator-Freigabe bleiben verpflichtend:
 - Replay-Schutz
 - Creator-Zustand und Release-Zustand getrennt sichtbar
 - keine Behauptung `production_ready`, solange externe Gates offen sind
+
+## v148 Zusatzstatus — Twitch Runtime
+Twitch ist code-seitig für reale Provider-Acceptance vorbereitet. Remote EventSub-Reconciliation, LIVE-State-Sync, Revocation-Handling und Self-Heal sind vorhanden. Produktionsfreigabe bleibt bis zu echten Twitch-/OBS-/Windows-/Soak-Tests offen.
+## v149 Zusatzstatus — YouTube Creator Integration
+YouTube ist code-seitig als dritter creator-spezifischer Provider integriert: OAuth Authorization Code Flow mit Offline-Refresh, verschlüsselte Tokens, Kanal-Isolation, aktiver Broadcast-/LIVE-State, adaptives Live-Chat-Polling sowie YouTube-spezifische Chat-, Mitgliedschafts- und Super-Chat-Widgets. Es wird nur `youtube.readonly` angefordert. `production_ready` bleibt bewusst `false`, bis nach dem Feature-Freeze reale Google-/YouTube-, Windows-/OBS-/Reconnect-/Soak-Tests erfolgen.
+

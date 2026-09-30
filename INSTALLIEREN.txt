@@ -1,49 +1,150 @@
-cfs_zockt v140 – kumulatives Updatepaket
+cfs_zockt v151 – kumulatives Updatepaket
 =========================================
 
 WAS DIESES PAKET IST
 --------------------
 Dieses ZIP ist KEIN vollständiger Projekt-Export.
-Es enthält alle bisher neu angelegten oder geänderten Update-Dateien in ihrer
+Es enthält alle bisher im kumulativen Update-Stand geführten Dateien in ihrer
 jeweils neuesten Fassung und baut auf deinem bestehenden cfs_zockt Projekt auf.
 
-V140 SCHWERPUNKT
+
+V151 SCHWERPUNKT
 ----------------
-- Widget Studio Code-Audit abgeschlossen.
-- Launcher-Kern Code-Audit abgeschlossen.
-- Launcher auf 0.47.17 synchronisiert.
-- fehlende Launcher-Runtime-Bausteine ergänzt/gefestigt.
-- Widget Runtime / OBS Browser-Source-Pfad geprüft.
-- Stream-Studio-/Scene-Studio-Testverträge auf aktuellen Protokollstand gebracht.
-- kompletter lokaler Stream-Studio-Aggregatcheck läuft durch.
-- Creator-Suite Release Gate auf v140 aktualisiert.
+- Admin Control wird nur noch über `CFS_ADMIN_EMAILS` zugeordnet; kein Creator-ID-Fallback.
+- eigener cfs_zockt Admin-Account darf TikTok/Twitch ohne Beta-Freigabe testen.
+- neue Creator werden automatisch als Beta `pending` geführt.
+- Admin kann Pending-Creator nach Passwort-Step-up direkt für TikTok + Twitch freigeben.
+- TikTok/Twitch OAuth, Launcher-Handoff, Sync, Widget-Erstellung, OBS-Install und Runtime sind bis zur Freigabe serverseitig gesperrt.
+- Pausierte Beta stoppt Provider-Nutzung, lässt Account und Disconnect bestehen.
+- Website, Account und Launcher zeigen Pending/Paused verständlich an.
+- YouTube bleibt von dieser geschlossenen Provider-Beta unberührt.
+- Backend 3.18.3, Schema Generation 72, Launcher 0.47.24.
+
+V149 SCHWERPUNKT
+----------------
+- YouTube als dritter creator-spezifischer Provider.
+- Google/YouTube OAuth Authorization Code Flow mit Offline-Refresh.
+- Access-/Refresh-Tokens nur serverseitig verschlüsselt.
+- eindeutige Kanalzuordnung pro cfs_zockt-Creator.
+- Kanalprofil, aktiver LIVE-Broadcast und eigener YouTube-LIVE-State.
+- Live-Chat mit adaptivem YouTube-Polling.
+- YouTube Chat, Mitgliedschaften und Super Chats/Super Sticker normalisiert.
+- eigener YouTube-Widget-Bereich; keine TikTok-/Twitch-Begriffsmischung.
+- Launcher 0.47.24 mit geschlossener TikTok-/Twitch-Provider-Beta und Admin-Freigabe.
+- Backend 3.18.0, Schema Generation 72.
+- Reale Provider-/Windows-/OBS-/Soak-Abnahme wird erst nach Feature-Freeze durchgeführt.
 
 INSTALLATION
 ------------
 1. ZIP entpacken.
-2. Den INHALT des Ordners in dein bestehendes Projekt kopieren.
+2. Den INHALT des Ordners in dein bestehendes cfs_zockt Projekt kopieren.
 3. Vorhandene Dateien ersetzen.
-4. Keine Secrets aus Render in Dateien eintragen.
-5. Erst committen/deployen, wenn wir den gemeinsamen Release-Stand freigeben.
+4. Keine Secrets aus Render oder dem Launcher in Dateien eintragen.
+5. Abhängigkeiten/Launcher-Build wie bisher aus dem bestehenden Projekt erzeugen.
+6. Vor Deploy/Release den gemeinsamen Stand mit `npm run release:v151` prüfen.
+7. Backend deployen; Schema Generation wird 72.
+8. Launcher 0.47.24 bauen/verteilen.
 
-WICHTIG
--------
-- Keine neuen Render-Secrets für v140 notwendig.
-- Für den späteren echten Launcher-Release müssen die bestehenden Release-Werte
-  auf 0.47.17 zeigen:
-  CFS_LAUNCHER_BUILD_TARGET_VERSION=0.47.17
-  CFS_RELEASE_EVIDENCE_VERSION=0.47.17
-- CFS_PLAYSTATION_NPSSO bleibt ausschließlich als Secret in Render.
-- Stream-/Provider-Credentials bleiben Launcher-lokal; nicht in GitHub oder Render kopieren.
+
+ADMIN CONTROL / PROVIDER-BETA V151
+----------------------------------
+Auf Render setzen:
+  CFS_ADMIN_EMAILS=DEINE_LOGIN_EMAIL
+  CFS_PROVIDER_BETA_REQUIRED=true
+  CFS_PROVIDER_BETA_PROVIDERS=tiktok,twitch
+
+`CFS_ADMIN_EMAILS` ist die einzige Admin-Control-Zuordnung. Trage dort nur die
+E-Mail deines eigenen cfs_zockt Login-Kontos ein. Alte Creator-ID-Admin-Fallbacks
+werden von v151 nicht mehr verwendet.
+
+Neue Registrierungen: Konto -> Beta PENDING.
+Freigabe: Admin Control -> Creator verwalten -> Creator auswählen ->
+BETA & ADMIN-NOTIZEN -> TIKTOK + TWITCH BETA FREIGEBEN.
+Die Admin-Schreibsperre verlangt davor eine frische Passwortbestätigung.
+
+YOUTUBE / GOOGLE OAUTH
+----------------------
+Auf Render zusätzlich setzen:
+  GOOGLE_CLIENT_ID=...
+  GOOGLE_CLIENT_SECRET=...
+  YOUTUBE_REDIRECT_URI=https://cfs-zockt.de/auth/youtube/callback
+
+In Google Cloud:
+- YouTube Data API v3 aktivieren.
+- OAuth 2.0 Web Client verwenden.
+- Redirect URI exakt eintragen:
+  https://cfs-zockt.de/auth/youtube/callback
+- OAuth Consent Screen für externe Creator konfigurieren.
+
+v149 fordert absichtlich nur:
+  https://www.googleapis.com/auth/youtube.readonly
+
+Keine schreibenden YouTube-/Broadcast-Scopes werden in v149 angefordert.
+Für eine öffentliche Creator-Freigabe darf die OAuth-App nicht dauerhaft im
+Google-Status `Testing` bleiben; im Testing-Modus sind externe Nutzer/Testnutzer
+beschränkt und Refresh-Tokens können nach 7 Tagen auslaufen. Vor öffentlicher
+Freigabe auf `In Production` wechseln und gegebenenfalls die Google-OAuth-
+Verifizierung abschließen.
+
+TWITCH
+------
+Render benötigt weiterhin:
+  TWITCH_CLIENT_ID=...
+  TWITCH_CLIENT_SECRET=...
+  TWITCH_REDIRECT_URI=https://cfs-zockt.de/auth/twitch/callback
+
+Die Twitch Developer App muss die öffentliche HTTPS-Domain erreichen können,
+weil EventSub den Callback `https://cfs-zockt.de/api/twitch/eventsub` verwendet.
+
+Aktuell verwendete Twitch-Scopes:
+  moderator:read:followers
+  channel:read:subscriptions
+  bits:read
+  user:read:chat
+  user:bot
+  channel:bot
+
+`user:write:chat` wird nicht angefordert.
+
+TIKTOK
+------
+TikTok verwendet die bestehende Login-Kit-/OAuth-Konfiguration. Profil-OAuth und
+TikTok-LIVE-Event-Provider bleiben getrennt. Für beliebige externe Creator muss die
+TikTok-App produktiv freigegeben sein; Sandbox/Test-Konfigurationen reichen nicht.
+
+WIDGET-ZUORDNUNG
+----------------
+- Kein TikTok verbunden: keine TikTok-Widgets.
+- Kein Twitch verbunden: keine Twitch-Widgets.
+- Kein YouTube verbunden: keine YouTube-Widgets.
+- TikTok verbunden: nur der TikTok-Bereich wird zusätzlich sichtbar.
+- Twitch verbunden + erforderliche Scopes: Twitch Chat/Follow/Sub/Cheer Widgets.
+- YouTube verbunden + readonly Scope: YouTube Chat/Mitgliedschaft/Super-Chat Widgets.
+- Mehrere Provider verbunden: die jeweiligen Provider-Bereiche erscheinen getrennt nebeneinander.
+- OBS-/allgemeine/manuelle Widgets bleiben providerunabhängig verfügbar.
+- Provider-Gating wird zusätzlich serverseitig erzwungen.
+
+LAUNCHER RELEASE-VERTRAG
+------------------------
+Aktueller Launcher-Vertrag:
+  CFS_LAUNCHER_BUILD_TARGET_VERSION=0.47.24
+  CFS_RELEASE_EVIDENCE_VERSION=0.47.24
 
 STATUS
 ------
-Widget Studio: FEATURE FROZEN / bereit für reale OBS-/Creator-Abnahme.
-Launcher Core: FEATURE FROZEN / bereit für reale Windows-Abnahme.
-Gesamte Creator Suite: noch nicht final; OBS WebSocket und Twitch OAuth sind die
-nächsten echten Feature-Blöcke. Multistream-Core ist lokal implementiert, braucht
-später reale Provider-/Reconnect-/Lasttests.
+Multi-Creator Isolation: CODE READY / reale Mehrnutzer-Abnahme später gesammelt.
+TikTok Account/LIVE Widgets: implementiert / reale Provider-Acceptance offen.
+Twitch OAuth/EventSub/Chat/Widgets: implementiert / reale Provider-Acceptance offen.
+YouTube OAuth/Kanal/LIVE/Chat/Widgets: implementiert / reale Provider-Acceptance offen.
+OBS WebSocket + One-Click Widget: implementiert / reale Windows-/OBS-Abnahme offen.
+Multistream: lokaler Core vorhanden / echte Provider-Ziele sind nächster Feature-Block.
 
 DETAILS
 -------
-Siehe TECHNIK-v140.md und CREATOR-SUITE-COMPLETION-v140.md.
+Siehe TECHNIK-v151.md, CREATOR-SUITE-COMPLETION-v151.md und SECURITY-BASELINE-v151.md.
+
+V150: Website-/Core-Hardening. Backend 3.18.1 / Schema 72 / Launcher 0.47.23. Vor Release `npm run release:v150` ausführen. Die Google/YouTube-Secrets aus v149 sind nur erforderlich, sobald YouTube tatsächlich verbunden/getestet werden soll.
+
+V151: Geschlossene TikTok-/Twitch-Provider-Beta mit E-Mail-only Admin Control. Backend 3.18.2 / Schema 72 / Launcher 0.47.24. Vor Release `npm run release:v151` ausführen.
+
+V152: Konsolidierte Private-Beta Legal-/Privacy-Härtung auf v151. Backend 3.18.3 / Schema 72 / Launcher 0.47.24. Vor Einbau/Release `npm run release:v152` ausführen.

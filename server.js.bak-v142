@@ -2,7 +2,7 @@
  * ============================================================
  * cfs_zockt Creator Suite
  * Website Backend
- * Version 3.18.3
+ * Version 3.12.0
  * ============================================================
  */
 
@@ -75,23 +75,7 @@ const APP_NAME =
     "CFS_Zockt Creator Suite";
 
 const BACKEND_VERSION =
-    "3.18.3";
-
-// ============================================================
-// PRIVATE BETA / LEGAL BASELINE
-//
-// Der aktuelle öffentliche Stand ist eine kostenlose Privat-Beta.
-// Bezahlte Verträge werden nur nach einer späteren, bewussten
-// Freischaltung erlaubt. Rechtstexte und Registrierungsnachweise
-// sind versioniert, ohne Datenschutz als pauschale Einwilligung
-// zu behandeln.
-// ============================================================
-
-const LEGAL_TERMS_VERSION = "2026-09-30-beta-v1";
-const LEGAL_PRIVACY_NOTICE_VERSION = "2026-09-30-beta-v1";
-const LEGAL_BETA_NOTICE_VERSION = "2026-09-30-beta-v1";
-const PRIVATE_BETA_MINIMUM_AGE = 18;
-const COMMERCIAL_MODE = String(process.env.CFS_COMMERCIAL_MODE || "false").trim().toLowerCase() === "true";
+    "3.12.0";
 
 const RENDER_GIT_COMMIT = String(process.env.RENDER_GIT_COMMIT || "").trim().toLowerCase();
 const RELEASE_COMMIT_SHA256 = /^[a-f0-9]{40}(?:[a-f0-9]{24})?$/.test(RENDER_GIT_COMMIT)
@@ -100,7 +84,6 @@ const RELEASE_COMMIT_SHA256 = /^[a-f0-9]{40}(?:[a-f0-9]{24})?$/.test(RENDER_GIT_
 
 
 const HTTP_MAX_HEADER_SIZE = 16 * 1024;
-const HTTP_MAX_HEADERS_COUNT = 100;
 const HTTP_HEADERS_TIMEOUT_MS = 20 * 1000;
 const HTTP_REQUEST_TIMEOUT_MS = 120 * 1000;
 const HTTP_KEEP_ALIVE_TIMEOUT_MS = 10 * 1000;
@@ -127,7 +110,6 @@ const CLIENT_KEY =
 const CLIENT_SECRET =
     process.env.TIKTOK_CLIENT_SECRET ||
     "";
-
 
 const LAUNCHER_API_KEY =
     process.env.CFS_LAUNCHER_API_KEY ||
@@ -209,51 +191,6 @@ const APP_BASE_SECURITY = canonicalAppOrigin(RAW_APP_BASE_URL,NODE_ENV);
 const APP_BASE = APP_BASE_SECURITY.url;
 const APP_BASE_URL = APP_BASE_SECURITY.origin;
 const APP_CANONICAL_ORIGIN = APP_BASE_SECURITY.origin;
-
-const TWITCH_CLIENT_ID = String(process.env.TWITCH_CLIENT_ID || "").trim();
-const TWITCH_CLIENT_SECRET = String(process.env.TWITCH_CLIENT_SECRET || "").trim();
-const TWITCH_REDIRECT_URI = String(process.env.TWITCH_REDIRECT_URI || `${APP_BASE_URL}/auth/twitch/callback`).trim();
-const TWITCH_AUTHORIZE_URL = "https://id.twitch.tv/oauth2/authorize";
-const TWITCH_TOKEN_URL = "https://id.twitch.tv/oauth2/token";
-const TWITCH_REVOKE_URL = "https://id.twitch.tv/oauth2/revoke";
-const TWITCH_VALIDATE_URL = "https://id.twitch.tv/oauth2/validate";
-const TWITCH_USERS_URL = "https://api.twitch.tv/helix/users";
-const TWITCH_EVENTSUB_URL = "https://api.twitch.tv/helix/eventsub/subscriptions";
-const TWITCH_STREAMS_URL = "https://api.twitch.tv/helix/streams";
-const TWITCH_EVENTSUB_CALLBACK_URL = `${APP_BASE_URL}/api/twitch/eventsub`;
-const TWITCH_STATE_COOKIE = NODE_ENV === "development" ? "cfs_twitch_oauth_state_dev" : "__Host-cfs_twitch_oauth_state";
-const TWITCH_OAUTH_SCOPES = Object.freeze([
-    "moderator:read:followers",
-    "channel:read:subscriptions",
-    "bits:read",
-    "user:read:chat",
-    "user:bot",
-    "channel:bot"
-]);
-const TWITCH_EVENTSUB_REQUIRED_SCOPES = Object.freeze([...TWITCH_OAUTH_SCOPES]);
-const TWITCH_VALIDATE_INTERVAL_MS = 55 * 60 * 1000;
-const TWITCH_TOKEN_SAFETY_WINDOW_MS = 5 * 60 * 1000;
-const TWITCH_RUNTIME_RECONCILE_INTERVAL_MS = 15 * 60 * 1000;
-const TWITCH_RUNTIME_RECONCILE_BATCH = 25;
-
-// YouTube Creator OAuth + LIVE runtime. Wir fordern nur youtube.readonly an:
-// Kanal, Broadcast-Status und Live-Chat lesen; keine Kanal-/Chat-Schreibrechte.
-const GOOGLE_CLIENT_ID = String(process.env.GOOGLE_CLIENT_ID || "").trim();
-const GOOGLE_CLIENT_SECRET = String(process.env.GOOGLE_CLIENT_SECRET || "").trim();
-const YOUTUBE_REDIRECT_URI = String(process.env.YOUTUBE_REDIRECT_URI || `${APP_BASE_URL}/auth/youtube/callback`).trim();
-const YOUTUBE_AUTHORIZE_URL = "https://accounts.google.com/o/oauth2/v2/auth";
-const YOUTUBE_TOKEN_URL = "https://oauth2.googleapis.com/token";
-const YOUTUBE_REVOKE_URL = "https://oauth2.googleapis.com/revoke";
-const YOUTUBE_CHANNELS_URL = "https://www.googleapis.com/youtube/v3/channels";
-const YOUTUBE_BROADCASTS_URL = "https://www.googleapis.com/youtube/v3/liveBroadcasts";
-const YOUTUBE_CHAT_MESSAGES_URL = "https://www.googleapis.com/youtube/v3/liveChat/messages";
-const YOUTUBE_STATE_COOKIE = NODE_ENV === "development" ? "cfs_youtube_oauth_state_dev" : "__Host-cfs_youtube_oauth_state";
-const YOUTUBE_OAUTH_SCOPES = Object.freeze(["https://www.googleapis.com/auth/youtube.readonly"]);
-const YOUTUBE_TOKEN_SAFETY_WINDOW_MS = 5 * 60 * 1000;
-const YOUTUBE_RUNTIME_IDLE_INTERVAL_MS = 3 * 60 * 1000;
-const YOUTUBE_RUNTIME_ACTIVE_INTERVAL_MS = 15 * 1000;
-const YOUTUBE_RUNTIME_WORKER_TICK_MS = 5 * 1000;
-const YOUTUBE_RUNTIME_BATCH = 25;
 const APP_CANONICAL_HOSTNAME = APP_BASE.hostname.toLowerCase();
 const APP_CANONICAL_WWW_ALIAS = APP_CANONICAL_HOSTNAME.startsWith("www.")
     ? APP_CANONICAL_HOSTNAME.slice(4)
@@ -442,24 +379,18 @@ const LAUNCHER_PIN_BETA_VERSION =
 const LAUNCHER_SAFETY_REVISION =
     String(process.env.CFS_LAUNCHER_SAFETY_REVISION || "v21-default").trim();
 
+const CFS_ADMIN_CREATOR_IDS = new Set(
+    String(process.env.CFS_ADMIN_CREATOR_IDS || "")
+        .split(",")
+        .map(value => value.trim())
+        .filter(Boolean)
+);
+
 const CFS_ADMIN_EMAILS = new Set(
     String(process.env.CFS_ADMIN_EMAILS || "")
         .split(",")
         .map(value => value.trim().toLowerCase())
         .filter(Boolean)
-);
-
-// v151 · geschlossene Provider-Beta
-// Während der internen/Beta-Phase dürfen TikTok und Twitch nur vom per E-Mail
-// autorisierten Admin oder von explizit freigeschalteten Beta-Creatorn genutzt werden.
-// Der Schalter kann nach der Acceptance-Phase ohne Codeänderung deaktiviert werden.
-const CFS_PROVIDER_BETA_REQUIRED =
-    String(process.env.CFS_PROVIDER_BETA_REQUIRED ?? "true").trim().toLowerCase() !== "false";
-const CFS_PROVIDER_BETA_PROVIDERS = new Set(
-    String(process.env.CFS_PROVIDER_BETA_PROVIDERS || "tiktok,twitch")
-        .split(",")
-        .map(value => value.trim().toLowerCase())
-        .filter(value => ["tiktok","twitch"].includes(value))
 );
 
 const LAUNCHER_RELEASE_CACHE_TTL_MS =
@@ -510,9 +441,6 @@ const REQUESTED_SCOPES = [
 
 const OAUTH_TTL_MS =
     10 * 60 * 1000;
-
-const LAUNCHER_PROVIDER_HANDOFF_TTL_MS =
-    2 * 60 * 1000;
 
 const ACCESS_TOKEN_SAFETY_WINDOW_MS =
     5 * 60 * 1000;
@@ -902,24 +830,6 @@ app.use((req, res, next) => {
 });
 
 // ============================================================
-// HTTP METHOD HARDENING · v150
-//
-// TRACE/TRACK werden für die Anwendung nicht benötigt. CONNECT wird
-// ebenfalls nicht als Anwendungsroute akzeptiert. Dadurch bleibt die
-// öffentlich erreichbare HTTP-Oberfläche bewusst klein und vorhersehbar.
-// ============================================================
-
-const DISALLOWED_HTTP_METHODS = new Set(["TRACE", "TRACK", "CONNECT"]);
-
-app.use((req, res, next) => {
-    const method = String(req.method || "GET").toUpperCase();
-    if (!DISALLOWED_HTTP_METHODS.has(method)) return next();
-    res.setHeader("Allow", "GET, HEAD, POST, PUT, PATCH, DELETE, OPTIONS");
-    res.setHeader("Cache-Control", "no-store");
-    return transportSecurityError(req, res, 405, "Diese HTTP-Methode wird nicht unterstützt.");
-});
-
-// ============================================================
 // TRANSPORT / HOST HARDENING · WEBSITE SECURITY PASS 1B
 //
 // Render terminiert TLS am Edge und reicht die Anfrage intern
@@ -1056,14 +966,6 @@ app.post(
     stripeBillingWebhook
 );
 
-// Twitch EventSub signiert exakt den unveränderten Request-Body.
-// Deshalb muss auch dieser Webhook vor express.json() registriert sein.
-app.post(
-    "/api/twitch/eventsub",
-    express.raw({type:"application/json",limit:"256kb"}),
-    twitchEventSubWebhook
-);
-
 app.use(
     express.json({
         limit:
@@ -1101,7 +1003,7 @@ const CONTENT_SECURITY_POLICY =
         "frame-ancestors 'self'",
         "frame-src 'self'",
         "form-action 'self'",
-        "script-src 'self' 'sha256-iYRjdExBre2F6oWcwvmahJvVY/6mH/VJ6zl2UgrxncI='",
+        "script-src 'self' 'sha256-YC+uEv6thSIMs8ZynolGqktWIjDONXc43N4IcYq/mOQ='",
         "script-src-attr 'none'",
         "style-src 'self' 'unsafe-inline'",
         "img-src 'self' data: blob: https:",
@@ -1141,11 +1043,6 @@ app.use(
         res.setHeader(
             "X-XSS-Protection",
             "0"
-        );
-
-        res.setHeader(
-            "X-DNS-Prefetch-Control",
-            "off"
         );
 
         res.setHeader(
@@ -1300,7 +1197,7 @@ function incidentWriteExempt(req) {
 
 function incidentProtectedWrite(req) {
     const path=String(req.path||"");
-    if(path.startsWith("/auth/tiktok")||path.startsWith("/auth/twitch")||path.startsWith("/auth/youtube")||path.startsWith("/auth/launcher/integrations"))return true;
+    if(path.startsWith("/auth/tiktok"))return true;
     if(isSafeHttpMethod(req.method))return false;
     return path.startsWith("/api/account/") ||
         path.startsWith("/api/creator/") ||
@@ -1503,12 +1400,6 @@ function createRateLimiter({
             entry.count >
             max
         ) {
-
-            // 429-Antworten dürfen weder im Browser noch an einem später
-            // vorgeschalteten CDN als wiederverwendbare Antwort landen.
-            res.setHeader("Cache-Control", "no-store");
-            res.setHeader("CDN-Cache-Control", "no-store");
-            res.setHeader("Surrogate-Control", "no-store");
 
             const retryAfter =
                 Math.max(
@@ -2737,134 +2628,6 @@ async function initDatabase() {
         )
     `);
 
-
-    // --------------------------------------------------------
-    // TWITCH OAUTH / ACCOUNT LINK
-    // --------------------------------------------------------
-
-    await pool.query(`
-        CREATE TABLE IF NOT EXISTS twitch_connections (
-            creator_id TEXT PRIMARY KEY,
-            connected BOOLEAN NOT NULL DEFAULT FALSE,
-            twitch_user_id TEXT,
-            login TEXT,
-            display_name TEXT,
-            profile_image_url TEXT,
-            access_token TEXT,
-            refresh_token TEXT,
-            access_expires_at BIGINT,
-            scope TEXT,
-            last_validated_at BIGINT,
-            last_runtime_checked_at BIGINT,
-            runtime_error TEXT NOT NULL DEFAULT '',
-            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-        )
-    `);
-    await pool.query(`ALTER TABLE twitch_connections ADD COLUMN IF NOT EXISTS last_runtime_checked_at BIGINT`);
-    await pool.query(`ALTER TABLE twitch_connections ADD COLUMN IF NOT EXISTS runtime_error TEXT NOT NULL DEFAULT ''`);
-
-    await pool.query(`
-        CREATE TABLE IF NOT EXISTS twitch_oauth_states (
-            state_hash TEXT PRIMARY KEY,
-            creator_id TEXT NOT NULL,
-            expires_at TIMESTAMPTZ NOT NULL,
-            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-        )
-    `);
-    await pool.query(`CREATE INDEX IF NOT EXISTS idx_twitch_oauth_states_expires ON twitch_oauth_states(expires_at)`);
-
-    // Twitch EventSub bleibt strikt pro Creator und Provider getrennt.
-    await pool.query(`
-        CREATE TABLE IF NOT EXISTS twitch_eventsub_subscriptions (
-            creator_id TEXT NOT NULL,
-            subscription_type TEXT NOT NULL,
-            subscription_id TEXT,
-            status TEXT NOT NULL DEFAULT 'pending',
-            required_scope TEXT NOT NULL DEFAULT '',
-            last_error TEXT NOT NULL DEFAULT '',
-            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-            PRIMARY KEY (creator_id, subscription_type)
-        )
-    `);
-    await pool.query(`CREATE INDEX IF NOT EXISTS idx_twitch_eventsub_subscription_id ON twitch_eventsub_subscriptions(subscription_id) WHERE subscription_id IS NOT NULL`);
-
-    // --------------------------------------------------------
-    // YOUTUBE OAUTH / CHANNEL LINK / LIVE CHAT RUNTIME
-    // --------------------------------------------------------
-    await pool.query(`
-        CREATE TABLE IF NOT EXISTS youtube_connections (
-            creator_id TEXT PRIMARY KEY,
-            connected BOOLEAN NOT NULL DEFAULT FALSE,
-            youtube_channel_id TEXT,
-            channel_title TEXT,
-            channel_handle TEXT,
-            profile_image_url TEXT,
-            subscriber_count BIGINT NOT NULL DEFAULT 0,
-            subscriber_count_hidden BOOLEAN NOT NULL DEFAULT FALSE,
-            access_token TEXT,
-            refresh_token TEXT,
-            access_expires_at BIGINT,
-            scope TEXT,
-            active_broadcast_id TEXT,
-            active_broadcast_title TEXT,
-            active_live_chat_id TEXT,
-            chat_page_token TEXT,
-            chat_initialized_at BIGINT,
-            next_chat_poll_at BIGINT,
-            next_runtime_poll_at BIGINT,
-            last_runtime_checked_at BIGINT,
-            runtime_error TEXT NOT NULL DEFAULT '',
-            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-        )
-    `);
-    await pool.query(`CREATE INDEX IF NOT EXISTS idx_youtube_connections_runtime ON youtube_connections(connected,next_runtime_poll_at) WHERE connected=TRUE`);
-    await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_youtube_channel_owner ON youtube_connections(youtube_channel_id) WHERE connected=TRUE AND youtube_channel_id IS NOT NULL`);
-    await pool.query(`
-        CREATE TABLE IF NOT EXISTS youtube_oauth_states (
-            state_hash TEXT PRIMARY KEY,
-            creator_id TEXT NOT NULL,
-            expires_at TIMESTAMPTZ NOT NULL,
-            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-        )
-    `);
-    await pool.query(`CREATE INDEX IF NOT EXISTS idx_youtube_oauth_states_expires ON youtube_oauth_states(expires_at)`);
-
-    // Provider-spezifischer LIVE-State verhindert, dass Twitch, YouTube und TikTok
-    // bei parallelen Streams denselben globalen LIVE-State überschreiben.
-    await pool.query(`
-        CREATE TABLE IF NOT EXISTS creator_provider_live_state (
-            creator_id TEXT NOT NULL,
-            provider TEXT NOT NULL,
-            session_id TEXT,
-            connected BOOLEAN NOT NULL DEFAULT FALSE,
-            started_at TIMESTAMPTZ,
-            last_event_at TIMESTAMPTZ,
-            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-            PRIMARY KEY (creator_id, provider)
-        )
-    `);
-    await pool.query(`CREATE INDEX IF NOT EXISTS idx_creator_provider_live_state_provider ON creator_provider_live_state(provider,updated_at DESC)`);
-
-    // --------------------------------------------------------
-    // LAUNCHER -> PROVIDER OAUTH HANDOFF
-    // Kurzlebige, einmalige Codes verbinden einen bereits authentifizierten
-    // Launcher mit dem Systembrowser, ohne Bridge-Token oder Provider-Token
-    // in URLs zu transportieren. Der eigentliche Code liegt nur im URL-Fragment
-    // der statischen Übergabeseite und wird anschließend per POST eingelöst.
-    // --------------------------------------------------------
-
-    await pool.query(`
-        CREATE TABLE IF NOT EXISTS launcher_provider_oauth_handoffs (
-            handoff_hash TEXT PRIMARY KEY,
-            creator_id TEXT NOT NULL,
-            provider TEXT NOT NULL,
-            expires_at TIMESTAMPTZ NOT NULL,
-            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-        )
-    `);
-    await pool.query(`ALTER TABLE launcher_provider_oauth_handoffs DROP CONSTRAINT IF EXISTS launcher_provider_oauth_handoffs_provider_check`);
-    await pool.query(`ALTER TABLE launcher_provider_oauth_handoffs ADD CONSTRAINT launcher_provider_oauth_handoffs_provider_check CHECK (provider IN ('tiktok','twitch','youtube'))`);
-    await pool.query(`CREATE INDEX IF NOT EXISTS idx_launcher_provider_oauth_handoffs_expires ON launcher_provider_oauth_handoffs(expires_at)`);
 
     // --------------------------------------------------------
     // CREATOR ACCOUNTS
@@ -4569,10 +4332,10 @@ async function initDatabase() {
 
 async function cleanupExpiredOAuthStates() {
 
-    await pool.query(`DELETE FROM tiktok_oauth_states WHERE expires_at < NOW()`);
-    await pool.query(`DELETE FROM twitch_oauth_states WHERE expires_at < NOW()`);
-    await pool.query(`DELETE FROM youtube_oauth_states WHERE expires_at < NOW()`);
-    await pool.query(`DELETE FROM launcher_provider_oauth_handoffs WHERE expires_at < NOW()`);
+    await pool.query(`
+        DELETE FROM tiktok_oauth_states
+        WHERE expires_at < NOW()
+    `);
 
 }
 
@@ -5216,11 +4979,6 @@ async function revokeCreatorPendingAuthArtifacts(client, creatorId, {keepPasswor
     await client.query(`DELETE FROM creator_mfa_challenges WHERE creator_id=$1`,[creatorId]);
     await client.query(`DELETE FROM creator_webauthn_challenges WHERE creator_id=$1`,[creatorId]);
     await client.query(`DELETE FROM tiktok_oauth_states WHERE creator_id=$1`,[creatorId]);
-    await client.query(`DELETE FROM twitch_oauth_states WHERE creator_id=$1`,[creatorId]);
-    await client.query(`DELETE FROM youtube_oauth_states WHERE creator_id=$1`,[creatorId]);
-    await client.query(`DELETE FROM launcher_provider_oauth_handoffs WHERE creator_id=$1`,[creatorId]);
-    await client.query(`DELETE FROM twitch_eventsub_subscriptions WHERE creator_id=$1`,[creatorId]);
-    await client.query(`DELETE FROM creator_provider_live_state WHERE creator_id=$1`,[creatorId]);
     if (keepPasswordResetTokenId) {
         await client.query(
             `DELETE FROM creator_account_action_tokens WHERE creator_id=$1 AND purpose='password_reset' AND id<>$2`,
@@ -5920,15 +5678,14 @@ function adminCreatorEntitlements({plan="free",betaActive=false}={}) {
     const entitlements=basePlanEntitlements("pro");
 
     // Root/Admin darf alle heute nutzbaren Creator-Suite-Bereiche testen und
-    // verwalten. Der Admin-Zugang selbst wird ausschließlich über die konfigurierte
-    // und (wenn aktiviert) verifizierte E-Mail-Adresse bestimmt.
+    // verwalten. Roadmap-Funktionen werden dadurch nicht künstlich freigeschaltet.
     Object.assign(entitlements,{
         dashboard:true,account:true,editor:true,widget_studio:true,tiktok:true,
         launcher:true,device_link:true,scene_studio:true,live_bridge:true,
         live_widgets:true,alerts:true,auto_thanks:true,local_output:true,
         stream_deck:true,cut_studio:true,games:true,nexus:true,audio_studio:true,
         obs:true,advanced_output:true,custom_branding:true,
-        twitch:true,
+        twitch:false,
         max_widgets:1000,max_scenes:250,max_stream_deck_buttons:12,
         max_active_devices:25,max_cut_projects:250,max_cut_clips_per_project:500,
         max_game_rules:250,max_pending_cut_jobs:250,
@@ -5963,87 +5720,30 @@ async function getCreatorBetaState(creatorId) {
     return {status:row?.status||"none",active:row?.status==="active",notes:studioText(row?.notes,1200,""),created_at:row?.created_at||null,updated_at:row?.updated_at||null};
 }
 
-async function ensureCreatorBetaCandidate(creatorId) {
-    if(!CFS_PROVIDER_BETA_REQUIRED||!creatorId)return;
-    await pool.query(`
-        INSERT INTO creator_beta_testers(creator_id,status,notes,created_at,updated_at)
-        VALUES($1,'pending','',NOW(),NOW())
-        ON CONFLICT(creator_id) DO NOTHING
-    `,[creatorId]);
-}
-
-function providerBetaPolicy(access,provider) {
-    const key=String(provider||"").trim().toLowerCase();
-    const required=CFS_PROVIDER_BETA_REQUIRED&&CFS_PROVIDER_BETA_PROVIDERS.has(key);
-    const allowed=!required||Boolean(access?.admin)||Boolean(access?.beta?.active&&access?.email_verified);
-    return {
-        provider:key,
-        required,
-        allowed,
-        status:!required?"not_required":access?.admin?"admin":String(access?.beta?.status||"pending"),
-        email_verified:Boolean(access?.email_verified)
-    };
-}
-
-function providerBetaDeniedPayload(access,provider) {
-    const policy=providerBetaPolicy(access,provider);
-    const label=policy.provider==="twitch"?"Twitch":"TikTok";
-    const message=!policy.email_verified
-        ? "Bestätige zuerst deine E-Mail-Adresse. Danach kann der Admin deinen Beta-Zugang freigeben."
-        : policy.status==="paused"
-            ? `Dein ${label}-Beta-Zugang ist derzeit pausiert.`
-            : `Für ${label} brauchst du während der Beta eine Freigabe durch den cfs_zockt Admin.`;
-    return {ok:false,allowed:false,code:"provider_beta_required",provider:policy.provider,beta_status:policy.status,email_verified:policy.email_verified,error:message};
-}
-
-async function requireProviderBetaAccess(accountOrId,provider) {
-    const access=await creatorAccessProfile(accountOrId);
-    const policy=providerBetaPolicy(access,provider);
-    if(policy.allowed)return access;
-    const error=new Error(providerBetaDeniedPayload(access,provider).error);
-    error.code="provider_beta_required";error.access=access;error.provider=policy.provider;
-    throw error;
-}
-
 async function creatorAccessProfile(accountOrId) {
     let account=typeof accountOrId==="object"&&accountOrId?accountOrId:null;
-    if(!account){const result=await pool.query(`SELECT id,plan,status,display_name,email,email_verified_at,created_at FROM creator_accounts WHERE id=$1 LIMIT 1`,[String(accountOrId||"")]);account=result.rows[0]||null;}
+    if(!account){const result=await pool.query(`SELECT id,plan,status,display_name,email,created_at FROM creator_accounts WHERE id=$1 LIMIT 1`,[String(accountOrId||"")]);account=result.rows[0]||null;}
     if(!account)return null;
-    const admin=await isCreatorSuiteAdmin(account);
-    if(CFS_PROVIDER_BETA_REQUIRED&&!admin)await ensureCreatorBetaCandidate(account.id);
-    const [beta,subscription]=await Promise.all([
+    const [beta,subscription,admin]=await Promise.all([
         getCreatorBetaState(account.id),
-        getCreatorSubscriptionState(account.id)
+        getCreatorSubscriptionState(account.id),
+        isCreatorSuiteAdmin(account)
     ]);
     const plan=normalizePlan(account.plan),effectivePlan=effectiveBillingPlan(plan,subscription);
     const entitlements=admin
         ? adminCreatorEntitlements({plan,betaActive:beta.active})
         : resolveCreatorEntitlements(effectivePlan,{betaActive:beta.active});
-    const emailVerified=Boolean(account.email_verified_at)||!ACCOUNT_MAIL_CONFIG.verificationRequired;
-    const betaProviderAllowed=Boolean(admin)||(Boolean(beta.active)&&emailVerified);
-    if(CFS_PROVIDER_BETA_REQUIRED){
-        for(const provider of CFS_PROVIDER_BETA_PROVIDERS)entitlements[provider]=betaProviderAllowed;
-    }
     const billingRaised=planRank(effectivePlan)>planRank(plan);
     const accessSource=admin
         ? "root_admin"
         : beta.active?(billingRaised?"billing_plus_beta":"plan_plus_beta"):(billingRaised?"billing":"plan");
     entitlements.access_source=accessSource;
-    const access={
+    return {
         plan,effective_plan:effectivePlan,
         base_entitlements:basePlanEntitlements(effectivePlan),entitlements,
-        beta,subscription,admin:Boolean(admin),email_verified:emailVerified,
+        beta,subscription,admin:Boolean(admin),
         access_source:accessSource
     };
-    access.provider_beta={
-        enabled:CFS_PROVIDER_BETA_REQUIRED,
-        providers:[...CFS_PROVIDER_BETA_PROVIDERS],
-        status:admin?"admin":beta.status,
-        allowed:betaProviderAllowed,
-        tiktok:providerBetaPolicy(access,"tiktok"),
-        twitch:providerBetaPolicy(access,"twitch")
-    };
-    return access;
 }
 
 function accessDeniedPayload(access,feature,requiredPlan="creator") {
@@ -8433,13 +8133,15 @@ async function recordSecurityEvent(
 
 async function isCreatorSuiteAdmin(account) {
     if (!account?.id) return false;
-    const email=String(account.email||"").trim().toLowerCase();
-    if(!email||!CFS_ADMIN_EMAILS.has(email))return false;
-    // Admin-Control ist v151 bewusst E-Mail-only. Alte Creator-ID-/Legacy-Owner-
-    // Fallbacks erteilen keine Admin-Rechte mehr. Bei aktivierter E-Mail-Verifikation
-    // muss auch die konfigurierte Admin-Adresse bestätigt sein.
-    if(ACCOUNT_MAIL_CONFIG.verificationRequired&&!account.email_verified_at)return false;
-    return true;
+
+    if (CFS_ADMIN_CREATOR_IDS.has(String(account.id))) return true;
+    if (CFS_ADMIN_EMAILS.has(String(account.email || "").trim().toLowerCase())) return true;
+
+    const legacyOwner = await pool.query(
+        `SELECT 1 FROM creator_tiktok_legacy_owner WHERE slot='default' AND creator_id=$1 LIMIT 1`,
+        [account.id]
+    );
+    return legacyOwner.rowCount > 0;
 }
 
 async function requireCreatorAdmin(req,res,next) {
@@ -10329,18 +10031,6 @@ const WIDGET_STUDIO_PROVIDERS = Object.freeze({
         label: "Creator Suite Launcher Bridge",
         status: "ready",
         supplies: ["live.likes", "live.viewers", "live.shares", "live.gifts_count", "live.followers_gained", "events", "actions"]
-    },
-    twitch_eventsub: {
-        key: "twitch_eventsub",
-        label: "Twitch EventSub",
-        status: "ready",
-        supplies: ["twitch.live", "twitch.follow", "twitch.subscribe", "twitch.cheer", "twitch.chat"]
-    },
-    youtube_live_api: {
-        key: "youtube_live_api",
-        label: "YouTube Live Streaming API",
-        status: "ready",
-        supplies: ["youtube.live", "youtube.subscribers", "youtube.chat", "youtube.membership", "youtube.super_chat"]
     }
 });
 
@@ -10352,351 +10042,244 @@ const WIDGET_STUDIO_WIDGET_TYPES = Object.freeze({
     obs_overlay: {
         key: "obs_overlay", label: "Freies Overlay", short_label: "FREIES OVERLAY",
         category: "overlay", library_group: "general", static_kind: "free", mode: "static", metric: "",
-        source: "Freies Design", source_kind: "static", provider: "obs", platform: "obs", studio_areas: ["obs"],
+        source: "Freies Design", source_kind: "static", platform: "obs", studio_areas: ["tiktok", "obs"],
         description: "Ein frei gestaltbares Overlay ohne Plattformdaten. Ideal für Text, Rahmen, Bilder, Socials und Branding."
     },
     camera_frame: {
         key: "camera_frame", label: "Kamera-Rahmen 16:9", short_label: "CAMERA 16:9",
         category: "overlay", library_group: "camera", static_kind: "camera", static_format: "16:9", mode: "static", metric: "",
-        source: "Transparentes Kamera-Overlay", source_kind: "static", provider: "obs", platform: "obs", studio_areas: ["obs"],
+        source: "Transparentes Kamera-Overlay", source_kind: "static", platform: "obs", studio_areas: ["tiktok", "obs"],
         description: "Transparenter 16:9-Kamera-Rahmen für OBS und Stream-Szenen. Browser Source über die normale Kamera legen und frei gestalten."
     },
     camera_frame_portrait: {
         key: "camera_frame_portrait", label: "Kamera-Rahmen 9:16", short_label: "CAMERA 9:16",
         category: "overlay", library_group: "camera", static_kind: "camera", static_format: "9:16", mode: "static", metric: "",
-        source: "Transparentes Hochformat-Kamera-Overlay", source_kind: "static", provider: "obs", platform: "obs", studio_areas: ["obs"],
+        source: "Transparentes Hochformat-Kamera-Overlay", source_kind: "static", platform: "obs", studio_areas: ["tiktok", "obs"],
         description: "Schmaler transparenter Kamera-Rahmen im 9:16-Format – besonders für vertikale TikTok-Szenen und Portrait-Cams."
     },
     camera_frame_square: {
         key: "camera_frame_square", label: "Kamera-Rahmen 1:1", short_label: "CAMERA 1:1",
         category: "overlay", library_group: "camera", static_kind: "camera", static_format: "1:1", mode: "static", metric: "",
-        source: "Transparentes quadratisches Kamera-Overlay", source_kind: "static", provider: "obs", platform: "obs", studio_areas: ["obs"],
+        source: "Transparentes quadratisches Kamera-Overlay", source_kind: "static", platform: "obs", studio_areas: ["tiktok", "obs"],
         description: "Quadratischer transparenter Kamera-Rahmen für kompakte Facecam-Platzierungen, Talk-Szenen und Social-Layouts."
     },
     stream_frame: {
         key: "stream_frame", label: "Stream-Rahmen 16:9", short_label: "STREAM FRAME 16:9",
         category: "overlay", library_group: "scene", static_kind: "scene_frame", static_format: "16:9", mode: "static", metric: "",
-        source: "Transparentes Szenen-Overlay", source_kind: "static", provider: "obs", platform: "obs", studio_areas: ["obs"],
+        source: "Transparentes Szenen-Overlay", source_kind: "static", platform: "obs", studio_areas: ["tiktok", "obs"],
         description: "Ein transparenter Außenrahmen für eine komplette 16:9-Streamszene – ideal für Gameplay, Talk und Event-Looks."
     },
     stream_frame_vertical: {
         key: "stream_frame_vertical", label: "Stream-Rahmen 9:16", short_label: "STREAM FRAME 9:16",
         category: "overlay", library_group: "scene", static_kind: "scene_frame", static_format: "9:16", mode: "static", metric: "",
-        source: "Transparentes Hochformat-Szenen-Overlay", source_kind: "static", provider: "obs", platform: "obs", studio_areas: ["obs"],
+        source: "Transparentes Hochformat-Szenen-Overlay", source_kind: "static", platform: "obs", studio_areas: ["tiktok", "obs"],
         description: "Ein transparenter Außenrahmen für vertikale 9:16-Streams und TikTok-orientierte Szenen."
     },
     lower_third: {
         key: "lower_third", label: "Nameplate / Lower Third", short_label: "NAMEPLATE",
         category: "overlay", library_group: "branding", static_kind: "lower_third", mode: "static", metric: "",
-        source: "Freies Branding-Overlay", source_kind: "static", provider: "obs", platform: "obs", studio_areas: ["obs"],
+        source: "Freies Branding-Overlay", source_kind: "static", platform: "obs", studio_areas: ["tiktok", "obs"],
         description: "Fertige Namensleiste für Creator-Name, Game, Rolle oder Hinweistext. Text, Farben und Rahmen bleiben frei editierbar."
     },
     social_bar: {
         key: "social_bar", label: "Social Bar", short_label: "SOCIAL BAR",
         category: "overlay", library_group: "branding", static_kind: "social_bar", mode: "static", metric: "",
-        source: "Freies Branding-Overlay", source_kind: "static", provider: "obs", platform: "obs", studio_areas: ["obs"],
+        source: "Freies Branding-Overlay", source_kind: "static", platform: "obs", studio_areas: ["tiktok", "obs"],
         description: "Horizontale Social-Leiste für Creator-Namen, Plattform-Hinweise oder Community-Callouts – ohne externe Plattformdaten."
     },
     stream_header: {
         key: "stream_header", label: "Stream Header", short_label: "HEADER",
         category: "overlay", library_group: "branding", static_kind: "header", mode: "static", metric: "",
-        source: "Freies Szenen-Overlay", source_kind: "static", provider: "obs", platform: "obs", studio_areas: ["obs"],
+        source: "Freies Szenen-Overlay", source_kind: "static", platform: "obs", studio_areas: ["tiktok", "obs"],
         description: "Schmale Kopfleiste für Titel, Session-Info, Challenge oder Branding am oberen Szenenrand."
     },
     stream_sidebar: {
         key: "stream_sidebar", label: "Stream Sidebar", short_label: "SIDEBAR",
         category: "overlay", library_group: "branding", static_kind: "sidebar", mode: "static", metric: "",
-        source: "Freies Szenen-Overlay", source_kind: "static", provider: "obs", platform: "obs", studio_areas: ["obs"],
+        source: "Freies Szenen-Overlay", source_kind: "static", platform: "obs", studio_areas: ["tiktok", "obs"],
         description: "Vertikale Seitenleiste für Socials, Ziele, Regeln oder statische Stream-Infos."
     },
     starting_screen: {
         key: "starting_screen", label: "Starting Soon Screen", short_label: "STARTING SOON",
         category: "overlay", library_group: "scene", static_kind: "screen", static_screen: "starting", mode: "static", metric: "",
-        source: "Freie Stream-Szene", source_kind: "static", provider: "obs", platform: "obs", studio_areas: ["obs"],
+        source: "Freie Stream-Szene", source_kind: "static", platform: "obs", studio_areas: ["tiktok", "obs"],
         description: "Fertige Startszene mit Titel und Untertitel. Als Browser Source nutzbar und vollständig im Widget Studio anpassbar."
     },
     brb_screen: {
         key: "brb_screen", label: "Bin gleich zurück Screen", short_label: "BRB",
         category: "overlay", library_group: "scene", static_kind: "screen", static_screen: "brb", mode: "static", metric: "",
-        source: "Freie Stream-Szene", source_kind: "static", provider: "obs", platform: "obs", studio_areas: ["obs"],
+        source: "Freie Stream-Szene", source_kind: "static", platform: "obs", studio_areas: ["tiktok", "obs"],
         description: "Pausenszene für kurze Unterbrechungen – mit eigenem Text, Farben, Bildern, Rahmen und Animationen."
     },
     ending_screen: {
         key: "ending_screen", label: "Stream Ending Screen", short_label: "STREAM ENDE",
         category: "overlay", library_group: "scene", static_kind: "screen", static_screen: "ending", mode: "static", metric: "",
-        source: "Freie Stream-Szene", source_kind: "static", provider: "obs", platform: "obs", studio_areas: ["obs"],
+        source: "Freie Stream-Szene", source_kind: "static", platform: "obs", studio_areas: ["tiktok", "obs"],
         description: "Abschlussszene für Danke, Community-Hinweise und den nächsten Stream – vollständig frei gestaltbar."
     },
     chat_overlay: {
         key: "chat_overlay", minimum_plan: "creator", label: "Chat Fenster", short_label: "LIVE CHAT",
         category: "chat", mode: "chat", event_type: "chat",
-        source: "TikTok LIVE Chat", source_kind: "live_bridge", provider: "tiktok", platform: "tiktok", studio_areas: ["tiktok", "obs"],
+        source: "TikTok LIVE Chat", source_kind: "live_bridge", platform: "tiktok", studio_areas: ["tiktok", "obs"],
         description: "Zeigt echte TikTok-LIVE-Kommentare als frei gestaltbares Chat-Overlay. Im OBS-Bereich bleibt TikTok die Datenquelle."
     },
 
     follower_goal: {
         key: "follower_goal", label: "Follower Goal", short_label: "FOLLOWER GOAL",
         category: "goals", mode: "goal", metric: "profile.followers",
-        source: "TikTok Profil", source_kind: "profile", provider: "tiktok", platform: "tiktok", studio_areas: ["tiktok", "obs"],
+        source: "TikTok Profil", source_kind: "profile",
         description: "Zeigt deinen aktuellen Follower-Stand und ein frei definierbares Ziel.", default_goal: 2000
     },
     follower_counter: {
         key: "follower_counter", label: "Follower Counter", short_label: "FOLLOWER COUNTER",
         category: "counter", mode: "counter", metric: "profile.followers",
-        source: "TikTok Profil", source_kind: "profile", provider: "tiktok", platform: "tiktok", studio_areas: ["tiktok", "obs"],
+        source: "TikTok Profil", source_kind: "profile",
         description: "Ein sauberer Zähler für deinen aktuellen Profil-Followerstand."
     },
     profile_likes_counter: {
         key: "profile_likes_counter", label: "Profil Likes Counter", short_label: "PROFIL LIKES",
         category: "counter", mode: "counter", metric: "profile.likes_total",
-        source: "TikTok Profil", source_kind: "profile", provider: "tiktok", platform: "tiktok", studio_areas: ["tiktok", "obs"],
+        source: "TikTok Profil", source_kind: "profile",
         description: "Zeigt die Gesamtzahl der Likes deines TikTok-Profils – nicht die Likes eines LIVE."
     },
     manual_counter: {
         key: "manual_counter", label: "Freier Counter", short_label: "FREIER COUNTER",
         category: "counter", mode: "manual_counter", metric: "",
-        source: "Manuell steuerbar", source_kind: "manual", provider: "obs", platform: "obs", studio_areas: ["obs"],
+        source: "Manuell steuerbar", source_kind: "manual", platform: "tiktok", studio_areas: ["tiktok", "obs"],
         description: "Ein frei steuerbarer Stream-Counter für eigene Runden, Punkte oder Challenges. Funktioniert in TikTok LIVE und OBS.", default_value: 0
     },
     wins_counter: {
         key: "wins_counter", label: "Siege Counter", short_label: "SIEGE",
         category: "counter", mode: "manual_counter", metric: "",
-        source: "Manuell steuerbar", source_kind: "manual", provider: "obs", platform: "obs", studio_areas: ["obs"],
+        source: "Manuell steuerbar", source_kind: "manual", platform: "tiktok", studio_areas: ["tiktok", "obs"],
         description: "Zählt deine Siege im Stream. Manuell steuerbar und für TikTok LIVE sowie OBS geeignet.", default_value: 0
     },
     deaths_counter: {
         key: "deaths_counter", label: "Tode Counter", short_label: "TODE",
         category: "counter", mode: "manual_counter", metric: "",
-        source: "Manuell steuerbar", source_kind: "manual", provider: "obs", platform: "obs", studio_areas: ["obs"],
+        source: "Manuell steuerbar", source_kind: "manual", platform: "tiktok", studio_areas: ["tiktok", "obs"],
         description: "Zählt Tode oder Fehlversuche im Stream. Manuell steuerbar und für TikTok LIVE sowie OBS geeignet.", default_value: 0
     },
     stream_timer: {
         key: "stream_timer", label: "Stream Timer", short_label: "STREAM TIMER",
         category: "counter", mode: "manual_timer", metric: "",
-        source: "Manuell steuerbar", source_kind: "manual", provider: "obs", platform: "obs", studio_areas: ["obs"],
+        source: "Manuell steuerbar", source_kind: "manual", platform: "tiktok", studio_areas: ["tiktok", "obs"],
         description: "Ein frei steuerbarer Stream-Timer für TikTok LIVE und OBS. Starten, pausieren, Zeit anpassen oder zurücksetzen – direkt im Widget Studio.",
         default_seconds: 0
     },
     manual_goal: {
         key: "manual_goal", label: "Manuelles Goal", short_label: "MANUELLES GOAL",
         category: "goals", mode: "goal", metric: "",
-        source: "Manuell steuerbar", source_kind: "manual", provider: "obs", platform: "obs", studio_areas: ["obs"],
+        source: "Manuell steuerbar", source_kind: "manual", platform: "tiktok", studio_areas: ["tiktok", "obs"],
         description: "Ein frei steuerbares Ziel ohne Plattform-Anbindung. Ideal für Challenges, Punkte, Runden oder Community-Ziele in TikTok LIVE und OBS.",
         default_goal: 100, default_value: 0
     },
     live_like_goal: {
         key: "live_like_goal", minimum_plan: "creator", label: "LIVE Like Goal", short_label: "LIVE LIKE GOAL",
         category: "goals", mode: "goal", metric: "live.likes",
-        source: "TikTok LIVE Bridge", source_kind: "live_bridge", provider: "tiktok", platform: "tiktok", studio_areas: ["tiktok", "obs"],
+        source: "LIVE Bridge", source_kind: "live_bridge",
         description: "Like-Ziel für eine laufende TikTok-LIVE-Session. Bis zur Bridge im Simulator testbar.", default_goal: 10000
     },
     live_like_counter: {
         key: "live_like_counter", minimum_plan: "creator", label: "LIVE Like Counter", short_label: "LIVE LIKES",
         category: "counter", mode: "counter", metric: "live.likes",
-        source: "TikTok LIVE Bridge", source_kind: "live_bridge", provider: "tiktok", platform: "tiktok", studio_areas: ["tiktok", "obs"],
+        source: "LIVE Bridge", source_kind: "live_bridge",
         description: "Zählt Likes innerhalb der aktuellen LIVE-Session."
     },
     live_timer: {
         key: "live_timer", minimum_plan: "creator", label: "LIVE Timer", short_label: "LIVE TIMER",
         category: "counter", mode: "timer", metric: "",
-        source: "TikTok LIVE Bridge", source_kind: "live_bridge", provider: "tiktok", platform: "tiktok", studio_areas: ["tiktok", "obs"],
+        source: "TikTok LIVE Bridge", source_kind: "live_bridge", platform: "tiktok",
         description: "Zeigt automatisch, wie lange die aktuelle TikTok-LIVE-Session läuft."
     },
     viewer_counter: {
         key: "viewer_counter", minimum_plan: "creator", label: "Viewer Counter", short_label: "VIEWER",
         category: "counter", mode: "counter", metric: "live.viewers",
-        source: "TikTok LIVE Bridge", source_kind: "live_bridge", provider: "tiktok", platform: "tiktok", studio_areas: ["tiktok", "obs"],
+        source: "LIVE Bridge", source_kind: "live_bridge",
         description: "Zeigt die aktuelle Zuschauerzahl deiner LIVE-Session."
     },
     gift_goal: {
         key: "gift_goal", minimum_plan: "creator", label: "Gift Goal", short_label: "GIFT GOAL",
         category: "goals", mode: "goal", metric: "live.gifts_count",
-        source: "TikTok LIVE Bridge", source_kind: "live_bridge", provider: "tiktok", platform: "tiktok", studio_areas: ["tiktok", "obs"],
+        source: "LIVE Bridge", source_kind: "live_bridge",
         description: "Setze ein Ziel für die Anzahl empfangener Gifts in der LIVE-Session.", default_goal: 50
     },
     gift_counter: {
         key: "gift_counter", minimum_plan: "creator", label: "Gift Counter", short_label: "GIFTS",
         category: "counter", mode: "counter", metric: "live.gifts_count",
-        source: "TikTok LIVE Bridge", source_kind: "live_bridge", provider: "tiktok", platform: "tiktok", studio_areas: ["tiktok", "obs"],
+        source: "LIVE Bridge", source_kind: "live_bridge",
         description: "Zählt empfangene Gifts in der laufenden LIVE-Session."
     },
     share_goal: {
         key: "share_goal", minimum_plan: "creator", label: "Share Goal", short_label: "SHARE GOAL",
         category: "goals", mode: "goal", metric: "live.shares",
-        source: "TikTok LIVE Bridge", source_kind: "live_bridge", provider: "tiktok", platform: "tiktok", studio_areas: ["tiktok", "obs"],
+        source: "LIVE Bridge", source_kind: "live_bridge",
         description: "Setze ein Ziel für Shares innerhalb deiner LIVE-Session.", default_goal: 100
     },
     share_counter: {
         key: "share_counter", minimum_plan: "creator", label: "Share Counter", short_label: "SHARES",
         category: "counter", mode: "counter", metric: "live.shares",
-        source: "TikTok LIVE Bridge", source_kind: "live_bridge", provider: "tiktok", platform: "tiktok", studio_areas: ["tiktok", "obs"],
+        source: "LIVE Bridge", source_kind: "live_bridge",
         description: "Zählt Shares deiner laufenden LIVE-Session."
     },
     follower_gain_counter: {
         key: "follower_gain_counter", minimum_plan: "creator", label: "Follower Gain", short_label: "NEUE FOLLOWER",
         category: "counter", mode: "counter", metric: "live.followers_gained",
-        source: "TikTok LIVE Bridge", source_kind: "live_bridge", provider: "tiktok", platform: "tiktok", studio_areas: ["tiktok", "obs"],
+        source: "LIVE Bridge", source_kind: "live_bridge",
         description: "Zeigt, wie viele neue Follower während der LIVE-Session hinzugekommen sind."
     },
     follower_gain_goal: {
         key: "follower_gain_goal", minimum_plan: "creator", label: "Follower Gain Goal", short_label: "FOLLOWER GAIN GOAL",
         category: "goals", mode: "goal", metric: "live.followers_gained",
-        source: "TikTok LIVE Bridge", source_kind: "live_bridge", provider: "tiktok", platform: "tiktok", studio_areas: ["tiktok", "obs"],
+        source: "LIVE Bridge", source_kind: "live_bridge",
         description: "Ziel für neue Follower innerhalb der aktuellen LIVE-Session.", default_goal: 100
     },
 
     follow_alert: {
         key: "follow_alert", minimum_plan: "creator", label: "Follow Alert", short_label: "FOLLOW ALERT",
         category: "alerts", mode: "alert", event_type: "follow",
-        source: "TikTok LIVE Event Queue", source_kind: "live_bridge", provider: "tiktok", platform: "tiktok", studio_areas: ["tiktok", "obs"],
+        source: "LIVE Event Queue", source_kind: "live_bridge",
         description: "Zeigt einen animierten Alert, wenn dir während des LIVE jemand folgt.", default_duration_ms: 4500
     },
     gift_alert: {
         key: "gift_alert", minimum_plan: "creator", label: "Gift Alert", short_label: "GIFT ALERT",
         category: "alerts", mode: "alert", event_type: "gift",
-        source: "TikTok LIVE Event Queue", source_kind: "live_bridge", provider: "tiktok", platform: "tiktok", studio_areas: ["tiktok", "obs"],
+        source: "LIVE Event Queue", source_kind: "live_bridge",
         description: "Zeigt Sender, Gift und Anzahl als animierten LIVE-Alert.", default_duration_ms: 5200
     },
     share_alert: {
         key: "share_alert", minimum_plan: "creator", label: "Share Alert", short_label: "SHARE ALERT",
         category: "alerts", mode: "alert", event_type: "share",
-        source: "TikTok LIVE Event Queue", source_kind: "live_bridge", provider: "tiktok", platform: "tiktok", studio_areas: ["tiktok", "obs"],
+        source: "LIVE Event Queue", source_kind: "live_bridge",
         description: "Bedankt sich sichtbar, wenn ein Zuschauer deinen LIVE teilt.", default_duration_ms: 4200
     },
     goal_reached_alert: {
         key: "goal_reached_alert", minimum_plan: "creator", label: "Goal Reached Alert", short_label: "GOAL REACHED",
         category: "alerts", mode: "goal_alert", metric: "live.likes",
         metric_options: ["profile.followers", "live.likes", "live.gifts_count", "live.shares", "live.followers_gained"],
-        source: "TikTok Creator Suite Daten", source_kind: "hybrid", provider: "tiktok", platform: "tiktok", studio_areas: ["tiktok", "obs"],
+        source: "Creator Suite Daten", source_kind: "hybrid",
         description: "Wird ausgelöst, sobald ein ausgewählter Zähler seinen Zielwert erreicht.",
         default_goal: 10000, default_duration_ms: 6000
     },
     latest_follower: {
         key: "latest_follower", minimum_plan: "creator", label: "Latest Follower", short_label: "LATEST FOLLOWER",
         category: "latest", mode: "latest", event_type: "follow",
-        source: "TikTok LIVE Event Queue", source_kind: "live_bridge", provider: "tiktok", platform: "tiktok", studio_areas: ["tiktok", "obs"],
+        source: "LIVE Event Queue", source_kind: "live_bridge",
         description: "Zeigt dauerhaft den zuletzt erfassten neuen Follower der aktuellen LIVE-Session."
     },
     latest_gift: {
         key: "latest_gift", minimum_plan: "creator", label: "Latest Gift", short_label: "LATEST GIFT",
         category: "latest", mode: "latest", event_type: "gift",
-        source: "TikTok LIVE Event Queue", source_kind: "live_bridge", provider: "tiktok", platform: "tiktok", studio_areas: ["tiktok", "obs"],
+        source: "LIVE Event Queue", source_kind: "live_bridge",
         description: "Zeigt den letzten Gift-Sender inklusive Gift-Name und Anzahl."
     },
     latest_share: {
         key: "latest_share", minimum_plan: "creator", label: "Latest Share", short_label: "LATEST SHARE",
         category: "latest", mode: "latest", event_type: "share",
-        source: "TikTok LIVE Event Queue", source_kind: "live_bridge", provider: "tiktok", platform: "tiktok", studio_areas: ["tiktok", "obs"],
+        source: "LIVE Event Queue", source_kind: "live_bridge",
         description: "Zeigt den letzten Zuschauer, der deinen LIVE geteilt hat."
-    },
-
-    twitch_live_timer: {
-        key: "twitch_live_timer", minimum_plan: "creator", label: "Twitch LIVE Timer", short_label: "TWITCH LIVE TIMER",
-        category: "counter", mode: "timer", metric: "",
-        source: "Twitch EventSub", source_kind: "live_provider", provider: "twitch", platform: "twitch", studio_areas: ["twitch", "obs"],
-        description: "Zeigt automatisch, wie lange dein aktueller Twitch-Stream läuft."
-    },
-    twitch_chat_overlay: {
-        key: "twitch_chat_overlay", minimum_plan: "creator", label: "Twitch Chat Fenster", short_label: "TWITCH CHAT",
-        category: "chat", mode: "chat", event_type: "chat",
-        required_scopes: ["user:read:chat","user:bot","channel:bot"],
-        source: "Twitch EventSub Chat", source_kind: "live_provider", provider: "twitch", platform: "twitch", studio_areas: ["twitch", "obs"],
-        description: "Zeigt echte Twitch-Chat-Nachrichten des verbundenen Creator-Kanals als frei gestaltbares Overlay."
-    },
-    twitch_follow_alert: {
-        key: "twitch_follow_alert", minimum_plan: "creator", label: "Twitch Follow Alert", short_label: "TWITCH FOLLOW",
-        category: "alerts", mode: "alert", event_type: "follow", required_scope: "moderator:read:followers",
-        source: "Twitch EventSub", source_kind: "live_provider", provider: "twitch", platform: "twitch", studio_areas: ["twitch", "obs"],
-        description: "Zeigt einen Alert bei einem neuen Twitch-Follow.", default_duration_ms: 4500
-    },
-    twitch_latest_follower: {
-        key: "twitch_latest_follower", minimum_plan: "creator", label: "Twitch Latest Follower", short_label: "LATEST TWITCH FOLLOWER",
-        category: "latest", mode: "latest", event_type: "follow", required_scope: "moderator:read:followers",
-        source: "Twitch EventSub", source_kind: "live_provider", provider: "twitch", platform: "twitch", studio_areas: ["twitch", "obs"],
-        description: "Zeigt dauerhaft den zuletzt erfassten Twitch-Follower."
-    },
-    twitch_sub_alert: {
-        key: "twitch_sub_alert", minimum_plan: "creator", label: "Twitch Sub Alert", short_label: "TWITCH SUB",
-        category: "alerts", mode: "alert", event_type: "subscribe", required_scope: "channel:read:subscriptions",
-        source: "Twitch EventSub", source_kind: "live_provider", provider: "twitch", platform: "twitch", studio_areas: ["twitch", "obs"],
-        description: "Zeigt einen Alert bei einem neuen Twitch-Sub oder Resub.", default_duration_ms: 5200
-    },
-    twitch_cheer_alert: {
-        key: "twitch_cheer_alert", minimum_plan: "creator", label: "Twitch Cheer Alert", short_label: "TWITCH CHEER",
-        category: "alerts", mode: "alert", event_type: "cheer", required_scope: "bits:read",
-        source: "Twitch EventSub", source_kind: "live_provider", provider: "twitch", platform: "twitch", studio_areas: ["twitch", "obs"],
-        description: "Zeigt einen Alert, wenn Bits in deinem Twitch-Kanal verwendet werden.", default_duration_ms: 5200
-    },
-    youtube_subscriber_goal: {
-        key: "youtube_subscriber_goal", minimum_plan: "creator", label: "YouTube Abonnenten Goal", short_label: "YOUTUBE ABO GOAL",
-        category: "goals", mode: "goal", metric: "profile.followers", required_scope: "https://www.googleapis.com/auth/youtube.readonly",
-        source: "YouTube Kanal", source_kind: "profile", provider: "youtube", platform: "youtube", studio_areas: ["youtube", "obs"],
-        description: "Zeigt den Abonnentenstand des verbundenen YouTube-Kanals und ein frei definierbares Ziel.", default_goal: 1000
-    },
-    youtube_subscriber_counter: {
-        key: "youtube_subscriber_counter", minimum_plan: "creator", label: "YouTube Abonnenten Counter", short_label: "YOUTUBE ABOS",
-        category: "counter", mode: "counter", metric: "profile.followers", required_scope: "https://www.googleapis.com/auth/youtube.readonly",
-        source: "YouTube Kanal", source_kind: "profile", provider: "youtube", platform: "youtube", studio_areas: ["youtube", "obs"],
-        description: "Zeigt den aktuellen Abonnentenstand des verbundenen YouTube-Kanals."
-    },
-    youtube_live_timer: {
-        key: "youtube_live_timer", minimum_plan: "creator", label: "YouTube LIVE Timer", short_label: "YOUTUBE LIVE TIMER",
-        category: "counter", mode: "timer", metric: "", required_scope: "https://www.googleapis.com/auth/youtube.readonly",
-        source: "YouTube Live Streaming API", source_kind: "live_provider", provider: "youtube", platform: "youtube", studio_areas: ["youtube", "obs"],
-        description: "Zeigt automatisch, wie lange der erkannte YouTube-Livestream läuft."
-    },
-    youtube_chat_overlay: {
-        key: "youtube_chat_overlay", minimum_plan: "creator", label: "YouTube Live Chat", short_label: "YOUTUBE CHAT",
-        category: "chat", mode: "chat", event_type: "chat", required_scope: "https://www.googleapis.com/auth/youtube.readonly",
-        source: "YouTube Live Chat", source_kind: "live_provider", provider: "youtube", platform: "youtube", studio_areas: ["youtube", "obs"],
-        description: "Zeigt Nachrichten aus dem Live-Chat des aktuell verbundenen YouTube-Livestreams."
-    },
-    youtube_member_alert: {
-        key: "youtube_member_alert", minimum_plan: "creator", label: "YouTube Mitgliedschaft Alert", short_label: "YOUTUBE MEMBER",
-        category: "alerts", mode: "alert", event_type: "membership", required_scope: "https://www.googleapis.com/auth/youtube.readonly",
-        source: "YouTube Live Chat Events", source_kind: "live_provider", provider: "youtube", platform: "youtube", studio_areas: ["youtube", "obs"],
-        description: "Reagiert auf neue Mitgliedschaften, Meilensteine und verschenkte Mitgliedschaften im YouTube Live Chat.", default_duration_ms: 5200
-    },
-    youtube_latest_member: {
-        key: "youtube_latest_member", minimum_plan: "creator", label: "YouTube Latest Member", short_label: "LATEST YOUTUBE MEMBER",
-        category: "latest", mode: "latest", event_type: "membership", required_scope: "https://www.googleapis.com/auth/youtube.readonly",
-        source: "YouTube Live Chat Events", source_kind: "live_provider", provider: "youtube", platform: "youtube", studio_areas: ["youtube", "obs"],
-        description: "Zeigt das zuletzt erfasste Mitgliedschafts-Ereignis des aktuellen YouTube-Livestreams."
-    },
-    youtube_super_chat_alert: {
-        key: "youtube_super_chat_alert", minimum_plan: "creator", label: "YouTube Super Chat Alert", short_label: "SUPER CHAT",
-        category: "alerts", mode: "alert", event_type: "super_chat", required_scope: "https://www.googleapis.com/auth/youtube.readonly",
-        source: "YouTube Live Chat Events", source_kind: "live_provider", provider: "youtube", platform: "youtube", studio_areas: ["youtube", "obs"],
-        description: "Zeigt einen Alert bei Super Chats und Super Stickern im YouTube-Livestream.", default_duration_ms: 5600
-    },
-    youtube_latest_super_chat: {
-        key: "youtube_latest_super_chat", minimum_plan: "creator", label: "YouTube Latest Super Chat", short_label: "LATEST SUPER CHAT",
-        category: "latest", mode: "latest", event_type: "super_chat", required_scope: "https://www.googleapis.com/auth/youtube.readonly",
-        source: "YouTube Live Chat Events", source_kind: "live_provider", provider: "youtube", platform: "youtube", studio_areas: ["youtube", "obs"],
-        description: "Zeigt den zuletzt erfassten Super Chat oder Super Sticker."
     }
 });
-
-const WIDGET_PROVIDER_TAXONOMY = Object.freeze({
-    tiktok: Object.freeze({forbidden_events:new Set(["subscribe","cheer","membership","super_chat"]),forbidden_metric_prefixes:["twitch.","youtube."]}),
-    twitch: Object.freeze({forbidden_events:new Set(["gift","share","like","viewer","membership","super_chat"]),forbidden_metric_prefixes:["live.likes","live.gifts","live.shares","live.viewers","profile.likes","youtube."]}),
-    youtube: Object.freeze({forbidden_events:new Set(["gift","share","like","viewer","follow","subscribe","cheer"]),forbidden_metric_prefixes:["live.likes","live.gifts","live.shares","live.viewers","profile.likes","twitch."]}),
-    obs: Object.freeze({forbidden_events:new Set(["gift","share","subscribe","cheer","membership","super_chat"]),forbidden_metric_prefixes:["live.","profile.","twitch.","youtube."]})
-});
-function assertWidgetProviderTaxonomy() {
-    for (const item of Object.values(WIDGET_STUDIO_WIDGET_TYPES)) {
-        const provider=String(item.provider||"").toLowerCase();
-        const rules=WIDGET_PROVIDER_TAXONOMY[provider];
-        if(!rules)throw new Error(`widget_provider_unknown:${item.key}`);
-        const areas=Array.isArray(item.studio_areas)?item.studio_areas:[];
-        if(areas.some(area=>area!==provider&&area!=="obs"))throw new Error(`widget_provider_area_mismatch:${item.key}`);
-        const eventType=String(item.event_type||"").toLowerCase();
-        if(eventType&&rules.forbidden_events.has(eventType))throw new Error(`widget_provider_event_mismatch:${item.key}`);
-        const metrics=[item.metric,...(Array.isArray(item.metric_options)?item.metric_options:[])].map(v=>String(v||"")).filter(Boolean);
-        if(metrics.some(metric=>rules.forbidden_metric_prefixes.some(prefix=>metric.startsWith(prefix))))throw new Error(`widget_provider_metric_mismatch:${item.key}`);
-    }
-}
-assertWidgetProviderTaxonomy();
 
 const WIDGET_STUDIO_WIDGET_TYPE_KEYS =
     new Set(Object.keys(WIDGET_STUDIO_WIDGET_TYPES));
@@ -10706,56 +10289,21 @@ function studioWidgetDefinition(value) {
     return WIDGET_STUDIO_WIDGET_TYPES[key] || WIDGET_STUDIO_WIDGET_TYPES.follower_goal;
 }
 
-function studioWidgetProvider(item={}) {
-    const explicit=String(item.provider||"").toLowerCase();
-    if (["tiktok","twitch","youtube","obs"].includes(explicit)) return explicit;
-    if (item.source_kind === "static" || item.source_kind === "manual") return "obs";
-    return "tiktok";
-}
-
-function studioWidgetRequiredScopes(item={}) {
-    const many=Array.isArray(item.required_scopes)?item.required_scopes:[];
-    const one=String(item.required_scope||"").trim();
-    return [...new Set([...many,one].map(value=>String(value||"").trim()).filter(Boolean))];
-}
-
-async function requireWidgetProviderBetaAccess(accountOrId,definition){
-    const provider=studioWidgetProvider(definition);
-    if(["tiktok","twitch"].includes(provider))return requireProviderBetaAccess(accountOrId,provider);
-    return creatorAccessProfile(accountOrId);
-}
-
-function studioWidgetRegistryPublic(plan = "free", entitlements = null, providerAccess = null) {
+function studioWidgetRegistryPublic(plan = "free", entitlements = null) {
     const effective=entitlements||getPlanEntitlements(plan);
-    const hasProviderFilter=providerAccess&&typeof providerAccess==="object";
-    const connected={
-        obs:true,
-        tiktok:Boolean(providerAccess?.tiktok?.connected)&&providerAccess?.tiktok?.beta_access?.allowed!==false,
-        twitch:Boolean(providerAccess?.twitch?.connected)&&providerAccess?.twitch?.beta_access?.allowed!==false,
-        youtube:Boolean(providerAccess?.youtube?.connected)
-    };
-    const providerScopes={
-        twitch:new Set(Array.isArray(providerAccess?.twitch?.scopes)?providerAccess.twitch.scopes:[]),
-        youtube:new Set(Array.isArray(providerAccess?.youtube?.scopes)?providerAccess.youtube.scopes:[])
-    };
     return Object.values(WIDGET_STUDIO_WIDGET_TYPES).map((item) => {
         const minimumPlan=item.minimum_plan||"free";
-        const provider=studioWidgetProvider(item);
-        const platform=item.platform || provider;
+        const platform=item.platform || (item.source_kind === "static" ? "obs" : "tiktok");
         const studioAreas=Array.isArray(item.studio_areas)&&item.studio_areas.length
-            ? [...new Set(item.studio_areas.filter(area => ["tiktok","twitch","youtube","obs"].includes(area)))]
+            ? [...new Set(item.studio_areas.filter(area => ["tiktok","obs"].includes(area)))]
             : [platform];
-        const planAvailable=item.mode === "static"
+        const available=item.mode === "static"
             ? Boolean(effective.widget_studio)
             : minimumPlan==="free"
                 ? true
                 : (["alert","latest","goal_alert"].includes(item.mode)?Boolean(effective.alerts):Boolean(effective.live_widgets));
-        const requiredScopes=studioWidgetRequiredScopes(item);
-        const grantedScopes=providerScopes[provider]||new Set();
-        const scopeAvailable=requiredScopes.length===0||requiredScopes.every(scope=>grantedScopes.has(scope));
-        const providerConnected=!hasProviderFilter||connected[provider]===true;
-        return {...item,provider,platform,studio_areas:studioAreas,minimum_plan:minimumPlan,required_scopes:requiredScopes,available:planAvailable&&providerConnected&&scopeAvailable,provider_connected:providerConnected,scope_available:scopeAvailable,metric_options:Array.isArray(item.metric_options)?[...item.metric_options]:undefined};
-    }).filter(item=>!hasProviderFilter||item.provider==="obs"||item.provider_connected);
+        return {...item,platform,studio_areas:studioAreas,minimum_plan:minimumPlan,available,metric_options:Array.isArray(item.metric_options)?[...item.metric_options]:undefined};
+    });
 }
 
 function studioClamp(
@@ -11528,7 +11076,7 @@ function studioWidgetTemplateConfig(widgetType = "follower_goal", templateKey = 
     const goal = Number(def.default_goal || 1000);
     const label = def.label;
     const short = def.short_label;
-    const sourceText = def.source_kind === "static" ? "FREIES OVERLAY" : def.source_kind === "profile" ? (def.provider === "youtube" ? "YOUTUBE KANAL" : def.provider === "twitch" ? "TWITCH KANAL" : "TIKTOK PROFIL") : def.source_kind === "manual" ? "MANUELL" : def.source_kind === "hybrid" ? "CREATOR SUITE" : def.provider === "twitch" ? "TWITCH LIVE" : def.provider === "youtube" ? "YOUTUBE LIVE" : "TIKTOK LIVE";
+    const sourceText = def.source_kind === "static" ? "FREIES OVERLAY" : def.source_kind === "profile" ? "TIKTOK PROFIL" : def.source_kind === "manual" ? "MANUELL" : def.source_kind === "hybrid" ? "CREATOR SUITE" : "TIKTOK LIVE";
 
     const base = (id,type,name,x,y,w,h,z=10) => ({id,type,name,visible:true,locked:false,position:{x,y},size:{width:w,height:h},rotation:0,opacity:1,zIndex:z,animation:{enabled:true,enter:"fade",change:type==="counter"?"pulse":type==="progress"?"glow":"none",durationMs:500}});
     const text=(id,name,value,x,y,w,h,size,color,align="left",weight=800,z=10,fx={})=>({...base(id,"text",name,x,y,w,h,z),data:{text:value},style:{fontFamily:"Inter",fontSize:size,fontWeight:weight,color,textAlign:align,letterSpacing:0,textTransform:"none",shadowColor:"rgba(0,0,0,.36)",shadowBlur:0,shadowX:0,shadowY:0,glowColor:"#148cff",glowBlur:0,...fx}});
@@ -11567,7 +11115,7 @@ function studioWidgetTemplateConfig(widgetType = "follower_goal", templateKey = 
         const width = template === "wide" ? 760 : template === "compact" ? 430 : 560;
         const height = template === "compact" ? 240 : 340;
         return {...common,canvas:{width,height,background:"transparent"},elements:[
-            chat("chat",def.provider === "twitch" ? "Twitch LIVE Chat" : def.provider === "youtube" ? "YouTube Live Chat" : "TikTok LIVE Chat",4,4,width-8,height-8,accent,bg,10)
+            chat("chat","TikTok LIVE Chat",4,4,width-8,height-8,accent,bg,10)
         ]};
     }
 
@@ -11691,20 +11239,12 @@ function studioWidgetTemplateConfig(widgetType = "follower_goal", templateKey = 
         const title = eventType === "follow" ? (def.mode === "latest" ? "LETZTER FOLLOWER" : "NEUER FOLLOWER")
             : eventType === "gift" ? (def.mode === "latest" ? "LETZTES GIFT" : "NEUES GIFT")
             : eventType === "share" ? (def.mode === "latest" ? "LETZTER SHARE" : "LIVE GETEILT")
-            : eventType === "subscribe" ? "NEUER TWITCH SUB"
-            : eventType === "cheer" ? "TWITCH CHEER"
-            : eventType === "membership" ? (def.mode === "latest" ? "LETZTE MITGLIEDSCHAFT" : "NEUE MITGLIEDSCHAFT")
-            : eventType === "super_chat" ? (def.mode === "latest" ? "LETZTER SUPER CHAT" : "SUPER CHAT")
             : short;
         const message = eventType === "follow" ? (def.mode === "latest" ? "{{actor}}" : "{{actor}} folgt dir jetzt!")
             : eventType === "gift" ? "{{actor}} · {{amount}}× {{gift}}"
             : eventType === "share" ? (def.mode === "latest" ? "{{actor}}" : "{{actor}} hat deinen LIVE geteilt!")
-            : eventType === "subscribe" ? "{{actor}} hat abonniert!"
-            : eventType === "cheer" ? "{{actor}} · {{amount}} Bits"
-            : eventType === "membership" ? "{{actor}} ist Mitglied"
-            : eventType === "super_chat" ? "{{actor}} · {{amount}}"
             : "{{actor}}";
-        const sub = eventType === "gift" ? "Danke für deinen Support!" : eventType === "follow" ? "Willkommen in der Community" : eventType === "subscribe" ? "Danke für deinen Sub!" : eventType === "cheer" ? "Danke für die Bits!" : eventType === "membership" ? "Danke für deine Mitgliedschaft!" : eventType === "super_chat" ? "Danke für deinen Super Chat!" : "Danke fürs Teilen";
+        const sub = eventType === "gift" ? "Danke für deinen Support!" : eventType === "follow" ? "Willkommen in der Community" : "Danke fürs Teilen";
         const h = def.mode === "alert" ? 158 : 112;
         const accent = template === "neon" ? "#27d0ff" : template === "wide" ? "#20d4e6" : template === "glass" ? "#27d0ff" : "#148cff";
         const bg = template === "neon" ? "rgba(4,18,31,.96)" : template === "glass" ? "rgba(13,34,52,.72)" : "rgba(6,17,31,.97)";
@@ -11718,7 +11258,7 @@ function studioWidgetTemplateConfig(widgetType = "follower_goal", templateKey = 
         return {...common,canvas:{width,height,background:"transparent"},elements:[
             shape("bg","Alert Hintergrund",3,3,width-6,height-6,bg,template==="compact"?18:22,accent,1,0,{glowColor:accent,glowBlur:template==="neon"?22:7,shadowBlur:28,shadowY:12}),
             avatar("event_avatar","Event Avatar","event.actor_avatar",template==="compact"?14:18,template==="compact"?15:24,template==="compact"?64:def.mode==="alert"?88:68,template==="compact"?16:22,12,{glowColor:accent,glowBlur:6}),
-            text("event_source","Event Quelle",(def.provider==="twitch"?"TWITCH · ":def.provider==="youtube"?"YOUTUBE · ":"TIKTOK LIVE · ")+title,template==="compact"?94:126,template==="compact"?13:20,width-(template==="compact"?112:150),16,8,accent,"left",900),
+            text("event_source","Event Quelle","TIKTOK LIVE · "+title,template==="compact"?94:126,template==="compact"?13:20,width-(template==="compact"?112:150),16,8,accent,"left",900),
             text("event_actor","Event Text",message,template==="compact"?94:126,template==="compact"?31:44,width-(template==="compact"?112:150),def.mode==="alert"?34:28,template==="compact"?15:def.mode==="alert"?21:17,"#f4f8ff","left",850,13,{glowColor:template==="neon"?accent:"#148cff",glowBlur:template==="neon"?8:0}),
             text("event_sub","Event Subtext",sub,template==="compact"?94:126,template==="compact"?62:def.mode==="alert"?91:77,width-(template==="compact"?112:150),18,8,"rgba(176,207,232,.68)","left",650)
         ]};
@@ -14007,41 +13547,7 @@ async function getStudioLiveState(creatorId) {
     };
 }
 
-async function studioDataSnapshot(creatorId, provider = "tiktok") {
-    const key=String(provider||"tiktok").toLowerCase();
-    if(key==="twitch"){
-        const [connection,live]=await Promise.all([getTwitchConnection(creatorId),getProviderLiveState(creatorId,"twitch")]);
-        return{
-            profile:{
-                connected:Boolean(connection?.connected),
-                display_name:connection?.display_name||connection?.login||"",
-                avatar_url:connection?.profile_image_url||"",
-                followers:0,
-                likes_total:0,
-                updated_at:connection?.updated_at||null
-            },
-            live,
-            bridge:{configured:true,online:Boolean(connection?.connected)},
-            provider:"twitch"
-        };
-    }
-    if(key==="youtube"){
-        const [connection,live]=await Promise.all([getYouTubeConnection(creatorId),getProviderLiveState(creatorId,"youtube")]);
-        return{
-            profile:{
-                connected:Boolean(connection?.connected),
-                display_name:connection?.channel_title||"",
-                avatar_url:connection?.profile_image_url||"",
-                followers:Number(connection?.subscriber_count||0),
-                likes_total:0,
-                updated_at:connection?.updated_at||null
-            },
-            youtube:{subscribers:Number(connection?.subscriber_count||0),subscriber_count_hidden:Boolean(connection?.subscriber_count_hidden)},
-            live,
-            bridge:{configured:true,online:Boolean(connection?.connected)},
-            provider:"youtube"
-        };
-    }
+async function studioDataSnapshot(creatorId) {
     const [profile, live, bridge] = await Promise.all([
         getFollowerWidgetTikTokData(creatorId),
         getStudioLiveState(creatorId),
@@ -14057,8 +13563,7 @@ async function studioDataSnapshot(creatorId, provider = "tiktok") {
             updated_at: profile.updated_at || null
         },
         live,
-        bridge,
-        provider:"tiktok"
+        bridge
     };
 }
 
@@ -14083,46 +13588,28 @@ function publicStudioLiveEventRow(row) {
             source_event_id: studioText(payload.source_event_id || payload.sourceEventId, 160, ""),
             is_bot: payload.is_bot === true,
             bot_command: studioText(payload.bot_command, 24, ""),
-            repeat_count: Math.max(0, Math.round(Number(payload.repeat_count || payload.repeatCount || 0) || 0)),
-            membership_level: studioText(payload.membership_level || payload.membershipLevel, 120, ""),
-            currency: studioText(payload.currency, 24, ""),
-            amount_display: studioText(payload.amount_display || payload.amountDisplay, 80, "")
+            repeat_count: Math.max(0, Math.round(Number(payload.repeat_count || payload.repeatCount || 0) || 0))
         },
         created_at: row.created_at || null
     };
 }
 
-async function getRecentStudioLiveEvents(creatorId, eventType = null, limit = 20, sessionId = null, provider = null) {
+async function getRecentStudioLiveEvents(creatorId, eventType = null, limit = 20, sessionId = null) {
     const safeLimit = Math.max(1, Math.min(50, Math.round(Number(limit) || 20)));
-    const providerKey=provider?String(provider).toLowerCase():"";
-    let resolvedSessionId=sessionId;
-    if(!providerKey && !resolvedSessionId)resolvedSessionId=(await getStudioLiveState(creatorId)).session_id;
-    if(!providerKey && !resolvedSessionId)return[];
-    const params=[normalizeCreatorId(creatorId)];
-    let where=`creator_id = $1`;
-    if(providerKey){params.push(providerKey);where+=` AND provider = $${params.length}`;}
-    if(resolvedSessionId){params.push(resolvedSessionId);where+=` AND session_id = $${params.length}`;}
-    if(eventType){params.push(String(eventType));where+=` AND event_type = $${params.length}`;}
+    const resolvedSessionId = sessionId || (await getStudioLiveState(creatorId)).session_id;
+    if (!resolvedSessionId) return [];
+    const params = [creatorId, resolvedSessionId];
+    let where = `creator_id = $1 AND session_id = $2`;
+    if (eventType) {
+        params.push(String(eventType));
+        where += ` AND event_type = $3`;
+    }
     params.push(safeLimit);
-    const result=await pool.query(`SELECT * FROM creator_live_events WHERE ${where} ORDER BY created_at DESC, id DESC LIMIT $${params.length}`,params);
-    return result.rows.map(publicStudioLiveEventRow).filter(Boolean);
-}
-
-async function getRecentCreatorActivityEvents(creatorId,eventType=null,limit=50){
-    const safeLimit=Math.max(1,Math.min(50,Math.round(Number(limit)||50)));
-    const [tiktokState,twitchState,youtubeState]=await Promise.all([
-        getStudioLiveState(creatorId),
-        getProviderLiveState(creatorId,"twitch"),
-        getProviderLiveState(creatorId,"youtube")
-    ]);
-    const sessionIds=[...new Set([tiktokState?.session_id,twitchState?.session_id,youtubeState?.session_id].filter(Boolean).map(String))];
-    if(!sessionIds.length)return[];
-    const params=[normalizeCreatorId(creatorId)];
-    const placeholders=sessionIds.map(id=>{params.push(id);return`$${params.length}`;});
-    let where=`creator_id = $1 AND session_id IN (${placeholders.join(",")})`;
-    if(eventType){params.push(String(eventType));where+=` AND event_type = $${params.length}`;}
-    params.push(safeLimit);
-    const result=await pool.query(`SELECT * FROM creator_live_events WHERE ${where} ORDER BY created_at DESC, id DESC LIMIT $${params.length}`,params);
+    const limitParam = `$${params.length}`;
+    const result = await pool.query(
+        `SELECT * FROM creator_live_events WHERE ${where} ORDER BY created_at DESC, id DESC LIMIT ${limitParam}`,
+        params
+    );
     return result.rows.map(publicStudioLiveEventRow).filter(Boolean);
 }
 
@@ -14828,50 +14315,20 @@ app.post(
 
 app.get("/api/plans/catalog",async(_req,res)=>{
     res.set("Cache-Control","public, max-age=120");
-    const plans=publicPlanCatalog().map(plan=>{
-        const checkoutAvailable=Boolean(COMMERCIAL_MODE && BILLING_CONFIG.plans?.[plan.key]?.checkout_available);
-        return {...plan,price_status:plan.key==="free"?"active":checkoutAvailable?"active":"private_beta",checkout_available:checkoutAvailable};
-    });
-    return res.json({
-        ok:true,
-        private_beta:true,
-        commercial_mode:COMMERCIAL_MODE,
-        billing_enabled:Boolean(COMMERCIAL_MODE && BILLING_CONFIG.enabled),
-        checkout_available:Boolean(COMMERCIAL_MODE && BILLING_CONFIG.checkout_available),
-        provider:BILLING_CONFIG.provider,
-        webhook_ready:Boolean(COMMERCIAL_MODE && BILLING_CONFIG.webhook_ready),
-        grace_days:BILLING_CONFIG.grace_days,
-        plans
-    });
-});
-
-app.get("/api/public/legal/status",(_req,res)=>{
-    res.set("Cache-Control","public, max-age=300");
-    return res.json({
-        ok:true,
-        private_beta:true,
-        commercial_mode:COMMERCIAL_MODE,
-        paid_checkout_enabled:Boolean(COMMERCIAL_MODE && BILLING_CONFIG.checkout_available),
-        minimum_age:PRIVATE_BETA_MINIMUM_AGE,
-        terms_version:LEGAL_TERMS_VERSION,
-        privacy_notice_version:LEGAL_PRIVACY_NOTICE_VERSION,
-        beta_notice_version:LEGAL_BETA_NOTICE_VERSION,
-        optional_tracking_enabled:false,
-        advertising_tracking_enabled:false
-    });
+    const plans=publicPlanCatalog().map(plan=>({...plan,price_status:plan.key==="free"?"active":BILLING_CONFIG.plans?.[plan.key]?.checkout_available?"active":"configuration_required",checkout_available:Boolean(BILLING_CONFIG.plans?.[plan.key]?.checkout_available)}));
+    return res.json({ok:true,billing_enabled:BILLING_CONFIG.enabled,checkout_available:BILLING_CONFIG.checkout_available,provider:BILLING_CONFIG.provider,webhook_ready:BILLING_CONFIG.webhook_ready,grace_days:BILLING_CONFIG.grace_days,plans});
 });
 
 app.get("/api/creator/access",requireCreatorAccount,async(req,res)=>{res.set("Cache-Control","no-store");try{return res.json({ok:true,...(await creatorAccessProfile(req.creatorAccount))});}catch(error){return res.status(500).json({ok:false,error:"Creator-Zugriff konnte nicht geladen werden."});}});
 
 app.get("/api/creator/billing/status",requireCreatorAccount,async(req,res)=>{
     res.set("Cache-Control","no-store");
-    try{const access=await creatorAccessProfile(req.creatorAccount);return res.json({ok:true,private_beta:true,commercial_mode:COMMERCIAL_MODE,provider:BILLING_CONFIG.provider,billing_enabled:Boolean(COMMERCIAL_MODE&&BILLING_CONFIG.enabled),webhook_ready:Boolean(COMMERCIAL_MODE&&BILLING_CONFIG.webhook_ready),checkout_available:Boolean(COMMERCIAL_MODE&&BILLING_CONFIG.checkout_available),portal_available:Boolean(COMMERCIAL_MODE&&BILLING_CONFIG.portal_available),grace_days:BILLING_CONFIG.grace_days,plan:access.plan,effective_plan:access.effective_plan,access_source:access.access_source,beta:access.beta,subscription:access.subscription});}
+    try{const access=await creatorAccessProfile(req.creatorAccount);return res.json({ok:true,provider:BILLING_CONFIG.provider,billing_enabled:BILLING_CONFIG.enabled,webhook_ready:BILLING_CONFIG.webhook_ready,checkout_available:BILLING_CONFIG.checkout_available,portal_available:BILLING_CONFIG.portal_available,grace_days:BILLING_CONFIG.grace_days,plan:access.plan,effective_plan:access.effective_plan,access_source:access.access_source,beta:access.beta,subscription:access.subscription});}
     catch(error){return res.status(500).json({ok:false,error:"Billing-Status konnte nicht geladen werden."});}
 });
 
 app.post("/api/creator/billing/checkout",requireCreatorAccount,async(req,res)=>{
     res.set("Cache-Control","no-store");
-    if(!COMMERCIAL_MODE)return res.status(503).json({ok:false,code:"private_beta_no_billing",error:"Bezahlte Pläne sind während der privaten Beta nicht freigeschaltet."});
     const plan=normalizePlan(req.body?.plan);
     if(!["creator","pro"].includes(plan))return res.status(400).json({ok:false,error:"Für diesen Plan ist kein Checkout erforderlich."});
     const priceId=BILLING_PLAN_PRICE[plan];if(!BILLING_CONFIG.enabled||!priceId)return res.status(503).json({ok:false,error:`${plan.toUpperCase()} Checkout ist noch nicht auf diesem Server konfiguriert.`});
@@ -14889,7 +14346,6 @@ app.post("/api/creator/billing/checkout",requireCreatorAccount,async(req,res)=>{
 
 app.post("/api/creator/billing/portal",requireCreatorAccount,async(req,res)=>{
     res.set("Cache-Control","no-store");
-    if(!COMMERCIAL_MODE)return res.status(503).json({ok:false,code:"private_beta_no_billing",error:"Billing ist während der privaten Beta deaktiviert."});
     if(!BILLING_CONFIG.portal_available)return res.status(503).json({ok:false,error:"Billing Portal ist noch nicht konfiguriert."});
     try{
         const row=(await pool.query(`SELECT provider_customer_id FROM creator_billing_subscriptions WHERE creator_id=$1 LIMIT 1`,[req.creatorAccount.id])).rows[0];
@@ -14932,28 +14388,6 @@ app.post(
                 normalizeDisplayName(
                     req.body?.display_name
                 );
-
-            const legalFlag = value => value === true || String(value || "").trim().toLowerCase() === "true" || String(value || "").trim().toLowerCase() === "on";
-            const termsAccepted = legalFlag(req.body?.terms_accepted);
-            const privacyAcknowledged = legalFlag(req.body?.privacy_acknowledged);
-            const betaAcknowledged = legalFlag(req.body?.beta_acknowledged);
-            const ageConfirmed = legalFlag(req.body?.age_18_confirmed);
-
-            if (!termsAccepted || !privacyAcknowledged || !betaAcknowledged) {
-                return res.status(400).json({
-                    ok:false,
-                    code:"legal_acceptance_required",
-                    error:"Bitte bestätige Nutzungsbedingungen, Datenschutzhinweise und Beta-Hinweis."
-                });
-            }
-
-            if (!ageConfirmed) {
-                return res.status(400).json({
-                    ok:false,
-                    code:"minimum_age_required",
-                    error:`Die geschlossene Beta ist derzeit nur für Personen ab ${PRIVATE_BETA_MINIMUM_AGE} Jahren freigegeben.`
-                });
-            }
 
 
             if (
@@ -15161,10 +14595,6 @@ app.post(
                 creatorId,
                 "account_registered"
             );
-            await recordSecurityEvent(creatorId,`legal_terms_${LEGAL_TERMS_VERSION}_accepted`);
-            await recordSecurityEvent(creatorId,`privacy_notice_${LEGAL_PRIVACY_NOTICE_VERSION}_acknowledged`);
-            await recordSecurityEvent(creatorId,`beta_notice_${LEGAL_BETA_NOTICE_VERSION}_acknowledged`);
-            await recordSecurityEvent(creatorId,`minimum_age_${PRIVATE_BETA_MINIMUM_AGE}_confirmed`);
 
             if (ACCOUNT_MAIL_CONFIG.verificationRequired) {
                 const verification = await issueAccountActionToken(creatorId,"verify_email",EMAIL_VERIFICATION_TOKEN_TTL_MS);
@@ -15178,10 +14608,6 @@ app.post(
                 );
             }
 
-            // Neue Creator werden während der geschlossenen Provider-Beta automatisch
-            // als Pending-Kandidat geführt. Der Admin schaltet TikTok/Twitch danach
-            // gezielt frei; Admin-Konten selbst brauchen keine Beta-Freigabe.
-            const access=await creatorAccessProfile(account);
 
             return res
                 .status(201)
@@ -15202,14 +14628,13 @@ app.post(
                         ),
 
                     entitlements:
-                        access.entitlements,
-
-                    access,
+                        getPlanEntitlements(
+                            account.plan
+                        ),
 
                     modules:
                         publicModuleRegistry(
-                            account,
-                            access.entitlements
+                            account
                         )
 
                 });
@@ -16992,14 +16417,6 @@ app.delete(
                 ]
             );
 
-            await client.query(`DELETE FROM twitch_oauth_states WHERE creator_id=$1`,[account.id]);
-            await client.query(`DELETE FROM youtube_oauth_states WHERE creator_id=$1`,[account.id]);
-            await client.query(`DELETE FROM launcher_provider_oauth_handoffs WHERE creator_id=$1`,[account.id]);
-            await client.query(`DELETE FROM twitch_eventsub_subscriptions WHERE creator_id=$1`,[account.id]);
-            await client.query(`DELETE FROM creator_provider_live_state WHERE creator_id=$1`,[account.id]);
-            await client.query(`DELETE FROM twitch_connections WHERE creator_id=$1`,[account.id]);
-            await client.query(`DELETE FROM youtube_connections WHERE creator_id=$1`,[account.id]);
-
 
             // Nur account-spezifische TikTok-Verbindungen entfernen.
             // Die globale Owner-Verbindung "default" bleibt unangetastet.
@@ -17685,29 +17102,20 @@ app.get(
 
             const access=await creatorAccessProfile(req.creatorAccount);
             const entitlements=access.entitlements;
-            const providerAccess=await creatorWidgetProviderAccess(req.creatorAccount.id);
-            const [twitchConnection,youtubeConnection,youtubeLive]=await Promise.all([getTwitchConnection(req.creatorAccount.id),getYouTubeConnection(req.creatorAccount.id),getProviderLiveState(req.creatorAccount.id,"youtube")]);
 
             const live =
                 await getStudioLiveState(
                     req.creatorAccount.id
                 );
-            const visibleRows=rows.filter(row=>{
-                const provider=studioWidgetProvider(studioWidgetDefinition(row.widget_type));
-                return provider==="obs"||providerAccess?.[provider]?.connected===true;
-            });
 
             return res.json({
                 ok: true,
                 widgets:
-                    visibleRows.map(publicStudioWidgetRow),
+                    rows.map(publicStudioWidgetRow),
                 tiktok,
-                twitch: publicTwitchConnection(twitchConnection),
-                youtube: publicYouTubeConnection(youtubeConnection,youtubeLive),
-                provider_access:providerAccess,
                 live,
                 bridge: await getStudioBridgeStatus(req.creatorAccount.id),
-                registry: studioWidgetRegistryPublic(req.creatorAccount.plan,entitlements,providerAccess),
+                registry: studioWidgetRegistryPublic(req.creatorAccount.plan,entitlements),
                 access,
                 providers: studioProviderRegistryPublic(),
                 sessions: await getStudioLiveSessions(req.creatorAccount.id, 5),
@@ -17938,24 +17346,6 @@ app.post(
 
             const definition =
                 studioWidgetDefinition(widgetType);
-            const providerAccess=await creatorWidgetProviderAccess(req.creatorAccount.id);
-            const widgetProvider=studioWidgetProvider(definition);
-            if(["tiktok","twitch"].includes(widgetProvider)&&providerAccess?.[widgetProvider]?.beta_access?.allowed===false){
-                const access=await creatorAccessProfile(req.creatorAccount);
-                return res.status(403).json(providerBetaDeniedPayload(access,widgetProvider));
-            }
-            if(widgetProvider!=="obs"&&providerAccess?.[widgetProvider]?.connected!==true){
-                const providerLabel=widgetProvider==="twitch"?"Twitch":widgetProvider==="youtube"?"YouTube":"TikTok";
-                return res.status(409).json({ok:false,code:"provider_not_connected",provider:widgetProvider,error:`Verbinde zuerst ${providerLabel}, bevor du dieses Widget erstellst.`});
-            }
-            if(["twitch","youtube"].includes(widgetProvider)){
-                const grantedScopes=new Set(providerAccess?.[widgetProvider]?.scopes||[]);
-                const missingScopes=studioWidgetRequiredScopes(definition).filter(scope=>!grantedScopes.has(scope));
-                if(missingScopes.length){
-                    const providerLabel=widgetProvider==="twitch"?"Twitch":"YouTube";
-                    return res.status(409).json({ok:false,code:"provider_scope_missing",provider:widgetProvider,required_scope:missingScopes[0],required_scopes:missingScopes,error:`${providerLabel} benötigt für dieses Widget zusätzliche Berechtigungen. ${providerLabel} bitte erneut verbinden.`});
-                }
-            }
 
             const minimumPlan=definition.minimum_plan||"free";
             const typeAllowed=minimumPlan==="free"||(["alert","latest","goal_alert"].includes(definition.mode)?Boolean(entitlements.alerts):Boolean(entitlements.live_widgets));
@@ -18023,10 +17413,8 @@ app.post(
                 ok: true,
                 widget: publicStudioWidgetRow(result.rows[0]),
                 tiktok,
-                youtube: publicYouTubeConnection(await getYouTubeConnection(req.creatorAccount.id),await getProviderLiveState(req.creatorAccount.id,"youtube")),
                 live: await getStudioLiveState(req.creatorAccount.id),
-                registry: studioWidgetRegistryPublic(req.creatorAccount.plan,entitlements,providerAccess),
-                provider_access:providerAccess,
+                registry: studioWidgetRegistryPublic(req.creatorAccount.plan),
                 providers: studioProviderRegistryPublic()
             });
 
@@ -18052,47 +17440,29 @@ app.get("/api/creator/stream-ready",requireCreatorAccount,async(req,res)=>{
     res.set("Cache-Control","no-store");
     try{
         const creatorId=req.creatorAccount.id;
-        const [bridge,widgetResult,providerAccess,twitchConnection,youtubeConnection]=await Promise.all([
+        const [bridge,connectionResult,widgetResult]=await Promise.all([
             getStudioBridgeStatus(creatorId),
-            pool.query(`SELECT COUNT(*)::int AS total, COUNT(*) FILTER (WHERE status='live' AND published_config IS NOT NULL)::int AS published FROM creator_widgets WHERE creator_id=$1`,[creatorId]),
-            creatorWidgetProviderAccess(creatorId),
-            getTwitchConnection(creatorId),
-            getYouTubeConnection(creatorId)
+            pool.query(`SELECT connected,scope,display_name,updated_at FROM tiktok_connections WHERE creator_id=$1 LIMIT 1`,[creatorId]),
+            pool.query(`SELECT COUNT(*)::int AS total, COUNT(*) FILTER (WHERE status='live' AND published_config IS NOT NULL)::int AS published FROM creator_widgets WHERE creator_id=$1`,[creatorId])
         ]);
+        const connection=connectionResult.rows[0]||null;
         const obs=obsBridgeIntegrationState(bridge);
         const total=Number(widgetResult.rows[0]?.total||0);
         const published=Number(widgetResult.rows[0]?.published||0);
         const emailReady=req.creatorAccount.email_verified===true;
-        const tiktokReady=providerAccess?.tiktok?.connected===true;
-        const twitchReady=providerAccess?.twitch?.connected===true;
-        const youtubeReady=providerAccess?.youtube?.connected===true;
-        const providerReady=tiktokReady||twitchReady||youtubeReady;
+        const tiktokReady=connection?.connected===true;
         const launcherReady=bridge?.online===true;
         const obsReady=launcherReady&&obs.websocket_connected===true;
         const widgetReady=published>0;
-        const providerNames=[tiktokReady?"TikTok":"",twitchReady?"Twitch":"",youtubeReady?"YouTube":""].filter(Boolean);
         const steps=[
             {key:"account",label:"Account",ready:emailReady,detail:emailReady?"E-Mail bestätigt.":"E-Mail-Adresse zuerst bestätigen.",href:"/pages/account.html"},
-            {key:"provider",label:"LIVE-Plattform",ready:providerReady,detail:providerReady?`${providerNames.join(" + ")} verbunden.`:"TikTok, Twitch oder YouTube verbinden.",href:"/pages/launcher.html"},
+            {key:"tiktok",label:"TikTok",ready:tiktokReady,detail:tiktokReady?`Verbunden${connection?.display_name?` · ${studioText(connection.display_name,80,"")}`:""}.`:"TikTok-Profil verbinden.",href:"/pages/tiktok.html"},
             {key:"launcher",label:"Launcher",ready:launcherReady,detail:launcherReady?`${studioText(bridge.machine_name,80,"Creator PC")} ist online.`:(bridge?.configured?"Launcher verbunden, aber aktuell offline.":"Creator-PC per Device-Link verbinden."),href:"/pages/launcher.html"},
             {key:"obs",label:"OBS",ready:obsReady,detail:obsReady?`OBS WebSocket verbunden${obs.current_scene?` · ${obs.current_scene}`:""}.`:(launcherReady?"OBS WebSocket im Launcher verbinden.":"Launcher zuerst online bringen."),href:"/pages/launcher.html"},
             {key:"widget",label:"Widget",ready:widgetReady,detail:widgetReady?`${published} veröffentlicht${published===1?"es Widget":"e Widgets"}.`:(total?"Widget vorhanden, aber noch nicht veröffentlicht.":"Erstes Widget erstellen und veröffentlichen."),href:"/pages/widget-studio.html"}
         ];
         const next=steps.find(step=>!step.ready)||null;
-        return res.json({
-            ok:true,
-            ready:steps.every(step=>step.ready),
-            steps,
-            next,
-            counts:{widgets:total,published_widgets:published},
-            launcher:{configured:bridge?.configured===true,online:launcherReady,client_version:bridge?.client_version||""},
-            obs,
-            providers:{
-                tiktok:{...providerAccess.tiktok},
-                twitch:{...providerAccess.twitch,...publicTwitchConnection(twitchConnection)},
-                youtube:{...providerAccess.youtube,...publicYouTubeConnection(youtubeConnection)}
-            }
-        });
+        return res.json({ok:true,ready:steps.every(step=>step.ready),steps,next,counts:{widgets:total,published_widgets:published},launcher:{configured:bridge?.configured===true,online:launcherReady,client_version:bridge?.client_version||""},obs,tiktok:{connected:tiktokReady,display_name:connection?.display_name||"",updated_at:connection?.updated_at||null}});
     }catch(error){
         safeLogError("Creator Stream Ready Fehler:",error);
         return res.status(500).json({ok:false,error:"Stream-Startcheck konnte nicht geladen werden."});
@@ -18126,18 +17496,13 @@ app.get(
                     req.creatorAccount.id
                 );
 
-            const providerAccess=await creatorWidgetProviderAccess(req.creatorAccount.id);
-            const [twitchConnection,youtubeConnection,youtubeLive]=await Promise.all([getTwitchConnection(req.creatorAccount.id),getYouTubeConnection(req.creatorAccount.id),getProviderLiveState(req.creatorAccount.id,"youtube")]);
             return res.json({
                 ok: true,
                 widget: publicStudioWidgetRow(row),
                 tiktok,
-                twitch:publicTwitchConnection(twitchConnection),
-                youtube:publicYouTubeConnection(youtubeConnection,youtubeLive),
-                provider_access:providerAccess,
                 live: await getStudioLiveState(req.creatorAccount.id),
                 bridge: await getStudioBridgeStatus(req.creatorAccount.id),
-                registry: studioWidgetRegistryPublic(req.creatorAccount.plan,null,providerAccess),
+                registry: studioWidgetRegistryPublic(req.creatorAccount.plan),
                 providers: studioProviderRegistryPublic()
             });
 
@@ -18182,7 +17547,6 @@ app.put(
             const widgetAccess=await creatorAccessProfile(req.creatorAccount);
             const widgetEntitlements=widgetAccess.entitlements;
             const widgetDefinition=studioWidgetDefinition(current.widget_type);
-            try{await requireWidgetProviderBetaAccess(req.creatorAccount,widgetDefinition)}catch(error){if(error?.code==="provider_beta_required")return res.status(403).json(providerBetaDeniedPayload(error.access,error.provider));throw error}
             const widgetMinimum=widgetDefinition.minimum_plan||"free";
             const widgetAllowed=widgetMinimum==="free"||(["alert","latest","goal_alert"].includes(widgetDefinition.mode)?Boolean(widgetEntitlements.alerts):Boolean(widgetEntitlements.live_widgets));
             if(!widgetAllowed)return res.status(403).json(accessDeniedPayload(widgetAccess,["alert","latest","goal_alert"].includes(widgetDefinition.mode)?"alerts":"live_widgets",widgetMinimum));
@@ -18349,8 +17713,6 @@ app.post("/api/creator/widget-studio/widgets/:id/install-obs",requireCreatorAcco
         const creatorId=req.creatorAccount.id;
         const widget=await getStudioWidgetById(creatorId,req.params.id);
         if(!widget)return res.status(404).json({ok:false,error:"Widget nicht gefunden."});
-        const widgetDefinition=studioWidgetDefinition(widget.widget_type);
-        try{await requireWidgetProviderBetaAccess(req.creatorAccount,widgetDefinition)}catch(error){if(error?.code==="provider_beta_required")return res.status(403).json(providerBetaDeniedPayload(error.access,error.provider));throw error}
         if(widget.status!=="live"||!widget.published_config)return res.status(409).json({ok:false,code:"widget_not_published",error:"Veröffentliche das Widget zuerst, bevor du es in OBS einfügst."});
         const bridge=await getStudioBridgeStatus(creatorId);
         const obs=obsBridgeIntegrationState(bridge);
@@ -18410,7 +17772,6 @@ app.post(
             const widgetAccess=await creatorAccessProfile(req.creatorAccount);
             const widgetEntitlements=widgetAccess.entitlements;
             const widgetDefinition=studioWidgetDefinition(current.widget_type);
-            try{await requireWidgetProviderBetaAccess(req.creatorAccount,widgetDefinition)}catch(error){if(error?.code==="provider_beta_required")return res.status(403).json(providerBetaDeniedPayload(error.access,error.provider));throw error}
             const widgetMinimum=widgetDefinition.minimum_plan||"free";
             const widgetAllowed=widgetMinimum==="free"||(["alert","latest","goal_alert"].includes(widgetDefinition.mode)?Boolean(widgetEntitlements.alerts):Boolean(widgetEntitlements.live_widgets));
             if(!widgetAllowed)return res.status(403).json(accessDeniedPayload(widgetAccess,["alert","latest","goal_alert"].includes(widgetDefinition.mode)?"alerts":"live_widgets",widgetMinimum));
@@ -18542,7 +17903,6 @@ app.post(
             const duplicateAccess=await creatorAccessProfile(req.creatorAccount);
             const duplicateEntitlements=duplicateAccess.entitlements;
             const duplicateDefinition=studioWidgetDefinition(current.widget_type);
-            try{await requireWidgetProviderBetaAccess(req.creatorAccount,duplicateDefinition)}catch(error){if(error?.code==="provider_beta_required")return res.status(403).json(providerBetaDeniedPayload(error.access,error.provider));throw error}
             const duplicateMinimum=duplicateDefinition.minimum_plan||"free";
             const duplicateAllowed=duplicateMinimum==="free"||(["alert","latest","goal_alert"].includes(duplicateDefinition.mode)?Boolean(duplicateEntitlements.alerts):Boolean(duplicateEntitlements.live_widgets));
             if(!duplicateAllowed)return res.status(403).json(accessDeniedPayload(duplicateAccess,["alert","latest","goal_alert"].includes(duplicateDefinition.mode)?"alerts":"live_widgets",duplicateMinimum));
@@ -18710,7 +18070,7 @@ app.get(
             const eventType = studioText(req.query?.type, 40, "") || null;
             return res.json({
                 ok: true,
-                events: await getRecentCreatorActivityEvents(req.creatorAccount.id, eventType, req.query?.limit || 20)
+                events: await getRecentStudioLiveEvents(req.creatorAccount.id, eventType, req.query?.limit || 20)
             });
         } catch (error) {
             safeLogError("Widget Studio Event Queue Fehler:",error);
@@ -19100,7 +18460,7 @@ app.get(
                     ORDER BY creator_id,last_seen_at DESC NULLS LAST,created_at DESC
                 )
                 SELECT
-                    c.id,c.email,c.display_name,c.plan,c.status,c.email_verified_at,c.created_at,c.updated_at,
+                    c.id,c.email,c.display_name,c.plan,c.status,c.created_at,c.updated_at,
                     t.connected AS tiktok_connected,t.display_name AS tiktok_display_name,
                     t.avatar_url,t.follower_count,t.likes_count,t.video_count,
                     t.updated_at AS tiktok_updated_at,
@@ -19129,11 +18489,9 @@ app.get(
             const now=Date.now();
             const creators=result.rows.map(row=>{
                 const readiness=creatorReadiness(row,now);
-                const adminEmail=CFS_ADMIN_EMAILS.has(String(row.email||"").trim().toLowerCase())&&(!ACCOUNT_MAIL_CONFIG.verificationRequired||Boolean(row.email_verified_at));
-                const betaStatus=row.beta_status||(CFS_PROVIDER_BETA_REQUIRED&&!adminEmail?"pending":"none");
                 return{
                     id:row.id,email:sensitiveDetailsUnlocked?row.email:"",display_name:row.display_name,
-                    plan:normalizePlan(row.plan),status:row.status,email_verified:Boolean(row.email_verified_at)||!ACCOUNT_MAIL_CONFIG.verificationRequired,is_admin:adminEmail,created_at:row.created_at,updated_at:row.updated_at,
+                    plan:normalizePlan(row.plan),status:row.status,created_at:row.created_at,updated_at:row.updated_at,
                     tiktok:{
                         connected:Boolean(row.tiktok_connected),display_name:row.tiktok_display_name||"",avatar_url:row.avatar_url||"",
                         followers:Number(row.follower_count||0),likes:Number(row.likes_count||0),videos:Number(row.video_count||0),updated_at:row.tiktok_updated_at||null,
@@ -19147,7 +18505,7 @@ app.get(
                     widgets:{total:Number(row.widgets_total||0),live:Number(row.widgets_live||0)},
                     scenes:{total:Number(row.scenes_total||0),live:Number(row.scenes_live||0)},
                     live:{connected:Boolean(row.live_connected),provider:row.live_provider||"none",last_event_at:row.last_event_at||null,updated_at:row.live_updated_at||null},
-                    beta:{status:betaStatus,notes:sensitiveDetailsUnlocked?(row.beta_notes||""):"",created_at:row.beta_created_at||null,updated_at:row.beta_updated_at||null},
+                    beta:{status:row.beta_status||"none",notes:sensitiveDetailsUnlocked?(row.beta_notes||""):"",created_at:row.beta_created_at||null,updated_at:row.beta_updated_at||null},
                     readiness:{score:readiness.score,checks:readiness.checks}
                 };
             });
@@ -19162,7 +18520,6 @@ app.get(
                     sync_fresh:creators.filter(c=>c.tiktok.sync.key==="fresh").length,
                     launcher_online:creators.filter(c=>c.launcher.connection.key==="online").length,
                     beta_active:creators.filter(c=>c.beta.status==="active").length,
-                    beta_pending:creators.filter(c=>c.beta.status==="pending").length,
                     live_now:creators.filter(c=>c.live.connected).length
                 },
                 creators
@@ -19181,28 +18538,20 @@ app.put(
     async(req,res)=>{
         try {
             const creatorId=studioText(req.params.id,120,"");
-            const status=["pending","active","paused","none"].includes(String(req.body?.status||""))?String(req.body.status):"pending";
+            const status=["none","active","paused"].includes(String(req.body?.status||""))?String(req.body.status):"none";
             const notes=studioText(req.body?.notes,1200,"");
-            const exists=await pool.query(`SELECT id,email,email_verified_at FROM creator_accounts WHERE id=$1 LIMIT 1`,[creatorId]);
+            const exists=await pool.query(`SELECT id FROM creator_accounts WHERE id=$1 LIMIT 1`,[creatorId]);
             if(!exists.rowCount)return res.status(404).json({ok:false,error:"Creator nicht gefunden."});
-            const target=exists.rows[0];
-            if(status==="active"&&ACCOUNT_MAIL_CONFIG.verificationRequired&&!target.email_verified_at){
-                return res.status(409).json({ok:false,code:"beta_email_not_verified",error:"Beta kann erst nach bestätigter E-Mail-Adresse aktiviert werden."});
-            }
-            if(CFS_ADMIN_EMAILS.has(String(target.email||"").trim().toLowerCase())){
-                return res.status(409).json({ok:false,code:"beta_not_needed_for_admin",error:"Dieses Konto ist über die Admin-E-Mail bereits vollständig freigeschaltet."});
-            }
-            if(status==="none"&&!CFS_PROVIDER_BETA_REQUIRED){
+            if(status==="none"){
                 await pool.query(`DELETE FROM creator_beta_testers WHERE creator_id=$1`,[creatorId]);
                 return res.json({ok:true,beta:{status:"none",notes:""}});
             }
-            const storedStatus=status==="none"?"pending":status;
             const result=await pool.query(`
                 INSERT INTO creator_beta_testers(creator_id,status,notes,created_at,updated_at)
                 VALUES($1,$2,$3,NOW(),NOW())
                 ON CONFLICT(creator_id) DO UPDATE SET status=EXCLUDED.status,notes=EXCLUDED.notes,updated_at=NOW()
                 RETURNING status,notes,created_at,updated_at
-            `,[creatorId,storedStatus,notes]);
+            `,[creatorId,status,notes]);
             return res.json({ok:true,beta:result.rows[0]});
         }catch(error){
             safeLogError("Beta Status Fehler:",error);
@@ -20276,83 +19625,6 @@ app.post("/api/bridge/cut-studio/projects/:id/clips",widgetBridgeEventLimiter,re
     }
 });
 
-
-const LAUNCHER_PROVIDER_OAUTH_KEYS = new Set(["tiktok","twitch","youtube"]);
-
-function launcherProviderOAuthKey(value){
-    const provider=String(value||"").trim().toLowerCase();
-    return LAUNCHER_PROVIDER_OAUTH_KEYS.has(provider)?provider:"";
-}
-
-function launcherProviderOAuthConfigured(provider){
-    if(provider==="twitch")return twitchConfigured();
-    if(provider==="youtube")return youtubeConfigured();
-    if(provider==="tiktok")return Boolean(CLIENT_KEY&&CLIENT_SECRET&&REDIRECT_URI);
-    return false;
-}
-
-async function issueLauncherProviderOAuthHandoff(creatorId,provider){
-    const key=launcherProviderOAuthKey(provider);
-    if(!key)throw Object.assign(new Error("Provider wird im Launcher noch nicht unterstützt."),{code:"launcher_provider_unsupported"});
-    if(!launcherProviderOAuthConfigured(key)){const label=key==="twitch"?"Twitch":key==="youtube"?"YouTube":"TikTok";throw Object.assign(new Error(`${label} OAuth ist auf dem Server noch nicht konfiguriert.`),{code:"launcher_provider_not_configured"});}
-    await cleanupExpiredOAuthStates();
-    const token=crypto.randomBytes(32).toString("base64url");
-    await pool.query(`DELETE FROM launcher_provider_oauth_handoffs WHERE creator_id=$1 AND provider=$2`,[normalizeCreatorId(creatorId),key]);
-    await pool.query(
-        `INSERT INTO launcher_provider_oauth_handoffs(handoff_hash,creator_id,provider,expires_at,created_at)
-         VALUES($1,$2,$3,NOW()+($4::bigint * INTERVAL '1 millisecond'),NOW())`,
-        [hashValue(token),normalizeCreatorId(creatorId),key,LAUNCHER_PROVIDER_HANDOFF_TTL_MS]
-    );
-    const fragment=new URLSearchParams({provider:key,handoff:token}).toString();
-    return {provider:key,expires_in_ms:LAUNCHER_PROVIDER_HANDOFF_TTL_MS,connect_url:`${APP_BASE_URL}/pages/launcher-provider-connect.html#${fragment}`};
-}
-
-async function consumeLauncherProviderOAuthHandoff(provider,token){
-    const key=launcherProviderOAuthKey(provider),raw=String(token||"").trim();
-    if(!key||!/^[A-Za-z0-9_-]{32,160}$/.test(raw))return null;
-    const result=await pool.query(
-        `DELETE FROM launcher_provider_oauth_handoffs
-         WHERE handoff_hash=$1 AND provider=$2 AND expires_at>=NOW()
-         RETURNING creator_id,provider`,
-        [hashValue(raw),key]
-    );
-    return result.rows[0]||null;
-}
-
-app.post("/api/bridge/integrations/:provider/connect",widgetBridgeEventLimiter,requireStudioBridge,async(req,res)=>{
-    res.set("Cache-Control","no-store");
-    try{
-        const provider=launcherProviderOAuthKey(req.params.provider);
-        if(["tiktok","twitch"].includes(provider))await requireProviderBetaAccess(req.studioBridge.creator_id,provider);
-        const handoff=await issueLauncherProviderOAuthHandoff(req.studioBridge.creator_id,provider);
-        return res.json({ok:true,...handoff});
-    }catch(error){
-        if(error?.code==="provider_beta_required")return res.status(403).json(providerBetaDeniedPayload(error.access,error.provider));
-        const status=error?.code==="launcher_provider_not_configured"?503:error?.code==="launcher_provider_unsupported"?400:500;
-        return res.status(status).json(clientSafeErrorPayload(req,error,status,"Provider-Verbindung konnte nicht gestartet werden.",{includeCode:true}));
-    }
-});
-
-app.post("/auth/launcher/integrations/start",tiktokConnectLimiter,requireTrustedPublicWrite,async(req,res)=>{
-    res.set("Cache-Control","no-store");
-    res.set("Referrer-Policy","no-referrer");
-    try{
-        const provider=launcherProviderOAuthKey(req.body?.provider);
-        const row=await consumeLauncherProviderOAuthHandoff(provider,req.body?.handoff);
-        if(!row)return res.status(400).send(renderPage("Provider verbinden",`<p class="error">Der Launcher-Verbindungscode ist ungültig, abgelaufen oder wurde bereits verwendet.</p>`));
-        if(["tiktok","twitch"].includes(provider)){
-            try{await requireProviderBetaAccess(row.creator_id,provider)}catch(error){if(error?.code==="provider_beta_required")return res.status(403).send(renderPage("Beta-Freigabe",`<p class="error">${escapeHtml(error.message)}</p><p class="muted">Bitte warte auf die Freigabe durch den cfs_zockt Admin.</p>`));throw error}
-        }
-        if(provider==="tiktok")return await beginTikTokOAuth(res,row.creator_id);
-        if(provider==="twitch")return await beginTwitchOAuth(res,row.creator_id);
-        if(provider==="youtube")return await beginYouTubeOAuth(res,row.creator_id);
-        return res.status(400).send(renderPage("Provider verbinden",`<p class="error">Provider wird noch nicht unterstützt.</p>`));
-    }catch(error){
-        safeLogError("Launcher Provider OAuth Start Fehler:",error);
-        return res.status(500).send(renderPage("Provider verbinden",`<p class="error">Provider-Verbindung konnte nicht gestartet werden.</p>`));
-    }
-});
-
 app.get(
     "/api/bridge/widget-studio/library",
     widgetBridgeHeartbeatLimiter,
@@ -20362,7 +19634,7 @@ app.get(
         try {
             const creatorId=req.studioBridge.creator_id;
             const access=await creatorAccessProfile(creatorId);
-            const [widgets,scenes,creator,game,cutProjects,gameRules,gameRuleHits,cutJobs,gameActivity,tiktokConnection,twitchConnection,youtubeConnection,bridgeStatus]=await Promise.all([
+            const [widgets,scenes,creator,game,cutProjects,gameRules,gameRuleHits,cutJobs,gameActivity]=await Promise.all([
                 getCreatorSceneSources(creatorId,{includeGame:Boolean(access.entitlements.games)}),
                 pool.query(
                     `SELECT * FROM creator_widget_scenes WHERE creator_id=$1 AND status='live' AND published_config IS NOT NULL ORDER BY updated_at DESC`,
@@ -20374,26 +19646,17 @@ app.get(
                 access.entitlements.games?listCreatorGameRules(creatorId):Promise.resolve([]),
                 access.entitlements.games?recentCreatorGameRuleHits(creatorId,10):Promise.resolve([]),
                 access.entitlements.cut_studio?listCutExportJobs(creatorId,25,{includeAudition:true}):Promise.resolve([]),
-                getPublicRecentGames(creatorId,{limit:3}),
-                getConnection(creatorId),
-                getTwitchConnection(creatorId),
-                getYouTubeConnection(creatorId),
-                getStudioBridgeStatus(creatorId)
+                getPublicRecentGames(creatorId,{limit:3})
             ]);
-            const liveProvider=bridgeStatus?.capabilities?.integration_health?.live_provider||{};
-            const liveProviderKey=String(liveProvider.key||bridgeStatus?.capabilities?.provider||"").toLowerCase();
-            const tiktokLiveReady=bridgeStatus?.online===true&&liveProvider.ready===true&&["tiktool","tikfinity"].includes(liveProviderKey);
-            const [twitchEventSub,youtubeLive]=await Promise.all([getTwitchEventSubStatus(creatorId),getProviderLiveState(creatorId,"youtube")]);
-            const tiktokBeta=providerBetaPolicy(access,"tiktok"),twitchBeta=providerBetaPolicy(access,"twitch");
-            const providerAccess={obs:{connected:true},tiktok:{connected:Boolean(tiktokConnection?.connected),beta_access:tiktokBeta},twitch:{connected:Boolean(twitchConnection?.connected),beta_access:twitchBeta,scopes:String(twitchConnection?.scope||"").split(/[\s,]+/).filter(Boolean)},youtube:{connected:Boolean(youtubeConnection?.connected),scopes:String(youtubeConnection?.scope||"").split(/[\s,]+/).filter(Boolean)}};
-            const publishedWidgets=widgets.filter(widget=>widget.status==="live").map(widget=>{
-                const definition=studioWidgetDefinition(widget.widget_type),provider=studioWidgetProvider(definition);
-                return{id:widget.id,name:widget.name,widget_type:widget.widget_type,provider,source_url:widget.source_url,source_urls:widget.source_urls||{}};
-            }).filter(widget=>widget.provider==="obs"||(providerAccess[widget.provider]?.connected===true&&providerAccess[widget.provider]?.beta_access?.allowed!==false));
-            const widgetCounts=publishedWidgets.reduce((acc,item)=>{acc[item.provider]=(acc[item.provider]||0)+1;return acc},{obs:0,tiktok:0,twitch:0,youtube:0});
             return res.json({
                 ok:true,creator,access,entitlements:access.entitlements,
-                widgets:publishedWidgets,
+                widgets:widgets.filter(widget=>widget.status==="live").map(widget=>({
+                    id:widget.id,
+                    name:widget.name,
+                    widget_type:widget.widget_type,
+                    source_url:widget.source_url,
+                    source_urls:widget.source_urls||{}
+                })),
                 scenes:scenes.rows.map(row=>publicSceneRow(row,APP_BASE_URL)),
                 game,
                 game_rules:gameRules,
@@ -20402,12 +19665,6 @@ app.get(
                 cut_jobs:cutJobs,
                 game_activity:gameActivity,
                 game_context:creatorGameContextFromActivity(gameActivity),
-                integrations:{
-                    tiktok:{...publicTikTokConnection(tiktokConnection),beta_access:tiktokBeta,configured:Boolean(CLIENT_KEY&&CLIENT_SECRET&&REDIRECT_URI),live_events_ready:tiktokBeta.allowed&&tiktokLiveReady,live_provider:liveProviderKey||"none"},
-                    twitch:{...publicTwitchConnection(twitchConnection),beta_access:twitchBeta,live_events_ready:twitchBeta.allowed&&twitchEventSub.ready,eventsub_implemented:true,eventsub:twitchEventSub},
-                    youtube:{...publicYouTubeConnection(youtubeConnection,youtubeLive),live_events_ready:Boolean(youtubeConnection?.connected)&&YOUTUBE_OAUTH_SCOPES.every(scope=>String(youtubeConnection?.scope||"").split(/[\s,]+/).includes(scope))},
-                    widgets:{published:publishedWidgets.length,by_provider:widgetCounts,available:true}
-                },
                 server_time:new Date().toISOString()
             });
         } catch (error) {
@@ -21255,17 +20512,10 @@ app.get(
             const staticObs = definition.source_kind === "static";
             const manualOnly = definition.source_kind === "manual";
             const detachedData = staticObs || manualOnly;
-            const widgetProvider=studioWidgetProvider(definition);
-            if(["tiktok","twitch"].includes(widgetProvider)){
-                const runtimeAccess=await creatorAccessProfile(row.creator_id);
-                const betaAccess=providerBetaPolicy(runtimeAccess,widgetProvider);
-                if(!betaAccess.allowed)return res.status(403).json({ok:false,code:"provider_beta_required",provider:widgetProvider,error:"Dieses Provider-Widget ist für diesen Creator derzeit nicht für die Beta freigeschaltet."});
-            }
             const snapshot = detachedData
                 ? null
                 : await studioDataSnapshot(
-                    row.creator_id,
-                    widgetProvider
+                    row.creator_id
                 );
             const publicSnapshot = detachedData
                 ? {
@@ -21298,7 +20548,7 @@ app.get(
                 : snapshot;
             const eventType = detachedData ? null : (definition.event_type || null);
             const events = eventType
-                ? await getRecentStudioLiveEvents(row.creator_id, eventType, 20, snapshot.live.session_id, ["twitch","youtube"].includes(widgetProvider)?widgetProvider:null)
+                ? await getRecentStudioLiveEvents(row.creator_id, eventType, 20, snapshot.live.session_id)
                 : [];
 
             return res.json({
@@ -21330,20 +20580,14 @@ app.get(
                         likes_count: 0,
                         updated_at: null
                     }
-                    : widgetProvider === "tiktok" ? {
+                    : {
                         connected: publicSnapshot.profile.connected,
                         display_name: publicSnapshot.profile.display_name,
                         avatar_url: publicSnapshot.profile.avatar_url,
                         follower_count: publicSnapshot.profile.followers,
                         likes_count: publicSnapshot.profile.likes_total,
                         updated_at: publicSnapshot.profile.updated_at
-                    } : {connected:false,display_name:"",avatar_url:"",follower_count:0,likes_count:0,updated_at:null},
-                twitch: !detachedData && widgetProvider === "twitch" ? {
-                    connected: publicSnapshot.profile.connected,
-                    display_name: publicSnapshot.profile.display_name,
-                    avatar_url: publicSnapshot.profile.avatar_url,
-                    updated_at: publicSnapshot.profile.updated_at
-                } : {connected:false,display_name:"",avatar_url:"",updated_at:null},
+                    },
                 live: publicSnapshot.live,
                 bridge: publicSnapshot.bridge
             });
@@ -21993,860 +21237,6 @@ app.put("/api/nexus/automations",requireCreatorAccount,creatorWriteLimiter,async
     }catch(error){const status=error?.code==="creator_feature_locked"?403:400;return res.status(status).json(clientSafeErrorPayload(req,error,status,"NEXUS-Automationen konnten nicht gespeichert werden."));}
 });
 
-let twitchRuntimeWorkerTimer=null;
-let twitchRuntimeWorkerPromise=null;
-
-async function runTwitchRuntimeReconcile(){
-    if(twitchRuntimeWorkerPromise||!twitchConfigured())return twitchRuntimeWorkerPromise;
-    twitchRuntimeWorkerPromise=(async()=>{
-        const rows=(await pool.query(`SELECT creator_id FROM twitch_connections WHERE connected=TRUE ORDER BY COALESCE(last_runtime_checked_at,0) ASC LIMIT $1`,[TWITCH_RUNTIME_RECONCILE_BATCH])).rows;
-        for(const item of rows){
-            try{
-                const betaAccess=await requireProviderBetaAccess(item.creator_id,"twitch").catch(()=>null);
-                if(!betaAccess)continue;
-                const connection=await ensureValidTwitchConnection(item.creator_id);
-                if(connection?.connected)await ensureTwitchEventSubSubscriptions(item.creator_id,connection);
-            }catch(error){
-                await pool.query(`UPDATE twitch_connections SET runtime_error=$2,last_runtime_checked_at=$3,updated_at=NOW() WHERE creator_id=$1`,[item.creator_id,String(error?.message||error).slice(0,240),Date.now()]).catch(()=>{});
-                safeLogError("Twitch Runtime Reconcile Warnung:",error);
-            }
-        }
-    })().finally(()=>{twitchRuntimeWorkerPromise=null});
-    return twitchRuntimeWorkerPromise;
-}
-
-function startTwitchRuntimeWorker(){
-    if(twitchRuntimeWorkerTimer||!twitchConfigured())return;
-    twitchRuntimeWorkerTimer=setInterval(()=>{void runTwitchRuntimeReconcile()},TWITCH_RUNTIME_RECONCILE_INTERVAL_MS);
-    twitchRuntimeWorkerTimer.unref?.();
-    setTimeout(()=>{void runTwitchRuntimeReconcile()},10_000).unref?.();
-}
-
-async function stopTwitchRuntimeWorker(){
-    if(twitchRuntimeWorkerTimer){clearInterval(twitchRuntimeWorkerTimer);twitchRuntimeWorkerTimer=null;}
-    if(twitchRuntimeWorkerPromise)await Promise.race([twitchRuntimeWorkerPromise,new Promise(resolve=>setTimeout(resolve,10_000))]);
-}
-
-// ============================================================
-// TWITCH OAUTH / ACCOUNT LINK
-// ============================================================
-
-function twitchConfigured(){
-    return Boolean(TWITCH_CLIENT_ID && TWITCH_CLIENT_SECRET && TWITCH_REDIRECT_URI);
-}
-
-async function getTwitchConnection(creatorId){
-    const result=await pool.query(`SELECT * FROM twitch_connections WHERE creator_id=$1 LIMIT 1`,[normalizeCreatorId(creatorId)]);
-    const row=result.rows[0];
-    if(!row)return null;
-    return {...row,access_token:row.access_token?decryptSecret(row.access_token):"",refresh_token:row.refresh_token?decryptSecret(row.refresh_token):""};
-}
-
-function publicTwitchConnection(row){
-    const scopes=String(row?.scope||"").split(/[\s,]+/).map(v=>v.trim()).filter(Boolean);
-    const missingScopes=TWITCH_EVENTSUB_REQUIRED_SCOPES.filter(scope=>!scopes.includes(scope));
-    return {
-        connected:Boolean(row?.connected),
-        account:{user_id:row?.twitch_user_id||"",login:row?.login||"",display_name:row?.display_name||"",profile_image_url:row?.profile_image_url||""},
-        scopes,
-        required_scopes:[...TWITCH_EVENTSUB_REQUIRED_SCOPES],
-        missing_scopes:missingScopes,
-        scope_ready:Boolean(row?.connected)&&missingScopes.length===0,
-        validated_at:row?.last_validated_at?new Date(Number(row.last_validated_at)).toISOString():null,
-        updated_at:row?.updated_at||null,
-        configured:twitchConfigured(),
-        runtime_checked_at:row?.last_runtime_checked_at?new Date(Number(row.last_runtime_checked_at)).toISOString():null,
-        runtime_error:studioText(row?.runtime_error,240,""),
-        runtime:{eventsub_implemented:true,eventsub_ready:false,chat_events_implemented:true,production_ready:false}
-    };
-}
-
-async function twitchFetch(url,options={}){
-    const controller=new AbortController();
-    const timer=setTimeout(()=>controller.abort(),15000);
-    try{
-        const response=await fetch(url,{...options,signal:controller.signal});
-        const text=await response.text();
-        let data={}; try{data=text?JSON.parse(text):{}}catch{data={message:text.slice(0,300)}}
-        if(!response.ok){const error=new Error(String(data?.message||data?.error||`Twitch HTTP ${response.status}`));error.status=response.status;error.payload=data;throw error;}
-        return data;
-    }finally{clearTimeout(timer)}
-}
-
-async function saveTwitchTokens(creatorId,data,existing=null){
-    const now=Date.now();
-    const refresh=String(data.refresh_token||existing?.refresh_token||"").trim();
-    await pool.query(`
-        INSERT INTO twitch_connections(creator_id,connected,access_token,refresh_token,access_expires_at,scope,last_validated_at,updated_at)
-        VALUES($1,TRUE,$2,$3,$4,$5,$6,NOW())
-        ON CONFLICT(creator_id) DO UPDATE SET connected=TRUE,access_token=EXCLUDED.access_token,
-          refresh_token=COALESCE(EXCLUDED.refresh_token,twitch_connections.refresh_token),access_expires_at=EXCLUDED.access_expires_at,
-          scope=EXCLUDED.scope,last_validated_at=EXCLUDED.last_validated_at,updated_at=NOW()
-    `,[normalizeCreatorId(creatorId),encryptSecret(String(data.access_token||"")),refresh?encryptSecret(refresh):null,
-       now+Math.max(0,Number(data.expires_in||0))*1000,Array.isArray(data.scope)?data.scope.join(" "):String(data.scope||existing?.scope||""),now]);
-}
-
-async function validateTwitchToken(accessToken){
-    return twitchFetch(TWITCH_VALIDATE_URL,{headers:{Authorization:`OAuth ${accessToken}`}});
-}
-
-async function refreshTwitchTokens(creatorId,connection){
-    if(!connection?.refresh_token)throw new Error("Twitch Refresh-Token fehlt.");
-    const body=new URLSearchParams({grant_type:"refresh_token",refresh_token:connection.refresh_token,client_id:TWITCH_CLIENT_ID,client_secret:TWITCH_CLIENT_SECRET});
-    const data=await twitchFetch(TWITCH_TOKEN_URL,{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body});
-    await saveTwitchTokens(creatorId,data,connection);
-    return getTwitchConnection(creatorId);
-}
-
-async function ensureValidTwitchConnection(creatorId){
-    let connection=await getTwitchConnection(creatorId);
-    if(!connection?.connected||!connection.access_token)return connection;
-    const now=Date.now();
-    if(Number(connection.access_expires_at||0) <= now+TWITCH_TOKEN_SAFETY_WINDOW_MS){
-        connection=await refreshTwitchTokens(creatorId,connection);
-    }
-    if(!connection.last_validated_at || now-Number(connection.last_validated_at)>TWITCH_VALIDATE_INTERVAL_MS){
-        try{
-            const validation=await validateTwitchToken(connection.access_token);
-            if(validation.client_id!==TWITCH_CLIENT_ID)throw new Error("Twitch Token gehört nicht zu dieser Anwendung.");
-            await pool.query(`UPDATE twitch_connections SET twitch_user_id=COALESCE($2,twitch_user_id),login=COALESCE($3,login),scope=$4,last_validated_at=$5,updated_at=NOW() WHERE creator_id=$1`,
-              [normalizeCreatorId(creatorId),validation.user_id||null,validation.login||null,Array.isArray(validation.scopes)?validation.scopes.join(" "):connection.scope,now]);
-            connection=await getTwitchConnection(creatorId);
-        }catch(error){
-            if(Number(error?.status)===401){
-                connection=await refreshTwitchTokens(creatorId,connection);
-                const validation=await validateTwitchToken(connection.access_token);
-                await pool.query(`UPDATE twitch_connections SET twitch_user_id=COALESCE($2,twitch_user_id),login=COALESCE($3,login),scope=$4,last_validated_at=$5,updated_at=NOW() WHERE creator_id=$1`,
-                  [normalizeCreatorId(creatorId),validation.user_id||null,validation.login||null,Array.isArray(validation.scopes)?validation.scopes.join(" "):connection.scope,Date.now()]);
-                connection=await getTwitchConnection(creatorId);
-            }else throw error;
-        }
-    }
-    return connection;
-}
-
-async function syncTwitchProfile(creatorId,connection=null){
-    const row=connection||await ensureValidTwitchConnection(creatorId);
-    if(!row?.access_token)return row;
-    const data=await twitchFetch(TWITCH_USERS_URL,{headers:{Authorization:`Bearer ${row.access_token}`,"Client-Id":TWITCH_CLIENT_ID}});
-    const user=Array.isArray(data?.data)?data.data[0]:null;
-    if(user){
-        try{await assertProviderAccountAvailable("twitch",user.id,creatorId)}catch(error){
-            if(error?.code==="provider_account_in_use")await pool.query(`DELETE FROM twitch_connections WHERE creator_id=$1`,[normalizeCreatorId(creatorId)]);
-            throw error;
-        }
-        await pool.query(`UPDATE twitch_connections SET twitch_user_id=$2,login=$3,display_name=$4,profile_image_url=$5,updated_at=NOW() WHERE creator_id=$1`,
-          [normalizeCreatorId(creatorId),String(user.id||""),String(user.login||""),String(user.display_name||""),String(user.profile_image_url||"")]);
-    }
-    return getTwitchConnection(creatorId);
-}
-
-
-const twitchAppTokenCache={token:"",expires_at:0};
-
-function twitchEventSubSecret(){
-    if(!TWITCH_CLIENT_SECRET)return"";
-    return crypto.createHmac("sha256",TWITCH_CLIENT_SECRET).update("cfs_zockt:twitch:eventsub:v1").digest("hex");
-}
-
-async function twitchAppAccessToken(){
-    if(twitchAppTokenCache.token&&twitchAppTokenCache.expires_at>Date.now()+120000)return twitchAppTokenCache.token;
-    const body=new URLSearchParams({client_id:TWITCH_CLIENT_ID,client_secret:TWITCH_CLIENT_SECRET,grant_type:"client_credentials"});
-    const data=await twitchFetch(TWITCH_TOKEN_URL,{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body});
-    twitchAppTokenCache.token=String(data.access_token||"");
-    twitchAppTokenCache.expires_at=Date.now()+Math.max(0,Number(data.expires_in||0))*1000;
-    return twitchAppTokenCache.token;
-}
-
-const TWITCH_EVENTSUB_DEFINITIONS=Object.freeze([
-    {type:"stream.online",version:"1",scopes:[]},
-    {type:"stream.offline",version:"1",scopes:[]},
-    {type:"channel.follow",version:"2",scopes:["moderator:read:followers"]},
-    {type:"channel.subscribe",version:"1",scopes:["channel:read:subscriptions"]},
-    {type:"channel.subscription.message",version:"1",scopes:["channel:read:subscriptions"]},
-    {type:"channel.subscription.gift",version:"1",scopes:["channel:read:subscriptions"]},
-    {type:"channel.cheer",version:"1",scopes:["bits:read"]},
-    {type:"channel.chat.message",version:"1",scopes:["user:read:chat","user:bot","channel:bot"]}
-]);
-
-function twitchEventSubScopes(definition={}){
-    const many=Array.isArray(definition.scopes)?definition.scopes:[];
-    const one=String(definition.scope||"").trim();
-    return [...new Set([...many,one].map(value=>String(value||"").trim()).filter(Boolean))];
-}
-
-function twitchEventSubCondition(type,broadcasterUserId){
-    const id=String(broadcasterUserId||"");
-    const condition={broadcaster_user_id:id};
-    if(type==="channel.follow")condition.moderator_user_id=id;
-    if(type==="channel.chat.message")condition.user_id=id;
-    return condition;
-}
-
-async function getTwitchEventSubStatus(creatorId){
-    const rows=(await pool.query(`SELECT subscription_type,subscription_id,status,required_scope,last_error,updated_at FROM twitch_eventsub_subscriptions WHERE creator_id=$1 ORDER BY subscription_type`,[normalizeCreatorId(creatorId)])).rows;
-    const enabled=new Set(rows.filter(row=>String(row.status)==="enabled").map(row=>row.subscription_type));
-    const expected=TWITCH_EVENTSUB_DEFINITIONS.map(item=>item.type);
-    return {
-        implemented:true,
-        callback_url:TWITCH_EVENTSUB_CALLBACK_URL,
-        enabled_count:enabled.size,
-        expected_count:expected.length,
-        ready:expected.every(type=>enabled.has(type)),
-        subscriptions:rows.map(row=>({type:row.subscription_type,status:row.status,required_scope:row.required_scope||"",error:row.last_error||"",updated_at:row.updated_at||null}))
-    };
-}
-
-async function upsertTwitchEventSubStatus(creatorId,definition,{subscriptionId=null,status="pending",error=""}={}){
-    await pool.query(`
-        INSERT INTO twitch_eventsub_subscriptions(creator_id,subscription_type,subscription_id,status,required_scope,last_error,updated_at)
-        VALUES($1,$2,$3,$4,$5,$6,NOW())
-        ON CONFLICT(creator_id,subscription_type) DO UPDATE SET
-          subscription_id=COALESCE(EXCLUDED.subscription_id,twitch_eventsub_subscriptions.subscription_id),
-          status=EXCLUDED.status,required_scope=EXCLUDED.required_scope,last_error=EXCLUDED.last_error,updated_at=NOW()
-    `,[normalizeCreatorId(creatorId),definition.type,subscriptionId,status,twitchEventSubScopes(definition).join(" "),String(error||"").slice(0,400)]);
-}
-
-async function listTwitchEventSubSubscriptionsForUser(broadcasterUserId,appToken){
-    const all=[];
-    let after="";
-    for(let page=0;page<10;page+=1){
-        const params=new URLSearchParams({user_id:String(broadcasterUserId||"")});
-        if(after)params.set("after",after);
-        const data=await twitchFetch(`${TWITCH_EVENTSUB_URL}?${params.toString()}`,{headers:{Authorization:`Bearer ${appToken}`,"Client-Id":TWITCH_CLIENT_ID}});
-        if(Array.isArray(data?.data))all.push(...data.data);
-        after=String(data?.pagination?.cursor||"");
-        if(!after)break;
-    }
-    return all;
-}
-
-function twitchEventSubRemoteMatches(definition,remote,broadcasterUserId){
-    if(!remote||String(remote.type)!==String(definition.type)||String(remote.version)!==String(definition.version))return false;
-    const transport=remote.transport||{};
-    if(String(transport.method)!=="webhook"||String(transport.callback)!==TWITCH_EVENTSUB_CALLBACK_URL)return false;
-    const expected=twitchEventSubCondition(definition.type,broadcasterUserId),actual=remote.condition||{};
-    return Object.entries(expected).every(([key,value])=>String(actual[key]||"")===String(value));
-}
-
-async function deleteTwitchEventSubSubscription(subscriptionId,appToken){
-    const id=String(subscriptionId||"").trim();
-    if(!id)return;
-    try{
-        await twitchFetch(`${TWITCH_EVENTSUB_URL}?id=${encodeURIComponent(id)}`,{method:"DELETE",headers:{Authorization:`Bearer ${appToken}`,"Client-Id":TWITCH_CLIENT_ID}});
-    }catch(error){if(Number(error?.status)!==404)throw error}
-}
-
-async function syncTwitchLiveState(creatorId,connection=null,appToken=null){
-    const row=connection||await ensureValidTwitchConnection(creatorId);
-    if(!row?.connected||!row.twitch_user_id||!twitchConfigured())return getProviderLiveState(creatorId,"twitch");
-    const token=appToken||await twitchAppAccessToken();
-    const data=await twitchFetch(`${TWITCH_STREAMS_URL}?user_id=${encodeURIComponent(row.twitch_user_id)}`,{headers:{Authorization:`Bearer ${token}`,"Client-Id":TWITCH_CLIENT_ID}});
-    const stream=Array.isArray(data?.data)?data.data[0]:null;
-    if(stream){
-        await saveTwitchProviderLiveState(creatorId,{connected:true,sessionId:`twitch:${String(stream.id||row.twitch_user_id).slice(0,180)}`,startedAt:stream.started_at||new Date().toISOString()});
-    }else{
-        await saveTwitchProviderLiveState(creatorId,{connected:false});
-    }
-    return getProviderLiveState(creatorId,"twitch");
-}
-
-async function ensureTwitchEventSubSubscriptions(creatorId,connection=null){
-    const row=connection||await ensureValidTwitchConnection(creatorId);
-    if(!row?.connected||!row.twitch_user_id||!twitchConfigured())return getTwitchEventSubStatus(creatorId);
-    const scopes=new Set(String(row.scope||"").split(/[\s,]+/).filter(Boolean));
-    const appToken=await twitchAppAccessToken();
-    const remote=await listTwitchEventSubSubscriptionsForUser(row.twitch_user_id,appToken);
-    for(const definition of TWITCH_EVENTSUB_DEFINITIONS){
-        const requiredScopes=twitchEventSubScopes(definition);
-        const missingScopes=requiredScopes.filter(scope=>!scopes.has(scope));
-        if(missingScopes.length){
-            await upsertTwitchEventSubStatus(creatorId,definition,{status:"missing_scope",error:`OAuth Scope fehlt: ${missingScopes.join(", ")}`});
-            continue;
-        }
-        const exact=remote.filter(item=>twitchEventSubRemoteMatches(definition,item,row.twitch_user_id)&&["enabled","webhook_callback_verification_pending"].includes(String(item.status)));
-        exact.sort((a,b)=>Number(String(b.status)==="enabled")-Number(String(a.status)==="enabled"));
-        const current=exact[0]||null;
-        if(current){
-            await upsertTwitchEventSubStatus(creatorId,definition,{subscriptionId:current.id||null,status:current.status||"pending"});
-            for(const duplicate of exact.slice(1)){try{await deleteTwitchEventSubSubscription(duplicate.id,appToken)}catch(error){safeLogError("Twitch EventSub Duplicate Cleanup Warnung:",error)}}
-            continue;
-        }
-        // Alte Callback-URLs derselben App/Creator-Kombination entfernen, damit kein Event an veraltete Deployments geht.
-        const stale=remote.filter(item=>String(item.type)===definition.type&&String(item.version)===definition.version&&String(item?.condition?.broadcaster_user_id||"")===String(row.twitch_user_id));
-        for(const old of stale){try{await deleteTwitchEventSubSubscription(old.id,appToken)}catch(error){safeLogError("Twitch EventSub Alt-Callback Cleanup Warnung:",error)}}
-        try{
-            const payload={type:definition.type,version:definition.version,condition:twitchEventSubCondition(definition.type,row.twitch_user_id),transport:{method:"webhook",callback:TWITCH_EVENTSUB_CALLBACK_URL,secret:twitchEventSubSecret()}};
-            const data=await twitchFetch(TWITCH_EVENTSUB_URL,{method:"POST",headers:{Authorization:`Bearer ${appToken}`,"Client-Id":TWITCH_CLIENT_ID,"Content-Type":"application/json"},body:JSON.stringify(payload)});
-            const created=Array.isArray(data?.data)?data.data[0]:null;
-            await upsertTwitchEventSubStatus(creatorId,definition,{subscriptionId:created?.id||null,status:created?.status||"webhook_callback_verification_pending"});
-        }catch(error){
-            // Twitch liefert bei bereits vorhandener type+condition-Kombination 409. Dann beim nächsten Reconcile remote übernehmen statt Duplikate zu erzeugen.
-            const conflictId=Number(error?.status)===409?String(error?.payload?.id||""):"";
-            await upsertTwitchEventSubStatus(creatorId,definition,{subscriptionId:conflictId||null,status:conflictId?"reconcile_required":"error",error:String(error?.message||error)});
-        }
-    }
-    await syncTwitchLiveState(creatorId,row,appToken);
-    await pool.query(`UPDATE twitch_connections SET last_runtime_checked_at=$2,runtime_error='',updated_at=NOW() WHERE creator_id=$1`,[normalizeCreatorId(creatorId),Date.now()]);
-    return getTwitchEventSubStatus(creatorId);
-}
-
-async function getProviderLiveState(creatorId,provider){
-    const key=String(provider||"").toLowerCase();
-    if(key==="tiktok")return getStudioLiveState(creatorId);
-    const row=(await pool.query(`SELECT * FROM creator_provider_live_state WHERE creator_id=$1 AND provider=$2 LIMIT 1`,[normalizeCreatorId(creatorId),key])).rows[0];
-    if(!row)return{connected:false,provider:key||"none",session_id:null,likes:0,viewers:0,shares:0,gifts_count:0,gifts_value:0,followers_gained:0,started_at:null,last_event_at:null,updated_at:null,stale:false};
-    return{connected:Boolean(row.connected),provider:key,session_id:row.session_id||null,likes:0,viewers:0,shares:0,gifts_count:0,gifts_value:0,followers_gained:0,started_at:row.started_at||null,last_event_at:row.last_event_at||null,updated_at:row.updated_at||null,stale:false};
-}
-
-async function saveTwitchProviderLiveState(creatorId,{connected,sessionId=null,startedAt=null,lastEventAt=null}={}){
-    await pool.query(`
-      INSERT INTO creator_provider_live_state(creator_id,provider,session_id,connected,started_at,last_event_at,updated_at)
-      VALUES($1,'twitch',$2,$3,$4,$5,NOW())
-      ON CONFLICT(creator_id,provider) DO UPDATE SET
-        session_id=COALESCE(EXCLUDED.session_id,creator_provider_live_state.session_id),
-        connected=EXCLUDED.connected,
-        started_at=CASE WHEN EXCLUDED.connected THEN COALESCE(EXCLUDED.started_at,creator_provider_live_state.started_at,NOW()) ELSE creator_provider_live_state.started_at END,
-        last_event_at=COALESCE(EXCLUDED.last_event_at,creator_provider_live_state.last_event_at),updated_at=NOW()
-    `,[normalizeCreatorId(creatorId),sessionId,Boolean(connected),startedAt,lastEventAt]);
-}
-
-async function insertTwitchRuntimeEvent(creatorId,eventType,event,messageId){
-    const state=await getProviderLiveState(creatorId,"twitch");
-    const id=crypto.randomUUID();
-    const actor=studioText(event?.chatter_user_name||event?.chatter_user_login||event?.user_name||event?.user_login||(event?.is_anonymous?"Anonymous":""),100,"");
-    const amount=eventType==="cheer"?Math.max(0,Number(event?.bits||0)):eventType==="subscribe"?Math.max(1,Number(event?.total||1)||1):1;
-    const payload={
-        message:studioText(event?.message?.text||event?.message||"",280,""),
-        tier:studioText(event?.tier,20,""),
-        is_gift:event?.is_gift===true,
-        is_anonymous:event?.is_anonymous===true,
-        source_provider:"twitch",
-        source_channel:studioText(event?.broadcaster_user_login||event?.broadcaster_user_name,120,""),
-        source_event_id:String(event?.message_id||messageId||"").slice(0,160),
-        is_bot:false
-    };
-    await pool.query(`
-      INSERT INTO creator_live_events(id,creator_id,session_id,provider,event_key,event_type,actor_name,amount,event_value,payload,created_at)
-      VALUES($1,$2,$3,'twitch',$4,$5,$6,$7,$8,$9::jsonb,NOW())
-      ON CONFLICT DO NOTHING
-    `,[id,normalizeCreatorId(creatorId),state.session_id||null,String(messageId||"").slice(0,200)||null,eventType,actor,amount,eventType==="cheer"?amount:0,JSON.stringify(payload)]);
-    await pool.query(`UPDATE creator_provider_live_state SET last_event_at=NOW(),updated_at=NOW() WHERE creator_id=$1 AND provider='twitch'`,[normalizeCreatorId(creatorId)]);
-}
-
-async function handleTwitchEventSubNotification(messageId,body){
-    const subscription=body?.subscription||{},event=body?.event||{};
-    const broadcasterId=String(event.broadcaster_user_id||subscription?.condition?.broadcaster_user_id||"");
-    if(!broadcasterId)return;
-    const owner=(await pool.query(`SELECT creator_id FROM twitch_connections WHERE connected=TRUE AND twitch_user_id=$1 LIMIT 1`,[broadcasterId])).rows[0];
-    if(!owner)return;
-    const creatorId=owner.creator_id,type=String(subscription.type||"");
-    const betaAccess=await requireProviderBetaAccess(creatorId,"twitch").catch(()=>null);
-    if(!betaAccess)return;
-    if(type==="stream.online"){
-        const sessionId=`twitch:${String(event.id||messageId||crypto.randomUUID()).slice(0,180)}`;
-        await saveTwitchProviderLiveState(creatorId,{connected:true,sessionId,startedAt:event.started_at||new Date().toISOString(),lastEventAt:new Date().toISOString()});
-        return;
-    }
-    if(type==="stream.offline"){
-        await saveTwitchProviderLiveState(creatorId,{connected:false,lastEventAt:new Date().toISOString()});
-        return;
-    }
-    const eventType=type==="channel.chat.message"?"chat":type==="channel.follow"?"follow":type==="channel.cheer"?"cheer":type.startsWith("channel.subscription")||type==="channel.subscribe"?"subscribe":"";
-    if(eventType)await insertTwitchRuntimeEvent(creatorId,eventType,event,messageId);
-}
-
-async function handleTwitchEventSubRevocation(body){
-    const subscription=body?.subscription||{},subscriptionId=String(subscription.id||""),status=String(subscription.status||"revoked");
-    const row=subscriptionId?(await pool.query(`SELECT creator_id,subscription_type FROM twitch_eventsub_subscriptions WHERE subscription_id=$1 LIMIT 1`,[subscriptionId])).rows[0]:null;
-    const broadcasterId=String(subscription?.condition?.broadcaster_user_id||"");
-    const owner=row||(!broadcasterId?null:(await pool.query(`SELECT creator_id FROM twitch_connections WHERE connected=TRUE AND twitch_user_id=$1 LIMIT 1`,[broadcasterId])).rows[0]);
-    if(!owner)return;
-    if(["authorization_revoked","user_removed"].includes(status)){
-        await pool.query(`UPDATE twitch_connections SET connected=FALSE,access_token=NULL,refresh_token=NULL,runtime_error=$2,last_runtime_checked_at=$3,updated_at=NOW() WHERE creator_id=$1`,[owner.creator_id,`EventSub: ${status}`,Date.now()]);
-        await saveTwitchProviderLiveState(owner.creator_id,{connected:false});
-    }else{
-        await pool.query(`UPDATE twitch_connections SET runtime_error=$2,last_runtime_checked_at=$3,updated_at=NOW() WHERE creator_id=$1`,[owner.creator_id,`EventSub ${String(owner.subscription_type||subscription.type||"")}: ${status}`,Date.now()]);
-    }
-}
-
-async function twitchEventSubWebhook(req,res){
-    res.set("Cache-Control","no-store");
-    try{
-        if(!twitchConfigured()||!twitchEventSubSecret())return res.status(503).end();
-        const messageId=String(req.get("Twitch-Eventsub-Message-Id")||"");
-        const timestamp=String(req.get("Twitch-Eventsub-Message-Timestamp")||"");
-        const signature=String(req.get("Twitch-Eventsub-Message-Signature")||"");
-        if(!messageId||!timestamp||!signature||!Buffer.isBuffer(req.body))return res.status(400).end();
-        const sentAt=new Date(timestamp).getTime();
-        if(!Number.isFinite(sentAt)||Math.abs(Date.now()-sentAt)>10*60*1000)return res.status(403).end();
-        const expected=`sha256=${crypto.createHmac("sha256",twitchEventSubSecret()).update(Buffer.concat([Buffer.from(messageId+timestamp),req.body])).digest("hex")}`;
-        const a=Buffer.from(expected),b=Buffer.from(signature);
-        if(a.length!==b.length||!crypto.timingSafeEqual(a,b))return res.status(403).end();
-        let body={};try{body=JSON.parse(req.body.toString("utf8"))}catch{return res.status(400).end()}
-        const messageType=String(req.get("Twitch-Eventsub-Message-Type")||"");
-        const subId=String(body?.subscription?.id||"");
-        if(subId){
-            await pool.query(`UPDATE twitch_eventsub_subscriptions SET status=$2,last_error='',updated_at=NOW() WHERE subscription_id=$1`,[subId,messageType==="revocation"?String(body?.subscription?.status||"revoked"):"enabled"]);
-        }
-        if(messageType==="webhook_callback_verification")return res.status(200).type("text/plain").send(String(body?.challenge||""));
-        if(messageType==="revocation")await handleTwitchEventSubRevocation(body);
-        if(messageType==="notification")await handleTwitchEventSubNotification(messageId,body);
-        return res.status(204).end();
-    }catch(error){safeLogError("Twitch EventSub Webhook Fehler:",error);return res.status(500).end()}
-}
-
-async function creatorWidgetProviderAccess(creatorId){
-    const [tiktok,twitch,youtube,bridge,twitchEventSub,twitchLive,youtubeLive,access]=await Promise.all([
-        getConnection(creatorId),
-        getTwitchConnection(creatorId),
-        getYouTubeConnection(creatorId),
-        getStudioBridgeStatus(creatorId),
-        getTwitchEventSubStatus(creatorId),
-        getProviderLiveState(creatorId,"twitch"),
-        getProviderLiveState(creatorId,"youtube"),
-        creatorAccessProfile(creatorId)
-    ]);
-    const liveProvider=bridge?.capabilities?.integration_health?.live_provider||{};
-    const liveProviderKey=String(liveProvider.key||bridge?.capabilities?.provider||"").toLowerCase();
-    const tiktokLiveReady=bridge?.online===true&&liveProvider.ready===true&&["tiktool","tikfinity"].includes(liveProviderKey);
-    const twitchScopes=String(twitch?.scope||"").split(/[\s,]+/).filter(Boolean);
-    const twitchMissing=TWITCH_EVENTSUB_REQUIRED_SCOPES.filter(scope=>!twitchScopes.includes(scope));
-    const youtubeScopes=String(youtube?.scope||"").split(/[\s,]+/).filter(Boolean);
-    const youtubeMissing=YOUTUBE_OAUTH_SCOPES.filter(scope=>!youtubeScopes.includes(scope));
-    const tiktokBeta=providerBetaPolicy(access,"tiktok"),twitchBeta=providerBetaPolicy(access,"twitch");
-    return{
-        obs:{connected:true,ready:true},
-        tiktok:{connected:Boolean(tiktok?.connected),beta_access:tiktokBeta,available_for_widgets:Boolean(tiktok?.connected)&&tiktokBeta.allowed,live_events_ready:tiktokBeta.allowed&&tiktokLiveReady,live_provider:liveProviderKey||"none"},
-        twitch:{
-            connected:Boolean(twitch?.connected),
-            beta_access:twitchBeta,
-            available_for_widgets:Boolean(twitch?.connected)&&twitchBeta.allowed,
-            scopes:twitchScopes,
-            required_scopes:[...TWITCH_EVENTSUB_REQUIRED_SCOPES],
-            missing_scopes:twitchMissing,
-            scope_ready:Boolean(twitch?.connected)&&twitchMissing.length===0,
-            eventsub:twitchEventSub,
-            live:twitchLive,
-            live_events_ready:twitchBeta.allowed&&twitchEventSub.ready,
-            runtime_checked_at:twitch?.last_runtime_checked_at?new Date(Number(twitch.last_runtime_checked_at)).toISOString():null,
-            runtime_error:studioText(twitch?.runtime_error,240,"")
-        },
-        youtube:{
-            connected:Boolean(youtube?.connected),
-            scopes:youtubeScopes,
-            required_scopes:[...YOUTUBE_OAUTH_SCOPES],
-            missing_scopes:youtubeMissing,
-            scope_ready:Boolean(youtube?.connected)&&youtubeMissing.length===0,
-            live_events_ready:Boolean(youtube?.connected)&&youtubeMissing.length===0,
-            live:youtubeLive,
-            runtime_checked_at:youtube?.last_runtime_checked_at?new Date(Number(youtube.last_runtime_checked_at)).toISOString():null,
-            runtime_error:studioText(youtube?.runtime_error,240,"")
-        }
-    };
-}
-
-async function assertProviderAccountAvailable(provider,externalId,creatorId){
-    const id=String(externalId||"").trim();if(!id)return;
-    const map={tiktok:{table:"tiktok_connections",field:"open_id",label:"TikTok"},twitch:{table:"twitch_connections",field:"twitch_user_id",label:"Twitch"},youtube:{table:"youtube_connections",field:"youtube_channel_id",label:"YouTube"}};
-    const cfg=map[String(provider||"").toLowerCase()];if(!cfg)throw new Error("Unbekannter Provider für Account-Isolation.");
-    const result=await pool.query(`SELECT creator_id FROM ${cfg.table} WHERE ${cfg.field}=$1 AND creator_id<>$2 AND connected=TRUE LIMIT 1`,[id,normalizeCreatorId(creatorId)]);
-    if(result.rows[0]){const error=new Error(`Dieser ${cfg.label}-Account ist bereits mit einem anderen Creator-Konto verbunden.`);error.code="provider_account_in_use";throw error;}
-}
-
-async function beginTwitchOAuth(res,creatorId){
-    if(!twitchConfigured())return res.status(503).send(renderPage("Twitch Verbindung",`<p class="error">Twitch OAuth ist auf diesem Server noch nicht konfiguriert.</p>`));
-    const state=crypto.randomBytes(32).toString("hex");
-    await pool.query(`DELETE FROM twitch_oauth_states WHERE expires_at<NOW() OR creator_id=$1`,[normalizeCreatorId(creatorId)]);
-    await pool.query(`INSERT INTO twitch_oauth_states(state_hash,creator_id,expires_at) VALUES($1,$2,NOW()+INTERVAL '10 minutes')`,[hashValue(state),normalizeCreatorId(creatorId)]);
-    res.cookie(TWITCH_STATE_COOKIE,state,{httpOnly:true,secure:NODE_ENV!=="development",sameSite:"lax",priority:"high",maxAge:OAUTH_TTL_MS,path:"/auth/twitch"});
-    const params=new URLSearchParams({client_id:TWITCH_CLIENT_ID,redirect_uri:TWITCH_REDIRECT_URI,response_type:"code",scope:TWITCH_OAUTH_SCOPES.join(" "),state,force_verify:"false"});
-    return res.redirect(`${TWITCH_AUTHORIZE_URL}?${params.toString()}`);
-}
-
-app.get("/api/creator/twitch/status",requireCreatorAccount,async(req,res)=>{
-    res.set("Cache-Control","no-store");
-    try{
-        const access=await creatorAccessProfile(req.creatorAccount),betaAccess=providerBetaPolicy(access,"twitch");
-        let row=await getTwitchConnection(req.creatorAccount.id);
-        if(betaAccess.allowed&&row?.connected&&twitchConfigured())row=await ensureValidTwitchConnection(req.creatorAccount.id);
-        let eventsub=await getTwitchEventSubStatus(req.creatorAccount.id);
-        if(betaAccess.allowed&&row?.connected&&twitchConfigured()&&!eventsub.ready){try{eventsub=await ensureTwitchEventSubSubscriptions(req.creatorAccount.id,row)}catch(error){safeLogError("Twitch EventSub Status Warnung:",error)}}
-        return res.json({ok:true,...publicTwitchConnection(row),beta_access:betaAccess,runtime:{eventsub_implemented:true,eventsub_ready:betaAccess.allowed&&eventsub.ready,chat_events_implemented:true,chat_ready:betaAccess.allowed&&eventsub.subscriptions?.some(item=>item.type==="channel.chat.message"&&String(item.status)==="enabled"),production_ready:false},eventsub});
-    }catch(error){safeLogError("Creator Twitch Status Fehler:",error);return res.status(502).json({ok:false,connected:false,configured:twitchConfigured(),error:"Twitch-Verbindung konnte nicht validiert werden."});}
-});
-
-app.get("/auth/creator/twitch",requireCreatorAccount,creatorWriteLimiter,async(req,res)=>{
-    res.set("Cache-Control","no-store");
-    try{
-        await requireProviderBetaAccess(req.creatorAccount,"twitch");
-        return await beginTwitchOAuth(res,req.creatorAccount.id);
-    }catch(error){
-        if(error?.code==="provider_beta_required")return res.status(403).send(renderPage("Twitch Beta",`<p class="error">${escapeHtml(error.message)}</p><p class="muted">Dein Account bleibt bestehen. Sobald der Admin dich freigibt, kannst du Twitch hier verbinden.</p>`));
-        safeLogError("Twitch OAuth Start Fehler:",error);return res.status(500).send(renderPage("Twitch Verbindung",`<p class="error">Twitch Login konnte nicht gestartet werden.</p>`));
-    }
-});
-
-app.get("/auth/twitch/callback",async(req,res)=>{
-    res.set("Cache-Control","no-store");
-    try{
-        const {code,state,error,error_description:errorDescription}=req.query;
-        if(error)return res.status(400).send(renderPage("Twitch Verbindung",`<p>Twitch Verbindung wurde nicht abgeschlossen.</p><p class="muted">${escapeHtml(errorDescription||error)}</p>`));
-        const cookieState=parseCookies(req)[TWITCH_STATE_COOKIE];
-        if(!code||!state||!cookieState||!safeEqualText(String(state),String(cookieState)))return res.status(400).send(renderPage("Sicherheitsprüfung",`<p>OAuth Sicherheitsprüfung fehlgeschlagen.</p>`));
-        const stateResult=await pool.query(`DELETE FROM twitch_oauth_states WHERE state_hash=$1 AND expires_at>=NOW() RETURNING creator_id`,[hashValue(String(state))]);
-        if(!stateResult.rowCount)return res.status(400).send(renderPage("Sicherheitsprüfung",`<p>Login ist abgelaufen oder wurde bereits verwendet.</p>`));
-        const creatorId=normalizeCreatorId(stateResult.rows[0].creator_id);
-        await requireProviderBetaAccess(creatorId,"twitch");
-        const body=new URLSearchParams({client_id:TWITCH_CLIENT_ID,client_secret:TWITCH_CLIENT_SECRET,code:String(code),grant_type:"authorization_code",redirect_uri:TWITCH_REDIRECT_URI});
-        const tokenData=await twitchFetch(TWITCH_TOKEN_URL,{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body});
-        await saveTwitchTokens(creatorId,tokenData,null);
-        let connection=await ensureValidTwitchConnection(creatorId);
-        connection=await syncTwitchProfile(creatorId,connection);
-        try{await ensureTwitchEventSubSubscriptions(creatorId,connection)}catch(eventSubError){safeLogError("Twitch EventSub Setup Warnung:",eventSubError)}
-        res.clearCookie(TWITCH_STATE_COOKIE,{path:"/auth/twitch"});
-        await recordSecurityEvent(creatorId,"twitch_connected");
-        return res.redirect("/pages/integrations.html?twitch=connected");
-    }catch(error){
-        if(error?.code==="provider_beta_required")return res.status(403).send(renderPage("Twitch Beta",`<p class="error">${escapeHtml(error.message)}</p><p class="muted">Die Verbindung wurde nicht gespeichert. Sobald der Admin die Beta freigibt, kannst du Twitch erneut verbinden.</p>`));
-        safeLogError("Twitch OAuth Callback Fehler:",error);return res.status(502).send(renderPage("Twitch Verbindung",`<p class="error">Twitch Verbindung konnte nicht abgeschlossen werden.</p>`));
-    }
-});
-
-app.post("/api/creator/twitch/sync",requireCreatorAccount,creatorWriteLimiter,async(req,res)=>{
-    res.set("Cache-Control","no-store");
-    try{await requireProviderBetaAccess(req.creatorAccount,"twitch");const row=await syncTwitchProfile(req.creatorAccount.id);const eventsub=await ensureTwitchEventSubSubscriptions(req.creatorAccount.id,row);return res.json({ok:true,...publicTwitchConnection(row),beta_access:providerBetaPolicy(await creatorAccessProfile(req.creatorAccount),"twitch"),runtime:{eventsub_implemented:true,eventsub_ready:eventsub.ready,chat_events_implemented:true,chat_ready:eventsub.subscriptions?.some(item=>item.type==="channel.chat.message"&&String(item.status)==="enabled"),production_ready:false},eventsub})}
-    catch(error){if(error?.code==="provider_beta_required")return res.status(403).json(providerBetaDeniedPayload(error.access,"twitch"));safeLogError("Twitch Sync Fehler:",error);return res.status(502).json({ok:false,error:"Twitch Profil konnte nicht synchronisiert werden."})}
-});
-
-app.post("/api/creator/twitch/disconnect",requireCreatorAccount,requireCreatorAccountElevation,async(req,res)=>{
-    res.set("Cache-Control","no-store");
-    try{
-        const row=await getTwitchConnection(req.creatorAccount.id);
-        if(row?.access_token&&TWITCH_CLIENT_ID){
-            try{const body=new URLSearchParams({client_id:TWITCH_CLIENT_ID,token:row.access_token});await twitchFetch(TWITCH_REVOKE_URL,{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body})}catch(error){console.warn("Twitch Revoke Warnung:",String(error?.message||error).slice(0,300))}
-        }
-        const eventSubs=(await pool.query(`SELECT subscription_id FROM twitch_eventsub_subscriptions WHERE creator_id=$1 AND subscription_id IS NOT NULL`,[req.creatorAccount.id])).rows;
-        if(eventSubs.length&&twitchConfigured()){
-            try{const appToken=await twitchAppAccessToken();for(const sub of eventSubs){await twitchFetch(`${TWITCH_EVENTSUB_URL}?id=${encodeURIComponent(sub.subscription_id)}`,{method:"DELETE",headers:{Authorization:`Bearer ${appToken}`,"Client-Id":TWITCH_CLIENT_ID}})}}catch(error){console.warn("Twitch EventSub Cleanup Warnung:",String(error?.message||error).slice(0,300))}
-        }
-        await pool.query(`DELETE FROM twitch_eventsub_subscriptions WHERE creator_id=$1`,[req.creatorAccount.id]);
-        await pool.query(`DELETE FROM creator_provider_live_state WHERE creator_id=$1 AND provider='twitch'`,[req.creatorAccount.id]);
-        await pool.query(`DELETE FROM twitch_connections WHERE creator_id=$1`,[req.creatorAccount.id]);
-        await pool.query(`DELETE FROM twitch_oauth_states WHERE creator_id=$1`,[req.creatorAccount.id]);
-        await pool.query(`DELETE FROM launcher_provider_oauth_handoffs WHERE creator_id=$1 AND provider='twitch'`,[req.creatorAccount.id]);
-        await recordSecurityEvent(req.creatorAccount.id,"twitch_disconnected");
-        return res.json({ok:true,connected:false});
-    }catch(error){safeLogError("Twitch Disconnect Fehler:",error);return res.status(500).json({ok:false,error:"Twitch-Verbindung konnte nicht getrennt werden."})}
-});
-
-// ============================================================
-// YOUTUBE OAUTH / CHANNEL LINK / LIVE + CHAT RUNTIME
-// ============================================================
-
-function youtubeConfigured(){
-    return Boolean(GOOGLE_CLIENT_ID && GOOGLE_CLIENT_SECRET && YOUTUBE_REDIRECT_URI);
-}
-
-async function getYouTubeConnection(creatorId){
-    const result=await pool.query(`SELECT * FROM youtube_connections WHERE creator_id=$1 LIMIT 1`,[normalizeCreatorId(creatorId)]);
-    const row=result.rows[0];
-    if(!row)return null;
-    return {...row,access_token:row.access_token?decryptSecret(row.access_token):"",refresh_token:row.refresh_token?decryptSecret(row.refresh_token):""};
-}
-
-function publicYouTubeConnection(row,live=null){
-    const scopes=String(row?.scope||"").split(/[\s,]+/).map(v=>v.trim()).filter(Boolean);
-    const missingScopes=YOUTUBE_OAUTH_SCOPES.filter(scope=>!scopes.includes(scope));
-    return{
-        connected:Boolean(row?.connected),
-        channel:{
-            id:row?.youtube_channel_id||"",
-            title:row?.channel_title||"",
-            handle:row?.channel_handle||"",
-            profile_image_url:row?.profile_image_url||"",
-            subscriber_count:Number(row?.subscriber_count||0),
-            subscriber_count_hidden:Boolean(row?.subscriber_count_hidden)
-        },
-        scopes,
-        required_scopes:[...YOUTUBE_OAUTH_SCOPES],
-        missing_scopes:missingScopes,
-        scope_ready:Boolean(row?.connected)&&missingScopes.length===0,
-        configured:youtubeConfigured(),
-        runtime_checked_at:row?.last_runtime_checked_at?new Date(Number(row.last_runtime_checked_at)).toISOString():null,
-        runtime_error:studioText(row?.runtime_error,240,""),
-        active_broadcast:{id:row?.active_broadcast_id||"",title:row?.active_broadcast_title||"",live_chat_id:Boolean(row?.active_live_chat_id)},
-        live:live||null,
-        runtime:{live_status_implemented:true,chat_read_implemented:true,membership_events_implemented:true,super_chat_events_implemented:true,production_ready:false},
-        updated_at:row?.updated_at||null
-    };
-}
-
-async function youtubeFetch(url,options={}){
-    const controller=new AbortController();
-    const timer=setTimeout(()=>controller.abort(),15000);
-    try{
-        const response=await fetch(url,{...options,signal:controller.signal});
-        const text=await response.text();
-        let data={};try{data=text?JSON.parse(text):{}}catch{data={message:text.slice(0,400)}}
-        if(!response.ok){
-            const apiError=Array.isArray(data?.error?.errors)?data.error.errors[0]:null;
-            const error=new Error(String(data?.error?.message||apiError?.message||data?.error_description||data?.error||`YouTube HTTP ${response.status}`));
-            error.status=response.status;error.reason=String(apiError?.reason||data?.error?.status||"");error.payload=data;throw error;
-        }
-        return data;
-    }finally{clearTimeout(timer)}
-}
-
-async function saveYouTubeTokens(creatorId,data,existing=null){
-    const previous=existing||await getYouTubeConnection(creatorId),now=Date.now();
-    const refresh=String(data?.refresh_token||previous?.refresh_token||"").trim();
-    const scope=Array.isArray(data?.scope)?data.scope.join(" "):String(data?.scope||previous?.scope||"");
-    await pool.query(`
-      INSERT INTO youtube_connections(creator_id,connected,access_token,refresh_token,access_expires_at,scope,updated_at)
-      VALUES($1,TRUE,$2,$3,$4,$5,NOW())
-      ON CONFLICT(creator_id) DO UPDATE SET connected=TRUE,access_token=EXCLUDED.access_token,
-        refresh_token=COALESCE(EXCLUDED.refresh_token,youtube_connections.refresh_token),access_expires_at=EXCLUDED.access_expires_at,
-        scope=CASE WHEN EXCLUDED.scope<>'' THEN EXCLUDED.scope ELSE youtube_connections.scope END,runtime_error='',updated_at=NOW()
-    `,[normalizeCreatorId(creatorId),encryptSecret(String(data?.access_token||"")),refresh?encryptSecret(refresh):null,
-       now+Math.max(0,Number(data?.expires_in||0))*1000,scope]);
-    return getYouTubeConnection(creatorId);
-}
-
-async function refreshYouTubeTokens(creatorId,connection=null){
-    const row=connection||await getYouTubeConnection(creatorId);
-    if(!row?.refresh_token)throw Object.assign(new Error("YouTube Refresh-Token fehlt. Bitte YouTube erneut verbinden."),{code:"youtube_reauth_required"});
-    const body=new URLSearchParams({client_id:GOOGLE_CLIENT_ID,client_secret:GOOGLE_CLIENT_SECRET,refresh_token:row.refresh_token,grant_type:"refresh_token"});
-    const data=await youtubeFetch(YOUTUBE_TOKEN_URL,{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body});
-    return saveYouTubeTokens(creatorId,data,row);
-}
-
-async function ensureValidYouTubeConnection(creatorId){
-    let row=await getYouTubeConnection(creatorId);
-    if(!row?.connected||!row.access_token)return row;
-    if(Number(row.access_expires_at||0)<=Date.now()+YOUTUBE_TOKEN_SAFETY_WINDOW_MS){
-        try{row=await refreshYouTubeTokens(creatorId,row)}catch(error){
-            await pool.query(`UPDATE youtube_connections SET runtime_error=$2,updated_at=NOW() WHERE creator_id=$1`,[normalizeCreatorId(creatorId),String(error?.message||error).slice(0,240)]).catch(()=>{});
-            throw error;
-        }
-    }
-    return row;
-}
-
-async function syncYouTubeChannel(creatorId,connection=null){
-    const row=connection||await ensureValidYouTubeConnection(creatorId);
-    if(!row?.access_token)return row;
-    const params=new URLSearchParams({part:"snippet,statistics",mine:"true",maxResults:"5"});
-    const data=await youtubeFetch(`${YOUTUBE_CHANNELS_URL}?${params.toString()}`,{headers:{Authorization:`Bearer ${row.access_token}`}});
-    const channel=Array.isArray(data?.items)?data.items[0]:null;
-    if(!channel?.id)throw Object.assign(new Error("Für dieses Google-Konto wurde kein YouTube-Kanal gefunden."),{code:"youtube_channel_missing"});
-    try{await assertProviderAccountAvailable("youtube",channel.id,creatorId)}catch(error){
-        if(error?.code==="provider_account_in_use")await pool.query(`DELETE FROM youtube_connections WHERE creator_id=$1`,[normalizeCreatorId(creatorId)]);
-        throw error;
-    }
-    const snippet=channel.snippet||{},stats=channel.statistics||{},thumbs=snippet.thumbnails||{};
-    const avatar=thumbs.high?.url||thumbs.medium?.url||thumbs.default?.url||"";
-    await pool.query(`UPDATE youtube_connections SET youtube_channel_id=$2,channel_title=$3,channel_handle=$4,profile_image_url=$5,subscriber_count=$6,subscriber_count_hidden=$7,runtime_error='',updated_at=NOW() WHERE creator_id=$1`,[
-        normalizeCreatorId(creatorId),String(channel.id),studioText(snippet.title,120,""),studioText(snippet.customUrl,120,""),studioText(avatar,2000,""),Math.max(0,Number(stats.subscriberCount||0)),Boolean(stats.hiddenSubscriberCount)
-    ]);
-    return getYouTubeConnection(creatorId);
-}
-
-async function saveYouTubeProviderLiveState(creatorId,{connected,sessionId=null,startedAt=null,lastEventAt=null}={}){
-    await pool.query(`
-      INSERT INTO creator_provider_live_state(creator_id,provider,session_id,connected,started_at,last_event_at,updated_at)
-      VALUES($1,'youtube',$2,$3,$4,$5,NOW())
-      ON CONFLICT(creator_id,provider) DO UPDATE SET
-        session_id=CASE WHEN EXCLUDED.connected THEN COALESCE(EXCLUDED.session_id,creator_provider_live_state.session_id) ELSE creator_provider_live_state.session_id END,
-        connected=EXCLUDED.connected,
-        started_at=CASE WHEN EXCLUDED.connected THEN COALESCE(EXCLUDED.started_at,creator_provider_live_state.started_at,NOW()) ELSE creator_provider_live_state.started_at END,
-        last_event_at=COALESCE(EXCLUDED.last_event_at,creator_provider_live_state.last_event_at),updated_at=NOW()
-    `,[normalizeCreatorId(creatorId),sessionId,Boolean(connected),startedAt,lastEventAt]);
-}
-
-function youtubeChatEventType(item={}){
-    const type=String(item?.snippet?.type||"");
-    if(type==="textMessageEvent")return"chat";
-    if(["newSponsorEvent","memberMilestoneChatEvent","membershipGiftingEvent","giftMembershipReceivedEvent"].includes(type))return"membership";
-    if(["superChatEvent","superStickerEvent"].includes(type))return"super_chat";
-    return"";
-}
-
-async function insertYouTubeRuntimeEvent(creatorId,item){
-    const eventType=youtubeChatEventType(item);if(!eventType)return;
-    const state=await getProviderLiveState(creatorId,"youtube"),snippet=item?.snippet||{},author=item?.authorDetails||{};
-    const eventKey=`youtube:${String(item?.id||crypto.randomUUID()).slice(0,180)}`;
-    const superDetails=snippet.superChatDetails||snippet.superStickerDetails||{};
-    const giftDetails=snippet.membershipGiftingDetails||{};
-    const amount=eventType==="membership"?Math.max(1,Number(giftDetails.giftMembershipsCount||1)||1):1;
-    const eventValue=eventType==="super_chat"?Math.max(0,Number(superDetails.amountMicros||0)/1_000_000):0;
-    const message=studioText(snippet.displayMessage||snippet.textMessageDetails?.messageText||superDetails.userComment||"",280,"");
-    const payload={
-        message,
-        source_provider:"youtube",
-        source_channel:studioText(author.channelId,120,""),
-        source_event_id:String(item?.id||"").slice(0,160),
-        membership_level:studioText(snippet.memberMilestoneChatDetails?.memberLevelName||snippet.newSponsorDetails?.memberLevelName||"",80,""),
-        currency:studioText(superDetails.currency,16,""),
-        amount_display:studioText(superDetails.amountDisplayString,48,""),
-        is_bot:false
-    };
-    await pool.query(`
-      INSERT INTO creator_live_events(id,creator_id,session_id,provider,event_key,event_type,actor_name,actor_avatar,amount,event_value,payload,created_at)
-      VALUES($1,$2,$3,'youtube',$4,$5,$6,$7,$8,$9,$10::jsonb,$11)
-      ON CONFLICT DO NOTHING
-    `,[crypto.randomUUID(),normalizeCreatorId(creatorId),state.session_id||null,eventKey,eventType,studioText(author.displayName,100,""),studioText(author.profileImageUrl,2000,""),amount,eventValue,JSON.stringify(payload),snippet.publishedAt||new Date().toISOString()]);
-    await pool.query(`UPDATE creator_provider_live_state SET last_event_at=GREATEST(COALESCE(last_event_at,'epoch'::timestamptz),$2::timestamptz),updated_at=NOW() WHERE creator_id=$1 AND provider='youtube'`,[normalizeCreatorId(creatorId),snippet.publishedAt||new Date().toISOString()]);
-}
-
-async function syncYouTubeLiveState(creatorId,connection=null){
-    const row=connection||await ensureValidYouTubeConnection(creatorId);
-    if(!row?.connected||!row.access_token||!youtubeConfigured())return getProviderLiveState(creatorId,"youtube");
-    const params=new URLSearchParams({part:"id,snippet,status",broadcastStatus:"active",mine:"true",maxResults:"5"});
-    let data;
-    try{data=await youtubeFetch(`${YOUTUBE_BROADCASTS_URL}?${params.toString()}`,{headers:{Authorization:`Bearer ${row.access_token}`}})}catch(error){
-        if(Number(error?.status)===401){const refreshed=await refreshYouTubeTokens(creatorId,row);return syncYouTubeLiveState(creatorId,refreshed)}
-        throw error;
-    }
-    const broadcast=Array.isArray(data?.items)?data.items.find(item=>String(item?.status?.lifeCycleStatus||"")==="live")||data.items[0]:null;
-    const now=Date.now();
-    if(!broadcast?.id){
-        await saveYouTubeProviderLiveState(creatorId,{connected:false});
-        await pool.query(`UPDATE youtube_connections SET active_broadcast_id=NULL,active_broadcast_title=NULL,active_live_chat_id=NULL,chat_page_token=NULL,chat_initialized_at=NULL,next_chat_poll_at=NULL,next_runtime_poll_at=$2,last_runtime_checked_at=$3,runtime_error='',updated_at=NOW() WHERE creator_id=$1`,[normalizeCreatorId(creatorId),now+YOUTUBE_RUNTIME_IDLE_INTERVAL_MS,now]);
-        return getProviderLiveState(creatorId,"youtube");
-    }
-    const liveChatId=String(broadcast?.snippet?.liveChatId||""),broadcastId=String(broadcast.id),changed=broadcastId!==String(row.active_broadcast_id||"")||liveChatId!==String(row.active_live_chat_id||"");
-    await saveYouTubeProviderLiveState(creatorId,{connected:true,sessionId:`youtube:${broadcastId}`.slice(0,200),startedAt:broadcast?.snippet?.actualStartTime||broadcast?.snippet?.scheduledStartTime||new Date().toISOString()});
-    await pool.query(`UPDATE youtube_connections SET active_broadcast_id=$2,active_broadcast_title=$3,active_live_chat_id=$4,chat_page_token=CASE WHEN $5 THEN NULL ELSE chat_page_token END,chat_initialized_at=CASE WHEN $5 THEN $6 ELSE chat_initialized_at END,next_chat_poll_at=CASE WHEN $4<>'' THEN CASE WHEN $5 THEN $6 ELSE COALESCE(next_chat_poll_at,$6) END ELSE NULL END,next_runtime_poll_at=$7,last_runtime_checked_at=$6,runtime_error='',updated_at=NOW() WHERE creator_id=$1`,[
-        normalizeCreatorId(creatorId),broadcastId,studioText(broadcast?.snippet?.title,160,""),liveChatId,changed,now,now+YOUTUBE_RUNTIME_ACTIVE_INTERVAL_MS
-    ]);
-    return getProviderLiveState(creatorId,"youtube");
-}
-
-async function pollYouTubeLiveChat(creatorId,connection=null){
-    let row=connection||await ensureValidYouTubeConnection(creatorId);
-    const chatId=String(row?.active_live_chat_id||"");
-    if(!row?.connected||!row.access_token||!chatId)return{ok:true,polled:false};
-    const params=new URLSearchParams({liveChatId:chatId,part:"id,snippet,authorDetails",maxResults:"200",profileImageSize:"88"});
-    if(row.chat_page_token)params.set("pageToken",String(row.chat_page_token));
-    let data;
-    try{data=await youtubeFetch(`${YOUTUBE_CHAT_MESSAGES_URL}?${params.toString()}`,{headers:{Authorization:`Bearer ${row.access_token}`}})}catch(error){
-        if(Number(error?.status)===401){row=await refreshYouTubeTokens(creatorId,row);return pollYouTubeLiveChat(creatorId,row)}
-        if(["liveChatEnded","liveChatNotFound"].includes(String(error?.reason))){
-            await pool.query(`UPDATE youtube_connections SET active_live_chat_id=NULL,chat_page_token=NULL,next_chat_poll_at=NULL,runtime_error=$2,updated_at=NOW() WHERE creator_id=$1`,[normalizeCreatorId(creatorId),String(error.reason)]);
-            return{ok:true,polled:false,ended:true};
-        }
-        throw error;
-    }
-    const initial=!row.chat_page_token,initializedAt=Number(row.chat_initialized_at||Date.now()),items=Array.isArray(data?.items)?data.items:[];
-    for(const item of items){
-        if(initial){const published=new Date(item?.snippet?.publishedAt||0).getTime();if(!Number.isFinite(published)||published<initializedAt-3000)continue;}
-        await insertYouTubeRuntimeEvent(creatorId,item);
-    }
-    const delay=Math.max(1000,Math.min(60_000,Number(data?.pollingIntervalMillis||5000)));
-    await pool.query(`UPDATE youtube_connections SET chat_page_token=$2,next_chat_poll_at=$3,last_runtime_checked_at=$4,runtime_error='',updated_at=NOW() WHERE creator_id=$1`,[normalizeCreatorId(creatorId),String(data?.nextPageToken||row.chat_page_token||""),Date.now()+delay,Date.now()]);
-    if(data?.offlineAt){await saveYouTubeProviderLiveState(creatorId,{connected:false,lastEventAt:data.offlineAt});}
-    return{ok:true,polled:true,events:items.length,next_poll_ms:delay};
-}
-
-let youtubeRuntimeWorkerTimer=null,youtubeRuntimeWorkerPromise=null;
-async function runYouTubeRuntimeReconcile(){
-    if(youtubeRuntimeWorkerPromise||!youtubeConfigured())return youtubeRuntimeWorkerPromise;
-    youtubeRuntimeWorkerPromise=(async()=>{
-        const now=Date.now();
-        const rows=(await pool.query(`SELECT creator_id FROM youtube_connections WHERE connected=TRUE AND (next_runtime_poll_at IS NULL OR next_runtime_poll_at<=$1 OR (active_live_chat_id IS NOT NULL AND (next_chat_poll_at IS NULL OR next_chat_poll_at<=$1))) ORDER BY COALESCE(next_runtime_poll_at,0) ASC LIMIT $2`,[now,YOUTUBE_RUNTIME_BATCH])).rows;
-        for(const item of rows){
-            const creatorId=item.creator_id;
-            try{
-                let row=await ensureValidYouTubeConnection(creatorId);
-                if(!row)continue;
-                if(!row.next_runtime_poll_at||Number(row.next_runtime_poll_at)<=Date.now()){await syncYouTubeLiveState(creatorId,row);row=await getYouTubeConnection(creatorId);}
-                if(row?.active_live_chat_id&&(!row.next_chat_poll_at||Number(row.next_chat_poll_at)<=Date.now()))await pollYouTubeLiveChat(creatorId,row);
-            }catch(error){
-                await pool.query(`UPDATE youtube_connections SET runtime_error=$2,last_runtime_checked_at=$3,next_runtime_poll_at=$4,updated_at=NOW() WHERE creator_id=$1`,[normalizeCreatorId(creatorId),String(error?.message||error).slice(0,240),Date.now(),Date.now()+60_000]).catch(()=>{});
-                safeLogError("YouTube Runtime Warnung:",error);
-            }
-        }
-    })().finally(()=>{youtubeRuntimeWorkerPromise=null});
-    return youtubeRuntimeWorkerPromise;
-}
-function startYouTubeRuntimeWorker(){
-    if(youtubeRuntimeWorkerTimer||!youtubeConfigured())return;
-    youtubeRuntimeWorkerTimer=setInterval(()=>{void runYouTubeRuntimeReconcile()},YOUTUBE_RUNTIME_WORKER_TICK_MS);youtubeRuntimeWorkerTimer.unref?.();
-    setTimeout(()=>{void runYouTubeRuntimeReconcile()},12_000).unref?.();
-}
-async function stopYouTubeRuntimeWorker(){
-    if(youtubeRuntimeWorkerTimer){clearInterval(youtubeRuntimeWorkerTimer);youtubeRuntimeWorkerTimer=null;}
-    if(youtubeRuntimeWorkerPromise)await Promise.race([youtubeRuntimeWorkerPromise,new Promise(resolve=>setTimeout(resolve,10_000))]);
-}
-
-async function beginYouTubeOAuth(res,creatorId){
-    if(!youtubeConfigured())return res.status(503).send(renderPage("YouTube Verbindung",`<p class="error">YouTube OAuth ist auf diesem Server noch nicht konfiguriert.</p>`));
-    const state=crypto.randomBytes(32).toString("hex");
-    await pool.query(`DELETE FROM youtube_oauth_states WHERE expires_at<NOW() OR creator_id=$1`,[normalizeCreatorId(creatorId)]);
-    await pool.query(`INSERT INTO youtube_oauth_states(state_hash,creator_id,expires_at) VALUES($1,$2,NOW()+INTERVAL '10 minutes')`,[hashValue(state),normalizeCreatorId(creatorId)]);
-    res.cookie(YOUTUBE_STATE_COOKIE,state,{httpOnly:true,secure:NODE_ENV!=="development",sameSite:"lax",priority:"high",maxAge:OAUTH_TTL_MS,path:"/auth/youtube"});
-    const params=new URLSearchParams({client_id:GOOGLE_CLIENT_ID,redirect_uri:YOUTUBE_REDIRECT_URI,response_type:"code",scope:YOUTUBE_OAUTH_SCOPES.join(" "),state,access_type:"offline",include_granted_scopes:"true",prompt:"consent"});
-    return res.redirect(`${YOUTUBE_AUTHORIZE_URL}?${params.toString()}`);
-}
-
-app.get("/api/creator/youtube/status",requireCreatorAccount,async(req,res)=>{
-    res.set("Cache-Control","no-store");
-    try{
-        let row=await getYouTubeConnection(req.creatorAccount.id);
-        if(row?.connected&&youtubeConfigured()){row=await ensureValidYouTubeConnection(req.creatorAccount.id);if(!row?.youtube_channel_id)row=await syncYouTubeChannel(req.creatorAccount.id,row);}
-        const live=await getProviderLiveState(req.creatorAccount.id,"youtube");
-        return res.json({ok:true,...publicYouTubeConnection(row,live),live_events_ready:Boolean(row?.connected)&&publicYouTubeConnection(row).scope_ready});
-    }catch(error){safeLogError("Creator YouTube Status Fehler:",error);return res.status(502).json({ok:false,connected:false,configured:youtubeConfigured(),error:"YouTube-Verbindung konnte nicht validiert werden."});}
-});
-
-app.get("/auth/creator/youtube",requireCreatorAccount,creatorWriteLimiter,async(req,res)=>{
-    res.set("Cache-Control","no-store");
-    try{return await beginYouTubeOAuth(res,req.creatorAccount.id)}catch(error){safeLogError("YouTube OAuth Start Fehler:",error);return res.status(500).send(renderPage("YouTube Verbindung",`<p class="error">YouTube Login konnte nicht gestartet werden.</p>`))}
-});
-
-app.get("/auth/youtube/callback",async(req,res)=>{
-    res.set("Cache-Control","no-store");
-    try{
-        const {code,state,error,error_description:errorDescription}=req.query;
-        if(error)return res.status(400).send(renderPage("YouTube Verbindung",`<p>YouTube Verbindung wurde nicht abgeschlossen.</p><p class="muted">${escapeHtml(errorDescription||error)}</p>`));
-        const cookieState=parseCookies(req)[YOUTUBE_STATE_COOKIE];
-        if(!code||!state||!cookieState||!safeEqualText(String(state),String(cookieState)))return res.status(400).send(renderPage("Sicherheitsprüfung",`<p>OAuth Sicherheitsprüfung fehlgeschlagen.</p>`));
-        const stateResult=await pool.query(`DELETE FROM youtube_oauth_states WHERE state_hash=$1 AND expires_at>=NOW() RETURNING creator_id`,[hashValue(String(state))]);
-        if(!stateResult.rowCount)return res.status(400).send(renderPage("Sicherheitsprüfung",`<p>Login ist abgelaufen oder wurde bereits verwendet.</p>`));
-        const creatorId=normalizeCreatorId(stateResult.rows[0].creator_id);
-        const body=new URLSearchParams({client_id:GOOGLE_CLIENT_ID,client_secret:GOOGLE_CLIENT_SECRET,code:String(code),grant_type:"authorization_code",redirect_uri:YOUTUBE_REDIRECT_URI});
-        const tokenData=await youtubeFetch(YOUTUBE_TOKEN_URL,{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body});
-        await saveYouTubeTokens(creatorId,tokenData,null);
-        let connection=await syncYouTubeChannel(creatorId);
-        try{await syncYouTubeLiveState(creatorId,connection)}catch(runtimeError){safeLogError("YouTube LIVE Sync Warnung:",runtimeError)}
-        res.clearCookie(YOUTUBE_STATE_COOKIE,{path:"/auth/youtube"});
-        await recordSecurityEvent(creatorId,"youtube_connected");
-        return res.redirect("/pages/integrations.html?youtube=connected");
-    }catch(error){safeLogError("YouTube OAuth Callback Fehler:",error);return res.status(502).send(renderPage("YouTube Verbindung",`<p class="error">YouTube Verbindung konnte nicht abgeschlossen werden.</p>`))}
-});
-
-app.post("/api/creator/youtube/sync",requireCreatorAccount,creatorWriteLimiter,async(req,res)=>{
-    res.set("Cache-Control","no-store");
-    try{let row=await syncYouTubeChannel(req.creatorAccount.id);const live=await syncYouTubeLiveState(req.creatorAccount.id,row);row=await getYouTubeConnection(req.creatorAccount.id);return res.json({ok:true,...publicYouTubeConnection(row,live),live_events_ready:true})}
-    catch(error){safeLogError("YouTube Sync Fehler:",error);return res.status(502).json({ok:false,error:"YouTube Kanal/LIVE-Status konnte nicht synchronisiert werden."})}
-});
-
-app.post("/api/creator/youtube/disconnect",requireCreatorAccount,requireCreatorAccountElevation,async(req,res)=>{
-    res.set("Cache-Control","no-store");
-    try{
-        const row=await getYouTubeConnection(req.creatorAccount.id);
-        const token=row?.refresh_token||row?.access_token;
-        if(token){try{const body=new URLSearchParams({token});await youtubeFetch(YOUTUBE_REVOKE_URL,{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body})}catch(error){console.warn("YouTube Revoke Warnung:",String(error?.message||error).slice(0,300))}}
-        await pool.query(`DELETE FROM creator_provider_live_state WHERE creator_id=$1 AND provider='youtube'`,[req.creatorAccount.id]);
-        await pool.query(`DELETE FROM youtube_connections WHERE creator_id=$1`,[req.creatorAccount.id]);
-        await pool.query(`DELETE FROM youtube_oauth_states WHERE creator_id=$1`,[req.creatorAccount.id]);
-        await pool.query(`DELETE FROM launcher_provider_oauth_handoffs WHERE creator_id=$1 AND provider='youtube'`,[req.creatorAccount.id]);
-        await recordSecurityEvent(req.creatorAccount.id,"youtube_disconnected");
-        return res.json({ok:true,connected:false});
-    }catch(error){safeLogError("YouTube Disconnect Fehler:",error);return res.status(500).json({ok:false,error:"YouTube-Verbindung konnte nicht getrennt werden."})}
-});
-
 // ============================================================
 // TIKTOK CONNECTION LADEN
 // ============================================================
@@ -23061,11 +21451,6 @@ async function saveProfile(
     creatorId,
     profile
 ) {
-
-    try{await assertProviderAccountAvailable("tiktok",profile?.open_id,creatorId)}catch(error){
-        if(error?.code==="provider_account_in_use")await pool.query(`DELETE FROM tiktok_connections WHERE creator_id=$1`,[normalizeCreatorId(creatorId)]);
-        throw error;
-    }
 
     await pool.query(
         `
@@ -24083,8 +22468,8 @@ function creatorSuiteCoreReadinessSnapshot({ bridge = {}, streamConfig = null } 
         checks,
         roadmap:{
             current:["widget_studio","launcher_bridge","stream_engine","interactive_games"],
-            next:["multistream_destinations","creator_suite_feature_freeze"],
-            later:["provider_acceptance","production_soak"]
+            next:["twitch_connection","youtube_connection","multistream_acceptance"],
+            later:["additional_stream_providers","production_soak"]
         },
         policy:{
             stream_credentials:"launcher_local_encrypted",
@@ -24461,7 +22846,7 @@ app.get(
     requireCreatorAccount,
     async (_req, res) => {
         res.set("Cache-Control", "no-store");
-        const oauth = publicProviderOAuthContracts(process.env).map(item=>item.provider==="twitch"?{...item,status:"oauth_eventsub_chat_implemented",oauth_implemented:true,production_ready:false,account_flow:true,eventsub_implemented:true,chat_events_implemented:true,eventsub_acceptance_required:true}:item);
+        const oauth = publicProviderOAuthContracts(process.env);
         return res.json({
             ok:true,
             schema:1,
@@ -24725,8 +23110,8 @@ app.get(
     async(req,res)=>{
         res.set("Cache-Control","no-store");
         try {
-            const [connection,access]=await Promise.all([getConnection(req.creatorAccount.id),creatorAccessProfile(req.creatorAccount)]);
-            return res.json({ok:true,...publicTikTokConnection(connection),beta_access:providerBetaPolicy(access,"tiktok")});
+            const connection=await getConnection(req.creatorAccount.id);
+            return res.json({ok:true,...publicTikTokConnection(connection)});
         } catch (error) {
             safeLogError("Creator TikTok Status Fehler:",error);
             return res.status(500).json({ok:false,connected:false,error:"TikTok Status konnte nicht geladen werden."});
@@ -24741,10 +23126,8 @@ app.get(
     async(req,res)=>{
         res.set("Cache-Control","no-store");
         try {
-            await requireProviderBetaAccess(req.creatorAccount,"tiktok");
             return await beginTikTokOAuth(res,req.creatorAccount.id);
         } catch (error) {
-            if(error?.code==="provider_beta_required")return res.status(403).send(renderPage("TikTok Beta",`<p class="error">${escapeHtml(error.message)}</p><p class="muted">Dein Account bleibt bestehen. Sobald der Admin dich freigibt, kannst du TikTok hier verbinden.</p>`));
             safeLogError("Creator TikTok Login Fehler:",error);
             return res.status(500).send(renderPage("TikTok Verbindung",`<p class="error">TikTok Login konnte nicht gestartet werden.</p>`));
         }
@@ -24757,14 +23140,12 @@ app.post(
     async(req,res)=>{
         res.set("Cache-Control","no-store");
         try {
-            await requireProviderBetaAccess(req.creatorAccount,"tiktok");
             const connection=await getConnection(req.creatorAccount.id);
             if(!connection?.connected)return res.status(409).json({ok:false,error:"TikTok ist noch nicht verbunden."});
             const profile=await fetchTikTokProfile(req.creatorAccount.id);
             if (await canUseLegacyDefaultTikTok(req.creatorAccount.id)) publicCommunityStatsCache.expires_at=0;
             return res.json({ok:true,connected:true,profile,updated_at:profile.updated_at});
         } catch (error) {
-            if(error?.code==="provider_beta_required")return res.status(403).json(providerBetaDeniedPayload(error.access,"tiktok"));
             const diagnostic=getSafeDiagnostic(error,"creator_profile_sync");
             return res.status(502).json({ok:false,error:diagnosticMessage(diagnostic),diagnostic});
         }
@@ -24790,7 +23171,6 @@ app.post(
             }
             await pool.query(`DELETE FROM tiktok_connections WHERE creator_id=$1`,[creatorId]);
             await pool.query(`DELETE FROM tiktok_oauth_states WHERE creator_id=$1`,[creatorId]);
-            await pool.query(`DELETE FROM launcher_provider_oauth_handoffs WHERE creator_id=$1 AND provider='tiktok'`,[creatorId]);
             if (await canUseLegacyDefaultTikTok(creatorId)) publicCommunityStatsCache.expires_at=0;
             await recordSecurityEvent(creatorId,"tiktok_disconnected");
             return res.json({ok:true,connected:false});
@@ -25677,9 +24057,6 @@ app.get(
                         .creator_id
                 );
 
-            // Der OAuth-State allein reicht nicht: Wird die Beta zwischen Start und
-            // Callback pausiert, darf der Provider nicht mehr verknüpft werden.
-            await requireProviderBetaAccess(creatorId,"tiktok");
 
             const tokenData =
                 await exchangeAuthorizationCode(
@@ -25808,10 +24185,6 @@ app.get(
 
         }
         catch (error) {
-
-            if(error?.code==="provider_beta_required"){
-                return res.status(403).send(renderPage("TikTok Beta",`<p class="error">${escapeHtml(error.message)}</p><p class="muted">Die Verbindung wurde nicht gespeichert. Sobald der Admin die Beta freigibt, kannst du TikTok erneut verbinden.</p>`));
-            }
 
             const diagnostic =
                 getSafeDiagnostic(
@@ -28497,7 +26870,6 @@ app.get("/go/tiktok/community", (_req, res) => {
 const SEO_CANONICAL_PATHS = new Map([
     ["/index.html", "/"],
     ["/pages/creator-suite", "/pages/creator-suite.html"],
-    ["/pages/merch", "/pages/merch.html"],
     ["/pages/plans", "/pages/plans.html"],
     ["/pages/roadmap", "/pages/roadmap.html"],
     ["/pages/support", "/pages/support.html"],
@@ -28750,8 +27122,6 @@ async function startServer() {
         );
         startAccountMailOutboxWorker();
         startProductionMonitorWorker();
-        startTwitchRuntimeWorker();
-        startYouTubeRuntimeWorker();
 
 
         httpServer = http.createServer(
@@ -28764,7 +27134,6 @@ async function startServer() {
             app
         );
         httpServer.maxRequestsPerSocket = HTTP_MAX_REQUESTS_PER_SOCKET;
-        httpServer.maxHeadersCount = HTTP_MAX_HEADERS_COUNT;
 
         httpServer.listen(
             PORT,
@@ -28888,11 +27257,11 @@ async function startServer() {
                 );
 
                 console.log(
-                    "Twitch: OAUTH + EVENTSUB + CHAT / ACCEPTANCE OFFEN"
+                    "Twitch: ROADMAP"
                 );
 
                 console.log(
-                    "OBS: WEBSOCKET + WIDGET INSTALL / ACCEPTANCE OFFEN"
+                    "OBS: ROADMAP"
                 );
 
 
@@ -28974,8 +27343,6 @@ async function gracefulShutdown(reason, error = null) {
             httpServer.closeIdleConnections?.();
             await new Promise(resolve => httpServer.close(() => resolve()));
         }
-        await stopTwitchRuntimeWorker();
-        await stopYouTubeRuntimeWorker();
         await stopProductionMonitorWorker();
         await stopAccountMailOutboxWorker();
         await pool.end();

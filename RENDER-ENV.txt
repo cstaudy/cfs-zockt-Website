@@ -13,3 +13,17 @@ Beispiel:
 CFS_PUBLIC_TIKTOK_FOLLOWERS=12500
 
 Den NPSSO niemals in Dateien, Git oder Chats kopieren.
+
+
+Twitch OAuth v143 (für Twitch Account-Verbindung):
+TWITCH_CLIENT_ID=<Twitch Developer Client ID>
+TWITCH_CLIENT_SECRET=<Twitch Developer Client Secret>
+TWITCH_REDIRECT_URI=https://cfs-zockt.de/auth/twitch/callback
+
+# YouTube Creator OAuth + LIVE/Chat
+GOOGLE_CLIENT_ID=<aus Google Cloud Console>
+GOOGLE_CLIENT_SECRET=<nur als Render Secret>
+YOUTUBE_REDIRECT_URI=https://cfs-zockt.de/auth/youtube/callback
+
+# Private Beta: kostenpflichtige Checkouts standardmäßig blockiert. Erst nach rechtlicher/kommerzieller Umstellung aktivieren.
+CFS_COMMERCIAL_MODE=false
