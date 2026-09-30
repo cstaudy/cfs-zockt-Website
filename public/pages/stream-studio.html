@@ -436,7 +436,7 @@
   <section class="stream-rack stream-multistream-rack" data-dock-id="multistream" data-dock-title="Local Multistream" aria-labelledby="multistreamTitle">
     <div class="stream-section-head multistream-head">
       <div><span>LOCAL MULTISTREAM</span><strong id="multistreamTitle">Mehrere Ziele · lokal über den Launcher</strong></div>
-      <small>Kein Stream-Key und keine RTMP-Zieladresse wird in der CFS Cloud gespeichert.</small>
+      <small>Stream-Keys und RTMP-Zieladressen werden nicht in der CFS Cloud gespeichert.</small>
     </div>
 
     <div class="multistream-summary" aria-label="Multistream Zusammenfassung">
@@ -447,12 +447,12 @@
     </div>
 
     <div class="multistream-security-note">
-      <strong>LOKALE ZUGANGSDATEN:</strong> Die Website speichert nur Zieltyp, Profil und Bitrate. Stream-Keys, Tokens, Passwörter und benutzerdefinierte RTMP/RTMPS-Adressen werden ausschließlich im lokalen Launcher hinterlegt. Fällt ein Ziel aus, sollen die anderen Ziele unabhängig weiterlaufen.
+      <strong>LOKALE ZUGANGSDATEN:</strong> Die Website speichert nur Zieltyp, Profil und Bitrate. Twitch-/YouTube-Streamdaten können auf ausdrückliche Aktion über die authentisierte, signierte no-store Bridge an den Launcher übertragen und dort in Windows SafeStorage verschlüsselt gespeichert werden; PostgreSQL speichert sie nicht. TikTok und Custom RTMP bleiben lokale manuelle Eingaben. Fällt ein Ziel aus, laufen die anderen Ziele unabhängig weiter.
     </div>
 
     <div class="multistream-provider-support" aria-label="Unterstützte Multistream-Verbindungen">
-      <article><span>YOUTUBE</span><strong>DIREKT</strong><small>RTMPS + Stream-Key aus Live Control Room</small></article>
-      <article><span>TWITCH</span><strong>DIREKT</strong><small>RTMP-Ingest + Stream-Key aus Creator Dashboard</small></article>
+      <article><span>YOUTUBE</span><strong>ACCOUNT + DIREKT</strong><small>verbundener Kanal · sicherer Launcher-Import oder manuell</small></article>
+      <article><span>TWITCH</span><strong>ACCOUNT + DIREKT</strong><small>verbundener Account · Stream-Key-Lesescope für Launcher-Import</small></article>
       <article><span>TIKTOK</span><strong>ZUGANG ABHÄNGIG</strong><small>Nur mit LIVE-/Encoder-Zugang und bereitgestelltem Stream-Key</small></article>
     </div>
 
