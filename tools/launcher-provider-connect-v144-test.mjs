@@ -30,7 +30,7 @@ assert(!server.includes('launcher-provider-connect.html?handoff='),'handoff toke
 assert(bridge.includes('beginProviderConnect(provider)')&&bridge.includes('/api/bridge/integrations/${encodeURIComponent(key)}/connect'),'bridge provider-connect client missing');
 assert(bridge.includes('provider_oauth_handoff_v1: true'),'bridge capability missing');
 assert(preload.includes('connectProviderAccount'),'preload provider connect method missing');
-for(const needle of ['connectProviderAccount(provider)','scheduleProviderIntegrationPoll','target.pathname!=="/pages/launcher-provider-connect.html"','shell.openExternal(target.toString())'])assert(main.includes(needle),`launcher main provider connect missing: ${needle}`);
+for(const needle of ['connectProviderAccount(provider','scheduleProviderIntegrationPoll','target.pathname!=="/pages/launcher-provider-connect.html"','shell.openExternal(target.toString())'])assert(main.includes(needle),`launcher main provider connect missing: ${needle}`);
 assert(html.includes('data-provider-connect="tiktok"')&&html.includes('data-provider-connect="twitch"'),'TikTok/Twitch launcher buttons missing');
 assert(app.includes('renderProviderConnections')&&app.includes('[data-provider-connect]')&&app.includes('connectProviderAccount(provider)'),'provider launcher UI render missing');
 assert((app.includes('Twitch LIVE-Events folgen mit EventSub')||app.includes('Twitch EventSub ist bereit')||app.includes('Twitch EventSub inklusive Chat ist bereit'))&&(app.includes('EventSub wird eingerichtet')||app.includes('EventSub inklusive Chat wird eingerichtet')),'Twitch runtime readiness must remain explicit and state-aware');

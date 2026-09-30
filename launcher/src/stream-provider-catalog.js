@@ -7,7 +7,7 @@ const PROVIDERS = Object.freeze({
     credentialMode:"stream_key",
     serverHint:"RTMPS-Server-URL aus YouTube Live Control Room",
     keyHint:"Stream-Key aus YouTube Live Control Room",
-    setupHint:"YouTube Live im Kanal aktivieren, im Live Control Room Stream anlegen und RTMPS-URL plus Stream-Key lokal im CFS Launcher eintragen.",
+    setupHint:"Bei verbundenem YouTube-Konto kann der Launcher vorhandene Live-Stream-Ingest-Daten per no-store Bridge sicher in Windows SafeStorage übernehmen. Manuelle Eingabe bleibt als Fallback.",
     docs:"https://support.google.com/youtube/answer/10364924"
   }),
   twitch: Object.freeze({
@@ -18,7 +18,7 @@ const PROVIDERS = Object.freeze({
     credentialMode:"stream_key",
     serverHint:"rtmp://<TWITCH-INGEST-SERVER>/app",
     keyHint:"Stream-Key aus Twitch Creator Dashboard → Einstellungen → Stream",
-    setupHint:"Twitch nutzt RTMP-Ingest. Wähle einen Twitch-Ingest-Server und speichere Stream-Key und Server nur lokal im CFS Launcher.",
+    setupHint:"Bei verbundenem Twitch-Konto kann der Launcher Stream-Key und offiziellen Ingest-Server nach Freigabe von channel:read:stream_key übernehmen. Gespeichert wird ausschließlich lokal in Windows SafeStorage.",
     docs:"https://dev.twitch.tv/docs/video-broadcast/"
   }),
   tiktok: Object.freeze({

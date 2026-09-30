@@ -847,6 +847,68 @@ function removeStreamCredential(targetId){
   return appState({streamCredentialAction:{ok:true,removed,targetId:String(targetId||"")}});
 }
 
+function currentStreamTarget(targetId){
+  const applied=effectiveStreamStudioConfig(streamStudioCloud?.config||{});
+  const targets=Array.isArray(applied?.config?.multistream?.destinations)?applied.config.multistream.destinations:[];
+  return targets.find(item=>String(item?.id||"")===String(targetId||""))||null;
+}
+
+function publicProviderStreamImport(result={},targetId=""){
+  const candidates=Array.isArray(result?.candidates)?result.candidates.slice(0,50).map(item=>({
+    id:String(item?.id||"").slice(0,180),
+    title:String(item?.title||"").slice(0,160),
+    stream_status:String(item?.stream_status||"").slice(0,40),
+    health_status:String(item?.health_status||"").slice(0,40),
+    bound_broadcast_id:String(item?.bound_broadcast_id||"").slice(0,180),
+    bound_broadcast_title:String(item?.bound_broadcast_title||"").slice(0,160),
+    bound_broadcast_status:String(item?.bound_broadcast_status||"").slice(0,40)
+  })).filter(item=>item.id):[];
+  return{
+    ok:result?.status==="ready"||result?.status==="imported",
+    provider:String(result?.provider||"").slice(0,32),
+    targetId:String(targetId||"").slice(0,64),
+    status:String(result?.status||"unknown").slice(0,48),
+    connected:result?.connected===true,
+    reauth_required:result?.reauth_required===true,
+    automatic_import:result?.automatic_import!==false,
+    message:String(result?.message||"").slice(0,300),
+    recommended_stream_id:String(result?.recommended_stream_id||"").slice(0,180),
+    selected_stream:result?.selected_stream&&typeof result.selected_stream==="object"?{
+      id:String(result.selected_stream.id||"").slice(0,180),
+      title:String(result.selected_stream.title||"").slice(0,160),
+      stream_status:String(result.selected_stream.stream_status||"").slice(0,40)
+    }:null,
+    candidates,
+    credentials_persisted_server_side:false
+  };
+}
+
+async function importLinkedProviderStreamCredential(input={}){
+  if(!streamCredentialStore)throw new Error("Lokaler Stream-Key-Speicher ist nicht bereit.");
+  if(!streamCredentialStore.encryptionAvailable())throw new Error("Windows SafeStorage muss verfügbar sein, bevor Stream-Zugangsdaten übernommen werden.");
+  if(!bridge?.snapshot?.().connected)throw new Error("Verbinde zuerst diesen Launcher mit deinem Creator-Account.");
+  const targetId=String(input?.targetId||"").trim();
+  const target=currentStreamTarget(targetId);
+  if(!target)throw new Error("Streaming-Ziel ist nicht mehr in deiner aktuellen Studio-Konfiguration vorhanden.");
+  const provider=String(target.provider||"").toLowerCase();
+  if(!["twitch","youtube","tiktok"].includes(provider))throw new Error("Für dieses Ziel gibt es keinen Account-Import. Verwende die lokale manuelle Eingabe.");
+  if(!providerIntegrationConnected(provider))return appState({providerStreamImport:{provider,targetId,status:"connect_required",connected:false,automatic_import:provider!=="tiktok",message:`Verbinde zuerst deinen ${streamProviderInfo(provider).label}-Account.`}});
+  const result=await bridge.importProviderStreamCredential(provider,{stream_id:String(input?.streamId||"")});
+  if(result?.status!=="ready"||!result?.credential){
+    return appState({providerStreamImport:publicProviderStreamImport(result,targetId)});
+  }
+  if(provider==="tiktok")throw new Error("TikTok unterstützt in diesem Pfad keinen automatischen Stream-Key-Import.");
+  const saved=streamCredentialStore.set(targetId,{
+    serverUrl:String(result.credential.server_url||""),
+    streamKey:String(result.credential.stream_key||"")
+  });
+  logger?.info?.("Provider stream credential imported into local SafeStorage",`${provider}:${targetId}`);
+  return appState({
+    providerStreamImport:{...publicProviderStreamImport({...result,status:"imported"},targetId),ok:true,status:"imported"},
+    streamCredentialAction:{ok:true,target:saved,source:"provider_account"}
+  });
+}
+
 function listWindowsProcessCandidates(){
   if(process.platform!=="win32")return Promise.resolve([]);
   const command='Get-Process | Where-Object { $_.Id -gt 0 -and $_.ProcessName } | Select-Object Id,ProcessName,MainWindowTitle,MainWindowHandle,Responding | Sort-Object ProcessName,Id | ConvertTo-Json -Compress';
@@ -1524,11 +1586,11 @@ function scheduleProviderIntegrationPoll(provider,{startedAt=Date.now()}={}){
   providerIntegrationPollTimers.set(key,setTimeout(tick,2500));
 }
 
-async function connectProviderAccount(provider){
+async function connectProviderAccount(provider,{force=false}={}){
   const key=String(provider||"").trim().toLowerCase();
   if(!["tiktok","twitch","youtube"].includes(key))throw new Error("Provider wird im Launcher noch nicht unterstützt.");
   if(!bridge?.snapshot?.().connected)throw new Error("Verbinde zuerst diesen Launcher mit deinem Creator-Account.");
-  if(providerIntegrationConnected(key))return appState({providerConnect:{provider:key,status:"already_connected"}});
+  if(providerIntegrationConnected(key)&&force!==true)return appState({providerConnect:{provider:key,status:"already_connected"}});
   const response=await bridge.beginProviderConnect(key);
   const raw=String(response?.connect_url||"");
   let target,base;
@@ -2045,8 +2107,10 @@ function registerIpc() {
     return appState();
   });
 
-  ipcMain.handle("launcher:provider-connect", async (_event, provider) => {
-    return connectProviderAccount(provider);
+  ipcMain.handle("launcher:provider-connect", async (_event, input) => {
+    const provider=typeof input==="object"&&input?input.provider:input;
+    const force=Boolean(typeof input==="object"&&input?.force===true);
+    return connectProviderAccount(provider,{force});
   });
 
   ipcMain.handle("launcher:game-activity-sync", async () => {
@@ -2204,6 +2268,7 @@ function registerIpc() {
   ipcMain.handle("launcher:game-capture-doctor", async () => gameCaptureDoctor());
   ipcMain.handle("launcher:stream-credential-save", async (_event,input) => saveStreamCredential(input||{}));
   ipcMain.handle("launcher:stream-credential-remove", async (_event,targetId) => removeStreamCredential(targetId));
+  ipcMain.handle("launcher:stream-provider-import", async (_event,input) => importLinkedProviderStreamCredential(input||{}));
   ipcMain.handle("launcher:stream-provider-docs", async (_event,provider) => openStreamProviderDocs(provider));
   ipcMain.handle("launcher:stream-engine-preflight", async () => streamEnginePreflight());
   ipcMain.handle("launcher:stream-engine-start", async () => startStreamingEngine());

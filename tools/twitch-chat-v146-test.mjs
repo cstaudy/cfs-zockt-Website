@@ -18,7 +18,7 @@ const versionAtLeast=(actual,minimum)=>{const a=String(actual).split('.').map(Nu
 assert(versionAtLeast(pkg.version,'3.16.0'),`backend must be at least 3.16.0, got ${pkg.version}`);
 assert(versionAtLeast(launcherPkg.version,'0.47.22'),`launcher must be >= 0.47.22, got ${launcherPkg.version}`);
 
-const scopeBlock=(server.match(/const TWITCH_OAUTH_SCOPES = Object\.freeze\(\[([\s\S]*?)\]\);/)||[])[1]||'';
+const scopeBlock=[(server.match(/const TWITCH_EVENTSUB_REQUIRED_SCOPES = Object\.freeze\(\[([\s\S]*?)\]\);/)||[])[1]||'',(server.match(/const TWITCH_STREAM_TARGET_SCOPES = Object\.freeze\(\[([\s\S]*?)\]\);/)||[])[1]||''].join('\n');
 for(const scope of ['moderator:read:followers','channel:read:subscriptions','bits:read','user:read:chat','user:bot','channel:bot']){
   assert(scopeBlock.includes(`"${scope}"`),`missing Twitch OAuth scope ${scope}`);
 }

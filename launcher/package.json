@@ -1,6 +1,6 @@
 {
   "name": "cfs-zockt-creator-suite-launcher",
-  "version": "0.47.24",
+  "version": "0.47.25",
   "private": true,
   "description": "Desktop Launcher / LIVE Bridge für die cfs_zockt Creator Suite.",
   "main": "main.js",

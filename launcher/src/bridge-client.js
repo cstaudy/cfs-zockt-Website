@@ -98,6 +98,7 @@ class BridgeClient extends EventEmitter {
       replay_guard_v1: true,
       creator_suite_runtime_v1: true,
       provider_oauth_handoff_v1: true,
+      provider_stream_target_import_v1: true,
       stream_engine_v1: Boolean(this.streamHealthProvider),
       multistream_local_v1: Boolean(this.streamHealthProvider),
       local_stream_credentials_v1: Boolean(this.streamCredentialsProvider),
@@ -174,6 +175,25 @@ class BridgeClient extends EventEmitter {
       method:"POST",
       body:{},
       timeoutMs:8000
+    });
+  }
+
+  async providerStreamTargetStatus(provider) {
+    const key=String(provider||"").trim().toLowerCase();
+    if(!["tiktok","twitch","youtube"].includes(key))throw new Error("Streaming-Provider wird im Launcher noch nicht unterstützt.");
+    return this.request(`/api/bridge/stream-studio/provider-targets/${encodeURIComponent(key)}`,{
+      method:"GET",
+      timeoutMs:15000
+    });
+  }
+
+  async importProviderStreamCredential(provider,payload={}) {
+    const key=String(provider||"").trim().toLowerCase();
+    if(!["tiktok","twitch","youtube"].includes(key))throw new Error("Streaming-Provider wird im Launcher noch nicht unterstützt.");
+    return this.request(`/api/bridge/stream-studio/provider-targets/${encodeURIComponent(key)}/import`,{
+      method:"POST",
+      body:{stream_id:String(payload?.stream_id||"").slice(0,180)},
+      timeoutMs:20000
     });
   }
 

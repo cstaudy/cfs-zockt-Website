@@ -30,7 +30,7 @@ for(const id of ['multistreamTitle','multistreamLimit','multistreamActiveCount',
   add(`Multistream UI exposes ${id}`,has(html,`id="${id}"`));
 }
 for(const provider of ['YouTube','Twitch','TikTok','Custom RTMP/RTMPS']) add(`provider ${provider} is represented`,has(html,provider)||has(js,provider));
-add('credentials are explicitly launcher-local',has(html,'Stream-Keys, Tokens, Passwörter')&&has(html,'ausschließlich im lokalen Launcher'));
+add('credentials remain non-persistent in CFS Cloud and local at rest',has(html,'PostgreSQL speichert sie nicht')&&has(html,'signierte no-store Bridge')&&has(html,'Windows SafeStorage')&&has(html,'TikTok und Custom RTMP bleiben lokale manuelle Eingaben'));
 add('cloud relay is explicitly disabled for now',has(html,'Cloud Relay bleibt deaktiviert'));
 add('failure isolation is documented',has(html,'nicht automatisch alle anderen Ausgänge stoppen'));
 add('custom RTMP target can be added',has(js,'function addCustomStreamTarget')&&has(js,'provider:"custom_rtmp"'));

@@ -1,25 +1,26 @@
-# HANDOFF v150 — cfs_zockt Creator Suite
+# HANDOFF v153 — cfs_zockt Creator Suite
 
 ## Aktiver Stand
-Backend **3.18.2** · Schema **72** · Launcher **0.47.24** · kumulativer Update-Stand **v151**.
+Backend **3.19.0** · Schema **72** · Launcher **0.47.25** · kumulativer Update-Stand **v153**.
 
-## Schwerpunkt v150
-Website-/Backend-Härtung und Bereinigung der aktiven Test-Infrastruktur. Keine neuen YouTube-Funktionen in diesem Block. Die bestehenden TikTok-/Twitch-/YouTube-/OBS-Integrationen bleiben erhalten und provider-spezifisch getrennt.
+## Schwerpunkt v153
+CFS Stream Studio Provider-Zielintegration. Twitch und YouTube können aus dem bereits verbundenen Creator-Account auf ausdrückliche Launcher-Aktion in lokale Streaming-Ziele übernommen werden. TikTok bleibt ausschließlich mit offiziell bereitgestelltem Encoder-/Stream-Key-Zugang nutzbar.
 
-## Härtung
-- TRACE/TRACK/CONNECT werden mit 405 abgewiesen.
-- HTTP-Header-Anzahl ist serverseitig begrenzt.
-- `X-DNS-Prefetch-Control: off` ergänzt.
-- Rate-Limit-429-Antworten werden nicht gecacht.
-- Homepage/öffentliche Merch-Seite haben vollständigere Social-/SEO-Metadaten; Sitemap und Canonical-Routen sind synchronisiert.
-- Öffentliche Links auf Sicherheit und Status sind sichtbar.
-- Aktiver Projekt-Regressionstest verwendet nur vorhandene aktuelle Prüfskripte statt fehlender Legacy-Dateien.
+## Sicherheitsvertrag
+- keine dauerhafte Stream-Key-Persistenz in PostgreSQL oder Browser-State
+- Provider-Import über authentisierte/signierte Launcher-Bridge
+- Importantworten no-store/no-cache
+- lokale verschlüsselte Ablage über Windows SafeStorage
+- Twitch zusätzlicher Read-Scope `channel:read:stream_key`, getrennt von EventSub/Chat
+- YouTube weiterhin nur `youtube.readonly`
+- keine Umgehung von TikTok-Zugangsregeln
+- Cloud Relay bleibt deaktiviert
 
-## Teststatus
-Lokale Security-/Auth-/Lifecycle-/Recovery-/Provider-/Widget-/Launcher-/Scene-/Stream-/Multistream-Gates werden über `release:v150` gebündelt. Externe Production-Smokes und Online-`npm audit` konnten in der isolierten Umgebung nicht belastbar ausgeführt werden und bleiben für die spätere Acceptance offen.
+## Status
+`stream-provider-target153:check` 45/45 PASS, Multistream 70/70 PASS, Control Center 37/37 PASS und kompletter `release:v153` PASS. CFS Studio gilt code-seitig als bereit für reale Multistream-Acceptance, nicht als produktionsabgenommen.
 
-## Entwicklungsreihenfolge
-Der Nutzer möchte zuerst die Plattform feature-seitig fertigstellen und anschließend reale Acceptance-/Soak-/Windows-/OBS-/Provider-Tests durchführen. YouTube-Konfiguration ist aktuell bewusst zurückgestellt. Nach v150 kann der noch offene Multistream-Zielblock fortgeführt werden.
+## Nächste Phase
+Feature-seitig keine unnötige Studio-Erweiterung mehr. Als Nächstes Beta-Test-Handbuch/Acceptance-Matrix und danach reale Windows-/OBS-/Twitch-/YouTube-/TikTok-/Reconnect-/Last-/Soak-Tests. Nur Fehler oder zwingende Integrationslücken aus diesen Tests werden zurück in den Feature-Stand übernommen.
 
 ## Paketregel
-Jede neue Version bleibt ein **kumulatives Updatepaket, kein Full Project**. Bestehende kumulative Dateien müssen erhalten bleiben; neue/geänderte Dateien werden in aktueller Fassung ergänzt.
+Jede Version bleibt bis zum Release ein **kumulatives Updatepaket, kein Full Project**. Vor echtem Release wird ein vollständiger Projektstand/Full Build erzeugt.
