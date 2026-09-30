@@ -6,7 +6,7 @@ on:
       expected_backend_version:
         description: "Expected backend version after deploy"
         required: true
-        default: "3.12.0"
+        default: "3.20.5"
         type: string
 
 permissions:

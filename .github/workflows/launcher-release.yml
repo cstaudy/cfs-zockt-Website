@@ -97,6 +97,14 @@ jobs:
             "CFS_WINDOWS_SIGNATURE_STATUS=unsigned_or_invalid" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
           }
 
+      - name: Require valid signatures for public tag release
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: pwsh
+        run: |
+          if ("$env:CFS_WINDOWS_SIGNATURE_STATUS" -ne "valid") {
+            throw "Public Launcher Releases require valid Authenticode signatures. Configure CSC_LINK/CSC_KEY_PASSWORD before tagging."
+          }
+
       - name: Generate Windows build evidence
         run: node tools/generate-windows-build-evidence.mjs
 
