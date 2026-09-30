@@ -1,8 +1,179 @@
-# PROJECT CURRENT STATE — v152
+# PROJECT CURRENT STATE
 
-Aktiver kumulativer Stand: **v152**. v152 konsolidiert den vollständigen v151-Updatebestand mit der Private-Beta Legal-/Privacy-Härtung. Backend **3.18.3**, Schema **72**, Launcher **0.47.24**. Das Paket ist ein kumulatives Updatepaket, kein Full Project.
+Aktiver kumulativer Stand: **v159**. Der Feature Freeze aus v154 bleibt aktiv. v159 professionalisiert den öffentlichen Produktauftritt und ergänzt einen öffentlichen, read-only Launcher-Downloadweg für tatsächlich veröffentlichte Windows-Releases. Öffentliche Tag-Releases verlangen gültige Authenticode-Signaturen. Backend **3.20.5**, Schema **73**, Launcher **0.47.29**. Das Paket bleibt ein kumulatives Updatepaket und ist kein Full Project.
 
-Wichtig: `CFS_COMMERCIAL_MODE=false` für den aktuellen privaten kostenlosen Beta-Betrieb gesetzt lassen.
+**Backend: 3.20.5**  
+**Schema: 73**  
+**Launcher: 0.47.29**
+
+---
+
+Aktiver kumulativer Stand: **v158**. Der Feature Freeze aus v154 bleibt aktiv. v158 setzt die UI-/Informationsarchitektur-Bereinigung fort: Stream Studio, Integrationen und Scene Studio sind jetzt nach dem tatsächlichen Creator-Ablauf geordnet. Backend **3.20.4**, Schema **73**, Launcher **0.47.28**. Das Paket bleibt ein kumulatives Updatepaket und ist kein Full Project.
+
+## v158 — Studio Flow / Integrations-Ordnung
+
+- Stream Studio: 5 Schritte von Bühne bis Live-Überwachung
+- Integrationen: Provider / PC+Launcher+OBS / Diagnose
+- Scene Studio: klarer Direkt-/Kompatibilitätseditor
+- gemeinsame Themenlogik bleibt: Start & Status · Gestalten · Produzieren · Verbinden · Community · System & Tests
+- Workspace Flow v158: **86/86 PASS**
+- kompletter `npm run release:v158`: **PASS**
+- reale Windows-/OBS-/Provider-Acceptance bleibt offen
+
+Details: `TECHNIK-v158.md`, `CREATOR-SUITE-COMPLETION-v158.md`, `SECURITY-BASELINE-v158.md` und `handoff/HANDOFF-v158.md`.
+
+---
+
+# PROJECT CURRENT STATE — v157
+
+Aktiver kumulativer Stand: **v157**. Der Feature Freeze aus v154 bleibt aktiv. v157 ordnet die vorhandene Creator Suite nach Aufgaben, ohne neue große Funktionen einzuführen. Backend **3.20.3**, Schema **73**, Launcher **0.47.28**. Das Paket bleibt ein kumulatives Updatepaket und ist kein Full Project.
+
+Wichtig: `CFS_COMMERCIAL_MODE=false` bleibt für die kostenlose private Beta gesetzt. Reale Windows-/OBS-/Provider-/Reconnect-/Soak-Nachweise bleiben weiterhin offen, bis sie auf echter Umgebung durchgeführt wurden.
+
+Die übergeordnete UI-Struktur lautet: **Start & Status · Gestalten · Produzieren · Verbinden · Community · System & Tests**.
+
+---
+
+# v157 — Workspace Organization
+
+**Aktiver Stand: v157**  
+**Backend: 3.20.3**  
+**Schema Generation: 73**  
+**Launcher: 0.47.28**
+
+- Launcher-Navigation nach Aufgaben statt Technikbegriffen gegliedert
+- alle bestehenden Launcher-Views bleiben erhalten
+- Sidebar-Navigation für kleine Bildschirmhöhen scrollbar
+- Launcher `Creator Tools` zu `Games & Cut` präzisiert
+- Widget Studio: Erstellen / Verwalten / Weiter zum Stream
+- Dashboard: sechs feste Creator-Suite-Themen
+- öffentliche Creator Suite: viele Einzelmodule zu sechs Themen zusammengeführt
+- Multistream-Sicherheitsgrenzen und lokale Credential-Grenze unverändert
+- System Check / Build Target / Recovery Policy auf den aktuellen Versionsstand synchronisiert
+- `workspace157:check`: **69/69 PASS**
+- kompletter `npm run release:v157`: **PASS**
+
+**Nächster Block bleibt unverändert:** reale Windows-/Launcher-/OBS-/Twitch-/TikTok-/YouTube-Setup-/Multistream-/Reconnect-/Soak-/Multi-Creator-Acceptance.
+
+Details: `TECHNIK-v157.md`, `CREATOR-SUITE-COMPLETION-v157.md`, `SECURITY-BASELINE-v157.md` und `handoff/HANDOFF-v157.md`.
+
+---
+
+# PROJECT CURRENT STATE — v156
+
+Aktiver kumulativer Stand: **v156**. Der Feature Freeze aus v154 bleibt aktiv. v156 ist ein reiner Website-/UX-Cleanup: feste Demo-/Spielmotive wurden von der Startseite entfernt, LIVE-/Beta-Texte wurden wahrheitsgemäß synchronisiert und die öffentliche Creator-Suite-Navigation wurde bereinigt. Backend **3.20.2**, Schema **73**, Launcher **0.47.27**. Das Paket bleibt ein kumulatives Updatepaket und ist kein Full Project.
+
+Wichtig: `CFS_COMMERCIAL_MODE=false` bleibt für die kostenlose private Beta gesetzt. Reale Windows-/OBS-/Provider-/Reconnect-/Soak-Nachweise bleiben weiterhin offen, bis sie tatsächlich auf echter Umgebung durchgeführt wurden.
+
+Die weiter unten erhaltenen historischen Pass-/Entwicklungsnotizen mit eigenen Sequenznummern sind nicht der aktive Paket-Release; maßgeblich ist dieser Kopfbereich.
+
+---
+
+# v156 — Website Clarity Cleanup
+
+**Aktiver Stand: v156**  
+**Backend: 3.20.2**  
+**Schema Generation: 73**  
+**Launcher: 0.47.27**
+
+- drei statische Streambilder (CS2, FC25, Warzone) aus der Startseite entfernt
+- statisches Warzone-Fallback aus der LIVE-Vorschau entfernt
+- echte Remote-Cover bleiben für reale PlayStation-/LIVE-Daten möglich
+- neutraler CFS-LIVE-Platzhalter statt Demo-Spielmotiv
+- Startseiten-CTA auf Streams / Creator Suite vereinfacht
+- `STREAMS & STREAMPLAN` in wahrheitsgemäßes `STREAMS & CONTENT` geändert
+- Creator-Suite-Seite auf kostenlose geschlossene Beta und Acceptance-Phase aktualisiert
+- veralteter Multistream-„Nächster Block“-Text entfernt
+- Stream-Studio-Link auf den korrekten Tools-Bereich korrigiert
+- Login-/Plan-Texte an private Beta angepasst
+- `homepage156:check`: **32/32 PASS**
+- `release:v156`: **PASS**
+
+**Nächster Block bleibt unverändert:** reale Windows-/Launcher-/OBS-/Twitch-/TikTok-/YouTube-Setup-/Multistream-/Reconnect-/Soak-/Multi-Creator-Acceptance.
+
+Details: `TECHNIK-v156.md`, `CREATOR-SUITE-COMPLETION-v156.md`, `SECURITY-BASELINE-v156.md` und `handoff/HANDOFF-v156.md`.
+
+---
+
+# PROJECT CURRENT STATE — v155
+
+Aktiver kumulativer Stand: **v155**. Der Feature Freeze aus v154 bleibt aktiv; v155 härtet ausschließlich die Test-/Diagnosekette für die laufende Private-Beta-Acceptance. Backend **3.20.1**, Schema **73**, Launcher **0.47.27**. Das Paket bleibt ein kumulatives Updatepaket und ist kein Full Project.
+
+Wichtig: `CFS_COMMERCIAL_MODE=false` für den aktuellen kostenlosen privaten Beta-Betrieb gesetzt lassen. Der neue Private-Beta-Starter führt keinen Stripe-LIVE-Test aus. Reale Windows-/OBS-/Provider-/Reconnect-/Soak-Nachweise bleiben offen, bis sie tatsächlich auf echter Umgebung durchgeführt wurden.
+
+Die weiter unten erhaltenen historischen Pass-/Entwicklungsnotizen mit eigenen Sequenznummern sind nicht der aktive Paket-Release; maßgeblich ist dieser Kopfbereich.
+
+---
+
+# v155 — Private-Beta Acceptance Hardening
+
+**Aktiver Stand: v155**  
+**Backend: 3.20.1**  
+**Schema Generation: 73**  
+**Launcher: 0.47.27**
+
+- Feature Freeze bleibt aktiv; keine neuen großen Funktionen
+- R59 und R68 sauber in `project:check` verdrahtet
+- R68 auf aktuelles Schema 73 aktualisiert
+- `project:check`: **40/40 PASS**
+- Stream Credential Store: **29/29 PASS**
+- Private Beta Acceptance Contract: **34/34 PASS**
+- `release:v155`: **PASS**
+- neuer sicherer Windows-Einstieg: `RUN-PRIVATE-BETA-ACCEPTANCE.cmd`
+- öffentlicher Smoke in der isolierten Build-Umgebung wegen fehlender DNS-/Netzwerkauflösung blockiert; kein künstlicher PASS/FAIL
+
+**Nächster Block:** reale Windows-/Launcher-/OBS-/Twitch-/TikTok-/YouTube-Setup-/Multistream-/Reconnect-/Soak-/Multi-Creator-Acceptance.
+
+Details: `TECHNIK-v155.md`, `ACCEPTANCE-STATUS-v155.md`, `PRIVATE-BETA-ACCEPTANCE-v155.md`, `SECURITY-BASELINE-v155.md` und `handoff/HANDOFF-v155.md`.
+
+---
+
+# v154 — Beta-Test-Handbuch / Feature Freeze
+
+**Aktiver Stand: v154**  
+**Backend: 3.20.0**  
+**Schema Generation: 73**  
+**Launcher: 0.47.26**
+
+- integriertes Launcher-Beta-Test-Handbuch mit 12 strukturierten Schritten
+- Ergebnis je Schritt: `passed`, `failed` oder `skipped`
+- optionaler Kommentar und optionale secret-freie Diagnose
+- creator-spezifische Speicherung mit optionaler Session-Zuordnung
+- Admin Control zeigt Tester, Schritt, Ergebnis, Kommentar und technische Eckdaten
+- Feature-Freeze-Inventar trennt offene Acceptance von neuen Produktfeatures
+- `beta-handbook154:check`: **57/57 PASS**
+- `feature-freeze154:check`: **33/33 PASS**
+- `project:check`: **30/30 PASS**
+- kompletter `release:v154`: **PASS** auf dem vollständigen Repository
+
+**Nächster Block:** gebündelte reale Windows-/OBS-/Provider-/Multistream-/Reconnect-/Soak-/Multi-Creator-Acceptance. Keine neuen großen Funktionen davor.
+
+Details: `TECHNIK-v154.md`, `CREATOR-SUITE-COMPLETION-v154.md`, `SECURITY-BASELINE-v154.md`, `FEATURE-FREEZE-v154.md` und `handoff/HANDOFF-v154.md`.
+
+---
+
+
+# v153 — CFS Studio Provider → Streaming-Ziel Zusammenführung
+
+**Aktiver Stand: v153**  
+**Backend: 3.19.0**  
+**Schema Generation: 72**  
+**Launcher: 0.47.25**
+
+- Twitch nutzt für den lokalen Streaming-Ziel-Import zusätzlich `channel:read:stream_key`; fehlender Scope betrifft nur das Streaming-Ziel und nicht die EventSub-Bereitschaft.
+- Der Twitch Stream-Key wird nur auf ausdrückliche, authentisierte Launcher-Anfrage gelesen; Ingest wird aus dem offiziellen Twitch-Ingest-Katalog ermittelt.
+- YouTube liest mit dem bestehenden `youtube.readonly` eigene `liveStreams`-/Ingest-Daten. Bei mehreren möglichen Streams muss der Launcher eine konkrete Auswahl senden.
+- TikTok bleibt strikt zugangsabhängig: kein automatischer Credential-Import, kein Scraping und keine Umgehung des offiziellen Encoder-Zugangs.
+- Custom RTMP bleibt manuell lokal konfigurierbar.
+- Stream-Credentials werden nicht in PostgreSQL, Browser-State, URLs oder Cloud-Relay persistiert. Der Launcher übernimmt sie direkt in SafeStorage.
+- Neue Bridge-Pfade sind `no-store`; mutierende Imports laufen weiter über den signierten/replay-geschützten Launcher-Bridge-Vertrag.
+- CFS Studio erhält ausschließlich `provider_targets`-Statusdaten ohne Stream-Keys.
+- Lokale Gates: kompletter `npm run release:v153` **PASS**; Provider-Target v153 **45/45 PASS**, Projekt-Regression **30/30 PASS**, Provider-Beta v151 **20/20 PASS**, YouTube-v149-Vertrag **41/41 PASS**, Legal/Privacy **26/26 PASS**, Multistream-Core **70/70 PASS**, Twitch Runtime **20/20 PASS**, Website Hardening **35/35 PASS**, Widget-UX **40/40 PASS**.
+- Der im Altbestand fehlende `tools/youtube-integration-v149-test.mjs` wurde als echter statischer 41-Punkte-Vertrag rekonstruiert und läuft **41/41 PASS**. Ein separat erwarteter Launcher-Stream-Credential-Test fehlt weiterhin physisch; dafür wird kein erfundenes Ergebnis behauptet.
+
+**Nächster Block:** CFS Studio Feature Freeze vorbereiten → Beta-Test-Handbuch fertigbauen → danach gebündelte echte Tests.
+
+Details: `TECHNIK-v153.md`, `CREATOR-SUITE-COMPLETION-v153.md`, `SECURITY-BASELINE-v153.md` und `handoff/HANDOFF-v153.md`.
 
 ---
 
@@ -1657,7 +1828,7 @@ Status: `CODE_COMPLETE / LOCAL_CONTRACTS_PASS / EXTERNAL_ACCEPTANCE_OPEN`
 
 Dashboard game-context failure handling now fails closed, while CUT surfaces linked Stream Session provenance as user-readable status only. No opaque IDs are shown in the normal UI. Local checks: v131 8/8 PASS, v130 10/10 PASS, v129 8/8 PASS.
 
-## v153 – Support Export Integrity Seal
+## Historische interne Sequenz (Legacy-Label v153) – Support Export Integrity Seal
 
 Status: `CODE_COMPLETE / LOCAL_CONTRACTS_PASS / EXTERNAL_ACCEPTANCE_OPEN`
 

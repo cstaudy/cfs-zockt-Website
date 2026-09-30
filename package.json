@@ -1,6 +1,6 @@
 {
   "name": "cfs-zockt-creator-suite-web",
-  "version": "3.18.3",
+  "version": "3.20.5",
   "private": true,
   "description": "cfs_zockt Website mit TikTok Login Kit, Profil-Sync und geschützter Launcher-API.",
   "main": "server.js",
@@ -328,7 +328,23 @@
     "scripts150:check": "node tools/active-script-integrity-v150-test.mjs .",
     "provider-beta151:check": "node tools/provider-beta-access-v151-test.mjs .",
     "release:v151": "npm run release:v150 && npm run provider-beta151:check",
-    "release:v152": "npm run release:v151 && npm run legalbeta:check && npm run funnel:check"
+    "release:v152": "npm run release:v151 && npm run legalbeta:check && npm run funnel:check",
+    "stream-provider-target153:check": "node tools/stream-provider-targets-v153-test.mjs .",
+    "release:v153": "npm run stream-provider-target153:check && npm run project:check && npm run provider-beta151:check && npm run website150:check && npm run legalbeta:check && npm run funnel:check && npm run multistream21:check && node tools/twitch-runtime-hardening-v148-test.mjs . && node tools/widget-studio-30s-ux-test.mjs .",
+    "beta-handbook154:check": "node tools/beta-test-handbook-v154-test.mjs .",
+    "release:v154": "npm run release:v153 && npm run beta-handbook154:check && npm run feature-freeze154:check",
+    "feature-freeze154:check": "node tools/feature-freeze-v154-test.mjs .",
+    "stream-credential-store155:check": "node launcher/tools/stream-credential-store-test.mjs",
+    "private-beta155:check": "node tools/private-beta-acceptance-v155-test.mjs . && npm run project:check && npm run stream-provider-target153:check && npm run beta-handbook154:check && npm run feature-freeze154:check && node tools/release-readiness-finish-v88-test.mjs . && npm run stream-credential-store155:check",
+    "release:v155": "npm run release:v154 && npm run private-beta155:check",
+    "homepage156:check": "node tools/homepage-clarity-v156-test.mjs .",
+    "release:v156": "npm run release:v155 && npm run homepage156:check",
+    "workspace157:check": "node tools/workspace-organization-v157-test.mjs .",
+    "release:v157": "npm run release:v156 && npm run workspace157:check",
+    "workspace158:check": "node tools/workspace-flow-v158-test.mjs .",
+    "release:v158": "npm run release:v157 && npm run workspace158:check",
+    "launcher-download159:check": "node tools/public-launcher-download-v159-test.mjs .",
+    "release:v159": "npm run release:v158 && npm run launcher-download159:check"
   },
   "engines": {
     "node": ">=22"

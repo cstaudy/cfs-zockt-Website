@@ -2,7 +2,7 @@
  * ============================================================
  * cfs_zockt Creator Suite
  * Website Backend
- * Version 3.18.3
+ * Version 3.20.5
  * ============================================================
  */
 
@@ -14,7 +14,7 @@ const crypto = require("crypto");
 const fs = require("fs");
 const path = require("path");
 const { Pool } = require("pg");
-const { LauncherReleaseCatalog, buildPolicy: buildLauncherReleasePolicy } = require("./lib/launcher-release-policy");
+const { LauncherReleaseCatalog, selectRelease: selectLauncherRelease, releaseSummary: launcherReleaseSummary, buildPolicy: buildLauncherReleasePolicy } = require("./lib/launcher-release-policy");
 const { validSessionId, canResumeSessionRow, releasePolicyAllowsLive, buildResumedLiveState } = require("./lib/live-session-recovery");
 const { ACTION_LEASE_SECONDS, ACTION_RETRY_DELAY_SECONDS, ACTION_MAX_ATTEMPTS, ACTION_TTL_MINUTES, normalizeActionIds } = require("./lib/live-action-delivery");
 const { SCENE_PROFILES, sanitizeSceneConfig, validateSceneOwnership, scenePublicToken, publicSceneRow } = require("./lib/creator-widget-scenes");
@@ -75,7 +75,7 @@ const APP_NAME =
     "CFS_Zockt Creator Suite";
 
 const BACKEND_VERSION =
-    "3.18.3";
+    "3.20.5";
 
 // ============================================================
 // PRIVATE BETA / LEGAL BASELINE
@@ -220,9 +220,11 @@ const TWITCH_VALIDATE_URL = "https://id.twitch.tv/oauth2/validate";
 const TWITCH_USERS_URL = "https://api.twitch.tv/helix/users";
 const TWITCH_EVENTSUB_URL = "https://api.twitch.tv/helix/eventsub/subscriptions";
 const TWITCH_STREAMS_URL = "https://api.twitch.tv/helix/streams";
+const TWITCH_STREAM_KEY_URL = "https://api.twitch.tv/helix/streams/key";
+const TWITCH_INGESTS_URL = "https://ingest.twitch.tv/ingests";
 const TWITCH_EVENTSUB_CALLBACK_URL = `${APP_BASE_URL}/api/twitch/eventsub`;
 const TWITCH_STATE_COOKIE = NODE_ENV === "development" ? "cfs_twitch_oauth_state_dev" : "__Host-cfs_twitch_oauth_state";
-const TWITCH_OAUTH_SCOPES = Object.freeze([
+const TWITCH_EVENTSUB_REQUIRED_SCOPES = Object.freeze([
     "moderator:read:followers",
     "channel:read:subscriptions",
     "bits:read",
@@ -230,7 +232,11 @@ const TWITCH_OAUTH_SCOPES = Object.freeze([
     "user:bot",
     "channel:bot"
 ]);
-const TWITCH_EVENTSUB_REQUIRED_SCOPES = Object.freeze([...TWITCH_OAUTH_SCOPES]);
+const TWITCH_STREAM_TARGET_SCOPES = Object.freeze(["channel:read:stream_key"]);
+const TWITCH_OAUTH_SCOPES = Object.freeze([
+    ...TWITCH_EVENTSUB_REQUIRED_SCOPES,
+    ...TWITCH_STREAM_TARGET_SCOPES
+]);
 const TWITCH_VALIDATE_INTERVAL_MS = 55 * 60 * 1000;
 const TWITCH_TOKEN_SAFETY_WINDOW_MS = 5 * 60 * 1000;
 const TWITCH_RUNTIME_RECONCILE_INTERVAL_MS = 15 * 60 * 1000;
@@ -246,6 +252,7 @@ const YOUTUBE_TOKEN_URL = "https://oauth2.googleapis.com/token";
 const YOUTUBE_REVOKE_URL = "https://oauth2.googleapis.com/revoke";
 const YOUTUBE_CHANNELS_URL = "https://www.googleapis.com/youtube/v3/channels";
 const YOUTUBE_BROADCASTS_URL = "https://www.googleapis.com/youtube/v3/liveBroadcasts";
+const YOUTUBE_LIVESTREAMS_URL = "https://www.googleapis.com/youtube/v3/liveStreams";
 const YOUTUBE_CHAT_MESSAGES_URL = "https://www.googleapis.com/youtube/v3/liveChat/messages";
 const YOUTUBE_STATE_COOKIE = NODE_ENV === "development" ? "cfs_youtube_oauth_state_dev" : "__Host-cfs_youtube_oauth_state";
 const YOUTUBE_OAUTH_SCOPES = Object.freeze(["https://www.googleapis.com/auth/youtube.readonly"]);
@@ -410,7 +417,7 @@ const LAUNCHER_MIN_BETA_VERSION =
 const LAUNCHER_BUILD_TARGET_VERSION =
     String(
         process.env.CFS_LAUNCHER_BUILD_TARGET_VERSION ||
-        "0.47.18"
+        "0.47.29"
     ).trim();
 
 const LAUNCHER_BLOCKED_VERSIONS =
@@ -3875,6 +3882,22 @@ async function initDatabase() {
     `);
     await pool.query(`CREATE INDEX IF NOT EXISTS idx_creator_beta_feedback_status ON creator_beta_feedback (status, severity, created_at DESC)`);
     await pool.query(`CREATE INDEX IF NOT EXISTS idx_creator_beta_feedback_creator ON creator_beta_feedback (creator_id, created_at DESC)`);
+
+    await pool.query(`
+        CREATE TABLE IF NOT EXISTS creator_beta_handbook_results (
+            creator_id TEXT NOT NULL REFERENCES creator_accounts(id) ON DELETE CASCADE,
+            step_key VARCHAR(100) NOT NULL,
+            session_id UUID REFERENCES creator_beta_sessions(id) ON DELETE SET NULL,
+            result VARCHAR(16) NOT NULL CHECK (result IN ('passed','failed','skipped')),
+            comment TEXT NOT NULL DEFAULT '',
+            diagnostics JSONB NOT NULL DEFAULT '{}'::jsonb,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            PRIMARY KEY (creator_id, step_key)
+        )
+    `);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_creator_beta_handbook_result ON creator_beta_handbook_results (result, updated_at DESC)`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_creator_beta_handbook_session ON creator_beta_handbook_results (session_id, updated_at DESC)`);
 
 
     // --------------------------------------------------------
@@ -12520,6 +12543,22 @@ const BETA_FEEDBACK_KINDS=new Set(["bug","idea","ux","other"]);
 const BETA_FEEDBACK_SEVERITIES=new Set(["low","medium","high","critical"]);
 const BETA_FEEDBACK_CATEGORIES=new Set(["launcher","live","widgets","scenes","obs","tiktok","games","cut_studio","account","other"]);
 const BETA_FEEDBACK_STATUSES=new Set(["new","reviewing","fixed","closed"]);
+const BETA_HANDBOOK_RESULTS=new Set(["passed","failed","skipped"]);
+const BETA_HANDBOOK_STEPS=Object.freeze([
+    {key:"account.registration",group:"ACCOUNT",title:"Registrierung",instruction:"Creator-Account registrieren und E-Mail-/Beta-Hinweise prüfen."},
+    {key:"account.login",group:"ACCOUNT",title:"Login",instruction:"Anmelden, Session prüfen und Dashboard öffnen."},
+    {key:"launcher.link",group:"LAUNCHER",title:"Launcher verbinden",instruction:"Launcher per Device-Link mit demselben Creator-Account verbinden."},
+    {key:"provider.tiktok",group:"PROVIDER",title:"TikTok",instruction:"TikTok-Verbindung, Profil-Sync und freigegebene LIVE-Funktionen prüfen."},
+    {key:"provider.twitch",group:"PROVIDER",title:"Twitch",instruction:"Twitch verbinden und OAuth/EventSub-Status prüfen; Streaming-Ziel bei Bedarf separat importieren."},
+    {key:"obs.connection",group:"OBS",title:"OBS verbinden",instruction:"OBS WebSocket verbinden und Scene-Lesen/Scene-Wechsel prüfen."},
+    {key:"widgets.runtime",group:"WIDGETS",title:"Widget erstellen & Runtime",instruction:"Widget speichern, veröffentlichen und die veröffentlichte Runtime prüfen."},
+    {key:"widgets.obs",group:"WIDGETS",title:"Widget in OBS",instruction:"Veröffentlichtes Widget per One-Click/Browser Source in OBS einfügen und darstellen."},
+    {key:"studio.scene",group:"CFS STUDIO",title:"Scene Composer",instruction:"Scene erstellen, Layer anordnen, speichern und Preview/Program-Wechsel prüfen."},
+    {key:"studio.capture_audio",group:"CFS STUDIO",title:"Capture & Audio",instruction:"Capture-Quelle und Audio-Routing auswählen und lokale Vorschau prüfen."},
+    {key:"streaming.single",group:"STREAMING",title:"Ein Streaming-Ziel",instruction:"Ein offiziell verfügbares Streaming-Ziel aktivieren, Start/Stop und Live Health prüfen."},
+    {key:"streaming.multi_recovery",group:"STREAMING",title:"Multistream & Recovery",instruction:"Mit 2+ verfügbaren Zielen Ziel-Isolation, manuellen Stop und Reconnect/Netzwerkverlust prüfen."}
+]);
+const BETA_HANDBOOK_KEYS=new Set(BETA_HANDBOOK_STEPS.map(item=>item.key));
 
 function betaText(value,max=200,fallback=""){
     const text=String(value??"").replace(/[\u0000-\u001f\u007f]/g," ").trim();
@@ -12571,6 +12610,18 @@ function publicBetaSession(row){
 function publicBetaFeedback(row){
     if(!row)return null;
     return {id:String(row.id),creator_id:String(row.creator_id),bridge_id:row.bridge_id?String(row.bridge_id):null,session_id:row.session_id?String(row.session_id):null,kind:row.kind||"bug",severity:row.severity||"medium",category:row.category||"launcher",title:row.title||"",description:row.description||"",repro_steps:row.repro_steps||"",expected:row.expected||"",actual:row.actual||"",launcher_version:row.launcher_version||"",platform:row.platform||"",provider:row.provider||"",diagnostics:row.diagnostics||{},status:row.status||"new",admin_notes:row.admin_notes||"",created_at:row.created_at||null,updated_at:row.updated_at||null};
+}
+function publicBetaHandbookResult(row){
+    if(!row)return null;
+    return {creator_id:String(row.creator_id),step_key:String(row.step_key||""),session_id:row.session_id?String(row.session_id):null,result:String(row.result||""),comment:row.comment||"",diagnostics:row.diagnostics||{},created_at:row.created_at||null,updated_at:row.updated_at||null};
+}
+function betaHandbookBundle(rows=[]){
+    const byKey=new Map((Array.isArray(rows)?rows:[]).map(row=>[String(row.step_key),publicBetaHandbookResult(row)]));
+    const steps=BETA_HANDBOOK_STEPS.map((step,index)=>({...step,index:index+1,result:byKey.get(step.key)||null}));
+    const summary={total:steps.length,passed:0,failed:0,skipped:0,untested:0,complete:false};
+    for(const step of steps){const result=step.result?.result;if(result&&Object.prototype.hasOwnProperty.call(summary,result))summary[result]++;else summary.untested++}
+    summary.complete=summary.untested===0;
+    return {version:1,steps,summary};
 }
 
 const BRIDGE_SIGNED_REQUEST_MAX_SKEW_MS = 2 * 60 * 1000;
@@ -18817,13 +18868,16 @@ app.get(
 app.get("/api/admin/creator-suite/beta-center",requireCreatorAccount,requireCreatorAdmin,requireCreatorAdminSensitiveRead,async(req,res)=>{
     res.set("Cache-Control","no-store");
     try{
-        const [feedbackResult,sessionResult,metricResult]=await Promise.all([
+        const [feedbackResult,sessionResult,handbookResult,metricResult]=await Promise.all([
             pool.query(`SELECT f.*,c.display_name AS creator_display_name,c.email AS creator_email FROM creator_beta_feedback f JOIN creator_accounts c ON c.id=f.creator_id ORDER BY CASE f.severity WHEN 'critical' THEN 0 WHEN 'high' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END,f.created_at DESC LIMIT 250`),
             pool.query(`SELECT s.*,c.display_name AS creator_display_name,c.email AS creator_email FROM creator_beta_sessions s JOIN creator_accounts c ON c.id=s.creator_id ORDER BY s.started_at DESC LIMIT 150`),
+            pool.query(`SELECT h.*,c.display_name AS creator_display_name,c.email AS creator_email FROM creator_beta_handbook_results h JOIN creator_accounts c ON c.id=h.creator_id ORDER BY h.updated_at DESC LIMIT 1000`),
             pool.query(`SELECT (SELECT COUNT(*)::int FROM creator_beta_testers WHERE status='active') AS active_beta_testers,(SELECT COUNT(*)::int FROM creator_beta_sessions WHERE status='completed') AS completed_sessions,(SELECT COUNT(DISTINCT creator_id)::int FROM creator_beta_sessions WHERE status='completed') AS tested_creators,(SELECT COUNT(*)::int FROM creator_beta_feedback WHERE status IN ('new','reviewing')) AS open_feedback,(SELECT COUNT(*)::int FROM creator_beta_feedback WHERE status IN ('new','reviewing') AND severity='critical') AS open_critical,(SELECT COUNT(*)::int FROM creator_beta_feedback WHERE status IN ('new','reviewing') AND severity='high') AS open_high`)
         ]);
-        const metrics=metricResult.rows[0]||{};
-        return res.json({ok:true,generated_at:new Date().toISOString(),summary:{active_beta_testers:Number(metrics.active_beta_testers||0),completed_sessions:Number(metrics.completed_sessions||0),tested_creators:Number(metrics.tested_creators||0),open_feedback:Number(metrics.open_feedback||0),open_critical:Number(metrics.open_critical||0),open_high:Number(metrics.open_high||0)},release_candidate:releaseCandidateReadiness(metrics),feedback:feedbackResult.rows.map(row=>({...publicBetaFeedback(row),creator:{display_name:row.creator_display_name||"Creator",email:row.creator_email||""}})),sessions:sessionResult.rows.map(row=>({...publicBetaSession(row),creator:{display_name:row.creator_display_name||"Creator",email:row.creator_email||""}}))});
+        const metrics=metricResult.rows[0]||{},handbookRows=handbookResult.rows.map(row=>({...publicBetaHandbookResult(row),creator:{display_name:row.creator_display_name||"Creator",email:row.creator_email||""}}));
+        const handbookSummary={total_results:handbookRows.length,passed:0,failed:0,skipped:0,creators:new Set(handbookRows.map(row=>row.creator_id)).size};
+        for(const row of handbookRows){if(Object.prototype.hasOwnProperty.call(handbookSummary,row.result))handbookSummary[row.result]++}
+        return res.json({ok:true,generated_at:new Date().toISOString(),summary:{active_beta_testers:Number(metrics.active_beta_testers||0),completed_sessions:Number(metrics.completed_sessions||0),tested_creators:Number(metrics.tested_creators||0),open_feedback:Number(metrics.open_feedback||0),open_critical:Number(metrics.open_critical||0),open_high:Number(metrics.open_high||0)},release_candidate:releaseCandidateReadiness(metrics),feedback:feedbackResult.rows.map(row=>({...publicBetaFeedback(row),creator:{display_name:row.creator_display_name||"Creator",email:row.creator_email||""}})),sessions:sessionResult.rows.map(row=>({...publicBetaSession(row),creator:{display_name:row.creator_display_name||"Creator",email:row.creator_email||""}})),handbook:{version:1,catalog:BETA_HANDBOOK_STEPS,summary:handbookSummary,results:handbookRows}});
     }catch(error){safeLogError("Beta Center Fehler:",error);return res.status(500).json({ok:false,error:"Beta Center konnte nicht geladen werden."})}
 });
 async function loadProductionEvidence(){
@@ -19561,6 +19615,7 @@ app.get("/api/creator/stream-studio",requireCreatorAccount,async(req,res)=>{
         const byId=new Map(allWidgets.map(widget=>[String(widget.id),publicStreamStudioSource(widget)]));
         for(const source of context.sceneSources){if(!byId.has(String(source.id)))byId.set(String(source.id),publicStreamStudioSource(source));}
         const gameActivity=await getPublicRecentGames(creatorId,{limit:3});
+        const providerTargets=await creatorProviderStreamTargets(creatorId,context.access);
         return res.json({
             ok:true,
             config,
@@ -19574,6 +19629,7 @@ app.get("/api/creator/stream-studio",requireCreatorAccount,async(req,res)=>{
             interactive_game:context.access.entitlements.games?await getCreatorGameRuntimePublic(creatorId):null,
             game_activity:gameActivity,
             game_context:creatorGameContextFromActivity(gameActivity),
+            provider_targets:providerTargets,
             live_readiness:await creatorLiveReadiness(creatorId,req.creatorAccount),
             interactive_game_engine:{launcher_online:gameBridge.online===true,compatible:gameBridge.capabilities?.interactive_games_service_v1===true,service_ready:gameBridge.capabilities?.interactive_games_service_ready===true,service_running:gameBridge.capabilities?.interactive_games_service_running===true,active_module:studioText(gameBridge.capabilities?.interactive_games_active_module,64,""),module_count:launcherInteractiveGameModules(gameBridge).length,catalog_hash:/^[a-f0-9]{64}$/.test(String(gameBridge.capabilities?.interactive_games_catalog_hash||""))?String(gameBridge.capabilities.interactive_games_catalog_hash):"",client_version:gameBridge.client_version||"",tikfinity:{supported:gameBridge.capabilities?.tikfinity_provider_v1===true,status:studioText(gameBridge.capabilities?.tikfinity_status,24,"offline"),healthy:gameBridge.capabilities?.tikfinity_healthy===true,last_event_at:studioText(gameBridge.capabilities?.tikfinity_last_event_at,60,"")}},
             multistream:{max_destinations:multistreamLimit,mode:"launcher_local",cloud_relay:false,credentials:"launcher_local_only"},
@@ -20083,8 +20139,11 @@ app.get("/api/bridge/beta/status",widgetBridgeHeartbeatLimiter,requireStudioBrid
     try{
         const beta=await getCreatorBetaState(req.studioBridge.creator_id);
         const session=beta.active?await activeBetaSessionForBridge(req.studioBridge.creator_id,req.studioBridge.id):null;
-        const recent=beta.active?await pool.query(`SELECT * FROM creator_beta_feedback WHERE creator_id=$1 ORDER BY created_at DESC LIMIT 10`,[req.studioBridge.creator_id]):{rows:[]};
-        return res.json({ok:true,beta,active_session:publicBetaSession(session),recent_feedback:recent.rows.map(publicBetaFeedback)});
+        const [recent,handbookRows]=beta.active?await Promise.all([
+            pool.query(`SELECT * FROM creator_beta_feedback WHERE creator_id=$1 ORDER BY created_at DESC LIMIT 10`,[req.studioBridge.creator_id]),
+            pool.query(`SELECT * FROM creator_beta_handbook_results WHERE creator_id=$1 ORDER BY updated_at DESC`,[req.studioBridge.creator_id])
+        ]):[{rows:[]},{rows:[]}];
+        return res.json({ok:true,beta,active_session:publicBetaSession(session),recent_feedback:recent.rows.map(publicBetaFeedback),handbook:betaHandbookBundle(handbookRows.rows)});
     }catch(error){return res.status(500).json({ok:false,error:"Beta-Status konnte nicht geladen werden."})}
 });
 app.post("/api/bridge/beta/session/start",widgetBridgeHeartbeatLimiter,requireStudioBridge,async(req,res)=>{
@@ -20108,6 +20167,28 @@ app.post("/api/bridge/beta/session/end",widgetBridgeHeartbeatLimiter,requireStud
         return res.json({ok:true,session:publicBetaSession(result.rows[0])});
     }catch(error){return res.status(error?.code==="beta_not_active"?403:500).json({ok:false,error:error?.message||"Beta-Session konnte nicht beendet werden."})}
 });
+app.put("/api/bridge/beta/handbook/:stepKey",widgetBridgeHeartbeatLimiter,requireStudioBridge,async(req,res)=>{
+    res.set("Cache-Control","no-store");
+    try{
+        await requireActiveBetaBridge(req.studioBridge);
+        const stepKey=betaText(req.params.stepKey,100,"");
+        if(!BETA_HANDBOOK_KEYS.has(stepKey))return res.status(404).json({ok:false,error:"Beta-Testschritt nicht gefunden."});
+        const resultValue=String(req.body?.result||"");
+        if(!BETA_HANDBOOK_RESULTS.has(resultValue))return res.status(400).json({ok:false,error:"Ergebnis muss passed, failed oder skipped sein."});
+        const sessionId=betaText(req.body?.session_id,120,"")||null;
+        if(sessionId){const check=await pool.query(`SELECT id FROM creator_beta_sessions WHERE id=$1 AND creator_id=$2 LIMIT 1`,[sessionId,req.studioBridge.creator_id]);if(!check.rows[0])return res.status(400).json({ok:false,error:"Beta-Session gehört nicht zu diesem Creator."})}
+        const diagnostics=req.body?.include_diagnostics===true?sanitizeBetaDiagnostics(req.body?.diagnostics||{}):{};
+        const saved=await pool.query(`
+            INSERT INTO creator_beta_handbook_results(creator_id,step_key,session_id,result,comment,diagnostics,created_at,updated_at)
+            VALUES($1,$2,$3,$4,$5,$6::jsonb,NOW(),NOW())
+            ON CONFLICT(creator_id,step_key) DO UPDATE SET session_id=EXCLUDED.session_id,result=EXCLUDED.result,comment=EXCLUDED.comment,diagnostics=EXCLUDED.diagnostics,updated_at=NOW()
+            RETURNING *
+        `,[req.studioBridge.creator_id,stepKey,sessionId,resultValue,betaText(req.body?.comment,2000,""),JSON.stringify(diagnostics)]);
+        const all=await pool.query(`SELECT * FROM creator_beta_handbook_results WHERE creator_id=$1 ORDER BY updated_at DESC`,[req.studioBridge.creator_id]);
+        return res.json({ok:true,result:publicBetaHandbookResult(saved.rows[0]),handbook:betaHandbookBundle(all.rows)});
+    }catch(error){return res.status(error?.code==="beta_not_active"?403:500).json({ok:false,error:error?.message||"Beta-Testschritt konnte nicht gespeichert werden."})}
+});
+
 app.post("/api/bridge/beta/feedback",widgetBridgeHeartbeatLimiter,requireStudioBridge,async(req,res)=>{
     res.set("Cache-Control","no-store");
     try{
@@ -20277,6 +20358,183 @@ app.post("/api/bridge/cut-studio/projects/:id/clips",widgetBridgeEventLimiter,re
 });
 
 
+
+const STREAM_PROVIDER_TARGET_KEYS = new Set(["tiktok","twitch","youtube"]);
+
+function streamProviderTargetKey(value){
+    const key=String(value||"").trim().toLowerCase();
+    return STREAM_PROVIDER_TARGET_KEYS.has(key)?key:"";
+}
+
+function streamProviderTargetNoStore(res){
+    res.set("Cache-Control","no-store");
+    res.set("Pragma","no-cache");
+    res.set("Expires","0");
+}
+
+function streamProviderTargetEnvelope(provider,payload={}){
+    return{
+        ok:true,
+        provider,
+        automatic_import:provider!=="tiktok",
+        server_storage:"none",
+        credentials_persisted_server_side:false,
+        browser_credentials_exposed:false,
+        ...payload
+    };
+}
+
+function twitchStreamTargetScopeState(row){
+    const scopes=String(row?.scope||"").split(/[\s,]+/).map(value=>value.trim()).filter(Boolean);
+    const missing=TWITCH_STREAM_TARGET_SCOPES.filter(scope=>!scopes.includes(scope));
+    return{scopes,missing,ready:Boolean(row?.connected)&&missing.length===0};
+}
+
+async function twitchIngestServerUrl(){
+    try{
+        const data=await twitchFetch(TWITCH_INGESTS_URL);
+        const ingests=Array.isArray(data?.ingests)?data.ingests:[];
+        const preferred=ingests.find(item=>item?.default===true)||[...ingests].sort((a,b)=>Number(a?.priority||9999)-Number(b?.priority||9999))[0];
+        const template=String(preferred?.url_template||"").trim();
+        if(template){
+            const clean=template.replace(/\{stream_key\}/gi,"").replace(/\/$/,"");
+            const parsed=new URL(clean);
+            if(["rtmp:","rtmps:"].includes(parsed.protocol))return clean;
+        }
+    }catch{}
+    return "rtmp://ingest.global-contribute.live-video.net/app";
+}
+
+async function twitchProviderStreamTarget(creatorId,{includeCredential=false}={}){
+    if(!twitchConfigured())return streamProviderTargetEnvelope("twitch",{status:"setup_required",connected:false,configured:false,message:"Twitch OAuth ist auf diesem Server noch nicht konfiguriert."});
+    let row=await getTwitchConnection(creatorId);
+    if(!row?.connected)return streamProviderTargetEnvelope("twitch",{status:"connect_required",connected:false,configured:true,message:"Verbinde zuerst deinen Twitch-Account."});
+    row=await ensureValidTwitchConnection(creatorId);
+    if(!row?.twitch_user_id)row=await syncTwitchProfile(creatorId,row);
+    const scope=twitchStreamTargetScopeState(row);
+    if(!scope.ready)return streamProviderTargetEnvelope("twitch",{status:"reauth_required",connected:true,configured:true,reauth_required:true,required_scopes:[...TWITCH_STREAM_TARGET_SCOPES],missing_scopes:scope.missing,message:"Twitch benötigt einmalig die Freigabe zum Lesen deines eigenen Stream-Keys."});
+    if(!includeCredential)return streamProviderTargetEnvelope("twitch",{status:"ready",connected:true,configured:true,reauth_required:false,message:"Twitch-Account verbunden. Der Launcher kann das Streaming-Ziel sicher übernehmen."});
+    const params=new URLSearchParams({broadcaster_id:String(row.twitch_user_id||"")});
+    const data=await twitchFetch(`${TWITCH_STREAM_KEY_URL}?${params.toString()}`,{headers:{Authorization:`Bearer ${row.access_token}`,"Client-Id":TWITCH_CLIENT_ID}});
+    const streamKey=String(Array.isArray(data?.data)?data.data[0]?.stream_key||"":"").trim();
+    if(!streamKey)return streamProviderTargetEnvelope("twitch",{status:"setup_required",connected:true,configured:true,message:"Twitch hat für diesen Account keinen nutzbaren Stream-Key zurückgegeben."});
+    return streamProviderTargetEnvelope("twitch",{
+        status:"ready",connected:true,configured:true,reauth_required:false,
+        message:"Twitch Streaming-Ziel wurde für den lokalen Launcher bereitgestellt.",
+        credential:{server_url:await twitchIngestServerUrl(),stream_key:streamKey}
+    });
+}
+
+async function youtubeBroadcastRows(accessToken,broadcastStatus){
+    const params=new URLSearchParams({part:"id,snippet,status,contentDetails",broadcastStatus:String(broadcastStatus||"active"),mine:"true",maxResults:"50"});
+    const data=await youtubeFetch(`${YOUTUBE_BROADCASTS_URL}?${params.toString()}`,{headers:{Authorization:`Bearer ${accessToken}`}});
+    return Array.isArray(data?.items)?data.items:[];
+}
+
+async function youtubeLiveStreamRows(accessToken,{ids=[]}={}){
+    const params=new URLSearchParams({part:"id,snippet,cdn,status",maxResults:"50"});
+    const cleanIds=[...new Set((Array.isArray(ids)?ids:[]).map(value=>String(value||"").trim()).filter(Boolean))].slice(0,50);
+    if(cleanIds.length)params.set("id",cleanIds.join(","));else params.set("mine","true");
+    const data=await youtubeFetch(`${YOUTUBE_LIVESTREAMS_URL}?${params.toString()}`,{headers:{Authorization:`Bearer ${accessToken}`}});
+    return Array.isArray(data?.items)?data.items:[];
+}
+
+function publicYouTubeStreamTargetCandidate(item={},broadcast=null){
+    return{
+        id:String(item?.id||"").slice(0,180),
+        title:studioText(item?.snippet?.title,160,"YouTube Live Stream"),
+        stream_status:studioText(item?.status?.streamStatus,40,"unknown"),
+        health_status:studioText(item?.status?.healthStatus?.status,40,"unknown"),
+        bound_broadcast_id:String(broadcast?.id||"").slice(0,180),
+        bound_broadcast_title:studioText(broadcast?.snippet?.title,160,""),
+        bound_broadcast_status:studioText(broadcast?.status?.lifeCycleStatus,40,"")
+    };
+}
+
+async function discoverYouTubeStreamTargets(row){
+    const [active,upcoming]=await Promise.all([
+        youtubeBroadcastRows(row.access_token,"active"),
+        youtubeBroadcastRows(row.access_token,"upcoming")
+    ]);
+    const broadcasts=[...active,...upcoming];
+    const boundByStream=new Map();
+    for(const broadcast of broadcasts){
+        const boundStreamId=String(broadcast?.contentDetails?.boundStreamId||"").trim();
+        if(boundStreamId&&!boundByStream.has(boundStreamId))boundByStream.set(boundStreamId,broadcast);
+    }
+    const boundIds=[...boundByStream.keys()];
+    const [boundStreams,reusableStreams]=await Promise.all([
+        boundIds.length?youtubeLiveStreamRows(row.access_token,{ids:boundIds}):Promise.resolve([]),
+        youtubeLiveStreamRows(row.access_token)
+    ]);
+    const merged=new Map();
+    for(const item of [...boundStreams,...reusableStreams])if(item?.id&&!merged.has(String(item.id)))merged.set(String(item.id),item);
+    const rows=[...merged.values()];
+    const candidates=rows.map(item=>publicYouTubeStreamTargetCandidate(item,boundByStream.get(String(item.id))||null));
+    const activeBound=candidates.find(item=>item.bound_broadcast_status==="live"||active.some(row=>String(row?.contentDetails?.boundStreamId||"")===item.id));
+    const upcomingBound=candidates.find(item=>upcoming.some(row=>String(row?.contentDetails?.boundStreamId||"")===item.id));
+    const recommended=activeBound||upcomingBound||candidates[0]||null;
+    return{rows,candidates,recommended_stream_id:String(recommended?.id||"")};
+}
+
+async function youtubeProviderStreamTarget(creatorId,{requestedStreamId="",includeCredential=false}={}){
+    if(!youtubeConfigured())return streamProviderTargetEnvelope("youtube",{status:"setup_required",connected:false,configured:false,message:"YouTube OAuth ist auf diesem Server noch nicht konfiguriert."});
+    let row=await getYouTubeConnection(creatorId);
+    if(!row?.connected)return streamProviderTargetEnvelope("youtube",{status:"connect_required",connected:false,configured:true,message:"Verbinde zuerst deinen YouTube-Account."});
+    row=await ensureValidYouTubeConnection(creatorId);
+    if(!row?.youtube_channel_id)row=await syncYouTubeChannel(creatorId,row);
+    let discovery;
+    try{discovery=await discoverYouTubeStreamTargets(row)}catch(error){
+        if(String(error?.reason)==="liveStreamingNotEnabled"||String(error?.reason)==="insufficientLivePermissions")return streamProviderTargetEnvelope("youtube",{status:"live_not_enabled",connected:true,configured:true,message:"YouTube LIVE ist für diesen Kanal nicht verfügbar oder noch nicht freigeschaltet."});
+        throw error;
+    }
+    if(!discovery.candidates.length)return streamProviderTargetEnvelope("youtube",{status:"setup_required",connected:true,configured:true,candidates:[],recommended_stream_id:"",message:"Richte zuerst einen YouTube Live Stream im Live Control Room ein. Bestehende Ingest-Daten werden danach sicher in den Launcher übernommen."});
+    if(!includeCredential)return streamProviderTargetEnvelope("youtube",{status:discovery.candidates.length>1?"selection_required":"ready",connected:true,configured:true,candidates:discovery.candidates,recommended_stream_id:discovery.recommended_stream_id,message:discovery.candidates.length>1?"Wähle den YouTube Live Stream, den dieser Launcher verwenden soll.":"YouTube Streaming-Ziel ist für den sicheren Launcher-Import verfügbar."});
+    const selectedId=String(requestedStreamId||"").trim();
+    if(!selectedId&&discovery.candidates.length>1)return streamProviderTargetEnvelope("youtube",{status:"selection_required",connected:true,configured:true,candidates:discovery.candidates,recommended_stream_id:discovery.recommended_stream_id,message:"Wähle den YouTube Live Stream, dessen Ingest-Daten lokal gespeichert werden sollen."});
+    const effectiveId=selectedId||discovery.recommended_stream_id;
+    const index=discovery.candidates.findIndex(item=>String(item.id)===effectiveId);
+    if(index<0)return streamProviderTargetEnvelope("youtube",{status:"selection_required",connected:true,configured:true,candidates:discovery.candidates,recommended_stream_id:discovery.recommended_stream_id,message:"Der ausgewählte YouTube Live Stream ist nicht mehr verfügbar. Bitte neu auswählen."});
+    const raw=discovery.rows.find(item=>String(item?.id||"")===effectiveId);
+    const ingestion=raw?.cdn?.ingestionInfo||{};
+    const serverUrl=String(ingestion.rtmpsIngestionAddress||ingestion.ingestionAddress||"").trim();
+    const streamKey=String(ingestion.streamName||"").trim();
+    if(!serverUrl||!streamKey)return streamProviderTargetEnvelope("youtube",{status:"setup_required",connected:true,configured:true,candidates:discovery.candidates,recommended_stream_id:discovery.recommended_stream_id,message:"YouTube hat für diesen Live Stream noch keine vollständigen Ingest-Daten bereitgestellt."});
+    let parsed;try{parsed=new URL(serverUrl)}catch{}
+    if(!parsed||!["rtmp:","rtmps:"].includes(parsed.protocol))return streamProviderTargetEnvelope("youtube",{status:"setup_required",connected:true,configured:true,message:"YouTube hat eine unerwartete Ingest-Adresse geliefert."});
+    return streamProviderTargetEnvelope("youtube",{
+        status:"ready",connected:true,configured:true,candidates:discovery.candidates,recommended_stream_id:discovery.recommended_stream_id,
+        selected_stream:discovery.candidates[index],message:"YouTube Streaming-Ziel wurde für den lokalen Launcher bereitgestellt.",
+        credential:{server_url:serverUrl,stream_key:streamKey}
+    });
+}
+
+async function tiktokProviderStreamTarget(creatorId){
+    const row=await getConnection(creatorId);
+    return streamProviderTargetEnvelope("tiktok",{provider:"tiktok",status:row?.connected?"manual_required":"connect_required",connected:Boolean(row?.connected),automatic_import:false,message:row?.connected?"TikTok Stream-Server und Stream-Key dürfen nur lokal eingetragen werden, wenn TikTok sie diesem Creator offiziell bereitstellt.":"Verbinde zuerst deinen TikTok-Account. Encoder-Zugang bleibt zusätzlich von TikTok abhängig."});
+}
+
+async function providerStreamTargetStatus(creatorId,provider,{includeCredential=false,requestedStreamId=""}={}){
+    const key=streamProviderTargetKey(provider);
+    if(!key)throw Object.assign(new Error("Streaming-Provider wird nicht unterstützt."),{code:"stream_provider_unsupported"});
+    if(["tiktok","twitch"].includes(key))await requireProviderBetaAccess(creatorId,key);
+    if(key==="twitch")return twitchProviderStreamTarget(creatorId,{includeCredential});
+    if(key==="youtube")return youtubeProviderStreamTarget(creatorId,{includeCredential,requestedStreamId});
+    return tiktokProviderStreamTarget(creatorId);
+}
+
+async function creatorProviderStreamTargets(creatorId,access=null){
+    const profile=access||await creatorAccessProfile(creatorId);
+    const [tiktok,twitch,youtube]=await Promise.all([getConnection(creatorId),getTwitchConnection(creatorId),getYouTubeConnection(creatorId)]);
+    const twitchPublic=publicTwitchConnection(twitch);
+    const tiktokBeta=providerBetaPolicy(profile,"tiktok"),twitchBeta=providerBetaPolicy(profile,"twitch");
+    return{
+        twitch:{provider:"twitch",connected:Boolean(twitch?.connected),beta_access:twitchBeta,status:!twitchBeta.allowed?"beta_required":!twitch?.connected?"connect_required":twitchPublic.stream_target?.reauth_required?"reauth_required":"account_ready",automatic_import:true,reauth_required:twitchPublic.stream_target?.reauth_required===true},
+        youtube:{provider:"youtube",connected:Boolean(youtube?.connected),status:youtube?.connected?"account_ready":"connect_required",automatic_import:true,configured:youtubeConfigured()},
+        tiktok:{provider:"tiktok",connected:Boolean(tiktok?.connected),beta_access:tiktokBeta,status:!tiktokBeta.allowed?"beta_required":tiktok?.connected?"manual_required":"connect_required",automatic_import:false}
+    };
+}
+
 const LAUNCHER_PROVIDER_OAUTH_KEYS = new Set(["tiktok","twitch","youtube"]);
 
 function launcherProviderOAuthKey(value){
@@ -20318,6 +20576,31 @@ async function consumeLauncherProviderOAuthHandoff(provider,token){
     );
     return result.rows[0]||null;
 }
+
+app.get("/api/bridge/stream-studio/provider-targets/:provider",widgetBridgeHeartbeatLimiter,requireStudioBridge,async(req,res)=>{
+    streamProviderTargetNoStore(res);
+    try{
+        const result=await providerStreamTargetStatus(req.studioBridge.creator_id,req.params.provider);
+        return res.json(result);
+    }catch(error){
+        if(error?.code==="provider_beta_required")return res.status(403).json(providerBetaDeniedPayload(error.access,error.provider));
+        const status=error?.code==="stream_provider_unsupported"?400:502;
+        return res.status(status).json(clientSafeErrorPayload(req,error,status,"Streaming-Zielstatus konnte nicht geladen werden.",{includeCode:true}));
+    }
+});
+
+app.post("/api/bridge/stream-studio/provider-targets/:provider/import",widgetBridgeEventLimiter,requireStudioBridge,async(req,res)=>{
+    streamProviderTargetNoStore(res);
+    try{
+        const requestedStreamId=String(req.body?.stream_id||"").trim().slice(0,180);
+        const result=await providerStreamTargetStatus(req.studioBridge.creator_id,req.params.provider,{includeCredential:true,requestedStreamId});
+        return res.json(result);
+    }catch(error){
+        if(error?.code==="provider_beta_required")return res.status(403).json(providerBetaDeniedPayload(error.access,error.provider));
+        const status=error?.code==="stream_provider_unsupported"?400:502;
+        return res.status(status).json(clientSafeErrorPayload(req,error,status,"Streaming-Ziel konnte nicht sicher übernommen werden.",{includeCode:true}));
+    }
+});
 
 app.post("/api/bridge/integrations/:provider/connect",widgetBridgeEventLimiter,requireStudioBridge,async(req,res)=>{
     res.set("Cache-Control","no-store");
@@ -22045,6 +22328,7 @@ async function getTwitchConnection(creatorId){
 function publicTwitchConnection(row){
     const scopes=String(row?.scope||"").split(/[\s,]+/).map(v=>v.trim()).filter(Boolean);
     const missingScopes=TWITCH_EVENTSUB_REQUIRED_SCOPES.filter(scope=>!scopes.includes(scope));
+    const streamTargetMissing=TWITCH_STREAM_TARGET_SCOPES.filter(scope=>!scopes.includes(scope));
     return {
         connected:Boolean(row?.connected),
         account:{user_id:row?.twitch_user_id||"",login:row?.login||"",display_name:row?.display_name||"",profile_image_url:row?.profile_image_url||""},
@@ -22052,6 +22336,13 @@ function publicTwitchConnection(row){
         required_scopes:[...TWITCH_EVENTSUB_REQUIRED_SCOPES],
         missing_scopes:missingScopes,
         scope_ready:Boolean(row?.connected)&&missingScopes.length===0,
+        stream_target:{
+            automatic_import:true,
+            required_scopes:[...TWITCH_STREAM_TARGET_SCOPES],
+            missing_scopes:streamTargetMissing,
+            ready:Boolean(row?.connected)&&streamTargetMissing.length===0,
+            reauth_required:Boolean(row?.connected)&&streamTargetMissing.length>0
+        },
         validated_at:row?.last_validated_at?new Date(Number(row.last_validated_at)).toISOString():null,
         updated_at:row?.updated_at||null,
         configured:twitchConfigured(),
@@ -24293,6 +24584,41 @@ async function getPublicCommunityStats() {
     }
     return publicCommunityStatsCache.in_flight;
 }
+
+app.get(
+    "/api/public/launcher/releases",
+    async (_req, res) => {
+        res.set("Cache-Control", "public, max-age=60, stale-while-revalidate=600");
+        try {
+            const catalog = await launcherReleaseCatalog.fetch();
+            const stableRelease = launcherReleaseSummary(
+                selectLauncherRelease(catalog.releases || [], "stable")
+            );
+            return res.json({
+                ok: Boolean(catalog.ok),
+                channel: "stable",
+                fetched_at: catalog.fetched_at || new Date().toISOString(),
+                stale: Boolean(catalog.stale),
+                build_target_version: LAUNCHER_BUILD_TARGET_VERSION,
+                published: Boolean(stableRelease?.setup?.url),
+                release: stableRelease || null
+            });
+        } catch (error) {
+            safeLogError("public-launcher-releases", error);
+            return res.status(503).json({
+                ok:false,
+                channel:"stable",
+                fetched_at:new Date().toISOString(),
+                stale:false,
+                build_target_version:LAUNCHER_BUILD_TARGET_VERSION,
+                published:false,
+                release:null,
+                error:"Launcher-Release konnte derzeit nicht geladen werden."
+            });
+        }
+    }
+);
+
 
 app.get(
     "/api/public/community-stats",
@@ -28497,6 +28823,7 @@ app.get("/go/tiktok/community", (_req, res) => {
 const SEO_CANONICAL_PATHS = new Map([
     ["/index.html", "/"],
     ["/pages/creator-suite", "/pages/creator-suite.html"],
+    ["/pages/launcher-download", "/pages/launcher-download.html"],
     ["/pages/merch", "/pages/merch.html"],
     ["/pages/plans", "/pages/plans.html"],
     ["/pages/roadmap", "/pages/roadmap.html"],

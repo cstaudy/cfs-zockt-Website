@@ -1,0 +1,41 @@
+NEU IN v157
+CHANGED-FILES-v157.txt
+CREATOR-SUITE-COMPLETION-v157.md
+SECURITY-BASELINE-v157.md
+TECHNIK-v157.md
+handoff/HANDOFF-v157.md
+tools/workspace-organization-v157-test.mjs
+
+GEÄNDERT IN v157
+.env.example
+CHANGED-FILES.txt
+DATEILISTE.txt
+INSTALLIEREN.txt
+PROJECT_CURRENT_STATE.md
+README.md
+UPDATE-INHALT.txt
+handoff/CURRENT-HANDOFF.md
+launcher/package-lock.json
+launcher/package.json
+launcher/renderer/index.html
+launcher/renderer/styles.css
+ops/application-recovery-policy.json
+package-lock.json
+package.json
+public/assets/css/styles.css
+public/assets/css/widget-studio.css
+public/assets/js/page-system-check.js
+public/index.html
+public/pages/creator-suite.html
+public/pages/dashboard.html
+public/pages/roadmap.html
+public/pages/system-check.html
+public/pages/widget-studio.html
+render.blueprint.example.yaml
+server.js
+tools/creator-suite-integrations-v141-test.mjs
+tools/creator-tools-v28-qa.mjs
+tools/homepage-clarity-v156-test.mjs
+
+GELÖSCHT IN v157
+keine Dateien

@@ -1,3 +1,118 @@
+# cfs_zockt — Creator Suite v159
+
+Aktiver Schwerpunkt: **professioneller öffentlicher Produktauftritt + echter Windows-Launcher-Downloadweg**. Der Feature Freeze bleibt aktiv; v159 ist ein UX-/Distribution-/Release-Hardening-Pass, kein neuer großer Produktblock.
+
+- Backend: **3.20.5**
+- Schema Generation: **73**
+- Launcher: **0.47.29**
+- neue öffentliche Seite: **`/pages/launcher-download.html`**
+- öffentliche read-only Release-API: **`/api/public/launcher/releases`**
+- Windows Build: **NSIS Setup `.exe` + Portable `.exe` · x64**
+- öffentliche Tag-Releases: **gültige Authenticode-Signatur verpflichtend**
+- Setup/Portable erscheinen auf der Website nur, wenn sie wirklich als GitHub Release veröffentlicht wurden
+- Startseiten-Navigation reduziert und Launcher als eigener Hauptweg hervorgehoben
+- Public Launcher Distribution Gate: **32/32 PASS**
+- kompletter `npm run release:v159`: **PASS**
+- echter Windows-/Installer-/SmartScreen-Test bleibt bis zur Ausführung auf Windows offen
+
+Siehe `TECHNIK-v159.md`, `CREATOR-SUITE-COMPLETION-v159.md`, `SECURITY-BASELINE-v159.md` und `LAUNCHER-DISTRIBUTION-v159.md`.
+
+---
+
+# cfs_zockt — Creator Suite v158
+
+Aktiver Schwerpunkt: **Stream Studio, Integrationen und Scene Studio sauber nach Creator-Ablauf ordnen**. Der Feature Freeze bleibt aktiv; v158 ist ein UX-/Informationsarchitektur-Pass, kein neuer Produktblock.
+
+- Backend: **3.20.4**
+- Schema Generation: **73**
+- Launcher: **0.47.28**
+- gemeinsame Themen: **Start & Status · Gestalten · Produzieren · Verbinden · Community · System & Tests**
+- Stream Studio: **Bühne bauen · Bild/Ton/Output · Stream prüfen · LIVE Session · Überwachen**
+- Integrationen: **Streaming-Plattformen · PC/Launcher/OBS · Erweitert & Diagnose**
+- Scene Studio: **Direkt-/Kompatibilitätseditor**, normaler neuer Weg liegt im CFS Stream Studio
+- Workspace-Flow-Gate: **86/86 PASS**
+- Release Gate: `npm run release:v158` → **PASS**
+- Feature Freeze bleibt aktiv; reale Windows-/OBS-/Provider-Acceptance bleibt offen
+
+Siehe `TECHNIK-v158.md`, `CREATOR-SUITE-COMPLETION-v158.md`, `SECURITY-BASELINE-v158.md` und `handoff/HANDOFF-v158.md`.
+
+---
+
+# cfs_zockt — Creator Suite v157
+
+Aktiver Schwerpunkt: **vorhandene Funktionen sauber nach Aufgaben ordnen**. Der Feature Freeze bleibt aktiv; v157 ist ein UX-/Informationsarchitektur-Pass, kein neuer Produktblock.
+
+- Backend: **3.20.3**
+- Schema Generation: **73**
+- Launcher: **0.47.28**
+- sechs feste Themen: **Start & Status · Gestalten · Produzieren · Verbinden · Community · System & Tests**
+- Launcher-Navigation entsprechend gruppiert und auf kleinen Höhen scrollbar
+- Widget Studio: **Erstellen · Verwalten · Weiter zum Stream**
+- Dashboard und öffentliche Creator Suite von Einzelmodulen auf Themenlogik reduziert
+- Workspace-Organization-Gate: **69/69 PASS**
+- Release Gate: `npm run release:v157` → **PASS**
+- Feature Freeze bleibt aktiv; reale Windows-/OBS-/Provider-Acceptance bleibt offen
+
+Siehe `TECHNIK-v157.md`, `CREATOR-SUITE-COMPLETION-v157.md`, `SECURITY-BASELINE-v157.md` und `handoff/HANDOFF-v157.md`.
+
+---
+
+# cfs_zockt — Creator Suite v156
+
+Aktiver Schwerpunkt: **Website-Cleanup innerhalb des Feature Freeze**. Die drei statischen Spielebilder auf der Startseite wurden entfernt und der öffentliche Einstieg auf klare, wahrheitsgemäße Wege reduziert.
+
+- Backend: **3.20.2**
+- Schema Generation: **73**
+- Launcher: **0.47.27**
+- statische CS2-/FC25-/Warzone-Streambilder entfernt
+- LIVE-Vorschau zeigt nur noch ein echtes verfügbares Cover, sonst neutrales CFS-LIVE-Feld
+- Hero führt klar zu **Streams** oder **Creator Suite**
+- Creator-Suite-Seite auf aktuelle kostenlose geschlossene Beta / Acceptance-Phase synchronisiert
+- Homepage-Clarity-Gate: **32/32 PASS**
+- Release Gate: `npm run release:v156` → **PASS**
+- Feature Freeze bleibt aktiv; reale Windows-/OBS-/Provider-Acceptance bleibt offen
+
+Siehe `TECHNIK-v156.md`, `CREATOR-SUITE-COMPLETION-v156.md`, `SECURITY-BASELINE-v156.md` und `handoff/HANDOFF-v156.md`.
+
+---
+
+# cfs_zockt — Creator Suite v155
+
+Aktiver Schwerpunkt: **reale Private-Beta-Acceptance gestartet; Test-/Diagnosekette gehärtet**. Der Feature Freeze bleibt aktiv.
+
+- Backend: **3.20.1**
+- Schema Generation: **73**
+- Launcher: **0.47.27**
+- Projekt-Regression: **40/40 PASS** inklusive R59–R68
+- Stream-Credential-Store: **29/29 PASS**
+- Private-Beta-Acceptance-Contract: **34/34 PASS**
+- Release Gate: `npm run release:v155` → **PASS**
+- Windows-Starter: `RUN-PRIVATE-BETA-ACCEPTANCE.cmd`
+- Nächster Schritt: **echte Windows-/OBS-/Provider-/Reconnect-/Soak-Acceptance**
+
+Der Private-Beta-Starter aktiviert keine Monetarisierung und führt keinen Stripe-LIVE-Test aus. Externe/hardwareabhängige Punkte werden nicht als PASS simuliert.
+
+Siehe `TECHNIK-v155.md`, `ACCEPTANCE-STATUS-v155.md`, `PRIVATE-BETA-ACCEPTANCE-v155.md`, `CREATOR-SUITE-COMPLETION-v155.md` und `SECURITY-BASELINE-v155.md`.
+
+---
+
+# cfs_zockt — Creator Suite v154
+
+Aktiver Schwerpunkt: **integriertes Beta-Test-Handbuch + vorbereiteter Feature Freeze**.
+
+- Backend: **3.20.0**
+- Schema Generation: **73**
+- Launcher: **0.47.26**
+- Beta-Test-Handbuch: **12 strukturierte Schritte**
+- Handbook Gate: `npm run beta-handbook154:check` → **57/57 PASS**
+- Feature Freeze Gate: `npm run feature-freeze154:check` → **33/33 PASS**
+- Release Gate: `npm run release:v154` → **PASS** auf dem vollständigen Repository
+- Nächster Schritt: **gebündelte reale Acceptance, keine neuen großen Features davor**
+
+Siehe `TECHNIK-v154.md`, `CREATOR-SUITE-COMPLETION-v154.md`, `SECURITY-BASELINE-v154.md` und `FEATURE-FREEZE-v154.md`.
+
+---
+
 # cfs_zockt — Creator Suite v152
 
 Aktiver Schwerpunkt: **konsolidierte Private-Beta Legal-/Privacy-Härtung auf dem v151-Code-Stand**. Das Paket enthält den kompletten kumulativen v151-Updatebestand plus die neuesten Legal-/Privacy-Dateien jeweils nur einmal.

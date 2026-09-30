@@ -1,0 +1,37 @@
+cfs_zockt v153 – geänderte/neue Dateien gegenüber dem gelieferten Repository-ZIP
+===============================================================================
+
+GEÄNDERT
+- .env.example
+- DATEILISTE.txt
+- INSTALLIEREN.txt
+- PROJECT_CURRENT_STATE.md
+- UPDATE-INHALT.txt
+- package.json
+- package-lock.json
+- public/assets/js/page-tiktok.js
+- public/assets/js/stream-studio.js
+- public/assets/js/widget-studio.js
+- server.js
+
+NEU
+- CREATOR-SUITE-COMPLETION-v153.md
+- SECURITY-BASELINE-v153.md
+- TECHNIK-v153.md
+- handoff/HANDOFF-v153.md
+- tools/youtube-integration-v149-test.mjs
+
+AKTUALISIERTES HANDOFF
+- handoff/CURRENT-HANDOFF.md
+
+BEREITS IM GELIEFERTEN ZIP VORHANDEN UND JETZT ERFOLGREICH GENUTZT
+- tools/stream-provider-targets-v153-test.mjs
+- Launcher Provider-Target-/SafeStorage-Implementierung in launcher/main.js,
+  launcher/src/bridge-client.js und launcher/renderer/app.js
+
+HINWEIS ZUM QUELLPAKET
+- .github/workflows/creator-suite-release-gate.yml war bereits im gelieferten ZIP
+  nicht physisch vorhanden und wird nicht als Teil dieses kumulativen Pakets behauptet.
+- launcher/tools/stream-credential-store-test.mjs ist ebenfalls nicht vorhanden;
+  hierfür wird kein eigener PASS behauptet. Der v153-Contract prüft die relevanten
+  SafeStorage-/Credential-Invarianten statisch.

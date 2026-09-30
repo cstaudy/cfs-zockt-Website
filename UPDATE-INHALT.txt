@@ -1,72 +1,12 @@
-V152 KONSOLIDIERTES UPDATE
-- Private-Beta Legal-/Privacy-Härtung auf v151-Codebasis.
-- Registrierung: Terms/Privacy/Beta/18+ dokumentiert.
-- CFS_COMMERCIAL_MODE=false blockiert bezahlte Checkouts.
-- Nicht notwendige Funnel-/Merch-Tracking-Persistenz entfernt.
-- Alle kumulativen v151-Dateien bleiben erhalten; jeder relative Pfad liegt im Paket nur einmal vor.
+cfs_zockt v158 – Studio Flow / Integrations-Ordnung
 
-cfs_zockt v151 – Update-Inhalt
-================================
-
-- Geschlossene TikTok-/Twitch-Provider-Beta für externe Creator.
-- Admin Control ausschließlich über `CFS_ADMIN_EMAILS`; kein Creator-ID-Fallback.
-- eigener Admin-Account umgeht die Beta-Sperre und kann Provider/Widgets direkt testen.
-- neue Registrierungen werden automatisch als `pending` geführt.
-- Admin Control zeigt wartende Beta-Creator und bietet direkte Freigabe für TikTok + Twitch.
-- Aktivierung kann bei eingeschalteter Mail-Verifikation erst nach bestätigter E-Mail erfolgen.
-- OAuth-Start und OAuth-Callback für TikTok/Twitch prüfen Beta-Zugriff.
-- Launcher OAuth-Handoff prüft Beta vor Ausgabe und nochmals vor Provider-OAuth.
-- Twitch EventSub/Self-Heal/Notifications ignorieren nicht freigeschaltete Creator.
-- TikTok-/Twitch-Provider-Widgets sind bei fehlender Freigabe auch serverseitig und in der öffentlichen Runtime gesperrt.
-- Launcher/Website zeigen `BETA FREIGABE AUSSTEHEND` bzw. `BETA PAUSIERT`.
-- YouTube bleibt von der geschlossenen Beta unverändert.
-- Backend 3.18.3 / Schema 72 / Launcher 0.47.24.
-- Provider Beta Access v151: 20/20 PASS.
-- vollständiger `release:v151` Gate: PASS.
-
---- Historischer v149-Inhalt ---
-
-cfs_zockt v149 – Update-Inhalt
-
-Schwerpunkt: YouTube Creator Integration als eigener, strikt getrennter Provider.
-
-Enthalten:
-- Google/YouTube OAuth Authorization Code Flow
-- `access_type=offline` + Refresh-Token-Lifecycle
-- serverseitig verschlüsselte Access-/Refresh-Tokens
-- eindeutige YouTube-Kanalzuordnung pro Creator
-- Kanalprofil-Sync
-- aktiven YouTube-LIVE-Broadcast erkennen
-- eigener YouTube Provider-LIVE-State
-- adaptives `liveChatMessages.list` Polling
-- YouTube Chat
-- Mitgliedschaften / Membership Gifts
-- Super Chats / Super Sticker
-- Event-Deduplizierung über YouTube Message-ID
-- YouTube Abonnenten Goal / Counter
-- YouTube LIVE Timer
-- YouTube Live Chat Widget
-- Mitgliedschaft Alert / Latest Member
-- Super Chat Alert / Latest Super Chat
-- YouTube-Bereich im Widget Studio nur nach passender Verbindung
-- serverseitiges `provider_not_connected` / Scope-Gating
-- strikte TikTok/Twitch/YouTube-Taxonomie
-- Launcher YouTube Connect / Widgets
-- YouTube Integrations-Hub mit Connect / Sync / Disconnect
-- Stream Startcheck: TikTok ODER Twitch ODER YouTube
-- Provider-getrennte Studio-Previewzustände
-- Backend 3.18.0 / Schema 72 / Launcher 0.47.23
-- YouTube v149 Integrationsgate + vollständiger Creator-Suite-Regressionsgate
-
-Bewusst nicht Bestandteil dieses Blocks:
-- YouTube Broadcast/Stream erzeugen oder verändern
-- YouTube Stream-Key/RTMP-Ziel
-- echtes YouTube-Multistream-Ziel
-- reale Google-/YouTube-/OBS-/Windows-/Soak-Abnahme
-
-Entwicklungsreihenfolge:
-Erst Feature-Blöcke vollständig fertigstellen. Als nächstes echte Multistream-Ziele
-mit dem vorhandenen lokalen Multistream-Kern verbinden. Danach Feature Freeze und
-gebündelte reale Acceptance.
-
-Dieses Paket ist kumulativ und kein Full Project.
+- Feature Freeze bleibt aktiv.
+- Stream Studio in 5 klare Schritte gegliedert.
+- Gemeinsame Creator-Suite-Themen im Studio sichtbar.
+- Integrationen nach Streaming-Plattformen, PC/Launcher/OBS und Diagnose gruppiert.
+- Scene Studio klar als Direkt-/Kompatibilitätseditor eingeordnet.
+- Bestehende Runtime-IDs und Security-Grenzen unverändert.
+- Backend 3.20.4 / Schema 73 / Launcher 0.47.28.
+- Workspace Flow v158: 86/86 PASS.
+- kompletter `npm run release:v158` Gate PASS.
+- Reale Windows-/OBS-/Provider-Acceptance bleibt offen.
