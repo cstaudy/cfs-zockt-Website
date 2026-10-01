@@ -116,15 +116,33 @@
 
     <section class="ws-simple-start-hub" data-experience-scope="simple" aria-label="Schnellstart im Widget Studio">
       <div class="ws-simple-start-head">
-        <div><span>DEIN SCHNELLSTART</span><strong>Was möchtest du machen?</strong><small>Die wichtigsten Wege ohne technische Umwege.</small></div>
-        <button type="button" class="ws-simple-brand-button" data-action="open-brand"><span>◆</span><strong>MEINE MARKE</strong><small id="wsSimpleBrandMeta">Farben, Schrift &amp; Logo</small></button>
+        <div><span>DEIN SCHNELLSTART</span><strong>Drei Bereiche statt einer langen Werkzeugliste.</strong><small>Erstellen, verwalten und anschließend in den Stream bringen.</small></div>
       </div>
-      <div class="ws-simple-start-grid">
-        <button class="primary" type="button" data-action="open-create"><b>＋</b><span><strong>Neues Widget</strong><small>Geführt in wenigen Schritten</small></span></button>
-        <button type="button" data-action="open-latest-widget"><b>↺</b><span><strong>Weiterarbeiten</strong><small id="wsSimpleContinueMeta">Letztes Widget öffnen</small></span></button>
-        <button type="button" data-dashboard-filter="favorites"><b>★</b><span><strong>Favoriten</strong><small>Schnell wiederfinden</small></span></button>
-        <button type="button" data-dashboard-filter="draft"><b>✎</b><span><strong>Entwürfe</strong><small>Noch nicht veröffentlicht</small></span></button>
-        <button type="button" data-dashboard-filter="live"><b>●</b><span><strong>Veröffentlicht</strong><small>Aktuell im Stream</small></span></button>
+      <div class="ws-simple-category-grid">
+        <article class="ws-simple-category">
+          <header><span>01 · ERSTELLEN</span><strong>Widget &amp; Design</strong><small>Alles, was du zum Bauen und Gestalten brauchst.</small></header>
+          <div class="ws-simple-category-actions">
+            <button class="primary" type="button" data-action="open-create"><b>＋</b><span><strong>Neues Widget</strong><small>Geführt starten</small></span></button>
+            <button type="button" data-action="open-latest-widget"><b>↺</b><span><strong>Weiterarbeiten</strong><small id="wsSimpleContinueMeta">Letztes Widget öffnen</small></span></button>
+            <button type="button" data-action="open-brand"><b>◆</b><span><strong>Meine Marke</strong><small id="wsSimpleBrandMeta">Farben, Schrift &amp; Logo</small></span></button>
+          </div>
+        </article>
+        <article class="ws-simple-category">
+          <header><span>02 · VERWALTEN</span><strong>Deine Bibliothek</strong><small>Widgets nach Arbeitsstand statt nach Technik sortieren.</small></header>
+          <div class="ws-simple-category-actions">
+            <button type="button" data-dashboard-filter="favorites"><b>★</b><span><strong>Favoriten</strong><small>Schnell wiederfinden</small></span></button>
+            <button type="button" data-dashboard-filter="draft"><b>✎</b><span><strong>Entwürfe</strong><small>Noch in Arbeit</small></span></button>
+            <button type="button" data-dashboard-filter="live"><b>●</b><span><strong>Veröffentlicht</strong><small>Für den Stream bereit</small></span></button>
+          </div>
+        </article>
+        <article class="ws-simple-category">
+          <header><span>03 · WEITER ZUM STREAM</span><strong>Scene, Studio &amp; Launcher</strong><small>Erst wechseln, wenn dein Widget fertig ist.</small></header>
+          <div class="ws-simple-category-links">
+            <a href="/pages/scene-studio.html"><b>◇</b><span><strong>Scene Studio</strong><small>Widgets kombinieren</small></span></a>
+            <a href="/pages/stream-studio.html"><b>◉</b><span><strong>CFS Studio</strong><small>Stream produzieren</small></span></a>
+            <button type="button" data-action="open-bridge"><b>⌁</b><span><strong>Launcher Status</strong><small>LIVE-Daten prüfen</small></span></button>
+          </div>
+        </article>
       </div>
       <div class="ws-simple-status-strip">
         <span><b id="wsSimpleWidgetStatus">0 Widgets</b><small>deine Bibliothek</small></span>
@@ -305,7 +323,7 @@
     <section class="ws-platform-picker">
       <div class="ws-section-label">1 · STREAM-BEREICH</div>
       <h3>Wo möchtest du das Widget einsetzen?</h3>
-      <p class="ws-platform-intro">Es werden nur die Provider-Bereiche angeboten, die mit deinem Creator-Account verbunden sind. OBS / Allgemein bleibt für plattformunabhängige Widgets verfügbar.</p>
+      <p class="ws-platform-intro">Jeder Bereich zeigt ausschließlich seine eigenen Widgets. TikTok-Daten bleiben bei TikTok, Twitch-Daten bei Twitch. Allgemein enthält nur plattformneutrale Widgets.</p>
       <div class="ws-platform-cards">
         <button class="ws-platform-card active" type="button" data-platform-filter="tiktok">
           <span class="ws-platform-logo">TT</span>
@@ -324,15 +342,57 @@
         </button>
         <button class="ws-platform-card" type="button" data-platform-filter="obs">
           <span class="ws-platform-logo obs">OBS</span>
-          <div><strong>OBS / Allgemein</strong><small>Counter, Timer, manuelle Goals, Text, Bilder und Branding</small></div>
-          <b>PROVIDER-FREI</b>
+          <div><strong>Allgemein</strong><small>Manuelle Counter, Timer, Goals, Text, Bilder und Branding – ohne Provider-Daten</small></div>
+          <b>PLATTFORMNEUTRAL</b>
         </button>
       </div>
       <div class="ws-platform-rule">
         <span>KLARE TRENNUNG</span>
-        <p><strong>TikTok verbunden → TikTok Widgets.</strong> <strong>Twitch verbunden → Twitch Widgets.</strong> <strong>YouTube verbunden → YouTube Widgets.</strong> Allgemeine OBS-Widgets bleiben davon getrennt. Kein Provider-Widget wird angezeigt, solange der zugehörige Account nicht verbunden ist.</p>
+        <p><strong>TikTok → nur TikTok Widgets.</strong> <strong>Twitch → nur Twitch Widgets.</strong> <strong>YouTube → nur YouTube Widgets.</strong> <strong>Allgemein → nur plattformneutrale Widgets.</strong> Provider-Daten werden nicht zwischen Kategorien gemischt.</p>
       </div>
       <div id="wsPlatformNotice" class="ws-platform-notice"></div>
+    </section>
+
+    <section class="ws-widget-converter" id="wsWidgetConverter" aria-label="Widget-Umwandler">
+      <div class="ws-widget-converter-head">
+        <div><div class="ws-section-label">WIDGET-UMWANDLER</div><h3>Logo hochladen und direkt in ein Plattform-Widget einbauen.</h3><p>Wähle zuerst TikTok oder Twitch. Danach stehen ausschließlich Widget-Typen dieser Plattform zur Auswahl.</p></div>
+        <span>ASSET → WIDGET</span>
+      </div>
+      <div class="ws-converter-flow">
+        <div class="ws-converter-step">
+          <b>1</b><div><strong>Plattform</strong><small>TikTok und Twitch bleiben strikt getrennt.</small></div>
+          <div class="ws-converter-platforms" role="group" aria-label="Streaming-Plattform für den Widget-Umwandler">
+            <button type="button" class="active" data-converter-platform="tiktok" aria-pressed="true">TikTok</button>
+            <button type="button" data-converter-platform="twitch" aria-pressed="false">Twitch</button>
+          </div>
+        </div>
+        <div class="ws-converter-step">
+          <b>2</b><div><strong>Widget-Typ</strong><small>Nur passende Typen der gewählten Plattform.</small></div>
+          <label class="ws-converter-select"><span>Widget</span><select id="wsConverterType"></select></label>
+        </div>
+        <div class="ws-converter-step">
+          <b>3</b><div><strong>Logo / Bild</strong><small>Das Bild wird als editierbares Branding-Element integriert.</small></div>
+          <label class="ws-converter-upload"><span id="wsConverterAssetPreview"><span>+</span><div><strong>Logo oder Bild hochladen</strong><small>PNG, JPG oder WebP</small></div></span><input id="wsConverterUpload" type="file" accept="image/png,image/jpeg,image/webp"></label>
+        </div>
+      </div>
+      <div class="ws-converter-footer"><small id="wsConverterNote">TikTok zeigt nur TikTok-Typen.</small><button class="btn primary" id="wsConverterCreate" type="button" disabled>WIDGET ERSTELLEN</button></div>
+    </section>
+
+    <section class="ws-panel-converter" id="wsPanelConverter" aria-label="Panel-Umwandler">
+      <div class="ws-widget-converter-head">
+        <div><div class="ws-section-label">PANEL-UMWANDLER</div><h3>Aus deinem Logo ein Account-Panel bauen.</h3><p>Wähle Twitch oder TikTok, danach den Inhalt: Über mich, Socials, Regeln, Discord, Setup, Support und mehr.</p></div>
+        <span>ASSET → ACCOUNT PANEL</span>
+      </div>
+      <div class="ws-panel-grid">
+        <div class="ws-panel-controls">
+          <div class="ws-converter-step"><b>1</b><div><strong>Plattform</strong><small>Twitch-Panel oder TikTok Profil-/Social-Karte.</small></div><div class="ws-converter-platforms" role="group" aria-label="Plattform für den Panel-Umwandler"><button type="button" class="active" data-panel-platform="twitch" aria-pressed="true">Twitch</button><button type="button" data-panel-platform="tiktok" aria-pressed="false">TikTok</button></div></div>
+          <div class="ws-converter-step"><b>2</b><div><strong>Panel-Typ</strong><small>Account-Inhalt auswählen.</small></div><label class="ws-converter-select"><span>Panel</span><select id="wsPanelType"></select></label></div>
+          <div class="ws-converter-step"><b>3</b><div><strong>Logo / Bild</strong><small>Optionales Branding-Asset.</small></div><label class="ws-converter-upload"><span id="wsPanelAssetPreview"><span>+</span><div><strong>Logo oder Bild hochladen</strong><small>PNG, JPG oder WebP</small></div></span><input id="wsPanelUpload" type="file" accept="image/png,image/jpeg,image/webp"></label></div>
+          <div class="ws-panel-fields"><label><span>Titel</span><input id="wsPanelTitle" maxlength="60" value="ÜBER MICH"></label><label><span>Text / Handle</span><textarea id="wsPanelBody" maxlength="180" rows="3">Gaming · LIVE · Community</textarea></label><label><span>Stil</span><select id="wsPanelStyle"><option value="platform">Plattform-Akzent</option><option value="dark">CFS Dark</option><option value="clean">Clean Light</option></select></label></div>
+        </div>
+        <div class="ws-panel-preview-wrap"><div class="ws-panel-preview-head"><strong>VORSCHAU</strong><small id="wsPanelFormat">320 × 120 · Twitch Info-Panel</small></div><div class="ws-panel-preview-stage"><canvas id="wsPanelPreviewCanvas" width="320" height="120"></canvas></div><p id="wsPanelNote"></p></div>
+      </div>
+      <div class="ws-converter-footer"><small>Das Ergebnis ist ein PNG. Es wird nicht automatisch auf Twitch oder TikTok veröffentlicht.</small><div class="ws-panel-actions"><button class="btn" id="wsPanelDownload" type="button">PNG HERUNTERLADEN</button><button class="btn primary" id="wsPanelSave" type="button">IN MEDIEN SPEICHERN</button></div></div>
     </section>
 
     <section class="ws-quickstart-30" data-experience-scope="simple" aria-label="30-Sekunden Schnellstart">

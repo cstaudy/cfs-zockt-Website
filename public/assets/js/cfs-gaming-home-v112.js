@@ -12,13 +12,15 @@
     xbox_series: "XBOX SERIES",
     xbox_one: "XBOX ONE",
     switch: "NINTENDO SWITCH",
+    twitch: "TWITCH",
     unknown: "PLATTFORM OFFEN"
   };
 
   const SOURCE_LABELS = {
     launcher_manual: "CFS Launcher",
     stream_capture: "Stream Capture",
-    playstation_network: "PlayStation Network"
+    playstation_network: "PlayStation Network",
+    twitch_api: "Twitch"
   };
 
   const compactNumber = value => {
@@ -221,10 +223,19 @@
     const liveStatus = session.live === true ? "live" : String(session.status || "unknown");
     const isLive = liveStatus === "live";
     const isOffline = liveStatus === "offline";
+    const provider = String(session.provider || "none").toLowerCase();
+    const twitchChannel = session?.channels?.twitch || {};
+    const tiktokChannel = session?.channels?.tiktok || {};
+    const twitchStatus = String(twitchChannel.status || "unknown").toLowerCase();
+    const tiktokStatus = String(tiktokChannel.status || "unknown").toLowerCase();
+    const isMulti = provider === "multistream" || (twitchStatus === "live" && tiktokStatus === "live");
+    const isTwitch = provider === "twitch" || (!isMulti && twitchStatus === "live");
+    const isTikTok = provider === "tiktok" || (!isMulti && tiktokStatus === "live");
     const current = session?.current_game?.name ? session.current_game : null;
     const fallback = latestRecentGames[0] || null;
     const displayedGame = current?.name || fallback?.name || "Aktuell kein Game erkannt";
     const platform = current?.platform ? platformLabel(current.platform) : (fallback?.platform ? platformLabel(fallback.platform) : "");
+    const lastLiveAt = session.last_live_at || twitchChannel.last_live_at || tiktokChannel.last_live_at || null;
 
     const badge = document.getElementById("liveStatusBadge");
     const previewBadge = document.getElementById("livePreviewBadge");
@@ -239,6 +250,49 @@
     const duration = document.getElementById("liveDuration");
     const previewImage = document.getElementById("livePreviewImage");
     const liveDot = document.querySelector(".gaming-live-title .gaming-live-dot");
+    const twitchButton = document.getElementById("twitchChannelButton");
+    const tiktokButton = document.getElementById("tiktokChannelButton");
+
+    if (twitchButton && /^https:\/\/www\.twitch\.tv\/[a-z0-9_]{3,25}\/?$/i.test(String(twitchChannel.url || ""))) {
+      twitchButton.href = String(twitchChannel.url);
+    }
+    if (tiktokButton && /^https:\/\/(?:www\.)?tiktok\.com\/@[^/?#]+\/?$/i.test(String(tiktokChannel.url || ""))) {
+      tiktokButton.href = String(tiktokChannel.url);
+    }
+
+    const renderPlatformState = (key, channel, label) => {
+      const indicator = document.getElementById(`${key}LiveIndicator`);
+      const detail = document.getElementById(`${key}LastLive`);
+      const status = String(channel?.status || "unknown").toLowerCase();
+      const live = status === "live";
+      const offline = status === "offline";
+      if (indicator) {
+        indicator.textContent = live ? "LIVE" : (offline ? "OFFLINE" : "STATUS OFFEN");
+        indicator.classList.toggle("is-live", live);
+        indicator.classList.toggle("is-offline", offline);
+        indicator.classList.toggle("is-unknown", !live && !offline);
+      }
+      if (!detail) return;
+      if (live) {
+        detail.textContent = key === "twitch"
+          ? "Direkt über Twitch erkannt"
+          : "Über CFS Launcher / TikTok-LIVE-Signal erkannt";
+        return;
+      }
+      if (channel?.last_live_at) {
+        detail.textContent = `Zuletzt live: ${formatLastPlayed(channel.last_live_at)}`;
+        return;
+      }
+      if (key === "tiktok") {
+        detail.textContent = channel?.tracking_ready
+          ? "CFS TikTok-LIVE-Signal bereit"
+          : (channel?.connected ? "TikTok verbunden · LIVE-Signal wird geprüft" : "TikTok noch nicht verbunden");
+        return;
+      }
+      detail.textContent = channel?.connected ? `${label} verbunden · Status wird geprüft` : `${label} noch nicht verbunden`;
+    };
+    renderPlatformState("twitch", twitchChannel, "Twitch");
+    renderPlatformState("tiktok", tiktokChannel, "TikTok");
 
     const badgeText = isLive ? "LIVE" : (isOffline ? "OFFLINE" : "STATUS OFFEN");
     [badge, previewBadge].forEach(node => {
@@ -253,31 +307,48 @@
       liveDot.classList.toggle("is-unknown", !isLive && !isOffline);
     }
     if (game) game.textContent = isLive && current ? current.name : (isLive ? "LIVE · Game wird gerade erkannt" : displayedGame);
-    if (previewGame) previewGame.textContent = isLive && current ? current.name : (isLive ? "LIVE auf TikTok" : displayedGame);
+    if (previewGame) {
+      const service = isMulti ? "Twitch & TikTok" : (isTwitch ? "Twitch" : (isTikTok ? "TikTok" : "Stream"));
+      previewGame.textContent = isLive && current ? current.name : (isLive ? `LIVE auf ${service}` : displayedGame);
+    }
 
     if (statusText) {
-      statusText.textContent = isLive
-        ? (current
-          ? `cfs_zockt ist gerade live und spielt ${current.name}${platform ? ` auf ${platform}` : ""}.`
-          : "cfs_zockt ist gerade live. Das aktuelle Game wird vom Launcher noch nicht gemeldet.")
-        : (isOffline
-          ? (fallback ? `Live-Session wurde beendet. Zuletzt gespielt: ${fallback.name}.` : "Aktuell ist keine Live-Session aktiv.")
-          : "Der LIVE-Status konnte gerade nicht eindeutig bestätigt werden. Die Website zeigt deshalb nicht mehr fälschlich OFFLINE an.");
+      if (isLive) {
+        const service = isMulti ? "Twitch und TikTok" : (isTwitch ? "Twitch" : (isTikTok ? "TikTok" : "dem Stream"));
+        statusText.textContent = current
+          ? `cfs_zockt ist gerade auf ${service} live und spielt ${current.name}${platform && !["TWITCH","TIKTOK"].includes(platform) ? ` auf ${platform}` : ""}.`
+          : `cfs_zockt ist gerade auf ${service} live. Das aktuelle Game wird noch abgeglichen.`;
+      } else if (isOffline) {
+        statusText.textContent = lastLiveAt
+          ? `Aktuell offline. Zuletzt live: ${formatLastPlayed(lastLiveAt)}.`
+          : (fallback ? `Aktuell offline. Zuletzt gespielt: ${fallback.name}.` : "Aktuell ist keine Live-Session aktiv.");
+      } else {
+        const tracked = [twitchChannel, tiktokChannel].filter(channel => channel?.connected || channel?.tracking_ready);
+        statusText.textContent = tracked.length
+          ? "Der LIVE-Status wird pro Plattform geprüft. Solange Twitch oder TikTok kein eindeutiges Signal liefern, zeigt die Website bewusst keinen falschen Offline-Status."
+          : "Der LIVE-Status konnte gerade nicht eindeutig bestätigt werden. Die Website zeigt deshalb keinen falschen Offline-Status.";
+      }
     }
 
     if (meta) {
       meta.replaceChildren();
-      const left = element("span", "", isLive ? "TikTok LIVE · erkannt" : (isOffline ? "TikTok LIVE · beendet" : "TikTok LIVE · Status wird geprüft"));
+      let providerText = "LIVE-Status · wird geprüft";
+      if (isMulti) providerText = "Twitch + TikTok · LIVE erkannt";
+      else if (isTwitch) providerText = isLive ? "Twitch LIVE · direkt erkannt" : (isOffline ? "Twitch · direkt offline erkannt" : "Twitch · Status wird geprüft");
+      else if (isTikTok) providerText = isLive ? "TikTok LIVE · über CFS erkannt" : (isOffline ? "TikTok · über CFS beendet" : "TikTok · Status wird geprüft");
+      else if (isOffline) providerText = "LIVE · beendet";
+      const left = element("span", "", providerText);
       const right = element("span", "", isLive
         ? (current ? `${platform || "Game"} · ${formatElapsed(current.elapsed_seconds)}` : "Session aktiv")
-        : (fallback?.last_played_at ? `Zuletzt aktiv: ${formatLastPlayed(fallback.last_played_at)}` : "Wartet auf LIVE-Signal"));
+        : (lastLiveAt ? `Zuletzt live: ${formatLastPlayed(lastLiveAt)}` : (fallback?.last_played_at ? `Zuletzt aktiv: ${formatLastPlayed(fallback.last_played_at)}` : "Noch kein letzter LIVE-Zeitpunkt gespeichert")));
       meta.append(left, right);
     }
 
     if (previewViewers) previewViewers.textContent = isLive ? `${compactNumber(session.viewers)} Zuschauer` : (isOffline ? "offline" : "Status offen");
     if (viewers) viewers.textContent = isLive ? compactNumber(session.viewers) : "—";
-    if (likes) likes.textContent = isLive ? compactNumber(session.likes) : "—";
-    if (shares) shares.textContent = isLive ? compactNumber(session.shares) : "—";
+    const showTikTokMetrics = isLive && (isTikTok || isMulti);
+    if (likes) likes.textContent = showTikTokMetrics ? compactNumber(session.likes) : "—";
+    if (shares) shares.textContent = showTikTokMetrics ? compactNumber(session.shares) : "—";
     if (duration) duration.textContent = isLive ? formatLiveDuration(session.started_at) : "—";
 
     if (previewImage) {
@@ -380,14 +451,20 @@
         live:state?.live?.active === true,
         status:state?.live?.status || "unknown",
         live_source:state?.live?.source || "none",
+        provider:state?.live?.provider || "none",
+        title:state?.live?.title || "",
         profile_name:state?.creator?.name || "cfs_zockt",
         profile_url:state?.creator?.profile_url || "",
+        channels:state?.creator?.channels || {},
         viewers:Number(state?.live?.viewers || 0),
         likes:Number(state?.live?.likes || 0),
         shares:Number(state?.live?.shares || 0),
         followers_gained:Number(state?.live?.followers_gained || 0),
         started_at:state?.live?.started_at || null,
         updated_at:state?.live?.updated_at || null,
+        last_live_at:state?.live?.last_live_at || null,
+        last_live_started_at:state?.live?.last_live_started_at || null,
+        last_live_provider:state?.live?.last_live_provider || "",
         signal:state?.live?.signal || {},
         current_game:current ? {
           name:current.name || "",

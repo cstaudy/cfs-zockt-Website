@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#020711">
   <meta name="robots" content="noindex,nofollow,noarchive">
-  <title>CFS Stream Studio | cfs_zockt</title>
+  <title>CFS Studio | cfs_zockt</title>
+  <link rel="manifest" href="/cfs-studio.webmanifest">
   <link rel="stylesheet" href="/assets/css/styles.css">
   <link rel="stylesheet" href="/assets/css/stream-studio.css">
   <link rel="stylesheet" href="/assets/css/cfs-theme-v3.css">
@@ -48,35 +49,27 @@
 </header>
 
 <main class="stream-studio-shell">
-  <section class="stream-studio-hero">
+  <section class="stream-studio-hero stream-studio-hero-v168">
     <div>
-      <span class="stream-studio-kicker">CFS STREAM STUDIO · LOCAL MULTISTREAM</span>
-      <h1>DEIN STREAM.<br><span>DEINE REGELN.</span></h1>
-      <p>Scene Composer, alle veröffentlichten Widgets und Overlays, Audio-Zielwerte, Output-Presets und mehrere Streaming-Ziele in einer Oberfläche. Capture, Encoding und Stream-Zugangsdaten bleiben lokal im Launcher.</p>
+      <span class="stream-studio-kicker">CFS STUDIO · PRODUKTION</span>
+      <h1>CFS <span>STUDIO.</span></h1>
+      <p>Scenes, Preview, Audio und Stream-Ziele in einer Oberfläche. Der Launcher arbeitet im Hintergrund; OBS bleibt optional.</p>
     </div>
     <div class="stream-studio-hero-actions">
-      <a class="btn" href="#scene-composer">SCENE COMPOSER</a>
-      <a class="btn" href="#stream-preflight">STREAM-CHECK</a>
-      <a class="btn" href="/pages/widget-studio.html">WIDGETS & OVERLAYS</a>
-      <button class="btn primary" id="saveStreamStudio" type="button">STUDIO SPEICHERN</button>
+      <a class="btn primary" href="#scene-composer">SCENE VORBEREITEN</a>
+      <a class="btn" href="#stream-session">LIVE KONTROLLE</a>
+      <button class="btn" id="installCfsStudio" type="button" hidden>CFS STUDIO INSTALLIEREN</button>
+      <button class="btn" id="saveStreamStudio" type="button">SPEICHERN</button>
     </div>
   </section>
 
-
-  <section class="cfs-studio-hub" aria-label="CFS Studio Bereiche">
-    <div class="cfs-studio-hub-copy">
-      <span>CFS STUDIO HUB</span>
-      <strong>Eine Oberfläche · getrennte Engines.</strong>
-      <small>LIVE, Audio, Cut, Widgets und Launcher arbeiten zusammen, bleiben technisch aber modular. So kann ein Cut-Export oder ein Launcher-Problem deinen laufenden Stream nicht unnötig mitreißen.</small>
-    </div>
-    <nav class="cfs-studio-hub-nav" aria-label="Studio Arbeitsbereiche">
-      <a class="active" href="#live-workspace"><b>LIVE</b><span>Scenes · Quellen · Multistream</span></a>
-      <a href="#studio-audio"><b>AUDIO</b><span>Mixer im Live-Workspace</span></a>
-      <a href="/pages/cut-studio.html"><b>CUT</b><span>Postproduktion · Export</span></a>
-      <a href="/pages/launcher.html"><b>LAUNCHER</b><span>Lokale Media Engine</span></a>
-      <a href="/pages/widget-studio.html"><b>WIDGETS</b><span>Widgets & Overlays bauen</span></a>
-    </nav>
-  </section>
+  <nav class="stream-operator-nav" aria-label="CFS Studio Arbeitsbereiche">
+    <a class="active" href="#live-workspace"><span>01</span><strong>SCENES & QUELLEN</strong><small>Bauen und auswählen</small></a>
+    <a href="#previewMonitor"><span>02</span><strong>PREVIEW & PROGRAM</strong><small>Kontrolliert live nehmen</small></a>
+    <a href="#studio-audio"><span>03</span><strong>AUDIO</strong><small>Mixer im Blick</small></a>
+    <a href="#stream-session"><span>04</span><strong>STREAM-ZIELE</strong><small>Check · Session · Multistream</small></a>
+    <a href="#stream-live-operations"><span>05</span><strong>DIAGNOSE</strong><small>Health & Aktivität bei Bedarf</small></a>
+  </nav>
 
   <section class="stream-status-strip" aria-label="Stream Studio Status">
     <div><span>LAUNCHER</span><strong id="streamLauncherStatus">WIRD GEPRÜFT</strong><small id="streamLauncherDetail">Lokale Engine für Capture & Encoding</small></div>
@@ -85,12 +78,11 @@
     <div><span>OUTPUT</span><strong id="streamOutputSummary">1080P60</strong><small>Studio-Preset</small></div>
   </section>
 
-  <section class="stream-workspace-toolbar" id="live-workspace" aria-label="Studio Layout">
-    <div>
-      <span>STUDIO WORKSPACE</span>
-      <strong>Panels so anordnen, wie du streamst.</strong>
-      <small>Scene Composer, Preview/Program, Szenen, Übergänge, Quellen, Audio, Output, Stream-Check und Multistream kannst du verschieben. Im Layout-Modus kannst du Panels außerdem am Eckgriff in der Größe ändern und die Seitenleisten breiter oder schmaler ziehen.</small>
-    </div>
+  <details class="stream-workspace-toolbar stream-workspace-tools" id="live-workspace">
+    <summary>
+      <div><span>LAYOUT & WORKSPACES</span><strong>Standardmäßig bleibt CFS Studio ruhig.</strong><small>Panels, Größen und gespeicherte Workspaces nur bei Bedarf anpassen.</small></div>
+      <b>ANPASSEN</b>
+    </summary>
     <div class="stream-workspace-actions">
       <label class="stream-workspace-preset"><span class="sr-only">Gespeicherten Workspace auswählen</span><select id="studioWorkspacePreset"><option value="">Workspace wählen</option></select></label>
       <button class="btn" id="loadStudioWorkspacePreset" type="button">WORKSPACE LADEN</button>
@@ -99,7 +91,12 @@
       <button class="btn" id="toggleStudioLayout" type="button" aria-pressed="false">LAYOUT ANPASSEN</button>
       <button class="btn" id="resetStudioLayout" type="button">STANDARDLAYOUT</button>
     </div>
-  </section>
+  </details>
+
+  <div class="stream-operator-heading">
+    <div><span>LIVE WORKSPACE</span><strong>Scenes links · Preview & Program in der Mitte · Stream-Ziele rechts</strong></div>
+    <small>Audio bleibt direkt darunter. Capture, Output und Diagnose sind standardmäßig eingeklappt.</small>
+  </div>
 
   <section class="stream-studio-grid" id="streamDockWorkspace">
     <div class="stream-dock-zone stream-dock-side" data-dock-zone="left" aria-label="Linker Studio-Bereich">
@@ -150,7 +147,7 @@
         </div>
         <div class="scene-composer-empty" id="sceneComposerEmpty">
           <strong>WÄHLE LINKS EINE SCENE ODER ERSTELLE EINE NEUE.</strong>
-          <p>Widgets, Overlays und lokale Launcher-Quellen kannst du rechts direkt zur ausgewählten Scene hinzufügen.</p>
+          <p>Widgets, Overlays und lokale Launcher-Quellen kannst du links direkt zur ausgewählten Scene hinzufügen.</p>
         </div>
         <div class="scene-composer-editor" id="sceneComposerEditor" hidden>
           <div class="scene-composer-toolbar">
@@ -264,7 +261,7 @@
     </section>
 
     <div class="stream-dock-zone stream-dock-side" data-dock-zone="right" aria-label="Rechter Studio-Bereich">
-    <aside class="stream-panel stream-sources-panel" data-dock-id="sources" data-dock-title="Quellen">
+    <aside class="stream-panel stream-sources-panel" id="stream-sources" data-dock-id="sources" data-dock-title="Quellen">
       <div class="stream-panel-head"><div><span>QUELLEN</span><strong>Alles an einem Ort</strong></div><a href="/pages/widget-studio.html">NEU BAUEN</a></div>
       <div class="stream-source-tabs" role="tablist" aria-label="Quellenfilter">
         <button class="active" data-source-filter="all" type="button">ALLE</button>
@@ -278,8 +275,15 @@
     </div>
   </section>
 
+  <div class="stream-operator-subhead" id="stream-io">
+    <div><span>AUDIO & SETUP</span><strong>Mixer offen · technische Einstellungen bei Bedarf</strong></div>
+    <small>Rohdaten und Stream-Credentials bleiben im Launcher.</small>
+  </div>
+
   <section class="stream-bottom-grid stream-dock-zone" data-dock-zone="bottom" aria-label="Unterer Studio-Bereich">
-    <article class="stream-rack" data-dock-id="capture" data-dock-title="Lokale Quellen">
+    <details class="stream-collapsible-panel stream-rack" data-dock-id="capture" data-dock-title="Lokale Quellen">
+      <summary class="stream-collapsible-summary"><span>CAPTURE</span><strong>Lokale Quellen</strong><small>Bildschirm · Fenster · Game · Kamera</small></summary>
+      <div class="stream-collapsible-body">
       <div class="stream-section-head"><div><span>LOKALE QUELLEN</span><strong>Capture über den Launcher</strong></div><small>Die Website speichert nur deine Auswahl. Bild und Ton bleiben lokal auf deinem PC.</small></div>
       <div class="stream-capture-grid">
         <label><input type="checkbox" data-capture-source="display"><span><strong>BILDSCHIRM</strong><small>Monitor Capture</small></span></label>
@@ -287,7 +291,8 @@
         <label><input type="checkbox" data-capture-source="game"><span><strong>GAME</strong><small>Game Capture</small></span></label>
         <label><input type="checkbox" data-capture-source="camera"><span><strong>KAMERA</strong><small>Webcam / Capture Card</small></span></label>
       </div>
-    </article>
+          </div>
+    </details>
 
     <article class="stream-rack" id="studio-audio" data-dock-id="audio" data-dock-title="Audio Mixer">
       <div class="stream-section-head"><div><span>AUDIO MIXER</span><strong>Launcher-Zielwerte</strong></div><div class="stream-section-tools"><small>Keine Audiodaten werden an die Website übertragen.</small><a href="/pages/audio-studio.html">AUDIO STUDIO</a></div></div>
@@ -300,7 +305,9 @@
       </div>
     </article>
 
-    <article class="stream-rack stream-output-rack" data-dock-id="output" data-dock-title="Output">
+    <details class="stream-collapsible-panel stream-rack stream-output-rack" id="stream-output" data-dock-id="output" data-dock-title="Output">
+      <summary class="stream-collapsible-summary"><span>OUTPUT</span><strong>Qualität & Aufnahme</strong><small>Profil · Encoder · Bitrate · Recording</small></summary>
+      <div class="stream-collapsible-body">
       <div class="stream-section-head"><div><span>OUTPUT</span><strong>Eigene Stream-Einstellungen</strong></div><small>Stream-Keys werden nicht in der Cloud gespeichert.</small></div>
       <div class="stream-output-presets" aria-label="Schnelle Output Profile">
         <button type="button" data-output-preset="quality">QUALITÄT · 1080P60</button>
@@ -334,8 +341,14 @@
         <a class="btn" href="/pages/launcher.html">LAUNCHER ÖFFNEN</a>
       </div>
       <p class="stream-engine-note"><strong>ENGINE-STATUS:</strong> Die lokale Launcher-Engine kann Stream Mix sowie Mic, Game, Discord, Music und Alerts als getrennte Recording-Spuren führen. Application-Audio bleibt lokal und wird per Windows Process Loopback gebunden; nicht konfigurierte Busse werden übersprungen.</p>
-    </article>
+          </div>
+    </details>
   </section>
+
+  <div class="stream-operator-subhead stream-live-subhead">
+    <div><span>LIVE & KONTROLLE</span><strong>Check, Session und Ziele in einer rechten Kontrollleiste</strong></div>
+    <small>Health und Community-Aktivität bleiben unter Diagnose verfügbar.</small>
+  </div>
 
   <section class="stream-dock-zone stream-wide-dock" data-dock-zone="wide" aria-label="Breiter Studio-Bereich">
   <section class="stream-rack stream-preflight-rack" id="stream-preflight" data-dock-id="preflight" data-dock-title="Stream Check" aria-labelledby="streamPreflightTitle">
@@ -376,11 +389,14 @@
       <a class="btn" href="#studio-audio">AUDIO MIXER</a>
       <a class="btn" href="/pages/cut-studio.html">NACH DEM STREAM: CUT</a>
     </div>
-    <div class="stream-session-note"><strong>MODULAR:</strong> Das Dashboard steuert nicht direkt Capture oder Stream-Keys. LIVE-Produktion, Cut-Export und lokale Launcher-Engine bleiben getrennte Laufzeitbereiche. Dadurch bleibt die Fehlerwirkung kleiner und ein Postproduktionsjob kann nicht einfach den Live-Encoder ersetzen.</div>
+    <details class="stream-inline-details"><summary>TECHNISCHE TRENNUNG</summary><div class="stream-session-note"><strong>MODULAR:</strong> Das Dashboard steuert nicht direkt Capture oder Stream-Keys. LIVE-Produktion, Cut-Export und lokale Launcher-Engine bleiben getrennte Laufzeitbereiche. Dadurch bleibt die Fehlerwirkung kleiner und ein Postproduktionsjob kann nicht einfach den Live-Encoder ersetzen.</div></details>
   </section>
 
 
-  <section class="stream-rack stream-health-rack" data-dock-id="health" data-dock-title="Live Health" aria-labelledby="streamHealthTitle">
+  <div id="stream-live-operations" class="stream-anchor-marker" aria-hidden="true"></div>
+  <details class="stream-collapsible-panel stream-rack stream-health-rack" data-dock-id="health" data-dock-title="Live Health" aria-labelledby="streamHealthTitle">
+      <summary class="stream-collapsible-summary"><span>DIAGNOSE</span><strong>Live Health</strong><small>Encoder · Upload · Dropped Frames · Reconnects</small></summary>
+      <div class="stream-collapsible-body">
     <div class="stream-section-head stream-health-head">
       <div><span>LIVE HEALTH</span><strong id="streamHealthTitle">Launcher-, Encoder- und Zielstatus</strong></div>
       <div class="stream-health-head-actions"><span class="stream-health-badge" id="streamHealthBadge">WIRD GEPRÜFT</span><button class="btn" id="refreshStreamHealth" type="button">AKTUALISIEREN</button></div>
@@ -405,9 +421,12 @@
     </div>
     <div id="streamHealthTargetsList" class="stream-health-targets" aria-live="polite"><div class="stream-health-empty">Warte auf Launcher-Telemetrie.</div></div>
     <div class="stream-health-note"><strong>PRIVAT:</strong> Der Launcher sendet nur technische Telemetrie wie FPS, Bitrate, Dropped Frames, Reconnects und Zielstatus. Stream-Keys, RTMP-Adressen, lokale Dateipfade sowie Roh-Audio/-Video werden nicht an die Website übertragen.</div>
-  </section>
+        </div>
+    </details>
 
-  <section class="stream-rack stream-activity-rack" data-dock-id="activity" data-dock-title="Multi-Chat & Activity" aria-labelledby="streamActivityTitle">
+  <details class="stream-collapsible-panel stream-rack stream-activity-rack" id="stream-activity" data-dock-id="activity" data-dock-title="Multi-Chat & Activity" aria-labelledby="streamActivityTitle">
+      <summary class="stream-collapsible-summary"><span>COMMUNITY</span><strong>Multi-Chat & Activity</strong><small>Chat · Follows · Gifts · Shares</small></summary>
+      <div class="stream-collapsible-body">
     <div class="stream-section-head">
       <div><span>MULTI-CHAT & ACTIVITY</span><strong id="streamActivityTitle">LIVE-Nachrichten und Events in einem Feed</strong></div>
       <small>Der Feed führt creator-isolierte TikTok- und Twitch-LIVE-Events zusammen. Weitere Plattform-Adapter werden erst nach sicherer Provider-Anbindung ergänzt.</small>
@@ -431,7 +450,8 @@
     </div>
     <div id="streamActivityFeed" class="stream-activity-feed" aria-live="polite"><div class="stream-activity-empty">Noch keine LIVE-Events in der aktuellen Session.</div></div>
     <div class="stream-activity-note"><strong>DATENSCHUTZ:</strong> Diese Ansicht legt keine zusätzliche Chat-Historie an. Sie liest nur die bereits creator-isolierten Events der aktuellen LIVE-Session. Antworten, Löschen, Bans und plattformspezifische Moderation werden erst aktiviert, wenn der jeweilige offizielle Provider-Adapter das sicher unterstützt.</div>
-  </section>
+        </div>
+    </details>
 
   <section class="stream-rack stream-multistream-rack" data-dock-id="multistream" data-dock-title="Local Multistream" aria-labelledby="multistreamTitle">
     <div class="stream-section-head multistream-head">
@@ -446,6 +466,8 @@
       <div><span>EMPFOHLEN</span><strong id="multistreamRecommended">0 Mbit/s</strong><small>inkl. Reserve</small></div>
     </div>
 
+    <details class="stream-inline-details multistream-details">
+      <summary>PLATTFORM- & SICHERHEITSDETAILS</summary>
     <div class="multistream-security-note">
       <strong>LOKALE ZUGANGSDATEN:</strong> Die Website speichert nur Zieltyp, Profil und Bitrate. Twitch-/YouTube-Streamdaten können auf ausdrückliche Aktion über die authentisierte, signierte no-store Bridge an den Launcher übertragen und dort in Windows SafeStorage verschlüsselt gespeichert werden; PostgreSQL speichert sie nicht. TikTok und Custom RTMP bleiben lokale manuelle Eingaben. Fällt ein Ziel aus, laufen die anderen Ziele unabhängig weiter.
     </div>
@@ -455,6 +477,7 @@
       <article><span>TWITCH</span><strong>ACCOUNT + DIREKT</strong><small>verbundener Account · Stream-Key-Lesescope für Launcher-Import</small></article>
       <article><span>TIKTOK</span><strong>ZUGANG ABHÄNGIG</strong><small>Nur mit LIVE-/Encoder-Zugang und bereitgestelltem Stream-Key</small></article>
     </div>
+    </details>
 
     <div id="multistreamTargets" class="multistream-targets"></div>
 

@@ -167,7 +167,10 @@ body.cfs-gaming-home-v116 .gaming-live-copy>p{margin:8px 0 11px;color:#d0dae4;fo
 body.cfs-gaming-home-v116 .gaming-live-meta{display:flex;gap:13px;color:#b7c5d4;font-size:8px}
 body.cfs-gaming-home-v116 .gaming-tag-row{display:flex;gap:6px;margin-top:11px}
 body.cfs-gaming-home-v116 .gaming-tag-row span{padding:6px 8px;border:1px solid #164767;border-radius:6px;background:#09243b;color:#bcd1e4;font-size:7px}
-body.cfs-gaming-home-v116 .gaming-live-button{width:100%;margin-top:auto;min-height:39px;font-size:9px}
+body.cfs-gaming-home-v116 .gaming-live-channel-actions{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:7px;margin-top:auto}
+body.cfs-gaming-home-v116 .gaming-live-button{width:100%;margin-top:0;min-height:39px;font-size:9px}
+body.cfs-gaming-home-v116 .gaming-live-button-secondary{background:#071827;border-color:#155177;color:#d8ecfb}
+body.cfs-gaming-home-v116 .gaming-live-button-secondary:hover{background:#0a2439;border-color:#1ab6ea;color:#fff}
 body.cfs-gaming-home-v116 .gaming-schedule-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
 body.cfs-gaming-home-v116 .gaming-schedule-card{min-width:0;overflow:hidden;border:1px solid #096795;border-radius:8px;background:linear-gradient(180deg,#06182a,#03101d);box-shadow:0 10px 28px rgba(0,0,0,.22)}
 body.cfs-gaming-home-v116 .gaming-schedule-top{height:32px;display:flex;align-items:center;justify-content:space-between;padding:0 9px;border-bottom:1px solid rgba(0,160,225,.24);font-size:7px;font-weight:900;letter-spacing:.03em}
@@ -435,16 +438,7 @@ body.cfs-gaming-home-v116 .gaming-final-cta-actions{display:flex;gap:10px;flex-w
   body.cfs-gaming-home-v116 .gaming-access-panel,body.cfs-gaming-home-v116 .gaming-final-cta-inner{align-items:flex-start;flex-direction:column}
   body.cfs-gaming-home-v116 .gaming-access-actions,body.cfs-gaming-home-v116 .gaming-final-cta-actions{justify-content:flex-start}
 }
-@media(max-width:900px){
-  body.cfs-gaming-home-v116 .gaming-auth-actions{margin-left:0}
-  body.cfs-gaming-home-v116 .gaming-register-cta>span{display:none}
-}
 @media(max-width:680px){
-  body.cfs-gaming-home-v116 .gaming-auth-actions{gap:5px}
-  body.cfs-gaming-home-v116 .gaming-login-link{display:none}
-  body.cfs-gaming-home-v116 .gaming-register-cta{width:42px;padding:0;gap:0;font-size:0}
-  body.cfs-gaming-home-v116 .gaming-register-cta:before{content:"+";font-size:20px}
-  body.cfs-gaming-home-v116 .gaming-register-cta b{display:none}
   body.cfs-gaming-home-v116 .gaming-hero h1{font-size:clamp(54px,18vw,80px)}
   body.cfs-gaming-home-v116 .gaming-profile-grid{grid-template-columns:1fr}
   body.cfs-gaming-home-v116 .gaming-profile-main{grid-column:auto;grid-template-columns:58px 1fr}
@@ -454,6 +448,7 @@ body.cfs-gaming-home-v116 .gaming-final-cta-actions{display:flex;gap:10px;flex-w
   body.cfs-gaming-home-v116 .gaming-access-panel,body.cfs-gaming-home-v116 .gaming-final-cta-inner{padding:20px 16px}
   body.cfs-gaming-home-v116 .gaming-access-actions,body.cfs-gaming-home-v116 .gaming-final-cta-actions{width:100%;flex-direction:column;align-items:stretch}
   body.cfs-gaming-home-v116 .gaming-access-actions .gaming-btn,body.cfs-gaming-home-v116 .gaming-final-cta-actions .gaming-btn{width:100%}
+  body.cfs-gaming-home-v116 .gaming-live-channel-actions{grid-template-columns:1fr}
   body.cfs-gaming-home-v116 .gaming-final-cta h2{font-size:29px}
 }
 
@@ -579,3 +574,152 @@ body.cfs-gaming-home-v116 .gaming-access-copy p{font-size:11px;line-height:1.58}
   body.cfs-gaming-home-v116 .gaming-schedule-copy{grid-column:2;grid-row:2;padding:13px}
   body.cfs-gaming-home-v116 .gaming-schedule-copy p{font-size:9.5px}
 }
+
+/* v161: transparent brand wordmark + compact per-platform LIVE status */
+body.cfs-gaming-home-v116 .gaming-brand img{
+  width:168px;
+  max-height:56px;
+  object-fit:contain;
+  object-position:left center;
+  filter:drop-shadow(0 0 12px rgba(0,159,255,.22));
+}
+body.cfs-gaming-home-v116 .gaming-brand>span{margin-left:5px;margin-top:-2px}
+body.cfs-gaming-home-v116 .gaming-footer-brand img{
+  width:184px;
+  max-height:64px;
+  object-fit:contain;
+  object-position:left center;
+  filter:drop-shadow(0 0 12px rgba(0,159,255,.18));
+}
+body.cfs-gaming-home-v116 .gaming-footer-brand span{margin-left:4px;margin-top:-4px}
+body.cfs-gaming-home-v116 .gaming-live-platform-status{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:7px;
+  margin-top:11px;
+}
+body.cfs-gaming-home-v116 .gaming-live-platform-row{
+  min-width:0;
+  display:grid;
+  grid-template-columns:auto 1fr;
+  align-items:center;
+  gap:5px 8px;
+  padding:8px 9px;
+  border:1px solid rgba(15,128,181,.28);
+  border-radius:8px;
+  background:rgba(3,17,29,.64);
+}
+body.cfs-gaming-home-v116 .gaming-live-platform-name{
+  color:#d9f5ff;
+  font-size:7px;
+  font-weight:950;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+body.cfs-gaming-home-v116 .gaming-live-platform-badge{
+  justify-self:end;
+  color:#aeeeff;
+  font-size:6.5px;
+  font-weight:950;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+body.cfs-gaming-home-v116 .gaming-live-platform-badge.is-live{color:#7fffc1}
+body.cfs-gaming-home-v116 .gaming-live-platform-badge.is-offline{color:#b2c3d1}
+body.cfs-gaming-home-v116 .gaming-live-platform-badge.is-unknown{color:#77dfff}
+body.cfs-gaming-home-v116 .gaming-live-platform-row small{
+  grid-column:1/-1;
+  overflow:hidden;
+  color:#7295ac;
+  font-size:6.4px;
+  font-weight:800;
+  line-height:1.35;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+@media(max-width:680px){
+  body.cfs-gaming-home-v116 .gaming-brand img{width:136px;max-height:48px}
+  body.cfs-gaming-home-v116 .gaming-brand>span{display:none}
+  body.cfs-gaming-home-v116 .gaming-live-platform-status{grid-template-columns:1fr}
+  body.cfs-gaming-home-v116 .gaming-live-platform-row small{white-space:normal}
+}
+
+/* v162: kompaktere öffentliche Startseite – weniger Text, gleiche Kernwege */
+body.cfs-gaming-home-v116 .gaming-offer-grid article{min-height:172px}
+body.cfs-gaming-home-v116 .gaming-offer-grid small{
+  display:block;
+  margin-top:7px;
+  color:#6f91a8;
+  font-size:7px;
+  font-weight:800;
+  letter-spacing:.03em;
+}
+body.cfs-gaming-home-v116 .gaming-schedule-card{min-height:148px}
+body.cfs-gaming-home-v116 .gaming-schedule-icon{min-height:58px}
+body.cfs-gaming-home-v116 .gaming-community-grid article{min-height:126px}
+body.cfs-gaming-home-v116 .gaming-community-grid p{line-height:1.35}
+@media(max-width:680px){
+  body.cfs-gaming-home-v116 .gaming-offer-grid article{min-height:158px}
+  body.cfs-gaming-home-v116 .gaming-schedule-card{min-height:0}
+}
+
+/* =========================================================
+   v164 · Public homepage professional flow
+   Cleaner mobile header, fewer repeated surfaces, compact footer.
+   ========================================================= */
+body.cfs-gaming-home-v116 .gaming-nav-mobile-auth{display:none}
+body.cfs-gaming-home-v116 .gaming-stream-layout{grid-template-columns:1fr}
+body.cfs-gaming-home-v116 .gaming-live-card{max-width:100%;grid-template-columns:minmax(320px,.92fr) minmax(0,1.08fr)}
+body.cfs-gaming-home-v116 .gaming-community-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+body.cfs-gaming-home-v116 .gaming-final-cta-actions{align-items:center}
+body.cfs-gaming-home-v116 .gaming-final-login{
+  display:inline-flex;align-items:center;min-height:40px;padding:0 4px;color:#8fb7cc;font-size:8px;font-weight:850;letter-spacing:.02em
+}
+body.cfs-gaming-home-v116 .gaming-final-login:hover{color:#dff8ff}
+body.cfs-gaming-home-v116 .gaming-footer{padding-top:18px}
+body.cfs-gaming-home-v116 .gaming-footer-main{padding-bottom:16px}
+body.cfs-gaming-home-v116 .gaming-footer-bottom{padding-top:13px}
+body.cfs-gaming-home-v116 .gaming-section{scroll-margin-top:84px}
+
+@media(max-width:900px){
+  body.cfs-gaming-home-v116 .gaming-auth-actions{display:none}
+  body.cfs-gaming-home-v116 .gaming-mobile-toggle{margin-left:auto}
+  body.cfs-gaming-home-v116 .gaming-nav{padding:8px}
+  body.cfs-gaming-home-v116 .gaming-nav a{border-bottom:1px solid rgba(31,99,139,.18)!important}
+  body.cfs-gaming-home-v116 .gaming-nav>a:last-of-type{border-bottom:0!important}
+  body.cfs-gaming-home-v116 .gaming-nav-mobile-auth{
+    display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;padding-top:10px;border-top:1px solid rgba(18,153,211,.32)
+  }
+  body.cfs-gaming-home-v116 .gaming-nav-mobile-auth a{
+    min-height:42px!important;justify-content:center!important;border:1px solid rgba(20,141,194,.5)!important;border-radius:8px!important;background:#061927!important;color:#e8f7ff!important
+  }
+  body.cfs-gaming-home-v116 .gaming-nav-mobile-auth .gaming-nav-mobile-primary{
+    border-color:#10bfe9!important;background:linear-gradient(135deg,#00d8f8,#0799ef)!important;color:#00111c!important
+  }
+  body.cfs-gaming-home-v116 .gaming-live-card{grid-template-columns:1fr}
+  body.cfs-gaming-home-v116 .gaming-community-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+
+@media(max-width:680px){
+  body.cfs-gaming-home-v116 .gaming-header-inner{min-height:64px}
+  body.cfs-gaming-home-v116 .gaming-header{min-height:64px}
+  body.cfs-gaming-home-v116 .gaming-nav{top:64px;left:12px;right:12px;max-height:calc(100dvh - 76px);border-radius:12px}
+  body.cfs-gaming-home-v116 .gaming-mobile-toggle{min-height:38px;padding:0 12px;border-radius:9px;font-size:8.5px}
+  body.cfs-gaming-home-v116 .gaming-brand{width:150px;flex-basis:150px}
+  body.cfs-gaming-home-v116 .gaming-brand img{width:138px;max-height:44px}
+  body.cfs-gaming-home-v116 .gaming-hero-copy{min-height:420px;padding-top:32px}
+  body.cfs-gaming-home-v116 .gaming-hero-values{display:grid;grid-template-columns:repeat(3,1fr);overflow:visible}
+  body.cfs-gaming-home-v116 .gaming-hero-values>div{min-width:0;margin-right:0;padding-right:8px}
+  body.cfs-gaming-home-v116 .gaming-live-visual{min-height:190px}
+  body.cfs-gaming-home-v116 .gaming-community-grid{grid-template-columns:1fr}
+  body.cfs-gaming-home-v116 .gaming-community-grid article{padding:17px 17px 14px}
+  body.cfs-gaming-home-v116 .gaming-final-cta{padding:22px 0}
+  body.cfs-gaming-home-v116 .gaming-final-cta-inner{gap:18px}
+  body.cfs-gaming-home-v116 .gaming-final-cta-actions{gap:8px}
+  body.cfs-gaming-home-v116 .gaming-final-login{justify-content:center}
+  body.cfs-gaming-home-v116 .gaming-footer-main{gap:18px}
+  body.cfs-gaming-home-v116 .gaming-footer nav{gap:10px 18px}
+  body.cfs-gaming-home-v116 .gaming-footer-bottom>div{gap:9px 15px}
+}
+
+body.cfs-gaming-home-v116 .gaming-final-version{display:block;margin-top:7px;color:#6f91a8;font-size:7px;font-weight:800;letter-spacing:.035em}

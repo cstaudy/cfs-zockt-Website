@@ -9,90 +9,6 @@
     }
   }
 
-  function buildPrimaryTools() {
-    if (document.getElementById("cfsDashboardV128Primary")) return;
-    const quick = document.getElementById("cfsDashboardV9Quick");
-    if (!quick) return;
-
-    const section = document.createElement("section");
-    section.className = "cfs-dashboard-v128-section";
-    section.id = "cfsDashboardV128Primary";
-    section.innerHTML = `
-      <div class="cfs-dashboard-v128-head">
-        <h2>Was möchtest du machen?</h2>
-        <p>Wähle einen Bereich und leg direkt los.</p>
-      </div>
-      <div class="cfs-dashboard-v128-grid">
-        <a class="cfs-dashboard-v128-card" href="/pages/widget-studio.html">
-          <span class="cfs-dashboard-v128-card-icon">▦</span>
-          <strong>Widgets</strong>
-          <p>Eigene Overlays, Alerts und Stream-Elemente erstellen.</p>
-          <span>WIDGETS ÖFFNEN →</span>
-        </a>
-        <a class="cfs-dashboard-v128-card" href="/pages/stream-studio.html">
-          <span class="cfs-dashboard-v128-card-icon">◉</span>
-          <strong>Stream Studio</strong>
-          <p>Szenen, Quellen, Overlays und Stream-Workflow vorbereiten.</p>
-          <span>STREAM STUDIO ÖFFNEN →</span>
-        </a>
-        <a class="cfs-dashboard-v128-card" href="/pages/tiktok.html">
-          <span class="cfs-dashboard-v128-card-icon">♪</span>
-          <strong>TikTok</strong>
-          <p>Verbindung, Profilwerte und unterstützte Creator-Daten verwalten.</p>
-          <span>TIKTOK ÖFFNEN →</span>
-        </a>
-        <a class="cfs-dashboard-v128-card" href="/pages/games.html">
-          <span class="cfs-dashboard-v128-card-icon">◆</span>
-          <strong>Games &amp; Tools</strong>
-          <p>Interactive Games und weitere Creator-Werkzeuge öffnen.</p>
-          <span>TOOLS ÖFFNEN →</span>
-        </a>
-      </div>`;
-    quick.insertAdjacentElement("afterend", section);
-  }
-
-  function buildStudioOverview() {
-    if (document.getElementById("cfsDashboardV128Studios")) return;
-    const primary = document.getElementById("cfsDashboardV128Primary");
-    if (!primary) return;
-
-    const section = document.createElement("section");
-    section.className = "cfs-dashboard-v128-section cfs-dashboard-v128-compact";
-    section.id = "cfsDashboardV128Studios";
-    section.innerHTML = `
-      <div class="cfs-dashboard-v128-head">
-        <h2>Deine Studios und Games auf einen Blick.</h2>
-        <p>Schneller Zugriff auf die wichtigsten Bereiche.</p>
-      </div>
-      <div class="cfs-dashboard-v128-grid">
-        <a class="cfs-dashboard-v128-card" href="/pages/stream-studio.html">
-          <span class="cfs-dashboard-v128-card-icon">◉</span><strong>Stream Studio</strong><p>Szenen, Overlays und Ausgabe.</p><span>ÖFFNEN →</span>
-        </a>
-        <a class="cfs-dashboard-v128-card" href="/pages/cut-studio.html">
-          <span class="cfs-dashboard-v128-card-icon">✂</span><strong>Cut Studio</strong><p>Clips und Creator-Material bearbeiten.</p><span>ÖFFNEN →</span>
-        </a>
-        <a class="cfs-dashboard-v128-card" href="/pages/tiktok.html">
-          <span class="cfs-dashboard-v128-card-icon">♪</span><strong>TikTok Hub</strong><p>Profil, Verbindung und Creator-Daten.</p><span>ÖFFNEN →</span>
-        </a>
-        <a class="cfs-dashboard-v128-card" href="/pages/launcher.html">
-          <span class="cfs-dashboard-v128-card-icon">▣</span><strong>Creator-PC</strong><p>Launcher, Desktop-Bridge und lokale Tools.</p><span>ÖFFNEN →</span>
-        </a>
-      </div>`;
-    primary.insertAdjacentElement("afterend", section);
-  }
-
-  function orderCoreBlocks() {
-    const hero = document.querySelector(".creator-dashboard-hero");
-    const focus = document.getElementById("cfsDashboardV9Focus");
-    const onboarding = document.querySelector(".cfs-onboarding-v4");
-    const quick = document.getElementById("cfsDashboardV9Quick");
-    if (!hero) return;
-
-    if (focus) hero.insertAdjacentElement("afterend", focus);
-    if (onboarding && focus) focus.insertAdjacentElement("afterend", onboarding);
-    if (quick && onboarding) onboarding.insertAdjacentElement("afterend", quick);
-  }
-
   function cookieValue(name) {
     const prefix = `${name}=`;
     return document.cookie.split(";").map(part => part.trim()).find(part => part.startsWith(prefix))?.slice(prefix.length) || "";
@@ -117,8 +33,8 @@
     pill.classList.remove("is-unknown");
     headline.textContent = active ? "Die öffentliche Website zeigt dich als LIVE." : "Automatische Erkennung ist aktiv.";
     text.textContent = active
-      ? "Dieser manuelle Fallback bleibt maximal 12 Stunden aktiv und kann jederzeit beendet werden. Launcher-/LIVE-Signale funktionieren parallel weiter."
-      : "Wenn TikTok LIVE nicht automatisch erkannt wird, kannst du die Website hier sofort auf LIVE setzen. Es werden keine Zuschauerzahlen erfunden.";
+      ? "Der manuelle Fallback endet automatisch nach spätestens 12 Stunden."
+      : "Nur nutzen, wenn TikTok LIVE nicht automatisch erkannt wird. Zuschauerzahlen werden nicht erfunden.";
     start.hidden = active;
     stop.hidden = !active;
   }
@@ -170,26 +86,23 @@
     loadPublicLiveControl().catch(() => renderPublicLiveControl({active:false}));
   }
 
+  function initDiagnosticsLabel() {
+    const details = document.querySelector(".creator-dashboard-diagnostics-v166");
+    const label = details?.querySelector(":scope > summary > strong");
+    if (!details || !label || details.dataset.bound === "1") return;
+    details.dataset.bound = "1";
+    const sync = () => { label.textContent = details.open ? "AUSBLENDEN" : "ANZEIGEN"; };
+    details.addEventListener("toggle", sync);
+    sync();
+  }
+
   function apply() {
-    document.body.classList.add("cfs-dashboard-neon-v128");
+    document.body.classList.add("cfs-dashboard-neon-v128", "cfs-dashboard-v166-ready");
     ensureStyleLast();
-    orderCoreBlocks();
-    buildPrimaryTools();
-    buildStudioOverview();
     initPublicLiveControl();
-    if (document.getElementById("cfsDashboardV128Primary")) {
-      document.body.classList.add("cfs-dashboard-v128-ready");
-    }
+    initDiagnosticsLabel();
   }
 
-  function init() {
-    apply();
-    [120, 350, 800, 1500].forEach(delay => setTimeout(apply, delay));
-    const observer = new MutationObserver(() => apply());
-    observer.observe(document.body, { childList:true, subtree:true });
-    setTimeout(() => observer.disconnect(), 4500);
-  }
-
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init, { once:true });
-  else init();
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", apply, { once:true });
+  else apply();
 })();

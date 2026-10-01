@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#020914">
   <title>cfs_zockt – Gaming, Streams, Community & Creator Suite</title>
-  <meta name="description" content="Die offizielle cfs_zockt Startseite: PlayStation-Gaming, Streams, Community und die CFS Creator Suite mit Tools für Creator.">
+  <meta name="description" content="cfs_zockt: LIVE-Streams, PlayStation, Community und Creator Suite.">
   <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
   <link rel="canonical" href="https://cfs-zockt.de/">
   <link rel="manifest" href="/site.webmanifest">
@@ -16,7 +16,7 @@
   <meta property="og:site_name" content="cfs_zockt">
   <meta property="og:locale" content="de_AT">
   <meta property="og:title" content="cfs_zockt – Gaming, Streams, Community & Creator Suite">
-  <meta property="og:description" content="PlayStation-Gaming, Streams, Community und Creator Tools – direkt bei cfs_zockt.">
+  <meta property="og:description" content="LIVE-Streams, Gaming, Community und Creator Tools bei cfs_zockt.">
   <meta property="og:url" content="https://cfs-zockt.de/">
   <meta property="og:image" content="https://cfs-zockt.de/assets/img/social-preview.jpg">
   <meta property="og:image:width" content="1200">
@@ -24,9 +24,9 @@
   <meta property="og:image:alt" content="cfs_zockt – Gaming, Streams, Community und Creator Suite">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="cfs_zockt – Gaming, Streams, Community & Creator Suite">
-  <meta name="twitter:description" content="PlayStation-Gaming, Streams, Community und Creator Tools – direkt bei cfs_zockt.">
+  <meta name="twitter:description" content="LIVE-Streams, Gaming, Community und Creator Tools bei cfs_zockt.">
   <meta name="twitter:image" content="https://cfs-zockt.de/assets/img/social-preview.jpg">
-  <script type="application/ld+json" data-cfs-seo>{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://cfs-zockt.de/#organization","name":"cfs_zockt","url":"https://cfs-zockt.de/","logo":{"@type":"ImageObject","url":"https://cfs-zockt.de/assets/img/app-icon.png"},"sameAs":["https://www.tiktok.com/@cfs_zockt"]},{"@type":"WebSite","@id":"https://cfs-zockt.de/#website","url":"https://cfs-zockt.de/","name":"cfs_zockt","inLanguage":"de-AT","publisher":{"@id":"https://cfs-zockt.de/#organization"}},{"@type":"WebPage","@id":"https://cfs-zockt.de/#webpage","url":"https://cfs-zockt.de/","name":"cfs_zockt – Gaming, Streams, Community & Creator Suite","description":"Die offizielle cfs_zockt Startseite mit Gaming, Streams, Community und Creator Suite.","inLanguage":"de-AT","isPartOf":{"@id":"https://cfs-zockt.de/#website"},"about":{"@id":"https://cfs-zockt.de/#organization"}}]}</script>
+  <script type="application/ld+json" data-cfs-seo>{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://cfs-zockt.de/#organization","name":"cfs_zockt","url":"https://cfs-zockt.de/","logo":{"@type":"ImageObject","url":"https://cfs-zockt.de/assets/img/app-icon.png"},"sameAs":["https://www.tiktok.com/@cfs_zockt","https://www.twitch.tv/cfs_zockt"]},{"@type":"WebSite","@id":"https://cfs-zockt.de/#website","url":"https://cfs-zockt.de/","name":"cfs_zockt","inLanguage":"de-AT","publisher":{"@id":"https://cfs-zockt.de/#organization"}},{"@type":"WebPage","@id":"https://cfs-zockt.de/#webpage","url":"https://cfs-zockt.de/","name":"cfs_zockt – Gaming, Streams, Community & Creator Suite","description":"cfs_zockt mit LIVE-Streams, Gaming, Community und Creator Suite.","inLanguage":"de-AT","isPartOf":{"@id":"https://cfs-zockt.de/#website"},"about":{"@id":"https://cfs-zockt.de/#organization"}}]}</script>
   <link rel="stylesheet" href="/assets/css/styles.css">
   <link rel="stylesheet" href="/assets/css/cfs-theme-v3.css">
   <link rel="stylesheet" href="/assets/css/cfs-gaming-home-v112.css">
@@ -37,18 +37,20 @@
 <header class="site-header gaming-header">
   <div class="container gaming-header-inner">
     <a class="gaming-brand" href="#start" aria-label="cfs_zockt Startseite">
-      <img src="/assets/img/brand/cfs-zockt-logo.png" alt="cfs_zockt">
+      <img src="/assets/img/brand/cfs-zockt-wordmark-transparent.png" alt="cfs_zockt">
       <span>GAMING · COMMUNITY · CREATOR</span>
     </a>
     <button class="mobile-toggle gaming-mobile-toggle" data-mobile-toggle type="button" aria-label="Navigation öffnen" aria-expanded="false">MENÜ</button>
     <nav class="nav gaming-nav" data-nav aria-label="Hauptnavigation">
-      <a class="active" href="#start">Home</a>
-      <a href="#about-me">Über mich</a>
       <a href="#streams">Streams</a>
+      <a href="#games">Games</a>
       <a href="#community">Community</a>
       <a href="/pages/creator-suite.html">Creator Suite</a>
       <a href="/pages/launcher-download.html">Launcher</a>
-      <a href="/pages/support.html">Kontakt</a>
+      <div class="gaming-nav-mobile-auth" aria-label="Creator Suite Zugang">
+        <a href="/pages/login.html" data-login-link>ANMELDEN</a>
+        <a class="gaming-nav-mobile-primary" href="/pages/login.html#regForm" data-auth-cta>KOSTENLOS STARTEN</a>
+      </div>
     </nav>
     <div class="gaming-auth-actions" aria-label="Creator Suite Zugang">
       <a class="gaming-login-link" href="/pages/login.html" data-login-link>ANMELDEN</a>
@@ -64,70 +66,21 @@
     <div class="container gaming-hero-grid">
       <div class="gaming-hero-copy">
         <div class="gaming-kicker">GAMING · COMMUNITY · CREATOR</div>
-        <h1><span class="gaming-brand-intro">ICH BIN</span><br><span class="gaming-brand-mark">cfs_zockt</span></h1>
-        <div class="gaming-hero-subline"><i></i><strong>MEHR ALS NUR GAMES</strong><i></i></div>
-        <p><strong>cfs_zockt</strong> verbindet Gaming, Streams, Community und Creator-Tools an einem Ort. Wähle direkt, was du suchst.</p>
+        <h1><span class="gaming-brand-mark">cfs_zockt</span></h1>
+        <div class="gaming-hero-subline"><i></i><strong>GAMING · LIVE · CREATOR</strong><i></i></div>
+        <p>Gaming, LIVE-Streams, Community und Creator-Tools.</p>
         <div class="gaming-hero-actions">
           <a class="gaming-btn gaming-btn-primary" href="#streams"><span class="gaming-btn-icon">◉</span> STREAMS ANSEHEN <b>→</b></a>
           <a class="gaming-btn" href="/pages/creator-suite.html"><span class="gaming-btn-icon">◇</span> CREATOR SUITE <b>→</b></a>
         </div>
         <div class="gaming-hero-values" aria-label="cfs_zockt Schwerpunkte">
-          <div><span class="gaming-value-icon">◈</span><strong>PLAYSTATION</strong><small>MEINE GAMES</small></div>
+          <div><span class="gaming-value-icon">◈</span><strong>PLAYSTATION</strong><small>GAMES</small></div>
           <div><span class="gaming-value-icon">◉</span><strong>STREAMS</strong><small>LIVE & COMMUNITY</small></div>
           <div><span class="gaming-value-icon">◇</span><strong>CREATOR SUITE</strong><small>TOOLS & WORKFLOW</small></div>
         </div>
       </div>
       <div class="gaming-hero-art" aria-label="cfs_zockt Gaming Setup">
         <img src="/assets/img/home-v116/hero-stage.webp" alt="Gaming Setup mit CFS Logo und blauem Neon-Licht">
-      </div>
-    </div>
-  </section>
-
-  <section class="gaming-section gaming-about-me" id="about-me">
-    <div class="container">
-      <div class="gaming-section-head gaming-section-head-split">
-        <div><span class="gaming-kicker gaming-kicker-line">ÜBER MICH</span><h2>GAMING IST MEIN ZUHAUSE.</h2></div>
-        <p>Ich verbinde Gaming, Streams und Community an einem Ort. Auf der Startseite siehst du echte Aktivität aus meinem PlayStation-Konto und findest direkt zu meinen Streams, meinem Discord und meinen Creator-Tools.</p>
-      </div>
-      <div class="gaming-profile-grid">
-        <article class="gaming-profile-main">
-          <div class="gaming-profile-badge">CFS</div>
-          <div>
-            <span class="gaming-card-kicker">cfs_zockt</span>
-            <h3>PLAYSTATION, STREAMS & COMMUNITY</h3>
-            <p>Meine zuletzt gespielten Titel kommen direkt aus meinem PlayStation-Network-Konto. Dazu kommen TikTok-Streams, Community-Sessions und direkter Austausch über Discord.</p>
-          </div>
-        </article>
-        <article><span class="gaming-community-symbol">◈</span><h3>PLAYSTATION</h3><p>Echte zuletzt gespielte PS4-/PS5-Titel mit Cover, Spielzeit und letzter Aktivität.</p></article>
-        <article><span class="gaming-community-symbol">◉</span><h3>LIVE CONTENT</h3><p>Gaming, Community Games und Unterhaltung direkt über meinen TikTok-Kanal.</p></article>
-        <article><span class="gaming-community-symbol">♡</span><h3>COMMUNITY</h3><p>Discord, gemeinsame Sessions und ein direkter Ort für Austausch rund ums Gaming.</p></article>
-      </div>
-    </div>
-  </section>
-
-  <section class="gaming-section gaming-offer" id="angebot">
-    <div class="container">
-      <div class="gaming-section-head gaming-section-head-split">
-        <div><span class="gaming-kicker gaming-kicker-line">AUF EINEN BLICK</span><h2>DAS FINDEST DU HIER</h2></div>
-        <p>Gaming und Community auf der einen Seite, Creator-Tools auf der anderen. Jeder Bereich führt dich direkt zum passenden nächsten Schritt.</p>
-      </div>
-      <div class="gaming-offer-grid">
-        <article><span class="gaming-offer-number">01</span><h3>STREAMS</h3><p>Gaming-Content, Community-Sessions und Live-Unterhaltung über TikTok.</p><a href="#streams">STREAMS ANSEHEN →</a></article>
-        <article><span class="gaming-offer-number">02</span><h3>WIDGET STUDIO</h3><p>Widgets für deine Streams konfigurieren, vorbereiten und in deinen Workflow bringen.</p><a href="/pages/creator-suite.html#widget-studio">WIDGET STUDIO →</a></article>
-        <article><span class="gaming-offer-number">03</span><h3>STREAM STUDIO</h3><p>Scenes, Overlays und Stream-Workflows für deinen Creator-Alltag – übersichtlich an einem Ort.</p><a href="/pages/creator-suite.html#tools">TOOLS ENTDECKEN →</a></article>
-        <article><span class="gaming-offer-number">04</span><h3>CFS LAUNCHER</h3><p>Build-Ziel Launcher 0.47.29: Die Windows-App verbindet lokale Stream-, OBS- und Bridge-Funktionen sicher mit der Creator Suite.</p><a href="/pages/launcher-download.html">WINDOWS LAUNCHER →</a></article>
-      </div>
-      <div class="gaming-access-panel">
-        <div class="gaming-access-copy">
-          <span class="gaming-kicker gaming-kicker-line">CREATOR SUITE</span>
-          <h3>DEIN ZUGANG ZU DEN CFS TOOLS.</h3>
-          <p>Die Creator Suite läuft aktuell als kostenlose geschlossene Beta. Registrierung ist möglich; einzelne Provider-Funktionen werden nach Freigabe aktiviert.</p>
-        </div>
-        <div class="gaming-access-actions">
-          <a class="gaming-btn gaming-btn-primary" href="/pages/login.html#regForm" data-auth-cta>KOSTENLOS REGISTRIEREN <b>→</b></a>
-          <a class="gaming-btn" href="/pages/login.html" data-login-link>ANMELDEN <b>→</b></a>
-          <a class="gaming-access-text" href="/pages/creator-suite.html">CREATOR SUITE ANSEHEN</a>
-        </div>
       </div>
     </div>
   </section>
@@ -147,15 +100,27 @@
           </div>
           <div class="gaming-live-copy">
             <div class="gaming-live-title"><span class="gaming-live-dot"></span><strong>Live bei cfs_zockt</strong></div>
-            <p>Hier siehst du direkt, ob gerade etwas läuft und welches Game aktuell gespielt wird.</p>
+            <p>LIVE-Status für Twitch und TikTok.</p>
             <div class="gaming-live-status-panel" aria-live="polite">
               <div class="gaming-live-status-head">
                 <span class="gaming-live-status-label">STATUS</span>
                 <span class="gaming-live-status-badge is-offline" id="liveStatusBadge">OFFLINE</span>
               </div>
               <strong class="gaming-live-status-game" id="liveStatusGame">Aktuell kein aktives Game erkannt</strong>
-              <p class="gaming-live-status-text" id="liveStatusText">Sobald cfs_zockt live oder aktiv ist, wird es hier automatisch angezeigt.</p>
+              <p class="gaming-live-status-text" id="liveStatusText">LIVE-Status wird automatisch aktualisiert.</p>
               <div class="gaming-live-status-meta" id="liveStatusMeta"><span>Standby</span><span>Launcher / PlayStation Sync</span></div>
+              <div class="gaming-live-platform-status" aria-label="LIVE-Status nach Plattform">
+                <div class="gaming-live-platform-row" data-live-platform="twitch">
+                  <span class="gaming-live-platform-name">Twitch</span>
+                  <strong class="gaming-live-platform-badge is-unknown" id="twitchLiveIndicator">STATUS OFFEN</strong>
+                  <small id="twitchLastLive">Wird geprüft</small>
+                </div>
+                <div class="gaming-live-platform-row" data-live-platform="tiktok">
+                  <span class="gaming-live-platform-name">TikTok</span>
+                  <strong class="gaming-live-platform-badge is-unknown" id="tiktokLiveIndicator">STATUS OFFEN</strong>
+                  <small id="tiktokLastLive">CFS Launcher Signal</small>
+                </div>
+              </div>
               <div class="gaming-live-session-stats" aria-label="Aktuelle Live-Statistiken">
                 <div><span>ZUSCHAUER</span><strong id="liveViewers">—</strong></div>
                 <div><span>LIKES</span><strong id="liveLikes">—</strong></div>
@@ -163,27 +128,13 @@
                 <div><span>LIVE SEIT</span><strong id="liveDuration">—</strong></div>
               </div>
             </div>
-            <div class="gaming-tag-row"><span>TikTok LIVE</span><span>PlayStation</span><span>Community</span></div>
-            <a class="gaming-btn gaming-btn-primary gaming-live-button" href="https://www.tiktok.com/@cfs_zockt" target="_blank" rel="noopener noreferrer"><span>♪</span> TIKTOK-KANAL ÖFFNEN <b>→</b></a>
+            <div class="gaming-tag-row"><span>Twitch LIVE</span><span>TikTok LIVE</span><span>PlayStation</span><span>Community</span></div>
+            <div class="gaming-live-channel-actions" aria-label="Streaming-Kanäle">
+              <a class="gaming-btn gaming-btn-primary gaming-live-button" id="twitchChannelButton" href="https://www.twitch.tv/cfs_zockt" target="_blank" rel="noopener noreferrer"><span>◉</span> TWITCH-KANAL ÖFFNEN <b>→</b></a>
+              <a class="gaming-btn gaming-live-button gaming-live-button-secondary" id="tiktokChannelButton" href="https://www.tiktok.com/@cfs_zockt" target="_blank" rel="noopener noreferrer"><span>♪</span> TIKTOK-KANAL ÖFFNEN <b>→</b></a>
+            </div>
           </div>
         </article>
-        <div class="gaming-schedule-list" aria-label="Was dich bei cfs_zockt erwartet">
-          <article class="gaming-schedule-card">
-            <div class="gaming-schedule-top"><span>COMMUNITY</span><strong>GEMEINSAM</strong></div>
-            <div class="gaming-schedule-icon" aria-hidden="true">◉</div>
-            <div class="gaming-schedule-copy"><strong>COMMUNITY GAMES</strong><p>Gemeinsam zocken, im Chat reden und zusammen Spaß haben.</p><span class="gaming-schedule-note">Streams und Community an einem Ort.</span></div>
-          </article>
-          <article class="gaming-schedule-card">
-            <div class="gaming-schedule-top"><span>CONTENT</span><strong>GAMING</strong></div>
-            <div class="gaming-schedule-icon" aria-hidden="true">◇</div>
-            <div class="gaming-schedule-copy"><strong>GAMING & TALK</strong><p>Aktuelle Games, Fortschritt und entspannter Austausch mit der Community.</p><span class="gaming-schedule-note">Aktuelles findest du direkt im LIVE-Status.</span></div>
-          </article>
-          <article class="gaming-schedule-card">
-            <div class="gaming-schedule-top"><span>SPECIAL</span><strong>EVENTS</strong></div>
-            <div class="gaming-schedule-icon" aria-hidden="true">✦</div>
-            <div class="gaming-schedule-copy"><strong>SPECIAL SESSIONS</strong><p>Spontane Streams, besondere Runden und gemeinsame Highlights.</p><span class="gaming-schedule-note">Keine festen Spielbilder oder Demo-Versprechen.</span></div>
-          </article>
-        </div>
       </div>
     </div>
   </section>
@@ -191,29 +142,27 @@
   <section class="gaming-section gaming-games" id="games">
     <div class="container">
       <div class="gaming-section-head gaming-games-head">
-        <div><span class="gaming-kicker gaming-kicker-line">MEINE PLAYSTATION GAMES</span><h2>ZULETZT GESPIELT</h2></div>
+        <div><span class="gaming-kicker gaming-kicker-line">PLAYSTATION</span><h2>ZULETZT GESPIELT</h2></div>
         <div class="gaming-games-meta" id="recentGamesMeta" aria-live="polite">PlayStation-Aktivität wird geladen …</div>
       </div>
       <div class="gaming-games-grid" id="recentGamesGrid" aria-live="polite" aria-busy="true">
-        <article class="gaming-game-card gaming-game-card-empty" data-game-slot="0"><div class="gaming-game-card-media"><span class="gaming-game-rank">01</span><span class="gaming-game-placeholder">PS</span></div><div class="gaming-game-card-copy"><strong>SPIELDATEN WERDEN GELADEN</strong><p>Der letzte Titel wird direkt aus meiner PlayStation-Aktivität geladen.</p><small>ECHTE DATEN · KEINE DEMO-WERTE</small></div></article>
-        <article class="gaming-game-card gaming-game-card-empty" data-game-slot="1"><div class="gaming-game-card-media"><span class="gaming-game-rank">02</span><span class="gaming-game-placeholder">PS</span></div><div class="gaming-game-card-copy"><strong>ZULETZT GESPIELT</strong><p>Hier erscheint automatisch der zweitletzte erfasste Titel.</p><small>SPIELZEIT · STARTS · PLATTFORM</small></div></article>
-        <article class="gaming-game-card gaming-game-card-empty" data-game-slot="2"><div class="gaming-game-card-media"><span class="gaming-game-rank">03</span><span class="gaming-game-placeholder">PS</span></div><div class="gaming-game-card-copy"><strong>ZULETZT GESPIELT</strong><p>Hier erscheint automatisch der drittletzte erfasste Titel.</p><small>LETZTER ZEITPUNKT · PLAYSTATION NETWORK</small></div></article>
+        <article class="gaming-game-card gaming-game-card-empty" data-game-slot="0"><div class="gaming-game-card-media"><span class="gaming-game-rank">01</span><span class="gaming-game-placeholder">PS</span></div><div class="gaming-game-card-copy"><strong>SPIELDATEN WERDEN GELADEN</strong><p>Letzter PlayStation-Titel.</p><small>ECHTE DATEN</small></div></article>
+        <article class="gaming-game-card gaming-game-card-empty" data-game-slot="1"><div class="gaming-game-card-media"><span class="gaming-game-rank">02</span><span class="gaming-game-placeholder">PS</span></div><div class="gaming-game-card-copy"><strong>ZULETZT GESPIELT</strong><p>Zweitletzter Titel.</p><small>SPIELZEIT · PLATTFORM</small></div></article>
+        <article class="gaming-game-card gaming-game-card-empty" data-game-slot="2"><div class="gaming-game-card-media"><span class="gaming-game-rank">03</span><span class="gaming-game-placeholder">PS</span></div><div class="gaming-game-card-copy"><strong>ZULETZT GESPIELT</strong><p>Drittletzter Titel.</p><small>PLAYSTATION NETWORK</small></div></article>
       </div>
-      <div class="gaming-recent-note"><strong>LIVE-DATEN:</strong> Die drei Karten werden automatisch aus meinem verbundenen PlayStation-Network-Konto aktualisiert.</div>
     </div>
   </section>
 
   <section class="gaming-section gaming-community" id="community">
     <div class="container">
       <div class="gaming-section-head gaming-section-head-split">
-        <div><span class="gaming-kicker gaming-kicker-line">COMMUNITY</span><h2>GEMEINSAM STÄRKER</h2></div>
-        <p>Über TikTok und Discord bleiben Streams, Games und Community miteinander verbunden. Die Zahlen unten werden automatisch aus den verbundenen Diensten geladen.</p>
+        <div><span class="gaming-kicker gaming-kicker-line">COMMUNITY</span><h2>COMMUNITY</h2></div>
+        <p>TikTok, Discord und Creator Tools.</p>
       </div>
       <div class="gaming-community-grid">
-        <article><span class="gaming-community-symbol">♪</span><h3>TIKTOK</h3><p>Streams, Content und aktuelle Followerdaten aus meinem verbundenen TikTok-Profil.</p><a class="gaming-card-link" href="https://www.tiktok.com/@cfs_zockt" target="_blank" rel="noopener noreferrer">TIKTOK ÖFFNEN →</a></article>
-        <article><span class="gaming-community-symbol">◉</span><h3>DISCORD</h3><p>Der direkte Community-Server für Austausch, gemeinsame Games und Updates.</p><a class="gaming-card-link" href="https://discord.gg/3bfAkcJTp" target="_blank" rel="noopener noreferrer">DISCORD BEITRETEN →</a></article>
-        <article><span class="gaming-community-symbol">♡</span><h3>GEMEINSAME GAMES</h3><p>Community-Sessions und Gaming stehen im Mittelpunkt – gemeinsam macht es mehr Spaß.</p></article>
-        <article><span class="gaming-community-symbol">◇</span><h3>CREATOR SUITE</h3><p>Eigene Tools für Widgets, Streams, interaktive Games und den CFS Launcher.</p><a class="gaming-card-link" href="/pages/creator-suite.html">CREATOR SUITE →</a></article>
+        <article><span class="gaming-community-symbol">♪</span><h3>TIKTOK</h3><p>Streams &amp; Content.</p><a class="gaming-card-link" href="https://www.tiktok.com/@cfs_zockt" target="_blank" rel="noopener noreferrer">TIKTOK ÖFFNEN →</a></article>
+        <article><span class="gaming-community-symbol">◉</span><h3>DISCORD</h3><p>Community, Games &amp; Updates.</p><a class="gaming-card-link" href="https://discord.gg/3bfAkcJTp" target="_blank" rel="noopener noreferrer">DISCORD BEITRETEN →</a></article>
+        <article><span class="gaming-community-symbol">◇</span><h3>CREATOR SUITE</h3><p>Widgets, Stream Studio &amp; Launcher.</p><a class="gaming-card-link" href="/pages/creator-suite.html">CREATOR SUITE →</a></article>
       </div>
     </div>
   </section>
@@ -232,19 +181,21 @@
     <div class="container gaming-final-cta-inner">
       <div>
         <span class="gaming-kicker gaming-kicker-line">CREATOR SUITE</span>
-        <h2>DEIN ACCOUNT. DEINE TOOLS.</h2>
-        <p>Registriere dich kostenlos für die geschlossene Beta oder melde dich mit deinem bestehenden Creator-Konto an.</p>
+        <h2>TOOLS FÜR DEINEN STREAM.</h2>
+        <p>Kostenlose geschlossene Beta.</p>
+        <small class="gaming-final-version">Launcher 0.47.30 · Windows x64</small>
       </div>
       <div class="gaming-final-cta-actions">
         <a class="gaming-btn gaming-btn-primary" href="/pages/login.html#regForm" data-auth-cta>KOSTENLOS STARTEN <b>→</b></a>
-        <a class="gaming-btn" href="/pages/login.html" data-login-link>ANMELDEN <b>→</b></a>
+        <a class="gaming-btn" href="/pages/launcher-download.html">WINDOWS LAUNCHER <b>→</b></a>
+        <a class="gaming-final-login" href="/pages/login.html" data-login-link>Schon registriert? Anmelden</a>
       </div>
     </div>
   </section>
 
   <section class="brand-source-entry" data-source-entry hidden aria-labelledby="sourceEntryTitle">
     <div class="container"><div class="brand-source-entry-card">
-      <div class="brand-source-entry-copy"><span data-source-entry-kicker>VON TIKTOK HIER?</span><h2 id="sourceEntryTitle">SCHÖN, DASS DU DA BIST.</h2><p data-source-entry-text>Schau dir meine Games, die Community und die Creator Suite an.</p></div>
+      <div class="brand-source-entry-copy"><span data-source-entry-kicker>VON TIKTOK HIER?</span><h2 id="sourceEntryTitle">SCHÖN, DASS DU DA BIST.</h2><p data-source-entry-text>Games, Community und Creator Suite.</p></div>
       <div class="brand-source-entry-actions"><a class="gaming-btn gaming-btn-primary" href="/pages/creator-suite.html" data-funnel-cta="tiktok-tools">TOOLS ANSEHEN</a><a class="gaming-btn" href="#community" data-funnel-cta="tiktok-community">COMMUNITY</a><a href="/pages/login.html#regForm" data-auth-cta data-funnel-cta="tiktok-register">KOSTENLOS STARTEN →</a></div>
     </div></div>
   </section>
@@ -268,14 +219,9 @@
 
 <footer class="gaming-footer">
   <div class="container gaming-footer-main">
-    <div class="gaming-footer-brand"><img src="/assets/img/brand/cfs-zockt-logo.png" alt="cfs_zockt"><span>cfs_zockt · Gaming · Community · Creator</span></div>
-    <nav aria-label="Footer Navigation"><a href="#start">Home</a><a href="#about-me">Über mich</a><a href="#streams">Streams</a><a href="#games">Games</a><a href="#community">Community</a><a href="/pages/creator-suite.html">Creator Suite</a><a href="/pages/merch.html">Merch Shop</a><a href="/pages/support.html">Kontakt</a></nav>
-    <div class="gaming-footer-social"><a href="https://www.tiktok.com/@cfs_zockt" target="_blank" rel="noopener noreferrer" aria-label="TikTok">♪</a><a href="https://discord.gg/3bfAkcJTp" target="_blank" rel="noopener noreferrer" aria-label="Discord">◉</a></div>
-  </div>
-  <div class="container gaming-footer-live" aria-label="Community Zahlen im Footer">
-    <div class="gaming-footer-live-item"><strong id="footerTikTokFollowers">—</strong><span>TikTok Follower</span></div>
-    <div class="gaming-footer-live-item"><strong id="footerDiscordMembers">—</strong><span>Discord Mitglieder</span></div>
-    <div class="gaming-footer-live-item"><strong id="footerRecentGames">—</strong><span>letzte Games</span></div>
+    <div class="gaming-footer-brand"><img src="/assets/img/brand/cfs-zockt-wordmark-transparent.png" alt="cfs_zockt"><span>cfs_zockt · Gaming · Community · Creator</span></div>
+    <nav aria-label="Footer Navigation"><a href="#streams">Streams</a><a href="/pages/creator-suite.html">Creator Suite</a><a href="/pages/launcher-download.html">Launcher</a><a href="/pages/support.html">Kontakt</a></nav>
+    <div class="gaming-footer-social"><a href="https://www.twitch.tv/cfs_zockt" target="_blank" rel="noopener noreferrer" aria-label="Twitch">◉</a><a href="https://www.tiktok.com/@cfs_zockt" target="_blank" rel="noopener noreferrer" aria-label="TikTok">♪</a><a href="https://discord.gg/3bfAkcJTp" target="_blank" rel="noopener noreferrer" aria-label="Discord">◎</a></div>
   </div>
   <div class="container gaming-footer-bottom"><span>© 2026 cfs_zockt. Gaming · Community · Creator Suite.</span><div><a href="/pages/impressum.html">Impressum</a><a href="/pages/datenschutz.html">Datenschutz</a><a href="/pages/nutzungsbedingungen.html">Nutzungsbedingungen</a><a href="/pages/security.html">Sicherheit</a><a href="/api/public/status">Status</a></div></div>
 </footer>

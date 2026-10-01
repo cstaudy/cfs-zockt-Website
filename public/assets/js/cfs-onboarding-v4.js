@@ -116,7 +116,8 @@
         <a class="btn primary" id="cfsOnboardingNextAction" href="/pages/dashboard.html" aria-disabled="true">BITTE WARTEN</a>
       </div>`;
 
-    hero.insertAdjacentElement("afterend", shell);
+    const anchor = document.getElementById("creatorTodayActions") || hero;
+    anchor.insertAdjacentElement("afterend", shell);
 
     let me = null;
     try {

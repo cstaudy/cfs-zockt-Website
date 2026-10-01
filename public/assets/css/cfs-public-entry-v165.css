@@ -1,0 +1,49 @@
+/* cfs_zockt · v165 public entry polish: concise Creator Suite, Launcher and Auth flow */
+body[data-brand-refinement="v165-public-entry"] .cfs-public-brand img{content:url('/assets/img/brand/cfs-zockt-wordmark-transparent.png');background:transparent!important}
+body[data-brand-refinement="v165-public-entry"] .cfs-public-brand small{display:none!important}
+body[data-brand-refinement="v165-public-entry"] .public-nav{gap:4px!important}
+body[data-brand-refinement="v165-public-entry"] .public-nav>a{font-size:9px!important}
+body[data-brand-refinement="v165-public-entry"] .public-nav>a.cfs-nav-login{margin-left:6px!important}
+.cfs-entry-hero-v165{padding-top:68px!important;padding-bottom:56px!important}
+body.public-suite-page .cfs-entry-hero-v165 .cfs-suite-hero-copy>p{max-width:560px!important;font-size:12px!important}
+.cfs-entry-grid-v165{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+.cfs-tool-grid-v165{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+.cfs-tool-grid-v165 article{min-height:142px!important}
+.cfs-compact-split-v165{align-items:center!important;gap:34px!important}
+.cfs-two-cards-v165{grid-template-columns:1fr 1fr!important}
+.cfs-public-details-v165{border:1px solid rgba(35,134,188,.28);border-radius:14px;background:#04101b;overflow:hidden}
+.cfs-public-details-v165>summary{list-style:none;cursor:pointer;padding:16px 18px;color:#79dfff;font-size:9px;font-weight:950;letter-spacing:.12em;user-select:none}
+.cfs-public-details-v165>summary::-webkit-details-marker{display:none}.cfs-public-details-v165>summary:after{content:'+';float:right;font-size:16px;line-height:.7}.cfs-public-details-v165[open]>summary:after{content:'−'}
+.cfs-public-details-v165[open]>summary{border-bottom:1px solid rgba(35,134,188,.2)}
+.cfs-status-grid-v165{grid-template-columns:repeat(3,minmax(0,1fr))!important;padding:14px!important}
+.cfs-final-v165{padding-top:32px!important}
+/* Launcher */
+body.launcher-download-page[data-brand-refinement="v165-public-entry"] .cfs-public-brand img{content:url('/assets/img/brand/cfs-zockt-wordmark-transparent.png');background:transparent!important}
+body.launcher-download-page .launcher-public-copy>p{max-width:590px;font-size:15px;line-height:1.6}
+body.launcher-download-page .launcher-public-section{padding:64px 0}
+.cfs-launcher-capabilities-v165 article{min-height:150px}
+.cfs-launcher-more-v165{padding-top:42px!important}
+.cfs-details-heading-v165{padding:24px 20px 0;margin-bottom:18px!important}.launcher-download-details .launcher-edition-grid{padding:0 20px 20px}
+.launcher-download-details .launcher-edition-grid article{min-height:185px}
+/* Auth */
+body.public-auth-page .auth-entry-shell{padding-top:32px!important}
+body.public-auth-page .cfs-auth-hero-v165{padding:28px 0 24px!important;grid-template-columns:minmax(0,1fr) minmax(260px,.48fr)!important}
+body.public-auth-page .cfs-auth-hero-v165 h1{font-size:clamp(42px,5.2vw,68px)!important}
+body.public-auth-page .cfs-auth-hero-v165 .cfs-auth-hero-copy>p{max-width:640px!important;font-size:11px!important}
+.cfs-auth-path-v165{padding:16px!important}.cfs-auth-path-v165 li{padding:9px 0!important}.cfs-auth-path-v165 li small{font-size:8px!important}
+.cfs-auth-facts-v165{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 16px}
+.cfs-auth-facts-v165 span,.cfs-signup-note-v165{padding:8px 10px;border:1px solid rgba(45,136,190,.26);border-radius:999px;background:#04111c;color:#8eb2c9;font-size:8px;font-weight:850;letter-spacing:.05em}
+.cfs-signup-note-v165{display:inline-block;margin:0 0 14px;border-radius:9px}
+body.public-auth-page .auth-entry-grid{gap:14px!important}
+body.public-auth-page .auth-entry-panel{padding:22px!important}
+body.public-auth-page .auth-panel-head p{margin-bottom:14px!important}
+body.public-auth-page .legal-consent{padding:9px 10px!important}
+.cfs-auth-details-v165{padding:0!important;background:transparent!important}.cfs-auth-details-v165 summary{cursor:pointer;padding:11px 0;color:#7197b1;font-size:8px;font-weight:850}.cfs-auth-details-v165 p{margin:0 0 10px;color:#718ba1;font-size:8px;line-height:1.55}
+/* Compact shared footer */
+.cfs-public-footer-v165{padding:0!important}.cfs-footer-v165-inner{display:grid;grid-template-columns:minmax(220px,1fr) auto auto;gap:24px;align-items:center;padding:28px 0 18px!important}.cfs-footer-v165-brand{display:flex;align-items:center;gap:14px}.cfs-footer-v165-brand img{width:150px;height:auto}.cfs-footer-v165-brand span{color:#6f899c;font-size:9px}.cfs-footer-v165-nav,.cfs-footer-v165-social{display:flex;gap:14px;flex-wrap:wrap}.cfs-footer-v165-nav a,.cfs-footer-v165-social a,.cfs-footer-v165-legal a{color:#8ca8bc;text-decoration:none;font-size:9px;font-weight:750}.cfs-footer-v165-nav a:hover,.cfs-footer-v165-social a:hover,.cfs-footer-v165-legal a:hover{color:#00d9ff}.cfs-footer-v165-legal{display:flex;justify-content:space-between;gap:20px;padding:14px 0 22px!important;border-top:1px solid rgba(34,103,144,.2);color:#607c90;font-size:8px}
+@media(max-width:980px){.cfs-tool-grid-v165,.cfs-status-grid-v165{grid-template-columns:repeat(2,minmax(0,1fr))!important}.cfs-footer-v165-inner{grid-template-columns:1fr}.cfs-footer-v165-nav,.cfs-footer-v165-social{justify-content:flex-start}}
+@media(max-width:760px){body[data-brand-refinement="v165-public-entry"] .public-nav.open{max-height:calc(100dvh - 76px);overflow:auto}.cfs-entry-grid-v165,.cfs-tool-grid-v165,.cfs-status-grid-v165,.cfs-two-cards-v165{grid-template-columns:1fr!important}body.public-auth-page .cfs-auth-hero-v165{grid-template-columns:1fr!important}.cfs-auth-path-v165{display:none}.cfs-footer-v165-legal{flex-direction:column;gap:7px}.launcher-download-details .launcher-edition-grid{padding-inline:14px}.cfs-details-heading-v165{padding-inline:14px}}
+@media(max-width:560px){.cfs-entry-hero-v165{padding-top:48px!important}.cfs-footer-v165-brand{align-items:flex-start;flex-direction:column}.cfs-footer-v165-nav,.cfs-footer-v165-social{gap:10px 14px}body.public-auth-page .auth-entry-panel{padding:18px!important}}
+@media(prefers-reduced-motion:reduce){.cfs-public-details-v165 *{transition:none!important}}
+body [data-footer-refinement="v165"]{padding:0!important}
+.cfs-auth-beta-details-v165{margin:0 0 16px}.cfs-auth-beta-details-body{padding:12px 16px}.cfs-auth-beta-details-body p{margin:0 0 7px;color:#7e9aae;font-size:8px;line-height:1.55}.cfs-auth-beta-details-body p:last-child{margin-bottom:0}.cfs-auth-beta-details-body strong{color:#bfefff}

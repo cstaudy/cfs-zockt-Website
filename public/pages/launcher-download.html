@@ -29,14 +29,15 @@
   <link rel="stylesheet" href="/assets/css/styles.css">
   <link rel="stylesheet" href="/assets/css/cfs-theme-v3.css">
   <link rel="stylesheet" href="/assets/css/cfs-launcher-download-v159.css">
+  <link rel="stylesheet" href="/assets/css/cfs-public-entry-v165.css">
   <script src="/assets/js/cfs-shell-v3.js" defer></script>
   <script src="/assets/js/page-launcher-download-v159.js" defer></script>
 </head>
-<body class="public-marketing launcher-download-page" data-brand-refinement="v159-professional-download">
+<body class="public-marketing launcher-download-page" data-brand-refinement="v165-public-entry">
 <header class="site-header brand-header public-site-header">
   <div class="container header-inner brand-header-inner cfs-public-header-inner">
     <a class="brand brand-logo-link cfs-public-brand" href="/" aria-label="cfs_zockt Startseite">
-      <img src="/assets/img/brand/cfs-zockt-logo.png" alt="cfs_zockt" data-logo-fallback>
+      <img src="/assets/img/brand/cfs-zockt-wordmark-transparent.png" alt="cfs_zockt" data-logo-fallback>
       <span class="brand-logo-fallback" hidden>cfs_zockt</span>
       <small>GAMING · COMMUNITY · CREATOR</small>
     </a>
@@ -54,97 +55,93 @@
 </header>
 
 <main>
-  <section class="launcher-public-hero">
+  <section class="launcher-public-hero cfs-entry-hero-v165">
     <div class="container launcher-public-hero-grid">
       <div class="launcher-public-copy">
-        <div class="launcher-public-kicker">CFS CREATOR SUITE · WINDOWS</div>
+        <div class="launcher-public-kicker">CFS CREATOR SUITE · WINDOWS x64</div>
         <h1>CFS LAUNCHER<br><span>FÜR WINDOWS.</span></h1>
-        <p>Die lokale Desktop-App verbindet deinen Creator-PC mit Stream Studio, OBS, Widgets und den lokalen Streaming-Funktionen. Installiert wird nur ein tatsächlich veröffentlichter Launcher-Release.</p>
+        <p>Die Desktop-App für Stream Studio, OBS und lokale Streaming-Funktionen.</p>
         <div class="launcher-public-actions">
           <a class="btn primary launcher-download-action is-disabled" id="launcherSetupDownload" href="#" aria-disabled="true">WINDOWS SETUP (.EXE)</a>
           <a class="btn launcher-download-action is-disabled" id="launcherPortableDownload" href="#" aria-disabled="true">PORTABLE (.EXE)</a>
         </div>
-        <div class="launcher-release-state" id="launcherReleaseState" role="status" aria-live="polite">
-          <span class="launcher-state-dot"></span>
-          <div><strong>Release wird geprüft</strong><small>Der öffentliche Release-Katalog wird geladen.</small></div>
-        </div>
-        <div class="launcher-public-trust" aria-label="Download Eigenschaften">
-          <span>Windows x64</span><span>GitHub Release-Artefakte</span><span>SHA-256-Prüfsummen</span><span>Private Beta</span>
-        </div>
+        <div class="launcher-release-state" id="launcherReleaseState" role="status" aria-live="polite"><span class="launcher-state-dot"></span><div><strong>Release wird geprüft</strong><small>Öffentlicher Release-Katalog wird geladen.</small></div></div>
+        <div class="launcher-public-trust" aria-label="Download Eigenschaften"><span>Windows x64</span><span>Signierter Stable-Release</span><span>SHA-256</span></div>
       </div>
       <aside class="launcher-public-release-card" aria-label="Aktueller Launcher Release">
         <div class="launcher-release-card-head"><span>STABLE RELEASE</span><b id="launcherReleaseBadge">PRÜFEN</b></div>
-        <div class="launcher-release-logo"><img src="/assets/img/brand/cfs-zockt-logo.png" alt=""></div>
-        <strong class="launcher-release-version" id="launcherReleaseVersion">Build-Ziel 0.47.29</strong>
+        <div class="launcher-release-logo"><img src="/assets/img/brand/cfs-zockt-wordmark-transparent.png" alt=""></div>
+        <strong class="launcher-release-version" id="launcherReleaseVersion">Build-Ziel 0.47.30</strong>
         <p id="launcherReleaseName">Veröffentlichter Windows-Release wird geprüft.</p>
-        <dl>
-          <div><dt>Veröffentlicht</dt><dd id="launcherReleaseDate">–</dd></div>
-          <div><dt>Setup</dt><dd id="launcherSetupSize">–</dd></div>
-          <div><dt>Portable</dt><dd id="launcherPortableSize">–</dd></div>
-          <div><dt>Prüfsumme</dt><dd id="launcherChecksumState">–</dd></div>
-        </dl>
+        <dl><div><dt>Veröffentlicht</dt><dd id="launcherReleaseDate">–</dd></div><div><dt>Setup</dt><dd id="launcherSetupSize">–</dd></div><div><dt>Portable</dt><dd id="launcherPortableSize">–</dd></div><div><dt>Prüfsumme</dt><dd id="launcherChecksumState">–</dd></div></dl>
         <a class="launcher-release-link is-hidden" id="launcherReleasePage" href="#" target="_blank" rel="noopener">RELEASE-DETAILS AUF GITHUB →</a>
       </aside>
     </div>
   </section>
 
-  <section class="launcher-public-section">
-    <div class="container">
-      <div class="launcher-public-heading"><div><span>WARUM DER LAUNCHER?</span><h2>LOKALE FUNKTIONEN BLEIBEN LOKAL.</h2></div><p>Die Website ist das Control Plane. Der Launcher übernimmt Funktionen, die direkt auf deinem Windows-PC laufen müssen.</p></div>
-      <div class="launcher-capability-grid">
-        <article><span>01</span><strong>Stream Studio</strong><p>Lokale Capture-, Audio-, Recording- und Streaming-Engine für den Creator-PC.</p></article>
-        <article><span>02</span><strong>OBS Integration</strong><p>OBS WebSocket verbinden, Szenen lesen und veröffentlichte Widgets als Browser Source einsetzen.</p></article>
-        <article><span>03</span><strong>Sichere lokale Credentials</strong><p>Stream-Zugangsdaten werden lokal verschlüsselt gespeichert und nicht als normale Website-Daten behandelt.</p></article>
-        <article><span>04</span><strong>Bridge &amp; Recovery</strong><p>Geräte-Link, Heartbeat, Reconnect und Diagnose verbinden Desktop und Creator Account kontrolliert.</p></article>
-      </div>
-    </div>
-  </section>
-
-  <section class="launcher-public-section launcher-public-section-alt">
+  <section class="launcher-public-section cfs-launcher-start-v165">
     <div class="container launcher-install-grid">
       <div>
-        <div class="launcher-public-heading compact"><div><span>INSTALLATION</span><h2>IN DREI SCHRITTEN STARTKLAR.</h2></div></div>
+        <div class="launcher-public-heading compact"><div><span>START</span><h2>IN DREI SCHRITTEN STARTKLAR.</h2></div></div>
         <div class="launcher-install-steps">
-          <article><b>1</b><div><strong>Setup herunterladen</strong><p>Nutze den offiziellen Setup-Download oben. Portable ist für Tests oder einen Start ohne Installation gedacht.</p></div></article>
-          <article><b>2</b><div><strong>Launcher installieren &amp; öffnen</strong><p>Der Release wird auf GitHub gebaut. Öffentliche Tag-Releases müssen den Windows-Signaturcheck bestehen.</p></div></article>
-          <article><b>3</b><div><strong>Creator Account verbinden</strong><p>Im Launcher einen Device-Link erzeugen und anschließend mit deinem Creator Account bestätigen.</p></div></article>
+          <article><b>1</b><div><strong>Setup laden</strong><p>Für normale Nutzung den Windows-Installer wählen.</p></div></article>
+          <article><b>2</b><div><strong>Installieren &amp; öffnen</strong><p>Öffentliche Releases müssen den Windows-Signaturcheck bestehen.</p></div></article>
+          <article><b>3</b><div><strong>Account verbinden</strong><p>Device-Link im Launcher erzeugen und im Creator Account bestätigen.</p></div></article>
         </div>
       </div>
       <aside class="launcher-security-panel">
-        <span class="launcher-panel-kicker">RELEASE-SICHERHEIT</span>
-        <h3>Kein versteckter Web-Download.</h3>
-        <p>Die Download-Seite verweist ausschließlich auf veröffentlichte Release-Artefakte. Ist kein Stable-Setup veröffentlicht, bleibt der Download deaktiviert.</p>
-        <ul><li>Setup und Portable getrennt</li><li>SHA-256-Datei im Release</li><li>Release-Manifest im Build</li><li>Kein Stream-Key im Downloadprozess</li></ul>
-        <a href="/pages/security.html">SICHERHEITSARCHITEKTUR ANSEHEN →</a>
+        <span class="launcher-panel-kicker">LOKALE GRENZE</span>
+        <h3>LOKALE FUNKTIONEN BLEIBEN LOKAL.</h3>
+        <p>Capture, Audio, OBS und Streaming laufen auf deinem PC. Stream-Zugangsdaten werden lokal verschlüsselt gespeichert.</p>
+        <ul><li>Stream Studio &amp; Capture</li><li>OBS WebSocket</li><li>lokal verschlüsselte Credentials</li><li>Bridge &amp; Reconnect</li></ul>
+        <a href="/pages/security.html">SICHERHEIT ANSEHEN →</a>
       </aside>
     </div>
   </section>
 
-  <section class="launcher-public-section">
+  <section class="launcher-public-section launcher-public-section-alt">
     <div class="container">
-      <div class="launcher-public-heading"><div><span>WELCHE VERSION?</span><h2>SETUP FÜR DEN ALLTAG. PORTABLE FÜR TESTS.</h2></div><p>Beide Varianten stammen aus demselben Windows-Build. Für normale Nutzung ist der Installer der klare Standardweg.</p></div>
-      <div class="launcher-edition-grid">
-        <article class="featured"><span>EMPFOHLEN</span><strong>Windows Setup</strong><p>Installiert die Creator Suite regulär und legt Startmenü-/Desktop-Zugänge an.</p><a id="launcherSetupDownloadSecondary" class="btn primary launcher-download-action is-disabled" href="#" aria-disabled="true">SETUP LADEN</a></article>
-        <article><span>ALTERNATIVE</span><strong>Portable</strong><p>Startet ohne klassische Installation. Geeignet für kontrollierte Tests und portable Beta-Szenarien.</p><a id="launcherPortableDownloadSecondary" class="btn launcher-download-action is-disabled" href="#" aria-disabled="true">PORTABLE LADEN</a></article>
-        <article><span>INTEGRITÄT</span><strong>SHA-256</strong><p>Wenn veröffentlicht, kannst du die Prüfsummen-Datei separat herunterladen und das Artefakt vergleichen.</p><a id="launcherChecksumDownload" class="btn launcher-download-action is-disabled" href="#" aria-disabled="true">PRÜFSUMMEN</a></article>
+      <div class="launcher-public-heading"><div><span>WAS DER LAUNCHER MACHT</span><h2>DESKTOP-FUNKTIONEN OHNE UMWEGE.</h2></div><p>Nur Funktionen, die wirklich lokal auf dem Creator-PC gebraucht werden.</p></div>
+      <div class="launcher-capability-grid cfs-launcher-capabilities-v165">
+        <article><span>01</span><strong>Stream Studio</strong><p>Capture, Audio, Recording und Streaming.</p></article>
+        <article><span>02</span><strong>OBS</strong><p>Szenen und Browser Sources verbinden.</p></article>
+        <article><span>03</span><strong>Credentials</strong><p>Streaming-Ziele lokal verschlüsselt halten.</p></article>
+        <article><span>04</span><strong>Bridge</strong><p>Geräte-Link, Heartbeat und Reconnect.</p></article>
       </div>
     </div>
   </section>
 
-  <section class="launcher-public-final">
-    <div class="container launcher-public-final-card">
-      <div><span>PRIVATE BETA</span><h2>LAUNCHER GELADEN? DANN ACCOUNT VERBINDEN.</h2><p>Der Download ist öffentlich nachvollziehbar. Die eigentlichen Creator- und Provider-Funktionen bleiben an deinen Account und die Beta-Freigaben gebunden.</p></div>
-      <div class="launcher-public-actions"><a class="btn primary" href="/pages/login.html">ANMELDEN</a><a class="btn" href="/pages/launcher-connect.html">GERÄT VERBINDEN</a></div>
+  <section class="launcher-public-section cfs-launcher-more-v165">
+    <div class="container">
+      <details class="cfs-public-details-v165 launcher-download-details">
+        <summary>WEITERE DOWNLOADS &amp; PRÜFSUMMEN</summary>
+        <div class="launcher-public-heading cfs-details-heading-v165"><div><span>WELCHE VERSION?</span><h2>SETUP FÜR DEN ALLTAG. PORTABLE FÜR TESTS.</h2></div><p>Beide Varianten stammen aus demselben Windows-Build.</p></div>
+        <div class="launcher-edition-grid">
+          <article class="featured"><span>EMPFOHLEN</span><strong>Windows Setup</strong><p>Normale Installation mit Startmenü-/Desktop-Zugang.</p><a id="launcherSetupDownloadSecondary" class="btn primary launcher-download-action is-disabled" href="#" aria-disabled="true">SETUP LADEN</a></article>
+          <article><span>ALTERNATIVE</span><strong>Portable</strong><p>Für kontrollierte Tests ohne klassische Installation.</p><a id="launcherPortableDownloadSecondary" class="btn launcher-download-action is-disabled" href="#" aria-disabled="true">PORTABLE LADEN</a></article>
+          <article><span>INTEGRITÄT</span><strong>SHA-256</strong><p>Prüfsummen des veröffentlichten Releases vergleichen.</p><a id="launcherChecksumDownload" class="btn launcher-download-action is-disabled" href="#" aria-disabled="true">PRÜFSUMMEN</a></article>
+        </div>
+      </details>
     </div>
+  </section>
+
+  <section class="launcher-public-final">
+    <div class="container launcher-public-final-card"><div><span>NÄCHSTER SCHRITT</span><h2>LAUNCHER GELADEN? ACCOUNT VERBINDEN.</h2><p>Creator- und Provider-Funktionen bleiben an deinen Account und die Beta-Freigaben gebunden.</p></div><div class="launcher-public-actions"><a class="btn primary" href="/pages/login.html">ANMELDEN</a><a class="btn" href="/pages/launcher-connect.html">GERÄT VERBINDEN</a></div></div>
   </section>
 </main>
 
-<footer class="brand-footer">
-  <div class="container brand-footer-grid">
-    <div><strong>cfs_zockt</strong><p>Gaming, Community und Creator Tools.</p></div>
-    <nav aria-label="Footer Navigation"><a href="/">Home</a><a href="/pages/creator-suite.html">Creator Suite</a><a href="/pages/launcher-download.html">Launcher</a><a href="/pages/security.html">Sicherheit</a><a href="/pages/support.html">Support</a></nav>
-    <nav aria-label="Rechtliches"><a href="/pages/impressum.html">Impressum</a><a href="/pages/datenschutz.html">Datenschutz</a><a href="/pages/nutzungsbedingungen.html">Nutzungsbedingungen</a></nav>
+<footer class="footer brand-footer public-footer" data-footer-refinement="v165">
+  <div class="container cfs-footer-v165-inner">
+    <div class="cfs-footer-v165-brand">
+      <img src="/assets/img/brand/cfs-zockt-wordmark-transparent.png" alt="cfs_zockt">
+      <span>Gaming · Community · Creator Suite</span>
+    </div>
+    <nav class="cfs-footer-v165-nav" aria-label="Footer Navigation">
+      <a href="/">Home</a><a href="/pages/creator-suite.html">Creator Suite</a><a href="/pages/launcher-download.html">Launcher</a><a href="/pages/support.html">Support</a>
+    </nav>
+    <div class="cfs-footer-v165-social"><a href="https://www.twitch.tv/cfs_zockt" target="_blank" rel="noopener noreferrer">Twitch</a><a href="https://www.tiktok.com/@cfs_zockt" target="_blank" rel="noopener noreferrer">TikTok</a><a href="https://discord.gg/3bfAkcJTp" target="_blank" rel="noopener noreferrer">Discord</a></div>
   </div>
+  <div class="container cfs-footer-v165-legal"><span>© 2026 cfs_zockt</span><span><a href="/pages/impressum.html">Impressum</a> · <a href="/pages/datenschutz.html">Datenschutz</a> · <a href="/pages/nutzungsbedingungen.html">Nutzungsbedingungen</a></span></div>
 </footer>
 </body>
 </html>
