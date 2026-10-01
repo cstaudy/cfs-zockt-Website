@@ -2,7 +2,7 @@
  * ============================================================
  * cfs_zockt Creator Suite
  * Website Backend
- * Version 3.20.5
+ * Version 3.20.15
  * ============================================================
  */
 
@@ -75,7 +75,7 @@ const APP_NAME =
     "CFS_Zockt Creator Suite";
 
 const BACKEND_VERSION =
-    "3.20.5";
+    "3.20.15";
 
 // ============================================================
 // PRIVATE BETA / LEGAL BASELINE
@@ -220,6 +220,7 @@ const TWITCH_VALIDATE_URL = "https://id.twitch.tv/oauth2/validate";
 const TWITCH_USERS_URL = "https://api.twitch.tv/helix/users";
 const TWITCH_EVENTSUB_URL = "https://api.twitch.tv/helix/eventsub/subscriptions";
 const TWITCH_STREAMS_URL = "https://api.twitch.tv/helix/streams";
+const TWITCH_VIDEOS_URL = "https://api.twitch.tv/helix/videos";
 const TWITCH_STREAM_KEY_URL = "https://api.twitch.tv/helix/streams/key";
 const TWITCH_INGESTS_URL = "https://ingest.twitch.tv/ingests";
 const TWITCH_EVENTSUB_CALLBACK_URL = `${APP_BASE_URL}/api/twitch/eventsub`;
@@ -417,7 +418,7 @@ const LAUNCHER_MIN_BETA_VERSION =
 const LAUNCHER_BUILD_TARGET_VERSION =
     String(
         process.env.CFS_LAUNCHER_BUILD_TARGET_VERSION ||
-        "0.47.29"
+        "0.47.30"
     ).trim();
 
 const LAUNCHER_BLOCKED_VERSIONS =
@@ -531,6 +532,17 @@ const TIKTOK_TIMEOUT_MS =
 // geladen. Browser erhalten weder TikTok-Tokens noch Provider-Details.
 const PUBLIC_TIKTOK_PROFILE_URL =
     "https://www.tiktok.com/@cfs_zockt";
+
+const PUBLIC_TWITCH_PROFILE_URL = (() => {
+    const configured = String(process.env.CFS_PUBLIC_TWITCH_PROFILE_URL || "https://www.twitch.tv/cfs_zockt").trim();
+    try {
+        const url = new URL(configured);
+        if (url.protocol !== "https:" || !["twitch.tv","www.twitch.tv"].includes(url.hostname.toLowerCase())) throw new Error("invalid twitch host");
+        return url.toString();
+    } catch {
+        return "https://www.twitch.tv/cfs_zockt";
+    }
+})();
 
 // Optionaler manueller Fallback fuer die oeffentliche TikTok-Followerzahl.
 // Wird nur verwendet, wenn fuer den Default-Creator keine TikTok-Statistik
@@ -1108,7 +1120,7 @@ const CONTENT_SECURITY_POLICY =
         "frame-ancestors 'self'",
         "frame-src 'self'",
         "form-action 'self'",
-        "script-src 'self' 'sha256-iYRjdExBre2F6oWcwvmahJvVY/6mH/VJ6zl2UgrxncI='",
+        "script-src 'self' 'sha256-ED1mubiXpyMozAI/g79d/nbnX4u1UTwecpxPHS2u3f0='",
         "script-src-attr 'none'",
         "style-src 'self' 'unsafe-inline'",
         "img-src 'self' data: blob: https:",
@@ -1194,6 +1206,19 @@ app.use(
             res.setHeader(
                 "X-Robots-Tag",
                 "noindex, nofollow, noarchive"
+            );
+        }
+
+        if (
+            req.path === "/pages/impressum.html" ||
+            req.path === "/pages/datenschutz.html" ||
+            req.path === "/pages/nutzungsbedingungen.html"
+        ) {
+            // Rechtstexte bleiben über Footer und direkte URL öffentlich erreichbar,
+            // werden aber bewusst nicht als normale Suchergebnisse beworben.
+            res.setHeader(
+                "X-Robots-Tag",
+                "noindex, follow, noarchive, nosnippet"
             );
         }
 
@@ -8005,26 +8030,36 @@ const STREAM_STUDIO_DOCK_ITEMS=["scenes","monitors","scene_composer","transition
 
 function streamStudioWorkspaceDefaults(){
     return {
-        version:2,
+        version:3,
         zones:{
-            left:["scenes"],
+            left:["scenes","sources"],
             center:["monitors","scene_composer","transition","overlay_rack"],
-            right:["sources"],
-            bottom:["capture","audio","output"],
-            wide:["preflight","session","health","activity","multistream"]
+            right:["session","preflight","multistream"],
+            bottom:["audio","capture","output"],
+            wide:["activity","health"]
         },
         sizes:{},
-        columns:{left_px:250,right_px:310}
+        columns:{left_px:280,right_px:340}
     };
+}
+
+function streamStudioWorkspaceLooksLegacyDefault(source={}){
+    if(Number(source?.version||0)>=3)return false;
+    const zones=source?.zones&&typeof source.zones==="object"&&!Array.isArray(source.zones)?source.zones:{};
+    const legacy={left:["scenes"],center:["monitors","scene_composer","transition","overlay_rack"],right:["sources"],bottom:["capture","audio","output"],wide:["preflight","session","health","activity","multistream"]};
+    const columns=source?.columns&&typeof source.columns==="object"&&!Array.isArray(source.columns)?source.columns:{};
+    const legacyColumns=(columns.left_px===undefined||Number(columns.left_px)===250)&&(columns.right_px===undefined||Number(columns.right_px)===310);
+    return STREAM_STUDIO_DOCK_ZONES.every(zone=>JSON.stringify(Array.isArray(zones[zone])?zones[zone]:[])===JSON.stringify(legacy[zone]))&&!Object.keys(source?.sizes||{}).length&&legacyColumns;
 }
 
 function sanitizeStreamStudioWorkspace(input={}){
     const defaults=streamStudioWorkspaceDefaults();
-    const source=input&&typeof input==="object"&&!Array.isArray(input)?input:{};
+    let source=input&&typeof input==="object"&&!Array.isArray(input)?input:{};
+    if(streamStudioWorkspaceLooksLegacyDefault(source))source=defaults;
     const zones=source.zones&&typeof source.zones==="object"&&!Array.isArray(source.zones)?source.zones:{};
     const allowed=new Set(STREAM_STUDIO_DOCK_ITEMS);
     const seen=new Set();
-    const clean={version:2,zones:{},sizes:{},columns:{left_px:250,right_px:310}};
+    const clean={version:3,zones:{},sizes:{},columns:{left_px:280,right_px:340}};
     for(const zone of STREAM_STUDIO_DOCK_ZONES){
         clean.zones[zone]=[];
         const requested=Array.isArray(zones[zone])?zones[zone]:[];
@@ -8052,8 +8087,8 @@ function sanitizeStreamStudioWorkspace(input={}){
         if(Object.keys(size).length)clean.sizes[id]=size;
     }
     const columns=source.columns&&typeof source.columns==="object"&&!Array.isArray(source.columns)?source.columns:{};
-    clean.columns.left_px=Math.round(clampNumber(columns.left_px,190,520,250));
-    clean.columns.right_px=Math.round(clampNumber(columns.right_px,220,620,310));
+    clean.columns.left_px=Math.round(clampNumber(columns.left_px,190,520,280));
+    clean.columns.right_px=Math.round(clampNumber(columns.right_px,220,620,340));
     return clean;
 }
 
@@ -10453,26 +10488,26 @@ const WIDGET_STUDIO_WIDGET_TYPES = Object.freeze({
     chat_overlay: {
         key: "chat_overlay", minimum_plan: "creator", label: "Chat Fenster", short_label: "LIVE CHAT",
         category: "chat", mode: "chat", event_type: "chat",
-        source: "TikTok LIVE Chat", source_kind: "live_bridge", provider: "tiktok", platform: "tiktok", studio_areas: ["tiktok", "obs"],
+        source: "TikTok LIVE Chat", source_kind: "live_bridge", provider: "tiktok", platform: "tiktok", studio_areas: ["tiktok"],
         description: "Zeigt echte TikTok-LIVE-Kommentare als frei gestaltbares Chat-Overlay. Im OBS-Bereich bleibt TikTok die Datenquelle."
     },
 
     follower_goal: {
         key: "follower_goal", label: "Follower Goal", short_label: "FOLLOWER GOAL",
         category: "goals", mode: "goal", metric: "profile.followers",
-        source: "TikTok Profil", source_kind: "profile", provider: "tiktok", platform: "tiktok", studio_areas: ["tiktok", "obs"],
+        source: "TikTok Profil", source_kind: "profile", provider: "tiktok", platform: "tiktok", studio_areas: ["tiktok"],
         description: "Zeigt deinen aktuellen Follower-Stand und ein frei definierbares Ziel.", default_goal: 2000
     },
     follower_counter: {
         key: "follower_counter", label: "Follower Counter", short_label: "FOLLOWER COUNTER",
         category: "counter", mode: "counter", metric: "profile.followers",
-        source: "TikTok Profil", source_kind: "profile", provider: "tiktok", platform: "tiktok", studio_areas: ["tiktok", "obs"],
+        source: "TikTok Profil", source_kind: "profile", provider: "tiktok", platform: "tiktok", studio_areas: ["tiktok"],
         description: "Ein sauberer Zähler für deinen aktuellen Profil-Followerstand."
     },
     profile_likes_counter: {
         key: "profile_likes_counter", label: "Profil Likes Counter", short_label: "PROFIL LIKES",
         category: "counter", mode: "counter", metric: "profile.likes_total",
-        source: "TikTok Profil", source_kind: "profile", provider: "tiktok", platform: "tiktok", studio_areas: ["tiktok", "obs"],
+        source: "TikTok Profil", source_kind: "profile", provider: "tiktok", platform: "tiktok", studio_areas: ["tiktok"],
         description: "Zeigt die Gesamtzahl der Likes deines TikTok-Profils – nicht die Likes eines LIVE."
     },
     manual_counter: {
@@ -10510,192 +10545,192 @@ const WIDGET_STUDIO_WIDGET_TYPES = Object.freeze({
     live_like_goal: {
         key: "live_like_goal", minimum_plan: "creator", label: "LIVE Like Goal", short_label: "LIVE LIKE GOAL",
         category: "goals", mode: "goal", metric: "live.likes",
-        source: "TikTok LIVE Bridge", source_kind: "live_bridge", provider: "tiktok", platform: "tiktok", studio_areas: ["tiktok", "obs"],
+        source: "TikTok LIVE Bridge", source_kind: "live_bridge", provider: "tiktok", platform: "tiktok", studio_areas: ["tiktok"],
         description: "Like-Ziel für eine laufende TikTok-LIVE-Session. Bis zur Bridge im Simulator testbar.", default_goal: 10000
     },
     live_like_counter: {
         key: "live_like_counter", minimum_plan: "creator", label: "LIVE Like Counter", short_label: "LIVE LIKES",
         category: "counter", mode: "counter", metric: "live.likes",
-        source: "TikTok LIVE Bridge", source_kind: "live_bridge", provider: "tiktok", platform: "tiktok", studio_areas: ["tiktok", "obs"],
+        source: "TikTok LIVE Bridge", source_kind: "live_bridge", provider: "tiktok", platform: "tiktok", studio_areas: ["tiktok"],
         description: "Zählt Likes innerhalb der aktuellen LIVE-Session."
     },
     live_timer: {
         key: "live_timer", minimum_plan: "creator", label: "LIVE Timer", short_label: "LIVE TIMER",
         category: "counter", mode: "timer", metric: "",
-        source: "TikTok LIVE Bridge", source_kind: "live_bridge", provider: "tiktok", platform: "tiktok", studio_areas: ["tiktok", "obs"],
+        source: "TikTok LIVE Bridge", source_kind: "live_bridge", provider: "tiktok", platform: "tiktok", studio_areas: ["tiktok"],
         description: "Zeigt automatisch, wie lange die aktuelle TikTok-LIVE-Session läuft."
     },
     viewer_counter: {
         key: "viewer_counter", minimum_plan: "creator", label: "Viewer Counter", short_label: "VIEWER",
         category: "counter", mode: "counter", metric: "live.viewers",
-        source: "TikTok LIVE Bridge", source_kind: "live_bridge", provider: "tiktok", platform: "tiktok", studio_areas: ["tiktok", "obs"],
+        source: "TikTok LIVE Bridge", source_kind: "live_bridge", provider: "tiktok", platform: "tiktok", studio_areas: ["tiktok"],
         description: "Zeigt die aktuelle Zuschauerzahl deiner LIVE-Session."
     },
     gift_goal: {
         key: "gift_goal", minimum_plan: "creator", label: "Gift Goal", short_label: "GIFT GOAL",
         category: "goals", mode: "goal", metric: "live.gifts_count",
-        source: "TikTok LIVE Bridge", source_kind: "live_bridge", provider: "tiktok", platform: "tiktok", studio_areas: ["tiktok", "obs"],
+        source: "TikTok LIVE Bridge", source_kind: "live_bridge", provider: "tiktok", platform: "tiktok", studio_areas: ["tiktok"],
         description: "Setze ein Ziel für die Anzahl empfangener Gifts in der LIVE-Session.", default_goal: 50
     },
     gift_counter: {
         key: "gift_counter", minimum_plan: "creator", label: "Gift Counter", short_label: "GIFTS",
         category: "counter", mode: "counter", metric: "live.gifts_count",
-        source: "TikTok LIVE Bridge", source_kind: "live_bridge", provider: "tiktok", platform: "tiktok", studio_areas: ["tiktok", "obs"],
+        source: "TikTok LIVE Bridge", source_kind: "live_bridge", provider: "tiktok", platform: "tiktok", studio_areas: ["tiktok"],
         description: "Zählt empfangene Gifts in der laufenden LIVE-Session."
     },
     share_goal: {
         key: "share_goal", minimum_plan: "creator", label: "Share Goal", short_label: "SHARE GOAL",
         category: "goals", mode: "goal", metric: "live.shares",
-        source: "TikTok LIVE Bridge", source_kind: "live_bridge", provider: "tiktok", platform: "tiktok", studio_areas: ["tiktok", "obs"],
+        source: "TikTok LIVE Bridge", source_kind: "live_bridge", provider: "tiktok", platform: "tiktok", studio_areas: ["tiktok"],
         description: "Setze ein Ziel für Shares innerhalb deiner LIVE-Session.", default_goal: 100
     },
     share_counter: {
         key: "share_counter", minimum_plan: "creator", label: "Share Counter", short_label: "SHARES",
         category: "counter", mode: "counter", metric: "live.shares",
-        source: "TikTok LIVE Bridge", source_kind: "live_bridge", provider: "tiktok", platform: "tiktok", studio_areas: ["tiktok", "obs"],
+        source: "TikTok LIVE Bridge", source_kind: "live_bridge", provider: "tiktok", platform: "tiktok", studio_areas: ["tiktok"],
         description: "Zählt Shares deiner laufenden LIVE-Session."
     },
     follower_gain_counter: {
         key: "follower_gain_counter", minimum_plan: "creator", label: "Follower Gain", short_label: "NEUE FOLLOWER",
         category: "counter", mode: "counter", metric: "live.followers_gained",
-        source: "TikTok LIVE Bridge", source_kind: "live_bridge", provider: "tiktok", platform: "tiktok", studio_areas: ["tiktok", "obs"],
+        source: "TikTok LIVE Bridge", source_kind: "live_bridge", provider: "tiktok", platform: "tiktok", studio_areas: ["tiktok"],
         description: "Zeigt, wie viele neue Follower während der LIVE-Session hinzugekommen sind."
     },
     follower_gain_goal: {
         key: "follower_gain_goal", minimum_plan: "creator", label: "Follower Gain Goal", short_label: "FOLLOWER GAIN GOAL",
         category: "goals", mode: "goal", metric: "live.followers_gained",
-        source: "TikTok LIVE Bridge", source_kind: "live_bridge", provider: "tiktok", platform: "tiktok", studio_areas: ["tiktok", "obs"],
+        source: "TikTok LIVE Bridge", source_kind: "live_bridge", provider: "tiktok", platform: "tiktok", studio_areas: ["tiktok"],
         description: "Ziel für neue Follower innerhalb der aktuellen LIVE-Session.", default_goal: 100
     },
 
     follow_alert: {
         key: "follow_alert", minimum_plan: "creator", label: "Follow Alert", short_label: "FOLLOW ALERT",
         category: "alerts", mode: "alert", event_type: "follow",
-        source: "TikTok LIVE Event Queue", source_kind: "live_bridge", provider: "tiktok", platform: "tiktok", studio_areas: ["tiktok", "obs"],
+        source: "TikTok LIVE Event Queue", source_kind: "live_bridge", provider: "tiktok", platform: "tiktok", studio_areas: ["tiktok"],
         description: "Zeigt einen animierten Alert, wenn dir während des LIVE jemand folgt.", default_duration_ms: 4500
     },
     gift_alert: {
         key: "gift_alert", minimum_plan: "creator", label: "Gift Alert", short_label: "GIFT ALERT",
         category: "alerts", mode: "alert", event_type: "gift",
-        source: "TikTok LIVE Event Queue", source_kind: "live_bridge", provider: "tiktok", platform: "tiktok", studio_areas: ["tiktok", "obs"],
+        source: "TikTok LIVE Event Queue", source_kind: "live_bridge", provider: "tiktok", platform: "tiktok", studio_areas: ["tiktok"],
         description: "Zeigt Sender, Gift und Anzahl als animierten LIVE-Alert.", default_duration_ms: 5200
     },
     share_alert: {
         key: "share_alert", minimum_plan: "creator", label: "Share Alert", short_label: "SHARE ALERT",
         category: "alerts", mode: "alert", event_type: "share",
-        source: "TikTok LIVE Event Queue", source_kind: "live_bridge", provider: "tiktok", platform: "tiktok", studio_areas: ["tiktok", "obs"],
+        source: "TikTok LIVE Event Queue", source_kind: "live_bridge", provider: "tiktok", platform: "tiktok", studio_areas: ["tiktok"],
         description: "Bedankt sich sichtbar, wenn ein Zuschauer deinen LIVE teilt.", default_duration_ms: 4200
     },
     goal_reached_alert: {
         key: "goal_reached_alert", minimum_plan: "creator", label: "Goal Reached Alert", short_label: "GOAL REACHED",
         category: "alerts", mode: "goal_alert", metric: "live.likes",
         metric_options: ["profile.followers", "live.likes", "live.gifts_count", "live.shares", "live.followers_gained"],
-        source: "TikTok Creator Suite Daten", source_kind: "hybrid", provider: "tiktok", platform: "tiktok", studio_areas: ["tiktok", "obs"],
+        source: "TikTok Creator Suite Daten", source_kind: "hybrid", provider: "tiktok", platform: "tiktok", studio_areas: ["tiktok"],
         description: "Wird ausgelöst, sobald ein ausgewählter Zähler seinen Zielwert erreicht.",
         default_goal: 10000, default_duration_ms: 6000
     },
     latest_follower: {
         key: "latest_follower", minimum_plan: "creator", label: "Latest Follower", short_label: "LATEST FOLLOWER",
         category: "latest", mode: "latest", event_type: "follow",
-        source: "TikTok LIVE Event Queue", source_kind: "live_bridge", provider: "tiktok", platform: "tiktok", studio_areas: ["tiktok", "obs"],
+        source: "TikTok LIVE Event Queue", source_kind: "live_bridge", provider: "tiktok", platform: "tiktok", studio_areas: ["tiktok"],
         description: "Zeigt dauerhaft den zuletzt erfassten neuen Follower der aktuellen LIVE-Session."
     },
     latest_gift: {
         key: "latest_gift", minimum_plan: "creator", label: "Latest Gift", short_label: "LATEST GIFT",
         category: "latest", mode: "latest", event_type: "gift",
-        source: "TikTok LIVE Event Queue", source_kind: "live_bridge", provider: "tiktok", platform: "tiktok", studio_areas: ["tiktok", "obs"],
+        source: "TikTok LIVE Event Queue", source_kind: "live_bridge", provider: "tiktok", platform: "tiktok", studio_areas: ["tiktok"],
         description: "Zeigt den letzten Gift-Sender inklusive Gift-Name und Anzahl."
     },
     latest_share: {
         key: "latest_share", minimum_plan: "creator", label: "Latest Share", short_label: "LATEST SHARE",
         category: "latest", mode: "latest", event_type: "share",
-        source: "TikTok LIVE Event Queue", source_kind: "live_bridge", provider: "tiktok", platform: "tiktok", studio_areas: ["tiktok", "obs"],
+        source: "TikTok LIVE Event Queue", source_kind: "live_bridge", provider: "tiktok", platform: "tiktok", studio_areas: ["tiktok"],
         description: "Zeigt den letzten Zuschauer, der deinen LIVE geteilt hat."
     },
 
     twitch_live_timer: {
         key: "twitch_live_timer", minimum_plan: "creator", label: "Twitch LIVE Timer", short_label: "TWITCH LIVE TIMER",
         category: "counter", mode: "timer", metric: "",
-        source: "Twitch EventSub", source_kind: "live_provider", provider: "twitch", platform: "twitch", studio_areas: ["twitch", "obs"],
+        source: "Twitch EventSub", source_kind: "live_provider", provider: "twitch", platform: "twitch", studio_areas: ["twitch"],
         description: "Zeigt automatisch, wie lange dein aktueller Twitch-Stream läuft."
     },
     twitch_chat_overlay: {
         key: "twitch_chat_overlay", minimum_plan: "creator", label: "Twitch Chat Fenster", short_label: "TWITCH CHAT",
         category: "chat", mode: "chat", event_type: "chat",
         required_scopes: ["user:read:chat","user:bot","channel:bot"],
-        source: "Twitch EventSub Chat", source_kind: "live_provider", provider: "twitch", platform: "twitch", studio_areas: ["twitch", "obs"],
+        source: "Twitch EventSub Chat", source_kind: "live_provider", provider: "twitch", platform: "twitch", studio_areas: ["twitch"],
         description: "Zeigt echte Twitch-Chat-Nachrichten des verbundenen Creator-Kanals als frei gestaltbares Overlay."
     },
     twitch_follow_alert: {
         key: "twitch_follow_alert", minimum_plan: "creator", label: "Twitch Follow Alert", short_label: "TWITCH FOLLOW",
         category: "alerts", mode: "alert", event_type: "follow", required_scope: "moderator:read:followers",
-        source: "Twitch EventSub", source_kind: "live_provider", provider: "twitch", platform: "twitch", studio_areas: ["twitch", "obs"],
+        source: "Twitch EventSub", source_kind: "live_provider", provider: "twitch", platform: "twitch", studio_areas: ["twitch"],
         description: "Zeigt einen Alert bei einem neuen Twitch-Follow.", default_duration_ms: 4500
     },
     twitch_latest_follower: {
         key: "twitch_latest_follower", minimum_plan: "creator", label: "Twitch Latest Follower", short_label: "LATEST TWITCH FOLLOWER",
         category: "latest", mode: "latest", event_type: "follow", required_scope: "moderator:read:followers",
-        source: "Twitch EventSub", source_kind: "live_provider", provider: "twitch", platform: "twitch", studio_areas: ["twitch", "obs"],
+        source: "Twitch EventSub", source_kind: "live_provider", provider: "twitch", platform: "twitch", studio_areas: ["twitch"],
         description: "Zeigt dauerhaft den zuletzt erfassten Twitch-Follower."
     },
     twitch_sub_alert: {
         key: "twitch_sub_alert", minimum_plan: "creator", label: "Twitch Sub Alert", short_label: "TWITCH SUB",
         category: "alerts", mode: "alert", event_type: "subscribe", required_scope: "channel:read:subscriptions",
-        source: "Twitch EventSub", source_kind: "live_provider", provider: "twitch", platform: "twitch", studio_areas: ["twitch", "obs"],
+        source: "Twitch EventSub", source_kind: "live_provider", provider: "twitch", platform: "twitch", studio_areas: ["twitch"],
         description: "Zeigt einen Alert bei einem neuen Twitch-Sub oder Resub.", default_duration_ms: 5200
     },
     twitch_cheer_alert: {
         key: "twitch_cheer_alert", minimum_plan: "creator", label: "Twitch Cheer Alert", short_label: "TWITCH CHEER",
         category: "alerts", mode: "alert", event_type: "cheer", required_scope: "bits:read",
-        source: "Twitch EventSub", source_kind: "live_provider", provider: "twitch", platform: "twitch", studio_areas: ["twitch", "obs"],
+        source: "Twitch EventSub", source_kind: "live_provider", provider: "twitch", platform: "twitch", studio_areas: ["twitch"],
         description: "Zeigt einen Alert, wenn Bits in deinem Twitch-Kanal verwendet werden.", default_duration_ms: 5200
     },
     youtube_subscriber_goal: {
         key: "youtube_subscriber_goal", minimum_plan: "creator", label: "YouTube Abonnenten Goal", short_label: "YOUTUBE ABO GOAL",
         category: "goals", mode: "goal", metric: "profile.followers", required_scope: "https://www.googleapis.com/auth/youtube.readonly",
-        source: "YouTube Kanal", source_kind: "profile", provider: "youtube", platform: "youtube", studio_areas: ["youtube", "obs"],
+        source: "YouTube Kanal", source_kind: "profile", provider: "youtube", platform: "youtube", studio_areas: ["youtube"],
         description: "Zeigt den Abonnentenstand des verbundenen YouTube-Kanals und ein frei definierbares Ziel.", default_goal: 1000
     },
     youtube_subscriber_counter: {
         key: "youtube_subscriber_counter", minimum_plan: "creator", label: "YouTube Abonnenten Counter", short_label: "YOUTUBE ABOS",
         category: "counter", mode: "counter", metric: "profile.followers", required_scope: "https://www.googleapis.com/auth/youtube.readonly",
-        source: "YouTube Kanal", source_kind: "profile", provider: "youtube", platform: "youtube", studio_areas: ["youtube", "obs"],
+        source: "YouTube Kanal", source_kind: "profile", provider: "youtube", platform: "youtube", studio_areas: ["youtube"],
         description: "Zeigt den aktuellen Abonnentenstand des verbundenen YouTube-Kanals."
     },
     youtube_live_timer: {
         key: "youtube_live_timer", minimum_plan: "creator", label: "YouTube LIVE Timer", short_label: "YOUTUBE LIVE TIMER",
         category: "counter", mode: "timer", metric: "", required_scope: "https://www.googleapis.com/auth/youtube.readonly",
-        source: "YouTube Live Streaming API", source_kind: "live_provider", provider: "youtube", platform: "youtube", studio_areas: ["youtube", "obs"],
+        source: "YouTube Live Streaming API", source_kind: "live_provider", provider: "youtube", platform: "youtube", studio_areas: ["youtube"],
         description: "Zeigt automatisch, wie lange der erkannte YouTube-Livestream läuft."
     },
     youtube_chat_overlay: {
         key: "youtube_chat_overlay", minimum_plan: "creator", label: "YouTube Live Chat", short_label: "YOUTUBE CHAT",
         category: "chat", mode: "chat", event_type: "chat", required_scope: "https://www.googleapis.com/auth/youtube.readonly",
-        source: "YouTube Live Chat", source_kind: "live_provider", provider: "youtube", platform: "youtube", studio_areas: ["youtube", "obs"],
+        source: "YouTube Live Chat", source_kind: "live_provider", provider: "youtube", platform: "youtube", studio_areas: ["youtube"],
         description: "Zeigt Nachrichten aus dem Live-Chat des aktuell verbundenen YouTube-Livestreams."
     },
     youtube_member_alert: {
         key: "youtube_member_alert", minimum_plan: "creator", label: "YouTube Mitgliedschaft Alert", short_label: "YOUTUBE MEMBER",
         category: "alerts", mode: "alert", event_type: "membership", required_scope: "https://www.googleapis.com/auth/youtube.readonly",
-        source: "YouTube Live Chat Events", source_kind: "live_provider", provider: "youtube", platform: "youtube", studio_areas: ["youtube", "obs"],
+        source: "YouTube Live Chat Events", source_kind: "live_provider", provider: "youtube", platform: "youtube", studio_areas: ["youtube"],
         description: "Reagiert auf neue Mitgliedschaften, Meilensteine und verschenkte Mitgliedschaften im YouTube Live Chat.", default_duration_ms: 5200
     },
     youtube_latest_member: {
         key: "youtube_latest_member", minimum_plan: "creator", label: "YouTube Latest Member", short_label: "LATEST YOUTUBE MEMBER",
         category: "latest", mode: "latest", event_type: "membership", required_scope: "https://www.googleapis.com/auth/youtube.readonly",
-        source: "YouTube Live Chat Events", source_kind: "live_provider", provider: "youtube", platform: "youtube", studio_areas: ["youtube", "obs"],
+        source: "YouTube Live Chat Events", source_kind: "live_provider", provider: "youtube", platform: "youtube", studio_areas: ["youtube"],
         description: "Zeigt das zuletzt erfasste Mitgliedschafts-Ereignis des aktuellen YouTube-Livestreams."
     },
     youtube_super_chat_alert: {
         key: "youtube_super_chat_alert", minimum_plan: "creator", label: "YouTube Super Chat Alert", short_label: "SUPER CHAT",
         category: "alerts", mode: "alert", event_type: "super_chat", required_scope: "https://www.googleapis.com/auth/youtube.readonly",
-        source: "YouTube Live Chat Events", source_kind: "live_provider", provider: "youtube", platform: "youtube", studio_areas: ["youtube", "obs"],
+        source: "YouTube Live Chat Events", source_kind: "live_provider", provider: "youtube", platform: "youtube", studio_areas: ["youtube"],
         description: "Zeigt einen Alert bei Super Chats und Super Stickern im YouTube-Livestream.", default_duration_ms: 5600
     },
     youtube_latest_super_chat: {
         key: "youtube_latest_super_chat", minimum_plan: "creator", label: "YouTube Latest Super Chat", short_label: "LATEST SUPER CHAT",
         category: "latest", mode: "latest", event_type: "super_chat", required_scope: "https://www.googleapis.com/auth/youtube.readonly",
-        source: "YouTube Live Chat Events", source_kind: "live_provider", provider: "youtube", platform: "youtube", studio_areas: ["youtube", "obs"],
+        source: "YouTube Live Chat Events", source_kind: "live_provider", provider: "youtube", platform: "youtube", studio_areas: ["youtube"],
         description: "Zeigt den zuletzt erfassten Super Chat oder Super Sticker."
     }
 });
@@ -10712,7 +10747,7 @@ function assertWidgetProviderTaxonomy() {
         const rules=WIDGET_PROVIDER_TAXONOMY[provider];
         if(!rules)throw new Error(`widget_provider_unknown:${item.key}`);
         const areas=Array.isArray(item.studio_areas)?item.studio_areas:[];
-        if(areas.some(area=>area!==provider&&area!=="obs"))throw new Error(`widget_provider_area_mismatch:${item.key}`);
+        if(areas.length!==1||areas[0]!==provider)throw new Error(`widget_provider_area_mismatch:${item.key}`);
         const eventType=String(item.event_type||"").toLowerCase();
         if(eventType&&rules.forbidden_events.has(eventType))throw new Error(`widget_provider_event_mismatch:${item.key}`);
         const metrics=[item.metric,...(Array.isArray(item.metric_options)?item.metric_options:[])].map(v=>String(v||"")).filter(Boolean);
@@ -17991,6 +18026,10 @@ app.post(
                 studioWidgetDefinition(widgetType);
             const providerAccess=await creatorWidgetProviderAccess(req.creatorAccount.id);
             const widgetProvider=studioWidgetProvider(definition);
+            const requestedPlatform=String(req.body?.requested_platform||"").toLowerCase();
+            if(requestedPlatform&&requestedPlatform!==widgetProvider){
+                return res.status(400).json({ok:false,code:"widget_platform_mismatch",provider:widgetProvider,requested_platform:requestedPlatform,error:"Widget-Typ und gewählte Streaming-Plattform passen nicht zusammen."});
+            }
             if(["tiktok","twitch"].includes(widgetProvider)&&providerAccess?.[widgetProvider]?.beta_access?.allowed===false){
                 const access=await creatorAccessProfile(req.creatorAccount);
                 return res.status(403).json(providerBetaDeniedPayload(access,widgetProvider));
@@ -22531,12 +22570,15 @@ async function deleteTwitchEventSubSubscription(subscriptionId,appToken){
 async function syncTwitchLiveState(creatorId,connection=null,appToken=null){
     const row=connection||await ensureValidTwitchConnection(creatorId);
     if(!row?.connected||!row.twitch_user_id||!twitchConfigured())return getProviderLiveState(creatorId,"twitch");
+    const previous=await getProviderLiveState(creatorId,"twitch");
     const token=appToken||await twitchAppAccessToken();
     const data=await twitchFetch(`${TWITCH_STREAMS_URL}?user_id=${encodeURIComponent(row.twitch_user_id)}`,{headers:{Authorization:`Bearer ${token}`,"Client-Id":TWITCH_CLIENT_ID}});
     const stream=Array.isArray(data?.data)?data.data[0]:null;
     if(stream){
-        await saveTwitchProviderLiveState(creatorId,{connected:true,sessionId:`twitch:${String(stream.id||row.twitch_user_id).slice(0,180)}`,startedAt:stream.started_at||new Date().toISOString()});
-    }else{
+        await saveTwitchProviderLiveState(creatorId,{connected:true,sessionId:`twitch:${String(stream.id||row.twitch_user_id).slice(0,180)}`,startedAt:stream.started_at||new Date().toISOString(),lastEventAt:new Date().toISOString()});
+    }else if(previous?.connected===true){
+        await saveTwitchProviderLiveState(creatorId,{connected:false,lastEventAt:new Date().toISOString()});
+    }else if(!previous?.updated_at){
         await saveTwitchProviderLiveState(creatorId,{connected:false});
     }
     return getProviderLiveState(creatorId,"twitch");
@@ -24001,6 +24043,10 @@ async function fetchPublicTikTokCommunityStats() {
     };
 }
 
+const PUBLIC_TWITCH_LIVE_CACHE_TTL_MS = Math.max(5_000, Math.min(60_000, Number(process.env.CFS_PUBLIC_TWITCH_LIVE_CACHE_TTL_MS || 12_000)));
+const PUBLIC_TWITCH_STALE_LIVE_MAX_MS = 2 * 60 * 1000;
+const publicTwitchLiveCache = new Map();
+
 const PUBLIC_LIVE_EVENT_FRESH_MS = 10 * 60 * 1000;
 const PUBLIC_LIVE_SESSION_FRESH_MS = 20 * 60 * 1000;
 const PUBLIC_LIVE_OVERRIDE_MAX_MS = 12 * 60 * 60 * 1000;
@@ -24060,6 +24106,170 @@ async function setCreatorPublicLiveControl(creatorId, active) {
     };
 }
 
+function twitchVideoDurationSeconds(value = "") {
+    const raw=String(value||"").trim().toLowerCase();
+    const match=raw.match(/^(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?$/);
+    if(!match)return 0;
+    return Math.max(0,(Number(match[1]||0)*3600)+(Number(match[2]||0)*60)+Number(match[3]||0));
+}
+
+async function latestTwitchArchive(userId,appToken){
+    const id=String(userId||"").trim();
+    if(!id)return null;
+    const params=new URLSearchParams({user_id:id,type:"archive",first:"1"});
+    const data=await twitchFetch(`${TWITCH_VIDEOS_URL}?${params.toString()}`,{headers:{Authorization:`Bearer ${appToken}`,"Client-Id":TWITCH_CLIENT_ID}});
+    const video=Array.isArray(data?.data)?data.data[0]:null;
+    if(!video?.created_at)return null;
+    const startedAt=new Date(video.created_at);
+    if(!Number.isFinite(startedAt.getTime()))return null;
+    const durationSeconds=twitchVideoDurationSeconds(video.duration);
+    const endedAt=durationSeconds>0?new Date(startedAt.getTime()+durationSeconds*1000):null;
+    return {
+        started_at:startedAt.toISOString(),
+        ended_at:endedAt&&Number.isFinite(endedAt.getTime())?endedAt.toISOString():null,
+        title:studioText(video.title,220,""),
+        url:/^https:\/\//i.test(String(video.url||""))?String(video.url):""
+    };
+}
+
+async function seedTwitchLastLiveHistory(creatorId,{startedAt=null,endedAt=null}={}){
+    if(!startedAt)return;
+    await pool.query(`
+      INSERT INTO creator_provider_live_state(creator_id,provider,session_id,connected,started_at,last_event_at,updated_at)
+      VALUES($1,'twitch',NULL,FALSE,$2,$3,NOW())
+      ON CONFLICT(creator_id,provider) DO UPDATE SET
+        started_at=COALESCE(creator_provider_live_state.started_at,EXCLUDED.started_at),
+        last_event_at=COALESCE(creator_provider_live_state.last_event_at,EXCLUDED.last_event_at)
+    `,[normalizeCreatorId(creatorId),startedAt,endedAt]);
+}
+
+function publicTwitchChannelUrl(login = "") {
+    const normalized = String(login || "").trim().toLowerCase();
+    if (/^[a-z0-9_]{3,25}$/.test(normalized)) return `https://www.twitch.tv/${normalized}`;
+    return PUBLIC_TWITCH_PROFILE_URL;
+}
+
+async function refreshPublicTwitchLiveSnapshot(creatorId) {
+    const id = normalizeCreatorId(creatorId);
+    const connectionResult = await pool.query(
+        `SELECT connected,twitch_user_id,login,display_name,updated_at
+         FROM twitch_connections
+         WHERE creator_id=$1
+         LIMIT 1`,
+        [id]
+    );
+    const connection = connectionResult.rows[0] || null;
+    const previous = await getProviderLiveState(id, "twitch");
+    const profileUrl = publicTwitchChannelUrl(connection?.login);
+    const base = {
+        available:Boolean(connection?.connected && connection?.twitch_user_id && twitchConfigured()),
+        connected:Boolean(connection?.connected),
+        provider:"twitch",
+        login:String(connection?.login || "").slice(0, 80),
+        display_name:String(connection?.display_name || connection?.login || "cfs_zockt").slice(0, 120),
+        profile_url:profileUrl,
+        live:false,
+        status:"unavailable",
+        authoritative:false,
+        viewer_count:0,
+        title:"",
+        game_name:"",
+        started_at:null,
+        last_live_started_at:previous?.started_at || null,
+        last_live_ended_at:previous?.connected === false && previous?.started_at ? (previous?.last_event_at || null) : null,
+        checked_at:null,
+        stale:false
+    };
+
+    if (!base.available) return base;
+
+    const checkedAt = new Date().toISOString();
+    try {
+        const appToken = await twitchAppAccessToken();
+        const data = await twitchFetch(
+            `${TWITCH_STREAMS_URL}?user_id=${encodeURIComponent(connection.twitch_user_id)}`,
+            {headers:{Authorization:`Bearer ${appToken}`,"Client-Id":TWITCH_CLIENT_ID}}
+        );
+        const stream = Array.isArray(data?.data) ? data.data[0] : null;
+        if (stream) {
+            await saveTwitchProviderLiveState(id, {
+                connected:true,
+                sessionId:`twitch:${String(stream.id || connection.twitch_user_id).slice(0,180)}`,
+                startedAt:stream.started_at || checkedAt,
+                lastEventAt:checkedAt
+            });
+        } else if (previous?.connected === true) {
+            // Der erste bestätigte Offline-Poll nach einer LIVE-Phase ist zugleich
+            // unser belastbarer Fallback für "zuletzt live", falls EventSub ausfällt.
+            await saveTwitchProviderLiveState(id, {connected:false,lastEventAt:checkedAt});
+        } else if (!previous?.updated_at) {
+            await saveTwitchProviderLiveState(id, {connected:false});
+        }
+
+        // Beim ersten Deploy kann noch kein historischer Offline-Zeitpunkt in CFS
+        // existieren. In diesem Fall bootstrappen wir einmalig aus dem letzten
+        // Twitch-Archiv (sofern der Kanal VODs veröffentlicht).
+        if (!stream && (!previous?.started_at || !previous?.last_event_at)) {
+            try {
+                const archive = await latestTwitchArchive(connection.twitch_user_id, appToken);
+                if (archive?.started_at) {
+                    await seedTwitchLastLiveHistory(id, {startedAt:archive.started_at,endedAt:archive.ended_at || archive.started_at});
+                }
+            } catch (historyError) {
+                safeLogError("public-twitch-history-refresh", historyError);
+            }
+        }
+
+        const state = await getProviderLiveState(id, "twitch");
+        return {
+            ...base,
+            live:Boolean(stream),
+            status:stream ? "live" : "offline",
+            authoritative:true,
+            viewer_count:stream ? Math.max(0, Number(stream.viewer_count) || 0) : 0,
+            title:stream ? studioText(stream.title, 220, "") : "",
+            game_name:stream ? studioText(stream.game_name, 160, "") : "",
+            started_at:stream?.started_at || null,
+            last_live_started_at:state?.started_at || stream?.started_at || null,
+            last_live_ended_at:!stream && state?.started_at ? (state?.last_event_at || null) : null,
+            checked_at:checkedAt,
+            stale:false
+        };
+    } catch (error) {
+        safeLogError("public-twitch-live-refresh", error);
+        const updatedMs = previous?.updated_at ? new Date(previous.updated_at).getTime() : 0;
+        const recentCachedLive = previous?.connected === true && Number.isFinite(updatedMs) && updatedMs > 0 && (Date.now() - updatedMs) <= PUBLIC_TWITCH_STALE_LIVE_MAX_MS;
+        return {
+            ...base,
+            live:recentCachedLive,
+            status:recentCachedLive ? "live" : "unknown",
+            authoritative:false,
+            started_at:recentCachedLive ? (previous?.started_at || null) : null,
+            last_live_started_at:previous?.started_at || null,
+            last_live_ended_at:!recentCachedLive && previous?.started_at ? (previous?.last_event_at || null) : null,
+            checked_at:checkedAt,
+            stale:true
+        };
+    }
+}
+
+async function getPublicTwitchLiveSnapshot(creatorId) {
+    const id = normalizeCreatorId(creatorId);
+    const cached = publicTwitchLiveCache.get(id);
+    if (cached?.payload && cached.expires_at > Date.now()) return cached.payload;
+    if (cached?.in_flight) return cached.in_flight;
+    const entry = cached || {payload:null,expires_at:0,in_flight:null};
+    entry.in_flight = refreshPublicTwitchLiveSnapshot(id)
+        .then(payload => {
+            entry.payload = payload;
+            entry.expires_at = Date.now() + PUBLIC_TWITCH_LIVE_CACHE_TTL_MS;
+            return payload;
+        })
+        .finally(() => { entry.in_flight = null; });
+    publicTwitchLiveCache.set(id, entry);
+    return entry.in_flight;
+}
+
 async function getPublicLiveEvidence(creatorId) {
     const [live, bridge, latestEventResult, liveSessionResult, manualControl] = await Promise.all([
         getStudioLiveState(creatorId),
@@ -24073,7 +24283,7 @@ async function getPublicLiveEvidence(creatorId) {
             [creatorId]
         ),
         pool.query(
-            `SELECT id,provider,status,started_at,updated_at,ended_at
+            `SELECT id,provider,status,metadata,started_at,updated_at,ended_at
              FROM creator_live_sessions
              WHERE creator_id=$1
              ORDER BY started_at DESC
@@ -24096,8 +24306,16 @@ async function getPublicLiveEvidence(creatorId) {
     const recentOpenSession = Boolean(session && session.status === "live" && !session.ended_at && sessionUpdatedAt && now - sessionUpdatedAt <= PUBLIC_LIVE_SESSION_FRESH_MS);
 
     const caps = bridge?.capabilities && typeof bridge.capabilities === "object" ? bridge.capabilities : {};
-    const providerStatus = String(caps.live_provider_status || caps.tikfinity_status || "").toLowerCase();
+    const integrationHealth = caps.integration_health && typeof caps.integration_health === "object" && !Array.isArray(caps.integration_health)
+        ? caps.integration_health
+        : {};
+    const liveProviderHealth = integrationHealth.live_provider && typeof integrationHealth.live_provider === "object" && !Array.isArray(integrationHealth.live_provider)
+        ? integrationHealth.live_provider
+        : {};
+    const providerKey = String(liveProviderHealth.key || caps.live_provider_key || caps.provider || "").toLowerCase();
+    const providerStatus = String(liveProviderHealth.status || caps.live_provider_status || caps.tikfinity_status || "").toLowerCase();
     const providerReady = bridge?.online === true && (
+        (caps.live_provider_health_v1 === true && liveProviderHealth.ready === true) ||
         (caps.live_provider_health_v1 === true && caps.live_provider_ready === true) ||
         caps.tikfinity_healthy === true
     );
@@ -24131,9 +24349,13 @@ async function getPublicLiveEvidence(creatorId) {
         source,
         latest_event_at: latestEvent?.created_at || null,
         latest_event_type: latestEventType || null,
+        provider_key:providerKey,
+        provider_status:providerStatus,
+        provider_ready:providerReady,
         session: session ? {
             id:String(session.id || ""),
             provider:String(session.provider || "none"),
+            provider_hint:String(session?.metadata?.provider || session?.metadata?.source_provider || "").toLowerCase().slice(0,40),
             status:String(session.status || ""),
             started_at:session.started_at || null,
             updated_at:session.updated_at || null,
@@ -24142,60 +24364,325 @@ async function getPublicLiveEvidence(creatorId) {
     };
 }
 
+const PUBLIC_TIKTOK_TRACKING_PROVIDERS = new Set(["tiktool","tiktok","tikfinity"]);
+const PUBLIC_TIKTOK_INACTIVE_STATES = new Set(["idle","offline","disconnected","stopped"]);
+
+function isPublicTikTokTrackingProvider(value = "") {
+    return PUBLIC_TIKTOK_TRACKING_PROVIDERS.has(String(value || "").trim().toLowerCase());
+}
+
+async function getPublicTikTokTrackingState(creatorId) {
+    return (await pool.query(
+        `SELECT creator_id,provider,session_id,connected,started_at,last_event_at,updated_at
+         FROM creator_provider_live_state
+         WHERE creator_id=$1 AND provider='tiktok'
+         LIMIT 1`,
+        [normalizeCreatorId(creatorId)]
+    )).rows[0] || null;
+}
+
+async function savePublicTikTokTrackingState(creatorId,{connected,sessionId=null,startedAt=null,lastEventAt=null}={}) {
+    await pool.query(`
+      INSERT INTO creator_provider_live_state(creator_id,provider,session_id,connected,started_at,last_event_at,updated_at)
+      VALUES($1,'tiktok',$2,$3,$4,$5,NOW())
+      ON CONFLICT(creator_id,provider) DO UPDATE SET
+        session_id=CASE WHEN EXCLUDED.connected THEN COALESCE(EXCLUDED.session_id,creator_provider_live_state.session_id) ELSE creator_provider_live_state.session_id END,
+        connected=EXCLUDED.connected,
+        started_at=CASE WHEN EXCLUDED.connected THEN COALESCE(EXCLUDED.started_at,creator_provider_live_state.started_at,NOW()) ELSE creator_provider_live_state.started_at END,
+        last_event_at=COALESCE(EXCLUDED.last_event_at,creator_provider_live_state.last_event_at),
+        updated_at=NOW()
+    `,[normalizeCreatorId(creatorId),sessionId,Boolean(connected),startedAt,lastEventAt]);
+}
+
+async function getPublicTikTokLiveSnapshot(creatorId, evidence = null) {
+    const id = normalizeCreatorId(creatorId);
+    const [connectionResult, historyResult] = await Promise.all([
+        pool.query(
+            `SELECT connected,display_name,updated_at
+             FROM tiktok_connections
+             WHERE creator_id=$1
+             LIMIT 1`,
+            [id]
+        ),
+        pool.query(
+            `SELECT id,provider,status,metadata,started_at,ended_at,updated_at
+             FROM creator_live_sessions
+             WHERE creator_id=$1
+               AND ended_at IS NOT NULL
+               AND (
+                    LOWER(provider)='tiktok'
+                    OR (
+                        LOWER(provider)='launcher_bridge'
+                        AND LOWER(COALESCE(metadata->>'provider',metadata->>'source_provider','')) IN ('tiktool','tiktok','tikfinity')
+                    )
+               )
+             ORDER BY ended_at DESC NULLS LAST,started_at DESC
+             LIMIT 1`,
+            [id]
+        )
+    ]);
+    const connection = connectionResult.rows[0] || null;
+    const lastEnded = historyResult.rows[0] || null;
+    const liveEvidence = evidence || await getPublicLiveEvidence(id);
+    const providerKey = String(liveEvidence?.provider_key || "").toLowerCase();
+    const providerStatus = String(liveEvidence?.provider_status || "").toLowerCase();
+    const sessionHint = String(liveEvidence?.session?.provider_hint || "").toLowerCase();
+    const providerIsTikTok = isPublicTikTokTrackingProvider(providerKey);
+    const sessionIsTikTok = isPublicTikTokTrackingProvider(sessionHint) || String(liveEvidence?.session?.provider || "").toLowerCase() === "tiktok";
+    const bridgeOnline = liveEvidence?.bridge?.online === true;
+    const trackingReady = bridgeOnline && providerIsTikTok && liveEvidence?.provider_ready === true;
+    const providerLive = bridgeOnline && providerIsTikTok && PUBLIC_LIVE_PROVIDER_ACTIVE_STATES.has(providerStatus);
+    const providerOffline = bridgeOnline && providerIsTikTok && PUBLIC_TIKTOK_INACTIVE_STATES.has(providerStatus);
+    let trackingState = await getPublicTikTokTrackingState(id);
+    if (providerLive && trackingState?.connected !== true) {
+        const detectedStart = liveEvidence?.manual_control?.started_at || liveEvidence?.live?.started_at || liveEvidence?.session?.started_at || new Date().toISOString();
+        await savePublicTikTokTrackingState(id,{connected:true,sessionId:liveEvidence?.session?.id || null,startedAt:detectedStart,lastEventAt:new Date().toISOString()});
+        trackingState = await getPublicTikTokTrackingState(id);
+    } else if (providerOffline && trackingState?.connected === true) {
+        await savePublicTikTokTrackingState(id,{connected:false,lastEventAt:new Date().toISOString()});
+        trackingState = await getPublicTikTokTrackingState(id);
+    }
+    const evidenceTikTokLive = liveEvidence?.status === "live"
+        && (providerIsTikTok || sessionIsTikTok || String(liveEvidence?.live?.provider || "").toLowerCase() === "tiktok")
+        && !(providerIsTikTok && providerOffline);
+    const live = providerLive || evidenceTikTokLive;
+    const explicitOffline = liveEvidence?.status === "offline" && (providerIsTikTok || sessionIsTikTok || Boolean(lastEnded));
+    const status = live ? "live" : ((explicitOffline || providerOffline || (trackingState?.connected === false && trackingState?.started_at)) ? "offline" : "unknown");
+    const trackedHistory = trackingState?.connected === false && trackingState?.started_at
+        ? {started_at:trackingState.started_at,ended_at:trackingState.last_event_at || trackingState.updated_at || null}
+        : null;
+    const latestEnded = latestPublicLiveHistory(
+        {provider:"session",at:lastEnded?.ended_at || null,started_at:lastEnded?.started_at || null},
+        {provider:"tracker",at:trackedHistory?.ended_at || null,started_at:trackedHistory?.started_at || null}
+    );
+    const checkedAt = liveEvidence?.bridge?.last_seen_at || liveEvidence?.latest_event_at || liveEvidence?.session?.updated_at || trackingState?.updated_at || null;
+
+    return {
+        available:Boolean(connection?.connected),
+        connected:Boolean(connection?.connected),
+        provider:"tiktok",
+        profile_url:PUBLIC_TIKTOK_PROFILE_URL,
+        display_name:String(connection?.display_name || "cfs_zockt").slice(0,120),
+        live,
+        status,
+        authoritative:false,
+        tracking_ready:trackingReady,
+        tracking_provider:providerIsTikTok ? providerKey : "none",
+        provider_status:providerStatus || "unknown",
+        source:live ? "launcher_tiktok_provider" : ((explicitOffline || providerOffline) ? "launcher_tiktok_end" : "launcher_tiktok_unknown"),
+        viewer_count:live ? Math.max(0,Number(liveEvidence?.live?.viewers)||0) : 0,
+        likes:live ? Math.max(0,Number(liveEvidence?.live?.likes)||0) : 0,
+        shares:live ? Math.max(0,Number(liveEvidence?.live?.shares)||0) : 0,
+        started_at:live ? (trackingState?.started_at || liveEvidence?.manual_control?.started_at || liveEvidence?.live?.started_at || liveEvidence?.session?.started_at || null) : null,
+        last_live_started_at:latestEnded?.started_at || null,
+        last_live_ended_at:latestEnded?.at || null,
+        checked_at:checkedAt,
+        stale:!bridgeOnline
+    };
+}
+
+function latestPublicLiveHistory(...items) {
+    return items
+        .filter(item => item?.at)
+        .map(item => ({...item,ms:new Date(item.at).getTime()}))
+        .filter(item => Number.isFinite(item.ms))
+        .sort((a,b) => b.ms-a.ms)[0] || null;
+}
+
 async function getPublicLiveSessionSnapshot() {
     const resolved = await resolvePublicTikTokProfileConnection();
     const creatorIds = [...new Set([resolved?.creatorId, DEFAULT_CREATOR_ID].filter(Boolean).map(String))];
     const states = await Promise.all(creatorIds.map(async creatorId => {
-        const [evidenceResult, gameResult] = await Promise.allSettled([
+        const [evidenceResult, twitchResult, gameResult] = await Promise.allSettled([
             getPublicLiveEvidence(creatorId),
+            getPublicTwitchLiveSnapshot(creatorId),
             getPublicRecentGames(creatorId,{limit:3})
         ]);
+        const evidence = evidenceResult.status === "fulfilled" ? evidenceResult.value : {
+            live:emptyStudioLiveState(),
+            bridge:{online:false,capabilities:{}},
+            status:"unknown",
+            source:"error",
+            latest_event_at:null,
+            latest_event_type:null,
+            provider_key:"",
+            provider_status:"",
+            provider_ready:false,
+            session:null
+        };
+        let tiktok;
+        try {
+            tiktok = await getPublicTikTokLiveSnapshot(creatorId, evidence);
+        } catch (error) {
+            safeLogError("public-tiktok-live-snapshot", error);
+            tiktok = {
+                available:false,connected:false,provider:"tiktok",profile_url:PUBLIC_TIKTOK_PROFILE_URL,display_name:"cfs_zockt",
+                live:false,status:"unknown",authoritative:false,tracking_ready:false,tracking_provider:"none",provider_status:"unknown",
+                source:"error",viewer_count:0,likes:0,shares:0,started_at:null,last_live_started_at:null,last_live_ended_at:null,checked_at:null,stale:true
+            };
+        }
         return {
             creatorId,
-            evidence: evidenceResult.status === "fulfilled" ? evidenceResult.value : {
-                live:emptyStudioLiveState(),
-                bridge:{online:false,capabilities:{}},
+            evidence,
+            twitch: twitchResult.status === "fulfilled" ? twitchResult.value : {
+                available:false,
+                connected:false,
+                provider:"twitch",
+                profile_url:PUBLIC_TWITCH_PROFILE_URL,
+                live:false,
                 status:"unknown",
-                source:"error",
-                latest_event_at:null,
-                latest_event_type:null,
-                session:null
+                authoritative:false,
+                viewer_count:0,
+                title:"",
+                game_name:"",
+                started_at:null,
+                last_live_started_at:null,
+                last_live_ended_at:null,
+                checked_at:null,
+                stale:true
             },
+            tiktok,
             games: gameResult.status === "fulfilled" ? gameResult.value : {active:null,recent:[]}
         };
     }));
 
-    const liveEntry = states.find(entry => entry.evidence?.status === "live") || states[0] || {
+    const twitchLiveEntry = states.find(entry => entry.twitch?.live === true) || null;
+    const tiktokLiveEntry = states.find(entry => entry.tiktok?.live === true) || null;
+    const genericLiveEntry = states.find(entry => {
+        if (entry.evidence?.status !== "live") return false;
+        if (entry.evidence?.manual_control?.active === true) return true;
+        const providerKey = String(entry.evidence?.provider_key || "").toLowerCase();
+        const sessionHint = String(entry.evidence?.session?.provider_hint || "").toLowerCase();
+        return !isPublicTikTokTrackingProvider(providerKey) && !isPublicTikTokTrackingProvider(sessionHint);
+    }) || null;
+    const twitchStatusEntry = twitchLiveEntry || states.find(entry => entry.twitch?.available === true || entry.twitch?.connected === true) || null;
+    const tiktokStatusEntry = tiktokLiveEntry || states.find(entry => entry.tiktok?.available === true || entry.tiktok?.tracking_ready === true) || null;
+    const selected = twitchLiveEntry || tiktokLiveEntry || genericLiveEntry || twitchStatusEntry || tiktokStatusEntry || states[0] || {
         creatorId:String(DEFAULT_CREATOR_ID),
-        evidence:{live:emptyStudioLiveState(),bridge:{online:false,capabilities:{}},status:"unknown",source:"none",latest_event_at:null,latest_event_type:null,session:null},
+        evidence:{live:emptyStudioLiveState(),bridge:{online:false,capabilities:{}},status:"unknown",source:"none",latest_event_at:null,latest_event_type:null,provider_key:"",provider_status:"",provider_ready:false,session:null},
+        twitch:{available:false,connected:false,provider:"twitch",profile_url:PUBLIC_TWITCH_PROFILE_URL,live:false,status:"unknown",authoritative:false,viewer_count:0,title:"",game_name:"",started_at:null,last_live_started_at:null,last_live_ended_at:null,checked_at:null,stale:true},
+        tiktok:{available:false,connected:false,provider:"tiktok",profile_url:PUBLIC_TIKTOK_PROFILE_URL,display_name:"cfs_zockt",live:false,status:"unknown",authoritative:false,tracking_ready:false,tracking_provider:"none",provider_status:"unknown",source:"none",viewer_count:0,likes:0,shares:0,started_at:null,last_live_started_at:null,last_live_ended_at:null,checked_at:null,stale:true},
         games:{active:null,recent:[]}
     };
-    const activeGameEntry = states.find(entry => entry.games?.active?.game_name) || liveEntry;
-    const evidence = liveEntry.evidence || {};
+    const activeGameEntry = states.find(entry => entry.games?.active?.game_name) || selected;
+    const evidence = selected.evidence || {};
     const live = evidence.live || emptyStudioLiveState();
-    const activeGame = activeGameEntry.games?.active?.game_name ? activeGameEntry.games.active : null;
-    const detectedLive = evidence.status === "live";
+    const publicTwitch = twitchStatusEntry?.twitch || selected.twitch || {};
+    const publicTikTok = tiktokStatusEntry?.tiktok || selected.tiktok || {};
+    const genericDetectedLive = evidence.status === "live";
+    const twitchLive = twitchLiveEntry?.twitch?.live === true;
+    const tiktokLive = tiktokLiveEntry?.tiktok?.live === true;
+    const detectedLive = Boolean(twitchLive || tiktokLive || genericLiveEntry);
+
+    const channelStates = [];
+    if (publicTwitch?.connected === true || publicTwitch?.available === true) {
+        channelStates.push(publicTwitch?.authoritative === true ? String(publicTwitch.status || "unknown") : "unknown");
+    }
+    if (publicTikTok?.connected === true || publicTikTok?.tracking_ready === true) {
+        channelStates.push(String(publicTikTok.status || "unknown"));
+    }
+    let status = "unknown";
+    if (detectedLive || channelStates.includes("live")) status = "live";
+    else if (channelStates.length && channelStates.every(value => value === "offline")) status = "offline";
+    else if (!channelStates.length && evidence.status === "offline") status = "offline";
+
+    let provider = "none";
+    if (twitchLive && tiktokLive) provider = "multistream";
+    else if (twitchLive) provider = "twitch";
+    else if (tiktokLive) provider = "tiktok";
+    else if (genericDetectedLive) {
+        const genericProvider = String(evidence.provider_key || evidence.session?.provider_hint || live.provider || evidence.session?.provider || "none").toLowerCase();
+        provider = isPublicTikTokTrackingProvider(genericProvider) || genericProvider === "launcher_bridge" ? "tiktok" : genericProvider;
+    }
+
+    let source = evidence.source || "none";
+    if (provider === "multistream") source = "twitch_api+launcher_tiktok_provider";
+    else if (provider === "twitch") source = twitchLiveEntry?.twitch?.authoritative ? "twitch_api" : "twitch_cached_live";
+    else if (provider === "tiktok") source = publicTikTok?.source || "launcher_tiktok_provider";
+    else if (status === "offline" && publicTwitch?.authoritative === true && publicTwitch?.status === "offline") source = "twitch_api";
+
+    const launcherGame = activeGameEntry.games?.active?.game_name ? activeGameEntry.games.active : null;
+    const twitchGame = twitchLiveEntry?.twitch?.game_name ? {
+        game_name:twitchLiveEntry.twitch.game_name,
+        platform:"twitch",
+        started_at:twitchLiveEntry.twitch.started_at || null,
+        elapsed_seconds:twitchLiveEntry.twitch.started_at ? Math.max(0,Math.floor((Date.now()-new Date(twitchLiveEntry.twitch.started_at).getTime())/1000)) : 0,
+        source:"twitch_api"
+    } : null;
+    const activeGame = twitchGame || launcherGame;
+    const twitchProfileUrl = publicTwitch?.profile_url || PUBLIC_TWITCH_PROFILE_URL;
+    const tiktokProfileName = String(publicTikTok?.display_name || resolved?.connection?.display_name || "cfs_zockt").slice(0,120);
+    const twitchProfileName = String(publicTwitch?.display_name || publicTwitch?.login || "cfs_zockt").slice(0,120);
+    const activeProfileName = provider === "twitch" ? twitchProfileName : (provider === "multistream" ? "cfs_zockt" : tiktokProfileName);
+    const activeProfileUrl = provider === "twitch" ? twitchProfileUrl : PUBLIC_TIKTOK_PROFILE_URL;
+    const twitchLastLiveAt = publicTwitch?.last_live_ended_at || null;
+    const tiktokLastLiveAt = publicTikTok?.last_live_ended_at || null;
+    const latestHistory = latestPublicLiveHistory(
+        {provider:"twitch",at:twitchLastLiveAt,started_at:publicTwitch?.last_live_started_at || null},
+        {provider:"tiktok",at:tiktokLastLiveAt,started_at:publicTikTok?.last_live_started_at || null}
+    );
+    const combinedViewers = (twitchLive ? Math.max(0,Number(twitchLiveEntry?.twitch?.viewer_count)||0) : 0)
+        + (tiktokLive ? Math.max(0,Number(tiktokLiveEntry?.tiktok?.viewer_count)||0) : 0);
 
     return {
         ok:true,
         live:detectedLive,
-        status:evidence.status || "unknown",
-        live_source:evidence.source || "none",
-        profile_name:String(resolved?.connection?.display_name || "cfs_zockt").slice(0,120),
-        profile_url:PUBLIC_TIKTOK_PROFILE_URL,
-        viewers:publicCommunityCount(live.viewers) || 0,
-        likes:publicCommunityCount(live.likes) || 0,
-        shares:publicCommunityCount(live.shares) || 0,
-        followers_gained:publicCommunityCount(live.followers_gained) || 0,
-        started_at:detectedLive ? (evidence.manual_control?.started_at || live.started_at || evidence.session?.started_at || null) : null,
-        updated_at:live.updated_at || live.last_event_at || evidence.latest_event_at || evidence.session?.updated_at || null,
+        status,
+        provider,
+        live_source:source,
+        profile_name:activeProfileName,
+        profile_url:activeProfileUrl,
+        viewers:detectedLive ? combinedViewers || (publicCommunityCount(live.viewers) || 0) : 0,
+        likes:tiktokLive ? Math.max(0,Number(tiktokLiveEntry?.tiktok?.likes)||0) : (provider === "twitch" ? 0 : (publicCommunityCount(live.likes) || 0)),
+        shares:tiktokLive ? Math.max(0,Number(tiktokLiveEntry?.tiktok?.shares)||0) : (provider === "twitch" ? 0 : (publicCommunityCount(live.shares) || 0)),
+        followers_gained:provider === "twitch" ? 0 : (publicCommunityCount(live.followers_gained) || 0),
+        title:twitchLive ? String(twitchLiveEntry?.twitch?.title || "").slice(0,220) : "",
+        started_at:detectedLive
+            ? (twitchLiveEntry?.twitch?.started_at || tiktokLiveEntry?.tiktok?.started_at || evidence.manual_control?.started_at || live.started_at || evidence.session?.started_at || null)
+            : null,
+        updated_at:twitchLiveEntry?.twitch?.checked_at || tiktokLiveEntry?.tiktok?.checked_at || publicTwitch?.checked_at || publicTikTok?.checked_at || live.updated_at || live.last_event_at || evidence.latest_event_at || evidence.session?.updated_at || null,
+        last_live_at:latestHistory?.at || null,
+        last_live_started_at:latestHistory?.started_at || null,
+        last_live_provider:latestHistory?.provider || null,
+        channels:{
+            twitch:{
+                connected:publicTwitch?.connected === true,
+                available:publicTwitch?.available === true,
+                status:String(publicTwitch?.status || "unknown"),
+                authoritative:publicTwitch?.authoritative === true,
+                stale:publicTwitch?.stale === true,
+                profile_name:twitchProfileName,
+                url:twitchProfileUrl,
+                last_live_at:twitchLastLiveAt,
+                last_live_started_at:publicTwitch?.last_live_started_at || null
+            },
+            tiktok:{
+                connected:publicTikTok?.connected === true,
+                available:publicTikTok?.available === true,
+                status:String(publicTikTok?.status || "unknown"),
+                authoritative:false,
+                tracking_ready:publicTikTok?.tracking_ready === true,
+                tracking_provider:String(publicTikTok?.tracking_provider || "none"),
+                provider_status:String(publicTikTok?.provider_status || "unknown"),
+                stale:publicTikTok?.stale === true,
+                profile_name:tiktokProfileName,
+                url:PUBLIC_TIKTOK_PROFILE_URL,
+                last_live_at:tiktokLastLiveAt,
+                last_live_started_at:publicTikTok?.last_live_started_at || null
+            }
+        },
         signal:{
             launcher_online:evidence.bridge?.online === true,
             launcher_reachable:evidence.bridge?.reachable === true,
             launcher_state:evidence.bridge?.connection_state || "offline",
             heartbeat_age_seconds:Number.isFinite(Number(evidence.bridge?.heartbeat_age_seconds)) ? Number(evidence.bridge.heartbeat_age_seconds) : null,
             latest_event_at:evidence.latest_event_at || null,
-            latest_event_type:evidence.latest_event_type || null
+            latest_event_type:evidence.latest_event_type || null,
+            twitch_checked_at:publicTwitch?.checked_at || null,
+            twitch_authoritative:publicTwitch?.authoritative === true,
+            tiktok_checked_at:publicTikTok?.checked_at || null,
+            tiktok_tracking_ready:publicTikTok?.tracking_ready === true,
+            tiktok_tracking_provider:String(publicTikTok?.tracking_provider || "none")
         },
         current_game:activeGame ? {
             name:String(activeGame.game_name || "").slice(0,160),
@@ -24229,6 +24716,7 @@ async function getPublicCreatorStateSnapshot() {
             ok:false,
             live:false,
             status:"unknown",
+            provider:"none",
             live_source:"error",
             profile_name:"cfs_zockt",
             profile_url:PUBLIC_TIKTOK_PROFILE_URL,
@@ -24238,7 +24726,11 @@ async function getPublicCreatorStateSnapshot() {
             followers_gained:0,
             started_at:null,
             updated_at:null,
-            signal:{launcher_online:false,latest_event_at:null,latest_event_type:null},
+            last_live_at:null,
+            last_live_started_at:null,
+            last_live_provider:null,
+            channels:{twitch:{connected:false,available:false,status:"unknown",authoritative:false,stale:true,profile_name:"cfs_zockt",url:PUBLIC_TWITCH_PROFILE_URL,last_live_at:null,last_live_started_at:null},tiktok:{connected:false,available:false,status:"unknown",authoritative:false,tracking_ready:false,tracking_provider:"none",provider_status:"unknown",stale:true,profile_name:"cfs_zockt",url:PUBLIC_TIKTOK_PROFILE_URL,last_live_at:null,last_live_started_at:null}},
+            signal:{launcher_online:false,launcher_reachable:false,launcher_state:"offline",heartbeat_age_seconds:null,latest_event_at:null,latest_event_type:null,twitch_checked_at:null,twitch_authoritative:false,tiktok_checked_at:null,tiktok_tracking_ready:false,tiktok_tracking_provider:"none"},
             current_game:null
         };
 
@@ -24653,6 +25145,7 @@ app.get(
                 ok:false,
                 live:false,
                 status:"unknown",
+                provider:"none",
                 live_source:"error",
                 profile_name:"cfs_zockt",
                 profile_url:PUBLIC_TIKTOK_PROFILE_URL,
@@ -24662,6 +25155,13 @@ app.get(
                 followers_gained:0,
                 started_at:null,
                 updated_at:null,
+                last_live_at:null,
+                last_live_started_at:null,
+                last_live_provider:null,
+                channels:{
+                    twitch:{connected:false,available:false,status:"unknown",authoritative:false,stale:true,profile_name:"cfs_zockt",url:PUBLIC_TWITCH_PROFILE_URL,last_live_at:null,last_live_started_at:null},
+                    tiktok:{connected:false,available:false,status:"unknown",authoritative:false,tracking_ready:false,tracking_provider:"none",provider_status:"unknown",stale:true,profile_name:"cfs_zockt",url:PUBLIC_TIKTOK_PROFILE_URL,last_live_at:null,last_live_started_at:null}
+                },
                 current_game:null
             });
         }
@@ -24680,8 +25180,8 @@ app.get(
                 ok:false,
                 schema:1,
                 generated_at:new Date().toISOString(),
-                creator:{name:"cfs_zockt",profile_url:PUBLIC_TIKTOK_PROFILE_URL},
-                live:{active:false,status:"unknown",source:"error",viewers:0,likes:0,shares:0,followers_gained:0,started_at:null,updated_at:null,signal:{launcher_online:false,launcher_reachable:false,launcher_state:"offline",heartbeat_age_seconds:null,latest_event_at:null,latest_event_type:""}},
+                creator:{name:"cfs_zockt",profile_url:PUBLIC_TIKTOK_PROFILE_URL,channels:{twitch:{connected:false,available:false,status:"unknown",authoritative:false,stale:true,profile_name:"cfs_zockt",url:PUBLIC_TWITCH_PROFILE_URL,last_live_at:null,last_live_started_at:null},tiktok:{connected:false,available:false,status:"unknown",authoritative:false,tracking_ready:false,tracking_provider:"none",provider_status:"unknown",stale:true,profile_name:"cfs_zockt",url:PUBLIC_TIKTOK_PROFILE_URL,last_live_at:null,last_live_started_at:null}}},
+                live:{active:false,status:"unknown",source:"error",provider:"none",title:"",viewers:0,likes:0,shares:0,followers_gained:0,started_at:null,updated_at:null,last_live_at:null,last_live_started_at:null,last_live_provider:"",signal:{launcher_online:false,launcher_reachable:false,launcher_state:"offline",heartbeat_age_seconds:null,latest_event_at:null,latest_event_type:"",twitch_checked_at:null,twitch_authoritative:false,tiktok_checked_at:null,tiktok_tracking_ready:false,tiktok_tracking_provider:"none"}},
                 game:{current:null,source:"",playtime_scope:"",window_days:null,updated_at:null,recent:[],games:[]},
                 social:{
                     tiktok:{available:false,followers:null,stale:false,source:"",updated_at:null,url:PUBLIC_TIKTOK_PROFILE_URL},
