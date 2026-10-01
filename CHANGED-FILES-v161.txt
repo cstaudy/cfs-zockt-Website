@@ -1,0 +1,24 @@
+# CHANGED FILES v161
+
+Gegenüber v160 geändert/neu:
+
+- `CREATOR-SUITE-COMPLETION-v161.md`
+- `TECHNIK-v161.md`
+- `package-lock.json`
+- `package.json`
+- `SECURITY-BASELINE-v161.md`
+- `README.md`
+- `PROJECT_CURRENT_STATE.md`
+- `server.js`
+- `lib/creator-state-snapshot.js`
+- `public/_headers`
+- `public/index.html`
+- `tools/public-tiktok-live-brand-v161-test.mjs`
+- `tools/public-twitch-live-v160-test.mjs`
+- `public/assets/css/cfs-gaming-home-v112.css`
+- `public/assets/js/cfs-gaming-home-v112.js`
+- `public/assets/js/page-system-check.js`
+
+Zusätzlich als benötigtes bestehendes Full-Project-Asset mitgeliefert:
+
+- `public/assets/img/brand/cfs-zockt-wordmark-transparent.png`

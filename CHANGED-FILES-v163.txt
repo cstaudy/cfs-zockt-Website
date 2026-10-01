@@ -1,0 +1,31 @@
+# CHANGED FILES v163
+
+Gegenüber v162 geändert/neu:
+
+- `CHANGED-FILES-v163.txt`
+- `CREATOR-SUITE-COMPLETION-v163.md`
+- `LEGAL-PRIVACY-PRIVATE-BETA.md`
+- `PROJECT_CURRENT_STATE.md`
+- `PUBLIC-LEGAL-PRIVACY-v163.md`
+- `README.md`
+- `SECURITY-BASELINE-v163.md`
+- `TECHNIK-v163.md`
+- `package-lock.json`
+- `package.json`
+- `public/assets/js/page-system-check.js`
+- `public/pages/datenschutz.html`
+- `public/pages/impressum.html`
+- `public/pages/nutzungsbedingungen.html`
+- `public/sitemap.xml`
+- `server.js`
+- `tools/homepage-concise-privacy-v162-test.mjs`
+- `tools/legal-public-privacy-v163-test.mjs`
+- `tools/website-acceptance-pass21-3-14-test.mjs`
+- `tools/website-seo-pass-test.mjs`
+
+Kumulative Paket-Metadaten werden zusätzlich auf v163 aktualisiert:
+
+- `CHANGED-FILES.txt`
+- `DATEILISTE.txt`
+- `INSTALLIEREN.txt`
+- `UPDATE-INHALT.txt`

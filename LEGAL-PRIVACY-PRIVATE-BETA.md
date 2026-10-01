@@ -54,3 +54,8 @@ Vor `CFS_COMMERCIAL_MODE=true` müssen mindestens erneut geprüft bzw. ergänzt 
 - nach wesentlichen Legal-Änderungen erneute Zustimmung technisch einplanen
 
 Diese Datei ist eine technische Compliance-Baseline und ersetzt keine individuelle Rechtsberatung.
+
+
+## v163 — öffentliche Auffindbarkeit der Rechtstexte
+
+Impressum, Datenschutz und Nutzungsbedingungen bleiben dauerhaft öffentlich erreichbar und im Footer verlinkt. Für den Suchmaschinen-Surface werden sie mit `noindex,follow,noarchive,nosnippet` ausgezeichnet und aus der XML-Sitemap entfernt. Sie werden nicht in `robots.txt` gesperrt, damit Crawler die `noindex`-Anweisung lesen können.

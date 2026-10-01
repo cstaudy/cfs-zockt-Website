@@ -1,12 +1,1 @@
-cfs_zockt v158 – Studio Flow / Integrations-Ordnung
-
-- Feature Freeze bleibt aktiv.
-- Stream Studio in 5 klare Schritte gegliedert.
-- Gemeinsame Creator-Suite-Themen im Studio sichtbar.
-- Integrationen nach Streaming-Plattformen, PC/Launcher/OBS und Diagnose gruppiert.
-- Scene Studio klar als Direkt-/Kompatibilitätseditor eingeordnet.
-- Bestehende Runtime-IDs und Security-Grenzen unverändert.
-- Backend 3.20.4 / Schema 73 / Launcher 0.47.28.
-- Workspace Flow v158: 86/86 PASS.
-- kompletter `npm run release:v158` Gate PASS.
-- Reale Windows-/OBS-/Provider-Acceptance bleibt offen.
+v170: Panel-Umwandler für Twitch und TikTok. Twitch Info-Panels, TikTok Profil-/Social-Karten, PNG-Download + Medienbibliothek. Backend 3.20.15, Launcher 0.47.30.

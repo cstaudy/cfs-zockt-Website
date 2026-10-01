@@ -1,6 +1,6 @@
 {
   "name": "cfs-zockt-creator-suite-web",
-  "version": "3.20.5",
+  "version": "3.20.15",
   "private": true,
   "description": "cfs_zockt Website mit TikTok Login Kit, Profil-Sync und geschützter Launcher-API.",
   "main": "server.js",
@@ -344,7 +344,29 @@
     "workspace158:check": "node tools/workspace-flow-v158-test.mjs .",
     "release:v158": "npm run release:v157 && npm run workspace158:check",
     "launcher-download159:check": "node tools/public-launcher-download-v159-test.mjs .",
-    "release:v159": "npm run release:v158 && npm run launcher-download159:check"
+    "release:v159": "npm run release:v158 && npm run launcher-download159:check",
+    "public-twitch160:check": "node tools/public-twitch-live-v160-test.mjs .",
+    "release:v160": "npm run release:v159 && npm run public-twitch160:check",
+    "public-tiktok161:check": "node tools/public-tiktok-live-brand-v161-test.mjs .",
+    "release:v161": "npm run release:v160 && npm run public-tiktok161:check",
+    "homepage162:check": "node tools/homepage-concise-privacy-v162-test.mjs .",
+    "release:v162": "npm run release:v161 && npm run homepage162:check",
+    "legal-public163:check": "node tools/legal-public-privacy-v163-test.mjs .",
+    "release:v163": "npm run release:v162 && npm run legal-public163:check",
+    "homepage164:check": "node tools/public-home-professional-v164-test.mjs .",
+    "release:v164": "npm run release:v163 && npm run homepage164:check",
+    "public-entry165:check": "node tools/public-entry-flow-v165-test.mjs .",
+    "release:v165": "npm run release:v164 && npm run public-entry165:check",
+    "creator-daily166:check": "node tools/creator-daily-account-v166-test.mjs .",
+    "release:v166": "npm run release:v165 && npm run creator-daily166:check",
+    "launcher-studio167:check": "node tools/launcher-studio-boundary-v167-test.mjs .",
+    "release:v167": "npm run release:v166 && npm run launcher-studio167:check",
+    "studio-operator168:check": "node tools/cfs-studio-operator-v168-test.mjs .",
+    "release:v168": "npm run release:v167 && npm run studio-operator168:check",
+    "widget169:check": "node tools/widget-converter-v169-test.mjs .",
+    "release:v169": "npm run release:v168 && npm run widget169:check",
+    "panel170:check": "node tools/panel-converter-v170-test.mjs .",
+    "release:v170": "npm run release:v169 && npm run panel170:check"
   },
   "engines": {
     "node": ">=22"

@@ -1,10 +1,180 @@
+# cfs_zockt · v170
+
+Panel-Umwandler für Twitch-Info-Panels und TikTok Profil-/Social-Karten. PNG-Download oder Speichern in die CFS-Medienbibliothek. Backend 3.20.15 · Schema 73 · Launcher 0.47.30.
+
+# v169 · Widget-Umwandler & Plattformtrennung
+
+TikTok- und Twitch-Widgets sind im Widget Studio strikt getrennt. Der neue Umwandler erstellt aus einem Bild/Logo und einem passenden TikTok-/Twitch-Typ ein normales editierbares Widget. Backend 3.20.15 · Schema 73 · Launcher 0.47.30.
+
+# cfs_zockt Creator Suite – v168
+
+Aktueller Fokus: **CFS Studio als Operator-Arbeitsplatz**. Die normale LIVE-Produktion bleibt sichtbar, technische Einstellungen und Diagnose treten in den Hintergrund.
+
+- Backend: **3.20.13**
+- Schema: **73**
+- Launcher: **0.47.30**
+- Scenes + Quellen links
+- Preview/Program + Composer in der Mitte
+- Session + Stream-Check + Multistream rechts
+- Audio direkt sichtbar
+- Capture, Output, Health und Activity standardmäßig eingeklappt
+- benutzerdefinierte alte Workspaces werden nicht ungefragt überschrieben
+- Secret-/SafeStorage-Grenzen unverändert
+- CFS Studio Operator Gate: **92/92 PASS
+- kompletter `release:v168`: **PASS / Exit 0****
+
+Siehe `CFS-STUDIO-OPERATOR-v168.md`, `TECHNIK-v168.md`, `CREATOR-SUITE-COMPLETION-v168.md` und `SECURITY-BASELINE-v168.md`.
+
+---
+
+# cfs_zockt Creator Suite – v167
+
+Aktueller Fokus: klare Produktgrenze zwischen **CFS Studio** und **Launcher**. CFS Studio ist der normale Produktionsweg. Der Launcher stellt lokal Engine, Capture, Provider-Bridges und verschlüsselte Stream-Credentials bereit. OBS bleibt optional im Profi-Bereich.
+
+- Backend: **3.20.12**
+- Schema: **73**
+- Launcher: **0.47.30**
+- CFS Studio: als eigene installierbare Web-App-Oberfläche vorbereitet
+- Kein zweiter Native-Installer in v167
+
+---
+
+# cfs_zockt — Creator Suite v166
+
+Aktiver Schwerpunkt: **Creator-Alltag nach dem Login**. Der Feature Freeze bleibt aktiv; v166 ist ein UX-/Informationsarchitektur-Pass.
+
+- Backend: **3.20.12**
+- Schema Generation: **73**
+- Launcher: **0.47.30**
+- Dashboard zeigt zuerst genau einen nächsten Schritt und vier Hauptaktionen
+- Status, Stream-Startcheck und technische Module liegen unter `Status & Diagnose`
+- Account ist in Profil, Sicherheit, Sitzungen sowie Daten & Konto gegliedert
+- transparente Wortmarke auch im Creator-Dashboard und Account
+- Auth-, Provider-, Launcher- und Secret-Grenzen unverändert
+- Creator Daily + Account Gate: **88/88 PASS**
+
+Siehe `TECHNIK-v166.md`, `CREATOR-SUITE-COMPLETION-v166.md`, `SECURITY-BASELINE-v166.md` und `CREATOR-DASHBOARD-ACCOUNT-v166.md`.
+
+---
+
+# cfs_zockt — Creator Suite v165
+
+Aktiver Schwerpunkt: **professioneller Produkt-Einstieg**. Der Feature Freeze bleibt aktiv; v165 ist ein UX-/Informationsarchitektur-Pass.
+
+- Backend: **3.20.11**
+- Schema Generation: **73**
+- Launcher: **0.47.30**
+- Creator Suite, Launcher Download und Login/Registrierung auf klare Hauptaufgaben reduziert
+- konsistente Navigation und kompakter Footer
+- technische Status-/Security-Details sekundär und aufklappbar
+- Auth-, Provider- und Launcher-Release-Verträge unverändert
+- Public Entry Flow Gate: **68/68 PASS**
+
+Siehe `TECHNIK-v165.md`, `CREATOR-SUITE-COMPLETION-v165.md`, `SECURITY-BASELINE-v165.md` und `PUBLIC-ENTRY-FLOW-v165.md`.
+
+---
+
+# cfs_zockt — Creator Suite v164
+
+Aktiver Schwerpunkt: **professioneller öffentlicher Besucher-Flow**. Der Feature Freeze bleibt aktiv; v164 ist ein reiner UX-/Informationsarchitektur-Pass.
+
+- Backend: **3.20.10**
+- Schema Generation: **73**
+- Launcher: **0.47.30**
+- Mobile Header ohne unklaren `+`-Shortcut
+- Anmeldung und kostenloser Start liegen mobil im Menü
+- LIVE steht direkt nach dem Hero; Games und Community folgen logisch
+- redundante Angebots-/Erwartungskarten entfernt
+- kompakter Footer mit Twitch, TikTok und Discord
+- Homepage Professional Flow Gate: **31/31 PASS**
+
+Siehe `TECHNIK-v164.md`, `CREATOR-SUITE-COMPLETION-v164.md`, `SECURITY-BASELINE-v164.md` und `PUBLIC-HOMEPAGE-POLISH-v164.md`.
+
+---
+
+# cfs_zockt — Creator Suite v163
+
+Aktiver Schwerpunkt: **Legal Privacy + Search Surface Hardening**. Der Feature Freeze bleibt aktiv; v163 ist ein Privacy-/SEO-Hardening-Pass.
+
+- Backend: **3.20.9**
+- Schema Generation: **73**
+- Launcher: **0.47.30**
+- Impressum, Datenschutz und Nutzungsbedingungen bleiben öffentlich erreichbar
+- Rechtseiten werden nicht mehr in der XML-Sitemap beworben
+- Meta Robots + `X-Robots-Tag`: `noindex,follow,noarchive,nosnippet`
+- Kontakt-E-Mail/`mailto:` bleiben auf die drei Rechtseiten begrenzt
+- keine Telefonnummer-Links im öffentlichen Website-Bereich
+
+Siehe `TECHNIK-v163.md`, `CREATOR-SUITE-COMPLETION-v163.md`, `SECURITY-BASELINE-v163.md` und `PUBLIC-LEGAL-PRIVACY-v163.md`.
+
+---
+
+# cfs_zockt — Creator Suite v162
+
+Aktiver Schwerpunkt: **kompakte öffentliche Hauptseite + Privacy-Audit**. Der Feature Freeze bleibt aktiv; v162 ist ein UX-/Privacy-Polish-Pass.
+
+- Backend: **3.20.8**
+- Schema Generation: **73**
+- Launcher: **0.47.30**
+- Hauptseite deutlich gekürzt, ohne LIVE-Status, Games, Community, Creator Suite oder Launcher zu entfernen
+- doppelter `Über mich`-Abschnitt entfernt
+- private Kontaktidentität bleibt aus der Hauptseite heraus
+- Anbietername, Postanschrift und Kontakt-E-Mail bleiben auf den rechtlichen Seiten begrenzt
+- Homepage Compact + Privacy Gate: **31/31 PASS**
+
+Siehe `TECHNIK-v162.md`, `CREATOR-SUITE-COMPLETION-v162.md`, `SECURITY-BASELINE-v162.md` und `PUBLIC-PRIVACY-AUDIT-v162.md`.
+
+---
+
+# cfs_zockt — Creator Suite v161
+
+Aktiver Schwerpunkt: **TikTok LIVE-/Last-LIVE-Tracking + transparentes Website-Branding**. Der Feature Freeze bleibt aktiv; v161 ist ein Reliability-/Polish-Pass.
+
+- Backend: **3.20.7**
+- Schema Generation: **73**
+- Launcher: **0.47.30**
+- TikTok LIVE/OFFLINE wird über den verbundenen CFS-Launcher-LIVE-Provider erkannt
+- TikTok `Zuletzt live` nutzt vorhandene Provider-/Session-Historie
+- Twitch und TikTok werden auf der Startseite separat angezeigt; simultanes LIVE wird als Multistream zusammengeführt
+- TikTok-Status bleibt bewusst nicht-autoritativer Providerstatus; kein Scraping und keine vorgetäuschte offizielle LIVE-API
+- Header/Footer verwenden jetzt das vorhandene echte transparente RGBA-CFS-Wortlogo statt der PNG mit eingebranntem schwarzen Hintergrund
+- Public TikTok/Brand Gate: **48/48 PASS**
+- Public Twitch Gate: **49/49 PASS**
+- Projektregression: **40/40 PASS**
+- kompletter `npm run release:v161`: **PASS / Exit 0**
+- reale TikTok-Acceptance mit Windows/Launcher/Provider LIVE → OFFLINE bleibt als externer Test offen
+
+Siehe `TECHNIK-v161.md`, `CREATOR-SUITE-COMPLETION-v161.md` und `SECURITY-BASELINE-v161.md`.
+
+---
+
+# cfs_zockt — Creator Suite v160
+
+Aktiver Schwerpunkt: **Twitch LIVE-Status auf der öffentlichen Startseite zuverlässig erkennen**. Der Feature Freeze bleibt aktiv; v160 ist ein Reliability-/Status-Pass.
+
+- Backend: **3.20.6**
+- Schema Generation: **73**
+- Launcher: **0.47.30**
+- Twitch LIVE/OFFLINE wird serverseitig direkt über Twitch Helix geprüft
+- `Zuletzt live` wird aus EventSub/Polling gespeichert und bei fehlender Alt-Historie aus dem letzten Twitch-Archiv gebootstrapped
+- Startseite: direkter **Twitch-Kanal**-Button plus TikTok-Kanal
+- Twitch Viewer/Game/Streamtitel werden öffentlich nur als nicht-sensitive Statusdaten ausgegeben
+- Provider-Tokens, Stream Keys und Client Secrets bleiben serverseitig/lokal
+- Public Twitch LIVE Gate: **49/49 PASS**
+- kompletter `npm run release:v160`: **PASS / Exit 0**
+- reale Produktionsabnahme mit deinem verbundenen Twitch-Konto (LIVE → OFFLINE) bleibt als externer Test offen
+
+Siehe `TECHNIK-v160.md`, `CREATOR-SUITE-COMPLETION-v160.md` und `SECURITY-BASELINE-v160.md`.
+
+---
+
 # cfs_zockt — Creator Suite v159
 
 Aktiver Schwerpunkt: **professioneller öffentlicher Produktauftritt + echter Windows-Launcher-Downloadweg**. Der Feature Freeze bleibt aktiv; v159 ist ein UX-/Distribution-/Release-Hardening-Pass, kein neuer großer Produktblock.
 
 - Backend: **3.20.5**
 - Schema Generation: **73**
-- Launcher: **0.47.29**
+- Launcher: **0.47.30**
 - neue öffentliche Seite: **`/pages/launcher-download.html`**
 - öffentliche read-only Release-API: **`/api/public/launcher/releases`**
 - Windows Build: **NSIS Setup `.exe` + Portable `.exe` · x64**

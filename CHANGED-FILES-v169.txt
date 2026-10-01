@@ -1,14 +1,14 @@
-v170 · Panel-Umwandler
+cfs_zockt v169 · Änderungen gegenüber dem vollständigen v168-Stand
 
-NEU:
-- PANEL-CONVERTER-v170.md
-- TECHNIK-v170.md
-- CREATOR-SUITE-COMPLETION-v170.md
-- SECURITY-BASELINE-v170.md
-- handoff/HANDOFF-v170.md
-- tools/panel-converter-v170-test.mjs
+NEU (6):
+- CREATOR-SUITE-COMPLETION-v169.md
+- SECURITY-BASELINE-v169.md
+- TECHNIK-v169.md
+- WIDGET-CONVERTER-v169.md
+- handoff/HANDOFF-v169.md
+- tools/widget-converter-v169-test.mjs
 
-GEÄNDERT:
+GEÄNDERT (18):
 - INSTALLIEREN.txt
 - PROJECT_CURRENT_STATE.md
 - README.md
@@ -24,6 +24,8 @@ GEÄNDERT:
 - public/pages/widget-studio.html
 - server.js
 - tools/cfs-studio-operator-v168-test.mjs
+- tools/creator-provider-isolation-v145-test.mjs
+- tools/twitch-chat-v146-test.mjs
+- tools/widget-studio-30s-ux-test.mjs
 
-GELÖSCHT:
-- keine
+GELÖSCHT (0):

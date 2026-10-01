@@ -1,4 +1,195 @@
+# Aktueller Stand · v170
+
+Backend **3.20.15**, Schema **73**, Launcher **0.47.30**. Panel-Umwandler ergänzt: Twitch Info-Panels und TikTok Profil-/Social-Karten, ohne automatische Provider-Veröffentlichung. Reale Windows-/OBS-/Provider-Acceptance bleibt offen.
+
+# v169 — Widget-Umwandler & strikte Provider-Kategorien
+
+Backend **3.20.15**, Schema **73**, Launcher **0.47.30**. TikTok/Twitch/YouTube/Allgemein sind providerrein; neuer TikTok-/Twitch-Bild-zu-Widget-Umwandler mit serverseitiger Plattformvalidierung. Reale Provider-/Windows-Acceptance bleibt offen.
+
+# cfs_zockt Creator Suite – Project Current State
+
+Aktiver kumulativer Stand: **v168**. Der Feature Freeze aus v154 bleibt aktiv. v168 ordnet CFS Studio als kompakten Operator-Arbeitsplatz: Scenes/Quellen links, Preview/Program in der Mitte, Stream-Ziele rechts und Audio direkt darunter. Technische Setup-/Diagnosebereiche bleiben vollständig vorhanden, sind aber standardmäßig eingeklappt. Backend **3.20.13**, Schema **73**, Launcher **0.47.30**.
+
+**Backend: 3.20.13**  
+**Schema: 73**  
+**Launcher: 0.47.30**
+
+## v168 – CFS Studio Operator Workspace
+
+- neues Standard-Workspace-Schema v3
+- links: Scenes + Quellen
+- Mitte: Preview/Program + Scene Composer + Übergang/Overlays
+- rechts: Stream Session + Stream-Check + Multistream
+- unten: Audio sichtbar; Capture/Output eingeklappt
+- Live Health und Multi-Chat/Activity standardmäßig eingeklappt
+- alte unveränderte Standardlayouts migrieren automatisch; individuelle Layouts bleiben erhalten
+- Layout-Edit und Deep-Links öffnen eingeklappte Panels kontrolliert
+- keine Änderung an Secret-/SafeStorage-/Provider-Grenzen
+- `studio-operator168:check`: **92/92 PASS
+- kompletter `release:v168`: **PASS / Exit 0****
+- `project:check`: **40/40 PASS**
+
+Details: `TECHNIK-v168.md`, `CREATOR-SUITE-COMPLETION-v168.md`, `SECURITY-BASELINE-v168.md`, `CFS-STUDIO-OPERATOR-v168.md`.
+
+---
+
+Aktiver kumulativer Stand: **v167**. Der Feature Freeze aus v154 bleibt aktiv. v167 trennt die Produktrollen klar: CFS Studio ist der Haupt-Arbeitsplatz, der Launcher bleibt lokale Engine/Bridge und OBS ist nur noch optionale Kompatibilität. Backend **3.20.12**, Schema **73**, Launcher **0.47.30**. CFS Studio kann zusätzlich als eigene installierbare Web-App-Oberfläche gestartet werden; es gibt bewusst keinen zweiten Native-Installer.
+
+**Backend: 3.20.12**  
+**Schema: 73**  
+**Launcher: 0.47.30**
+
+## v167 – CFS Studio / Launcher Product Boundary
+
+- CFS Studio ist im Launcher im Einfach-Modus als primärer Produktionsweg sichtbar.
+- Stream Engine, Local Output und OBS bleiben als lokale technische Werkzeuge im Profi-Modus.
+- OBS ist ausdrücklich optional; bestehende obs-websocket- und Browser-Source-Funktionen bleiben erhalten.
+- CFS Studio hat ein eigenes Web-App-Manifest (`/cfs-studio.webmanifest`) mit Start direkt im Stream Studio.
+- Installation nutzt den Browser-/PWA-Weg und teilt die bestehende sichere Web-Session; Tokens werden nicht in URL oder Manifest übertragen.
+- Kein zweiter nativer Installer in v167: dafür wäre eine zusätzliche sichere Auth-, Update- und Signing-Kette notwendig.
+
+---
+
 # PROJECT CURRENT STATE
+
+Aktiver kumulativer Stand: **v166**. Der Feature Freeze aus v154 bleibt aktiv. v166 reduziert den eingeloggten Creator-Alltag auf klare Hauptaktionen und trennt normale Nutzung von Status/Diagnose. Backend **3.20.12**, Schema **73**, Launcher **0.47.29**. Das Paket bleibt ein kumulatives Updatepaket und ist kein Full Project.
+
+**Backend: 3.20.12**  
+**Schema: 73**  
+**Launcher: 0.47.29**
+
+## v166 — Creator Dashboard + Account Alltag
+
+- Dashboard: ein automatischer nächster Schritt als Hauptaktion
+- vier Schnellzugriffe: Stream Studio, Widget Studio, Launcher, Integrationen
+- öffentlicher LIVE-Fallback bleibt direkt sichtbar
+- Status, Stream-Startcheck, Runtime, Workspace und Module unter `Status & Diagnose`
+- Account: Profil / Sicherheit / Sitzungen / Daten & Konto
+- doppelte Account-Verwaltungsnavigation entfernt
+- technische Schutzdetails eingeklappt, Funktionen/IDs unverändert
+- transparente CFS-Wortmarke auch im eingeloggten Bereich
+- `creator-daily166:check`: **88/88 PASS**
+- `project:check`: **40/40 PASS**
+- kompletter `release:v166`: **PASS / Exit 0**
+
+Details: `TECHNIK-v166.md`, `CREATOR-SUITE-COMPLETION-v166.md`, `SECURITY-BASELINE-v166.md`, `CREATOR-DASHBOARD-ACCOUNT-v166.md`.
+
+---
+
+Aktiver kumulativer Stand: **v165**. Der Feature Freeze aus v154 bleibt aktiv. v165 vereinheitlicht Creator Suite, Launcher Download und Login/Registrierung als klaren öffentlichen Produkt-Einstieg. Backend **3.20.11**, Schema **73**, Launcher **0.47.29**. Das Paket bleibt ein kumulatives Updatepaket und ist kein Full Project.
+
+**Backend: 3.20.11**  
+**Schema: 73**  
+**Launcher: 0.47.29**
+
+## v165 — Public Entry Flow
+
+- Creator Suite: kürzerer Hero, drei Einstiege, sechs Themen, Detailstatus aufklappbar
+- Launcher: Setup als Hauptweg, drei Startschritte, Portable/Prüfsummen sekundär
+- Login/Registrierung: zwei klare Hauptaktionen, technische Details aufklappbar
+- gemeinsame Navigation + kompakter Footer auf allen drei Einstiegsseiten
+- transparente CFS-Wortmarke durchgehend verwendet
+- Auth-/MFA-/Passkey-/Release-IDs und Sicherheitsgrenzen unverändert
+- `public-entry165:check`: **68/68 PASS**
+
+Details: `TECHNIK-v165.md`, `CREATOR-SUITE-COMPLETION-v165.md`, `SECURITY-BASELINE-v165.md`, `PUBLIC-ENTRY-FLOW-v165.md`.
+
+---
+
+Aktiver kumulativer Stand: **v164**. Der Feature Freeze aus v154 bleibt aktiv. v164 professionalisiert den öffentlichen Besucher-Flow: mobile Navigation ohne unklaren Plus-Shortcut, LIVE direkt nach dem Hero, weniger doppelte Karten und ein kompakter Footer. Backend **3.20.10**, Schema **73**, Launcher **0.47.29**. Das Paket bleibt ein kumulatives Updatepaket und ist kein Full Project.
+
+**Backend: 3.20.10**  
+**Schema: 73**  
+**Launcher: 0.47.29**
+
+## v164 — Public Homepage Professional Flow
+
+- Mobile Header: nur Logo + Menü; Anmeldung/Registrierung im geöffneten Menü
+- unklarer `+`-Registrierungs-Shortcut entfernt
+- Startseiten-Reihenfolge: Hero → LIVE → Games → Community → Creator Suite
+- redundanter Vier-Wege-Angebotsblock entfernt
+- generische Stream-Erwartungskarten entfernt; LIVE-Status steht im Mittelpunkt
+- Community auf drei aktive Wege reduziert: TikTok, Discord, Creator Suite
+- Footer ohne doppelte Community-Zahlen; Twitch/TikTok/Discord direkt erreichbar
+- Startseite bleibt mit rund 313 sichtbaren Wörtern kompakt
+- `homepage164:check`: **31/31 PASS**
+
+Details: `TECHNIK-v164.md`, `CREATOR-SUITE-COMPLETION-v164.md`, `SECURITY-BASELINE-v164.md`, `PUBLIC-HOMEPAGE-POLISH-v164.md`.
+
+---
+
+Aktiver kumulativer Stand: **v163**. Der Feature Freeze aus v154 bleibt aktiv. v163 hält die rechtlichen Seiten öffentlich erreichbar, reduziert aber ihre Suchmaschinen-Prominenz und begrenzt öffentliche Kontaktidentität weiter auf den Legal-Bereich. Backend **3.20.9**, Schema **73**, Launcher **0.47.29**. Das Paket bleibt ein kumulatives Updatepaket und ist kein Full Project.
+
+**Backend: 3.20.9**  
+**Schema: 73**  
+**Launcher: 0.47.29**
+
+## v163 — Legal Privacy + Search Surface Hardening
+
+- Impressum, Datenschutz und Nutzungsbedingungen bleiben per Footer/Direktlink öffentlich erreichbar
+- Meta Robots und HTTP `X-Robots-Tag` setzen diese Seiten auf `noindex,follow,noarchive,nosnippet`
+- Rechtseiten aus `sitemap.xml` entfernt
+- `robots.txt` lässt Crawling zu, damit `noindex` gelesen werden kann
+- E-Mail-/mailto-Audit begrenzt Kontaktidentität auf die drei Rechtseiten
+- keine Telefonnummer-Links im Public-Bereich
+
+## v162 — Homepage Compact + Public Privacy Audit
+
+- sichtbarer Startseitentext von ca. 669 auf ca. 352 Wörter reduziert
+- doppelter `Über mich`-Block entfernt
+- Hero, Stream-, Community-, PlayStation- und Beta-Texte gekürzt
+- LIVE-/Twitch-/TikTok-/PlayStation-Funktionen bleiben erhalten
+- keine private Kontakt-E-Mail, Postanschrift, Telefonnummer oder Geburtsangabe auf der Hauptseite
+- rechtliche Anbieter-/Kontaktdaten bleiben auf Impressum, Datenschutz und Nutzungsbedingungen begrenzt
+- `homepage162:check`: **31/31 PASS**
+
+Details: `TECHNIK-v162.md`, `CREATOR-SUITE-COMPLETION-v162.md`, `SECURITY-BASELINE-v162.md`, `PUBLIC-PRIVACY-AUDIT-v162.md`.
+
+---
+
+Aktiver kumulativer Stand: **v161**. Der Feature Freeze aus v154 bleibt aktiv. v161 ergänzt einen getrennten TikTok-LIVE-/Last-LIVE-Pfad über den lokalen Launcher-LIVE-Provider und ersetzt das im alten PNG eingebrannte schwarze Logo-Feld durch das vorhandene transparente RGBA-Wortlogo. Backend **3.20.7**, Schema **73**, Launcher **0.47.29**. Das Paket bleibt ein kumulatives Updatepaket und ist kein Full Project.
+
+**Backend: 3.20.7**  
+**Schema: 73**  
+**Launcher: 0.47.29**
+
+## v161 — TikTok LIVE Tracking + Transparent Brand
+
+- TikTok-LIVE-State aus Launcher `integration_health.live_provider`
+- TikTool/TikFinity/TikTok Provider getrennt erkannt
+- eigener TikTok LIVE/OFFLINE/Status-offen-Zustand
+- eigener TikTok `Zuletzt live`-Zeitpunkt aus CFS-Provider-/Session-Historie
+- Twitch und TikTok unabhängig; gleichzeitiges LIVE wird als Multistream dargestellt
+- alte Logo-PNG mit schwarzem Bildhintergrund auf echte transparente RGBA-Wordmark umgestellt
+- `public-tiktok161:check`: **48/48 PASS**
+- `public-twitch160:check`: **49/49 PASS**
+- `project:check`: **40/40 PASS**
+- kompletter `release:v161`: **PASS / Exit 0**
+
+Details: `TECHNIK-v161.md`, `CREATOR-SUITE-COMPLETION-v161.md`, `SECURITY-BASELINE-v161.md`.
+
+---
+
+Aktiver kumulativer Stand: **v160**. Der Feature Freeze aus v154 bleibt aktiv. v160 macht Twitch zur direkten, serverseitig geprüften LIVE/OFFLINE-Quelle der öffentlichen Startseite, ergänzt `Zuletzt live` und einen direkten Twitch-Kanal-Link. Backend **3.20.6**, Schema **73**, Launcher **0.47.29**. Das Paket bleibt ein kumulatives Updatepaket und ist kein Full Project.
+
+**Backend: 3.20.6**  
+**Schema: 73**  
+**Launcher: 0.47.29**
+
+## v160 — Public Twitch LIVE Status
+
+- Twitch Helix Streams: autoritative LIVE/OFFLINE-Prüfung
+- EventSub/Polling: LIVE→OFFLINE-Zeitpunkt für `Zuletzt live`
+- Bootstrap bestehender Historie über neuestes Twitch-Archiv, sofern vorhanden
+- Twitch Viewer/Game/Streamtitel im öffentlichen Status
+- direkter Twitch-Kanal-Link auf der Startseite
+- keine Provider-Tokens/Stream Keys im Browser
+- `public-twitch160:check`: **49/49 PASS**
+- kompletter `release:v160`: **PASS / Exit 0**
+
+Details: `TECHNIK-v160.md`, `CREATOR-SUITE-COMPLETION-v160.md`, `SECURITY-BASELINE-v160.md`.
+
+---
 
 Aktiver kumulativer Stand: **v159**. Der Feature Freeze aus v154 bleibt aktiv. v159 professionalisiert den öffentlichen Produktauftritt und ergänzt einen öffentlichen, read-only Launcher-Downloadweg für tatsächlich veröffentlichte Windows-Releases. Öffentliche Tag-Releases verlangen gültige Authenticode-Signaturen. Backend **3.20.5**, Schema **73**, Launcher **0.47.29**. Das Paket bleibt ein kumulatives Updatepaket und ist kein Full Project.
 
