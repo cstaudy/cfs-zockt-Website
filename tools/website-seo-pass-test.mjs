@@ -15,6 +15,9 @@ const INDEXABLE = new Map([
   ["pages/roadmap.html", `${BASE}/pages/roadmap.html`],
   ["pages/support.html", `${BASE}/pages/support.html`],
   ["pages/security.html", `${BASE}/pages/security.html`],
+]);
+
+const PUBLIC_NOINDEX = new Map([
   ["pages/impressum.html", `${BASE}/pages/impressum.html`],
   ["pages/datenschutz.html", `${BASE}/pages/datenschutz.html`],
   ["pages/nutzungsbedingungen.html", `${BASE}/pages/nutzungsbedingungen.html`],
@@ -88,10 +91,17 @@ for (const file of walk(publicDir).filter(f => f.endsWith(".html"))) {
       one(html, new RegExp(`<meta\\s+name=["']${escaped}["'][^>]*content=["']([^"']+)["'][^>]*>`, "gi"), name, rel);
     }
     one(html, /<link\s+rel=["']manifest["'][^>]*href=["']([^"']+)["'][^>]*>/gi, "manifest", rel);
+  } else if (PUBLIC_NOINDEX.has(rel)) {
+    if (!robots.includes("noindex")) errors.push(`${rel}: öffentliche Rechtseite braucht noindex.`);
+    if (!robots.includes("follow")) errors.push(`${rel}: öffentliche Rechtseite soll Links weiterhin follow erlauben.`);
+    if (!robots.includes("noarchive")) errors.push(`${rel}: öffentliche Rechtseite braucht noarchive.`);
+    if (!robots.includes("nosnippet")) errors.push(`${rel}: öffentliche Rechtseite braucht nosnippet.`);
+    const canonical = one(html, /<link\s+rel=["']canonical["'][^>]*href=["']([^"']+)["'][^>]*>/gi, "canonical", rel);
+    if (canonical !== PUBLIC_NOINDEX.get(rel)) errors.push(`${rel}: Canonical ist ${canonical || "leer"}, erwartet ${PUBLIC_NOINDEX.get(rel)}.`);
   } else {
     if (!robots.includes("noindex")) errors.push(`${rel}: interne/Runtime-Seite braucht noindex.`);
     const canonicals = [...html.matchAll(/<link\s+rel=["']canonical["']/gi)].length;
-    if (canonicals) errors.push(`${rel}: noindex-Seite soll keinen Canonical-Tag tragen.`);
+    if (canonicals) errors.push(`${rel}: interne noindex-Seite soll keinen Canonical-Tag tragen.`);
   }
 }
 
@@ -163,6 +173,7 @@ if (errors.length) {
 
 console.log(`SEO PASS CHECK: OK`);
 console.log(`- ${INDEXABLE.size} indexierbare Canonical-Seiten`);
-console.log(`- ${walk(publicDir).filter(f=>f.endsWith(".html")).length - INDEXABLE.size} interne/Runtime-Seiten auf noindex`);
+console.log(`- ${PUBLIC_NOINDEX.size} öffentliche Rechtseiten auf noindex/follow`);
+console.log(`- ${walk(publicDir).filter(f=>f.endsWith(".html")).length - INDEXABLE.size - PUBLIC_NOINDEX.size} interne/Runtime-Seiten auf noindex`);
 console.log(`- OpenGraph/Twitter + Manifest + Sitemap + robots geprüft`);
 console.log(`- Organization/WebSite/Creator-Suite JSON-LD + CSP-Hash geprüft`);

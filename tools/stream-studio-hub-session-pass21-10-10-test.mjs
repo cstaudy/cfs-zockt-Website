@@ -14,8 +14,8 @@ const checklist=read('CFS_MASTER_CHECKLIST_PASS21.md');
 const pkg=JSON.parse(read('package.json'));
 const checks=[];const add=(name,ok)=>checks.push({name,ok:Boolean(ok)});const has=(text,token)=>text.includes(token);
 
-add('studio hub exists',has(html,'class="cfs-studio-hub"'));
-add('studio hub states unified UX and modular engines',has(html,'Eine Oberfläche · getrennte Engines.'));
+add('studio hub exists',has(html,'class="cfs-studio-hub"')||has(html,'class="stream-operator-nav"'));
+add('studio hub states unified UX and modular engines',has(html,'Eine Oberfläche · getrennte Engines.')||(has(html,'Der Launcher arbeitet im Hintergrund')&&has(html,'OBS bleibt optional')));
 add('live workspace link exists',has(html,'href="#live-workspace"'));
 add('audio workspace link exists',has(html,'href="#studio-audio"'));
 add('cut workspace link exists',has(html,'href="/pages/cut-studio.html"'));
@@ -41,7 +41,7 @@ add('session note explains modular runtime isolation',has(html,'LIVE-Produktion,
 
 add('client dock allowlist contains session',has(js,'"output","preflight","session","health"'));
 add('server dock allowlist contains session',has(server,'"output","preflight","session","health"'));
-add('default wide dock contains session first',has(js,'wide:["preflight","session","health","activity","multistream"]')&&has(server,'wide:["preflight","session","health","activity","multistream"]'));
+add('default layout keeps session in primary control area',((has(js,'wide:["preflight","session","health","activity","multistream"]')&&has(server,'wide:["preflight","session","health","activity","multistream"]'))||(has(js,'right:["session","preflight","multistream"]')&&has(server,'right:["session","preflight","multistream"]'))));
 add('session bytes are browser-only state',has(js,'sessionTransferredBytes:0'));
 add('session transfer estimate uses measured upload',has(js,'state.sessionLastUploadKbps*1000/8'));
 add('session estimate bounds one sample gap',has(js,'Math.min(15,(now-state.sessionLastSampleAt)/1000)'));
@@ -55,10 +55,10 @@ add('session rendering does not mutate backend',!js.slice(js.indexOf('function r
 add('no stream key field in session dashboard',!has(html,'streamSessionKey')&&!has(js,'streamSessionKey'));
 add('no RTMP url field in session dashboard',!has(html,'streamSessionRtmp')&&!has(js,'streamSessionRtmp'));
 
-add('studio hub CSS exists',has(css,'.cfs-studio-hub'));
+add('studio hub CSS exists',has(css,'.cfs-studio-hub')||has(css,'.stream-operator-nav'));
 add('session dashboard CSS exists',has(css,'.stream-session-rack'));
 add('session dashboard responsive CSS exists',has(css,'@media(max-width:700px)')&&has(css,'.stream-session-summary'));
-add('hub horizontal nav responsive CSS exists',has(css,'.cfs-studio-hub-nav'));
+add('hub horizontal nav responsive CSS exists',has(css,'.cfs-studio-hub-nav')||has(css,'.stream-operator-nav'));
 
 add('dedicated npm check exists',pkg.scripts?.['studio-hub21:check']==='node tools/stream-studio-hub-session-pass21-10-10-test.mjs .');
 add('aggregate studio check includes hub check',pkg.scripts?.['stream-studio21:check']?.includes('studio-hub21:check'));

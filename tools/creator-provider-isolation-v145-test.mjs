@@ -55,9 +55,9 @@ assert(server.includes('["twitch","youtube"].includes(widgetProvider)?widgetProv
 
 // Creator-facing Studio must expose only connected provider areas.
 assert(studioHtml.includes('data-platform-filter="twitch"'),'Twitch platform card missing');
-assert(studioHtml.includes('TikTok verbunden')&&studioHtml.includes('Twitch verbunden'),'provider-specific Studio guidance missing');
-assert(studio.includes('el.hidden=state.providerAccess?.tiktok?.connected!==true'),'TikTok Studio filter must hide when disconnected');
-assert(studio.includes('el.hidden=state.providerAccess?.twitch?.connected!==true'),'Twitch Studio filter must hide when disconnected');
+assert(studioHtml.includes('TikTok → nur TikTok Widgets.')&&studioHtml.includes('Twitch → nur Twitch Widgets.'),'provider-specific Studio guidance missing');
+assert(studio.includes('function platformAvailable(area)')&&studio.includes('providerForDef(d)===area'),'TikTok Studio filter must be driven by connected registry');
+assert(studio.includes('b.hidden=!platformAvailable(area)'),'Twitch Studio filter must hide unavailable provider areas');
 assert(studio.includes('new URLSearchParams(location.search).get("platform")'),'provider-specific Studio deep link missing');
 
 // Launcher must switch a connected provider button from OAuth to that provider's widgets.

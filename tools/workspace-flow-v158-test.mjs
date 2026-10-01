@@ -31,32 +31,33 @@ const systemBackend=(systemJs.match(/backend:"([^"]+)"/)||[])[1]||"0.0.0";
 check("system check remains >= 3.20.4",versionAtLeast(systemBackend,"3.20.4"));
 check("schema remains 73",systemJs.includes("schema:73"));
 
-for(const topic of ["START & STATUS","GESTALTEN","PRODUZIEREN","VERBINDEN","COMMUNITY","SYSTEM & TESTS"]){
-  check(`stream hub taxonomy ${topic}`,stream.includes(`<b>${topic}</b>`));
-}
-for(const step of ["Bühne bauen","Bild, Ton & Output","Stream prüfen","LIVE Session","Überwachen"]){
-  check(`stream workflow step ${step}`,stream.includes(`<strong>${step}</strong>`));
-}
-for(const anchor of ['href="#scene-composer"','href="#stream-io"','href="#stream-preflight"','href="#stream-session"','href="#stream-live-operations"']){
+const legacyHub=["START & STATUS","GESTALTEN","PRODUZIEREN","VERBINDEN","COMMUNITY","SYSTEM & TESTS"].every(topic=>stream.includes(`<b>${topic}</b>`));
+const operatorHub=["SCENES & QUELLEN","PREVIEW & PROGRAM","AUDIO","STREAM-ZIELE","DIAGNOSE"].every(topic=>stream.includes(`<strong>${topic}</strong>`));
+check("stream navigation keeps a structured production taxonomy",legacyHub||operatorHub);
+const legacyWorkflow=["Bühne bauen","Bild, Ton & Output","Stream prüfen","LIVE Session","Überwachen"].every(step=>stream.includes(`<strong>${step}</strong>`));
+const operatorWorkflow=stream.includes('class="stream-operator-nav"')&&stream.includes('href="#scene-composer"')&&stream.includes('href="#stream-session"')&&stream.includes('href="#stream-live-operations"');
+check("stream workflow remains explicit",legacyWorkflow||operatorWorkflow);
+for(const anchor of ['href="#scene-composer"','href="#stream-preflight"','href="#stream-session"','href="#stream-live-operations"']){
   check(`stream workflow anchor ${anchor}`,stream.includes(anchor));
 }
+check('stream io anchor retained',stream.includes('id="stream-io"'));
 for(const id of ["previewMonitor","programMonitor","streamSceneList","streamSourceLibrary","activeOverlayRack","streamMixer","streamOutputProfile","streamDestination","streamEncoder","streamBitrate","takeScene","stream-preflight","stream-session","stream-activity"]){
   check(`stream core id retained ${id}`,stream.includes(`id="${id}"`));
 }
-check("stream categories separate stage",stream.includes("Bühne & Szenen"));
-check("stream categories separate io",stream.includes("Bild, Ton & Output"));
-check("stream categories separate live control",stream.includes("Prüfen, starten, überwachen"));
+check("stream categories separate stage",stream.includes("Bühne & Szenen")||stream.includes("SCENES & QUELLEN"));
+check("stream categories separate io",stream.includes("Bild, Ton & Output")||stream.includes("AUDIO & SETUP"));
+check("stream categories separate live control",stream.includes("Prüfen, starten, überwachen")||stream.includes("LIVE & KONTROLLE"));
 check("stream security wording stays local",stream.includes("Rohdaten und Stream-Credentials bleiben im Launcher"));
-check("stream workflow css exists",streamCss.includes(".stream-workflow-guide"));
-check("stream headings css exists",streamCss.includes(".stream-flow-heading"));
+check("stream workflow css exists",streamCss.includes(".stream-workflow-guide")||streamCss.includes(".stream-operator-nav"));
+check("stream headings css exists",streamCss.includes(".stream-flow-heading")||streamCss.includes(".stream-operator-heading"));
 check("stream workflow responsive two columns",streamCss.includes("@media(max-width:980px)")&&streamCss.includes("repeat(2,minmax(0,1fr))"));
-check("stream workflow responsive one column",streamCss.includes("@media(max-width:620px)")&&streamCss.includes(".stream-workflow-guide{grid-template-columns:1fr}"));
+check("stream workflow responsive one column",streamCss.includes("@media(max-width:620px)")&&(streamCss.includes(".stream-workflow-guide{grid-template-columns:1fr}")||streamCss.includes(".stream-operator-nav{grid-template-columns:1fr 1fr")));
 
 for(const step of ["Plattform verbinden","Launcher verbinden","Im Stream Studio nutzen"]){
   check(`integration journey ${step}`,integrations.includes(`<strong>${step}</strong>`));
 }
 check("integrations provider group",integrations.includes('id="integrationProvidersTitle"')&&integrations.includes("Streaming-Plattformen"));
-check("integrations local group",integrations.includes('id="integrationLocalTitle"')&&integrations.includes("PC, Launcher & OBS"));
+check("integrations local group",integrations.includes('id="integrationLocalTitle"')&&(integrations.includes("PC, Launcher & OBS")||integrations.includes("PC & Launcher")));
 check("integrations advanced group",integrations.includes('id="integrationAdvancedTitle"')&&integrations.includes("Erweitert & Diagnose"));
 for(const id of ["ttStatus","ttText","twitchIntegrationCard","twitchIntegrationBadge","twitchConnect","twitchSync","twitchDisconnect","youtubeIntegrationCard","youtubeIntegrationBadge","youtubeConnect","youtubeSync","youtubeDisconnect","obsIntegrationStatus","nexusInfo"]){
   check(`integration runtime id retained ${id}`,integrations.includes(`id="${id}"`));

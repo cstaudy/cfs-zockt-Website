@@ -26,10 +26,10 @@ check('Counter Rezept',js.includes('if(kind==="counter")return"counter_clean"'))
 check('Timer Rezept',js.includes('"timer_live":"timer_clean"'));
 check('Chat Rezept',js.includes('if(kind==="chat")return"chat_balanced"'));
 check('Kamera Rezept',js.includes('if(kind==="camera")return"camera_soft"'));
-check('OBS Goal bleibt manuell',js.includes('state.platformFilter==="obs"?["manual_goal"]'));
-check('OBS Counter bleibt manuell',js.includes('state.platformFilter==="obs"?["manual_counter"]'));
-check('OBS Timer bleibt manuell',js.includes('state.platformFilter==="obs"?["stream_timer"]'));
-check('OBS Kamera bleibt providerfrei sortiert',js.includes('state.platformFilter==="obs"?["camera_frame","camera_frame_square"]:[]'));
+check('Allgemein Goal bleibt manuell',js.includes('if(area==="obs"){if(kind==="goal")return["manual_goal"]'));
+check('Allgemein Counter bleibt manuell',js.includes('if(kind==="counter")return["manual_counter"]'));
+check('Allgemein Timer bleibt manuell',js.includes('if(kind==="timer")return["stream_timer"]'));
+check('Allgemein Kamera bleibt providerfrei sortiert',js.includes('if(kind==="camera")return["camera_frame","camera_frame_square"]'));
 check('Plan-Sperre wird respektiert',js.includes('button.disabled=!d||d.available===false'));
 check('Keine Auto-Publish-Funktion im Quickstart',!js.match(/function createQuickStart[\s\S]{0,900}publishNow\(/));
 

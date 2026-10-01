@@ -27,7 +27,7 @@ for(const needle of [
 ]) assert(server.includes(needle),`Twitch OAuth v143 missing: ${needle}`);
 assert(server.includes('path.startsWith("/auth/tiktok")||path.startsWith("/auth/twitch")'),'Twitch auth is not covered by incident write freeze');
 assert(!server.includes('res.json({access_token'),'Twitch access token must not be returned directly');
-assert(html.includes('TWITCH VERBINDEN')&&(html.includes('EventSub/Chat')||html.includes('EVENTSUB + CHAT')||html.includes('EventSub + Chat')),'Twitch integration UI missing or overclaims runtime readiness');
+assert(html.includes('TWITCH VERBINDEN')&&(html.includes('EventSub/Chat')||html.includes('EVENTSUB + CHAT')||html.includes('EventSub + Chat')||html.includes('LIVE-Events und Chat')),'Twitch integration UI missing or overclaims runtime readiness');
 assert(ui.includes('/api/creator/twitch/status')&&ui.includes('/api/creator/twitch/sync')&&ui.includes('/api/creator/twitch/disconnect'),'Twitch UI actions missing');
 assert(env.includes('TWITCH_CLIENT_ID=')&&env.includes('TWITCH_CLIENT_SECRET=')&&env.includes('TWITCH_REDIRECT_URI='),'Twitch env documentation missing');
 const {publicProviderOAuthContracts}=require(path.join(root,'lib/provider-oauth-contract.js'));

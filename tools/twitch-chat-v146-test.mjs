@@ -38,10 +38,10 @@ assert(server.includes('source: "Twitch EventSub Chat"'),'Twitch chat widget sou
 assert(server.includes('studioWidgetRequiredScopes'),'multi-scope widget helper missing');
 assert(server.includes('code:"provider_scope_missing"')&&server.includes('required_scopes:missingScopes'),'server-side Twitch widget scope rejection missing');
 
-assert(studio.includes('x==="tiktok"||x==="twitch"')&&studio.includes('x==="obs"'),'Widget Studio area filter must include Twitch');
+assert(studio.includes('twitch:{key:"twitch"')&&studio.includes('providerForDef(d)===String(area||"")'),'Widget Studio area filter must include provider-pure Twitch');
 assert(studio.includes('if(kind==="chat")return["twitch_chat_overlay"]'),'Twitch chat quick start missing');
 assert(studio.includes('"twitch_chat_overlay"'),'Twitch chat must be in the Studio catalog/recommendations');
-assert(studio.includes('Chat, LIVE-Timer, Follow-, Sub- und Cheer-Widgets'),'Twitch Studio provider guidance must mention chat');
+assert(studio.includes('Twitch Widgets.')&&studio.includes('Chat-, Follow-, Sub- und Cheer-Typen'),'Twitch Studio provider guidance must mention chat');
 
 assert(renderer.includes('String(item?.event_type||"")==="chat"'),'shared widget renderer must consume normalized chat events');
 assert(renderer.includes('payload?.message'),'shared widget renderer must render chat message payload');

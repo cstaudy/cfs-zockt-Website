@@ -177,8 +177,8 @@ for (const sitePath of sitemapLocs) {
   const local = sitePath === '/' ? path.join(publicDir, 'index.html') : path.join(publicDir, sitePath.replace(/^\//, ''));
   if (!fs.existsSync(local)) sitemapBroken.push(sitePath);
 }
-check('sitemap URLs resolve to public files', sitemapLocs.length >= 9 && sitemapBroken.length === 0, sitemapBroken.join(', '));
-check('sitemap includes all primary indexable pages', ['/','/pages/creator-suite.html','/pages/plans.html','/pages/roadmap.html','/pages/support.html','/pages/security.html','/pages/impressum.html','/pages/datenschutz.html','/pages/nutzungsbedingungen.html'].every(route => sitemapLocs.includes(route)));
+check('sitemap URLs resolve to public files', sitemapLocs.length >= 8 && sitemapBroken.length === 0, sitemapBroken.join(', '));
+check('sitemap includes all primary indexable pages', ['/','/pages/creator-suite.html','/pages/launcher-download.html','/pages/merch.html','/pages/plans.html','/pages/roadmap.html','/pages/support.html','/pages/security.html'].every(route => sitemapLocs.includes(route)) && !['/pages/impressum.html','/pages/datenschutz.html','/pages/nutzungsbedingungen.html'].some(route => sitemapLocs.includes(route)));
 
 // 10) No stale deleted repository reference is reintroduced in the website/deploy entrypoint.
 const deploySurface = [home, read('server.js'), read('public/pages/creator-suite.html')].join('\n');

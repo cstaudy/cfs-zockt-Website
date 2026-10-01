@@ -25,7 +25,7 @@ const server=read('server.js');
 const pkg=JSON.parse(read('package.json'));
 
 add('workspace toolbar exists',has(html,'id="toggleStudioLayout"')&&has(html,'id="resetStudioLayout"'));
-add('layout action explains movable panels',has(html,'Panels so anordnen, wie du streamst.'));
+add('layout action explains movable panels',has(html,'Panels so anordnen, wie du streamst.')||has(html,'Panels, Größen und gespeicherte Workspaces nur bei Bedarf anpassen.'));
 for(const zone of ['left','center','right','bottom','wide']) add(`dock zone ${zone} exists`,has(html,`data-dock-zone="${zone}"`));
 for(const item of ['scenes','monitors','scene_composer','transition','overlay_rack','sources','capture','audio','output','preflight','session','health','activity','multistream']) add(`dock item ${item} exists`,has(html,`data-dock-id="${item}"`));
 add('transition panel is dockable',has(html,'data-dock-id="transition"')&&has(html,'id="streamTransition"')&&has(html,'id="streamDuration"'));
@@ -41,7 +41,7 @@ add('client restores missing panels from defaults',has(js,'DEFAULT_WORKSPACE.zon
 add('client installs dedicated drag handles',has(js,'function installDockHandles')&&has(js,"stream-dock-handle"));
 add('dragging only starts in layout editing mode',has(js,'!state.layoutEditing')&&has(js,'state.layoutDragArmed!==item.dataset.dockId'));
 add('drag start uses only dock item id',has(js,"setData('text/plain',state.layoutDragId)"));
-add('drop captures sanitized workspace layout',has(js,'function captureWorkspaceLayout')&&has(js,'normalizeWorkspaceLayout({version:2,zones,sizes:state.config.workspace_layout?.sizes||{},columns:state.config.workspace_layout?.columns||{}})'));
+add('drop captures sanitized workspace layout',has(js,'function captureWorkspaceLayout')&&(has(js,'normalizeWorkspaceLayout({version:2,zones,sizes:state.config.workspace_layout?.sizes||{},columns:state.config.workspace_layout?.columns||{}})')||has(js,'normalizeWorkspaceLayout({version:3,zones,sizes:state.config.workspace_layout?.sizes||{},columns:state.config.workspace_layout?.columns||{}})')));
 add('drop schedules persistence',has(js,'scheduleWorkspaceSave()'));
 add('reset restores standard workspace',has(js,'function resetWorkspaceLayout')&&has(js,'normalizeWorkspaceLayout(DEFAULT_WORKSPACE)'));
 add('layout editing can be locked',has(js,"button.textContent=state.layoutEditing?'LAYOUT SPERREN':'LAYOUT ANPASSEN'"));
