@@ -22,10 +22,11 @@
       <button class="nav" data-view="sync" data-experience="pro"><span>↻</span> SYNC STATUS</button>
 
       <div class="nav-group">PRODUZIEREN</div>
+      <button class="nav nav-external" id="openCfsStudioNav" type="button"><span>◉</span> CFS STUDIO</button>
       <button class="nav" data-view="deck"><span>▦</span> STREAM DECK</button>
       <button class="nav" data-view="streamengine" data-experience="pro"><span>◉</span> STREAM ENGINE</button>
-      <button class="nav" data-view="output" data-experience="pro"><span>◈</span> LIVE OUTPUT</button>
-      <button class="nav" data-view="obs" data-experience="pro"><span>▣</span> OBS CONTROL</button>
+      <button class="nav" data-view="output" data-experience="pro"><span>◈</span> LOCAL OUTPUT</button>
+      <button class="nav" data-view="obs" data-experience="pro"><span>▣</span> OBS · OPTIONAL</button>
 
       <div class="nav-group" data-experience="pro">COMMUNITY</div>
       <button class="nav" data-view="events" data-experience="pro"><span>⌁</span> LIVE EVENTS</button>
@@ -76,9 +77,10 @@
     <section class="view active" data-page="live">
       <div class="hero">
         <div>
-          <span class="eyebrow">DESKTOP LIVE BRIDGE</span>
-          <h1>DEIN LIVE. EINE ZENTRALE.</h1>
-          <p>Der Launcher verbindet LIVE-Ereignisse mit Widget Studio, OBS und AutoThanks. Ohne dass der Browser offen bleiben muss.</p>
+          <span class="eyebrow">DESKTOP COMPANION · LOCAL ENGINE</span>
+          <h1>DEIN PC. DEINE LIVE-ENGINE.</h1>
+          <p>Der Launcher hält Provider, lokale Engine und sichere Zugangsdaten verbunden. Produziert wird im CFS Studio.</p>
+          <div class="launcher-primary-actions"><button class="btn primary" id="openCfsStudioHero" type="button">CFS STUDIO ÖFFNEN</button><small>OBS bleibt als optionale Kompatibilität im Profi-Modus.</small></div>
         </div>
         <div class="live-orb" id="liveOrb"><span></span><b id="liveOrbText">OFFLINE</b></div>
       </div>
@@ -106,8 +108,8 @@
           <button class="home-hub-card" type="button" data-hub-action="widgets" id="homeCardWidgets">
             <span class="home-step">03</span><div><small>WIDGETS</small><strong id="homeWidgetsState">OFFEN</strong><p id="homeWidgetsMeta">Bibliothek prüfen</p></div><b>›</b>
           </button>
-          <button class="home-hub-card" type="button" data-hub-action="output" id="homeCardOutput">
-            <span class="home-step">04</span><div><small>OBS / OUTPUT</small><strong id="homeOutputState">OFFEN</strong><p id="homeOutputMeta">Scene prüfen</p></div><b>›</b>
+          <button class="home-hub-card" type="button" data-hub-action="studio" id="homeCardOutput">
+            <span class="home-step">04</span><div><small>CFS STUDIO</small><strong id="homeOutputState">OFFEN</strong><p id="homeOutputMeta">Produktion öffnen</p></div><b>›</b>
           </button>
         </div>
       </section>
@@ -622,9 +624,9 @@
 
     <section class="view" data-page="obs">
       <div class="page-head">
-        <span class="eyebrow">OBS INTEGRATION</span>
-        <h1>OBS CONTROL.</h1>
-        <p>Lokale OBS-Steuerung über obs-websocket plus Browser-Source-Diagnose. Passwörter bleiben verschlüsselt auf diesem PC; der Launcher erlaubt nur den benötigten kleinen Request-Satz.</p>
+        <span class="eyebrow">OPTIONALE KOMPATIBILITÄT</span>
+        <h1>OBS.</h1>
+        <p>Nur wenn du OBS zusätzlich nutzen möchtest: lokale obs-websocket-Steuerung und Browser-Source-Diagnose. CFS Studio bleibt der normale Produktionsweg.</p>
       </div>
 
       <section class="panel obs-control-panel">

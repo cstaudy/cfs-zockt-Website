@@ -774,3 +774,9 @@ html[data-experience="simple"] .page-head p{max-width:620px}
   .nav{height:38px}
   .nav-group{margin-top:9px;padding-top:5px}
 }
+
+/* v167: CFS Studio is the primary production surface; Launcher stays the local companion. */
+.launcher-primary-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:18px}
+.launcher-primary-actions small{max-width:330px;color:var(--muted,#8fa2bd);line-height:1.45}
+.nav-external{border-color:rgba(67,145,255,.22)}
+.nav-external::after{content:"↗";margin-left:auto;font-size:11px;opacity:.7}

@@ -1,13 +1,13 @@
 # Windows Build — cfs_zockt Creator Suite Launcher
 
-Aktuelles Build-Ziel: **Launcher 0.47.29 · Windows x64**.
+Aktuelles Build-Ziel: **Launcher 0.47.30 · Windows x64**.
 
 ## Empfohlener öffentlicher Releaseweg
 
 Für öffentliche Downloads ist `.github/workflows/launcher-release.yml` der maßgebliche Buildweg. Der Workflow läuft auf `windows-latest`, baut die nativen Windows-Helfer, führt QA und Release-Gate aus und erzeugt:
 
-- `cfs_zockt-Creator-Suite-Setup-0.47.29-x64.exe`
-- `cfs_zockt-Creator-Suite-Portable-0.47.29-x64.exe`
+- `cfs_zockt-Creator-Suite-Setup-0.47.30-x64.exe`
+- `cfs_zockt-Creator-Suite-Portable-0.47.30-x64.exe`
 - `SHA256SUMS.txt`
 - `release-manifest.json`
 - Update-Metadaten / Blockmaps

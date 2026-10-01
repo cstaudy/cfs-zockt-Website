@@ -1,6 +1,6 @@
 # Aktueller Release-Hinweis v159
 
-- Build-Ziel: **0.47.29 · Windows x64**
+- Build-Ziel: **0.47.30 · Windows x64**
 - Öffentlicher Download: `/pages/launcher-download.html`
 - Setup + Portable werden über GitHub Actions gebaut.
 - Öffentliche Tag-Releases benötigen eine gültige Authenticode-Signatur.

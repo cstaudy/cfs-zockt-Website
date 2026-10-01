@@ -6,7 +6,7 @@ echo ================================================
 echo  cfs_zockt Creator Suite - Windows Release Build
 echo ================================================
 echo.
-echo Version: 0.47.29
+echo Version: 0.47.30
 echo Ziel:    NSIS Setup + Portable (Windows x64)
 echo.
 where node >nul 2>nul
@@ -39,8 +39,8 @@ echo Build erfolgreich.
 echo Ausgabe: %CD%\dist
 echo.
 echo Erwartete EXE-Dateien:
-echo   cfs_zockt-Creator-Suite-Setup-0.47.29-x64.exe
-echo   cfs_zockt-Creator-Suite-Portable-0.47.29-x64.exe
+echo   cfs_zockt-Creator-Suite-Setup-0.47.30-x64.exe
+echo   cfs_zockt-Creator-Suite-Portable-0.47.30-x64.exe
 echo.
 echo HINWEIS: Fuer einen oeffentlichen Release muss die Authenticode-
 echo Signatur gueltig sein. Der GitHub Tag-Workflow erzwingt das.

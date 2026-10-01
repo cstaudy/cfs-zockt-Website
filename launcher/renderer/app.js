@@ -41,7 +41,7 @@ const EXPERIENCE_HELP=Object.freeze({
   bot:{title:"Der Stream Bot reagiert auf Chat-Kommandos.",text:"Nutze Vorlagen oder eigene Commands. Der Bot schreibt derzeit nicht automatisch in fremde Chats zurück."},
   streamengine:{title:"Hier läuft dein Stream wirklich lokal.",text:"Stream-Keys, Capture und Encoding bleiben auf deinem PC. Die Website liefert nur deine geprüfte Studio-Konfiguration."},
   output:{title:"Output ist deine lokale Stream-Ausgabe.",text:"Hier startest oder prüfst du veröffentlichte Scenes. Für Anfänger reicht meistens die empfohlene Standardausgabe."},
-  obs:{title:"OBS Doctor hilft bei Browser-Source-Problemen.",text:"Öffne ihn nur, wenn eine Widget-URL in OBS nicht so aussieht oder lädt wie erwartet."},
+  obs:{title:"OBS ist optional.",text:"Nutze diesen Bereich nur, wenn du bewusst mit OBS weiterarbeitest. Der normale Produktionsweg läuft über CFS Studio."},
   system:{title:"System ist die technische Diagnose.",text:"Diese Werte sind vor allem für Support und Fehlersuche gedacht."},
   beta:{title:"Beta Test sammelt reproduzierbares Feedback.",text:"Nur relevant, wenn du aktiv an einem Testlauf teilnimmst."}
 });
@@ -457,6 +457,10 @@ async function runHomeHubAction(action){
     window.open(creatorToolUrl("/pages/widget-studio.html"),"_blank","noopener");
     return;
   }
+  if(key==="studio"){
+    window.open(creatorToolUrl("/pages/stream-studio.html"),"_blank","noopener");
+    return;
+  }
   if(key==="output"){showPage("output");return;}
   if(key==="sync"){
     if(!state?.bridge?.connected){showPage("bridge");return;}
@@ -538,13 +542,13 @@ function renderHomeHub(nextState=state){
   setHomeHubCard("#homeCardBridge",connected?"VERBUNDEN":"PC VERBINDEN",connected?`${creatorName} · Heartbeat ${fmtTime(bridge.lastHeartbeatAt)}`:(bridge.lastError||"Creator Account per Device-Link verbinden"),connected?"ok":"warn");
   setHomeHubCard("#homeCardTikTok",tiktokReady?"LIVE BEREIT":tiktokAccountConnected?"ACCOUNT VERBUNDEN":simulator?"SIMULATOR":"VERBINDEN",tiktokReady?(tiktokIntegration.profile?.display_name?`${tiktokIntegration.profile.display_name} · LIVE-Daten vorbereitet`:`${settings.tiktokUsername?`@${settings.tiktokUsername} · `:""}LIVE-Daten vorbereitet`):tiktokAccountConnected?"Profil-Daten bereit · LIVE-Provider noch einrichten":simulator?"Testmodus aktiv · TikTok Account noch nicht verbunden":"TikTok Account verbinden",tiktokReady?"ok":tiktokAccountConnected?"work":simulator?"work":"warn");
   setHomeHubCard("#homeCardWidgets",loaded?(widgets.length?`${widgets.length} WIDGET${widgets.length===1?"":"S"}`:"NOCH LEER"):connected?"SYNC LÄUFT":"WARTET",loaded?(widgets.length?`${scenes.length} veröffentlichte Scene${scenes.length===1?"":"s"}`:"Erstelle dein erstes Widget im Widget Studio"):(library.error||"Nach Device-Link automatisch synchronisiert"),loaded&&widgets.length?"ok":connected?"work":"warn");
-  setHomeHubCard("#homeCardOutput",output.running?(output.ready?"AKTIV":"LÄDT"):scenes.length?"BEREIT":"NOCH LEER",output.running?(output.ready?`${output.scene?.name||"Scene"} läuft als Local Output`:"Scene wird geladen"):scenes.length?`${scenes.length} Scene${scenes.length===1?"":"s"} für OBS / Output verfügbar`:"Zuerst eine Scene im Widget Studio veröffentlichen",output.running&&output.ready?"ok":scenes.length?"work":"warn");
+  setHomeHubCard("#homeCardOutput",output.running?(output.ready?"AKTIV":"LÄDT"):scenes.length?"BEREIT":"ÖFFNEN",output.running?(output.ready?`${output.scene?.name||"Scene"} läuft lokal`:"Scene wird geladen"):scenes.length?`${scenes.length} Scene${scenes.length===1?"":"s"} im CFS Studio verfügbar`:"CFS Studio öffnen und deine erste Scene bauen",output.running&&output.ready?"ok":scenes.length?"work":"warn");
 
   let next={title:"PC mit deinem Creator Account verbinden",label:"PC VERBINDEN",action:"bridge"};
   if(connected&&!loaded)next={title:"Deine Widgets vom Creator Account laden",label:"JETZT SYNCHRONISIEREN",action:"sync"};
   else if(connected&&loaded&&widgets.length===0)next={title:"Dein erstes Widget erstellen",label:"WIDGET STUDIO ÖFFNEN",action:"widgets"};
-  else if(connected&&loaded&&widgets.length>0&&scenes.length===0)next={title:"Widgets im Stream Board prüfen und veröffentlichen",label:"WIDGET STUDIO ÖFFNEN",action:"widgets"};
-  else if(connected&&scenes.length>0&&!output.running)next={title:"Deine veröffentlichte Scene für OBS / Output öffnen",label:"OUTPUT ÖFFNEN",action:"output"};
+  else if(connected&&loaded&&widgets.length>0&&scenes.length===0)next={title:"Deinen Stream im CFS Studio aufbauen",label:"CFS STUDIO ÖFFNEN",action:"studio"};
+  else if(connected&&scenes.length>0&&!output.running)next={title:"Deine Produktion im CFS Studio öffnen",label:"CFS STUDIO ÖFFNEN",action:"studio"};
   else if(connected&&output.running&&!bridge.liveActive)next={title:"Output läuft – jetzt LIVE-Verbindung prüfen",label:"LIVE CONTROL",action:"live"};
   else if(connected&&bridge.liveActive)next={title:"Stream läuft – Synchronisierung im Blick behalten",label:"SYNC STATUS",action:"sync"};
 
@@ -1744,7 +1748,7 @@ async function init() {
   $("#experienceHelpPro").onclick=()=>applyExperienceMode("pro",{announce:true});
   if (state.firstRun) requestAnimationFrame(openSetupWizard);
 
-  $$(".nav").forEach(button => button.onclick = async () => {
+  $$(".nav[data-view]").forEach(button => button.onclick = async () => {
     showPage(button.dataset.view);
     if(button.dataset.view==="deck"&&state?.bridge?.connected&&!state?.creatorLibrary?.loadedAt){
       try{state=await window.CFSLauncher.refreshCreatorLibrary();render(state)}catch{}
@@ -1774,6 +1778,8 @@ async function init() {
     }catch(error){toast(error.message,true);render(state)}
   });
   $("#providerWidgetsOpen").onclick=()=>window.open(creatorToolUrl("/pages/widget-studio.html"),"_blank","noopener");
+  $("#openCfsStudioNav")?.addEventListener("click",()=>window.open(creatorToolUrl("/pages/stream-studio.html"),"_blank","noopener"));
+  $("#openCfsStudioHero")?.addEventListener("click",()=>window.open(creatorToolUrl("/pages/stream-studio.html"),"_blank","noopener"));
   $("#openSyncTerminal").onclick=()=>showPage("sync");
   $("#syncClear").onclick=()=>{syncHistory=[];addSyncLine("SYSTEM","Anzeige geleert. Neue Sync-Meldungen erscheinen automatisch.","info");renderSyncMonitor(state);};
   $("#syncRefresh").onclick=async()=>{
