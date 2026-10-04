@@ -1,3 +1,58 @@
+cfs_zockt v195
+Backend 3.20.38 · Schema 78 · Launcher 0.47.30
+
+Full Project als feste Acceptance-Basis verwenden. Vor Realtests `npm ci`, `npm run freeze195:verify`, `npm run freeze195:secret` und `npm run release:v195` ausführen.
+Danach auf Windows `RUN-FIXED-ACCEPTANCE-v195.cmd` oder `.ps1` und `ABNAHME-ABLAUFPLAN-v195.md` verwenden.
+Keine neuen Features oder Runtime-Änderungen innerhalb desselben Acceptance-Kandidaten. Commerce bleibt aus.
+
+cfs_zockt v192
+Backend 3.20.37 · Schema 78 · Launcher 0.47.30
+
+Updatepaket ausschließlich über eine vollständige, freigegebene v191-Projektbasis legen und anschließend `npm run release:v192` ausführen.
+v192: vollständige Website-Brand-Unification mit neuer CFS-Bildmarke, einheitlichen Headern/Footer/Icons und gemeinsamer Public-/Creator-Shell. Keine neue DB-Migration. `CFS_COMMERCIAL_MODE=false`.
+
+cfs_zockt v191
+Backend 3.20.36 · Schema 78 · Launcher 0.47.30
+
+Updatepaket ausschließlich über eine vollständige, freigegebene v190-Projektbasis legen und anschließend `npm run release:v191` ausführen.
+v191: Acceptance Tooling & Diagnostics mit Repo-/Windows-Preflight, SHA-256-Evidence-Index, redigiertem Diagnose-Log, 60+-Minuten-Soak-Plan und manuellem Go/No-Go-Guard. Reale Tests bleiben offen. Keine DB-Migration. `CFS_COMMERCIAL_MODE=false`.
+
+cfs_zockt v190
+Backend 3.20.35 · Schema 78 · Launcher 0.47.30
+
+Updatepaket ausschließlich über eine vollständige, freigegebene v189-Projektbasis legen und anschließend `npm run release:v190` ausführen.
+v190: Release-Candidate-/Acceptance-Prep mit lokaler 48-Punkte-Realmatrix, PASS/FAIL/SKIP/BLOCKED/PENDING-Regeln und sicherem Evidence-CLI. Reale Tests bleiben initial vollständig offen. Keine DB-Migration. `CFS_COMMERCIAL_MODE=false`.
+
+cfs_zockt v189
+Backend 3.20.34 · Schema 78 · Launcher 0.47.30
+
+Updatepaket ausschließlich über eine vollständige, freigegebene v188-Projektbasis legen und anschließend `npm run release:v189` ausführen.
+v189: gemeinsame Creator-UX-Schicht für Empty-/Error-/Warning-Zustände, kontextuelle Hilfe und mobile Aktionsflächen; Provider-Aktionsfehler inline. Keine neue DB-Migration. `CFS_COMMERCIAL_MODE=false`.
+
+cfs_zockt v188
+Backend 3.20.33 · Schema 78 · Launcher 0.47.30
+
+Updatepaket ausschließlich über eine vollständige, freigegebene v187-Projektbasis legen und anschließend `npm run release:v188` ausführen.
+v188: Shop → Studio Deep Links auf konkrete creator-eigene Widgets/Overlays/Scenes/Panel-Sets, allowlisted Tool-Links sowie Shop-Empty-/Error-/Mobile-Workflow-Polish. Keine neue DB-Migration. `CFS_COMMERCIAL_MODE=false`.
+
+cfs_zockt v187
+Backend 3.20.32 · Schema 78 · Launcher 0.47.30
+
+Updatepaket ausschließlich über eine vollständige, freigegebene v186-Projektbasis legen und anschließend `npm run release:v187` ausführen.
+v187: optionale PNG/WebP-Shop-Cover aus der rechtegeprüften Admin-Medienbibliothek zusätzlich zum Auto-SVG; Publish- und Rechteprüfung bleiben fail-closed. Keine neue DB-Migration. `CFS_COMMERCIAL_MODE=false`.
+
+cfs_zockt v186
+Backend 3.20.31 · Schema 78 · Launcher 0.47.30
+
+Updatepaket ausschließlich über eine vollständige, freigegebene v185-Projektbasis legen und anschließend `npm run release:v186` ausführen.
+v186: private Admin-Katalogsuche, Status-/Plattform-/Angebotsfilter und Archivübersicht. Keine neue DB-Migration. `CFS_COMMERCIAL_MODE=false`.
+
+cfs_zockt v185
+Backend 3.20.30 · Schema 78 · Launcher 0.47.30
+
+Updatepaket ausschließlich über eine vollständige, freigegebene v184-Projektbasis legen und anschließend `npm run release:v185` ausführen.
+v185: Shop Install-Receipt Self-Healing + `retired` Paketbestandteile ohne Creator-Löschung. `CFS_COMMERCIAL_MODE=false`.
+
 cfs_zockt v184
 Backend 3.20.29 · Schema 78 · Launcher 0.47.30
 

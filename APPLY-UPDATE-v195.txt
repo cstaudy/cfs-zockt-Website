@@ -1,0 +1,23 @@
+cfs_zockt v195 · Fixed Acceptance Baseline
+Backend 3.20.38 · Schema 78 · Launcher 0.47.30
+
+Basis:
+- ausschließlich vollständiges v192 Full Project verwenden
+- erwarteter SHA-256 der freigegebenen v192-Basis:
+  ef7067e8eb75c23b28a8167abcf9fbb4df0884a6d98be709097b537ed892344e
+
+Anwendung:
+1. v192 Full Project in einen neuen Ordner entpacken.
+2. v195 Update im Projektroot darüber entpacken und vorhandene Dateien überschreiben.
+3. npm ci
+4. npm run freeze195:verify
+5. npm run freeze195:secret
+6. npm run release:v195
+7. Für die reale Windows-Abnahme `RUN-FIXED-ACCEPTANCE-v195.cmd` oder `.ps1` verwenden.
+8. Danach strikt `ABNAHME-ABLAUFPLAN-v195.md` abarbeiten.
+
+Wichtig:
+- v193/v194 werden in der aktuellen Release-Linie wegen bereits vorhandener historischer Artefakte bewusst übersprungen.
+- v195 ist eine feste Acceptance-Basis, aber kein Real-Acceptance-PASS.
+- Runtime-/Tooling-Drift invalidiert den Kandidaten.
+- CFS_COMMERCIAL_MODE=false.

@@ -1,3 +1,105 @@
+v195 · Fixed Acceptance Baseline / RC Freeze
+
+- SHA-256 Freeze-Tree für Runtime + Acceptance-Tooling
+- Drift-Verify vor und während der realen Abnahme
+- Secret-/Config-Scan
+- lokaler Artifact-Rollback-Drill
+- feste Baseline 0/48 HOLD; keine automatischen Real-PASS-Werte
+- Windows-Acceptance-Startskripte und verbindlicher Ablaufplan
+- Backend 3.20.38, Schema 78, Launcher 0.47.30
+- CFS_COMMERCIAL_MODE=false
+
+v192 · Website Brand Unification
+
+- neue zentrale CFS-Bildmarke auf allen 40 Nutzerseiten
+- einheitlicher Header-Lockup für Public, Creator, Shop, Studios, Admin und Utility-Seiten
+- Public bleibt Gaming/Streams/Community; Creator trägt separate Creator-Suite-Subline
+- gemeinsame Footer-/Creator-Signatur und Fallback-Header
+- Favicon, App-Icon, Apple-Touch-Icon und historische Logo-Aliase auf aktuelle Marke synchronisiert
+- TikTok Callback in gemeinsame Website-Shell überführt
+- CSP-Hash für aktualisierte JSON-LD-Logo-URL synchronisiert
+- keine neue DB-Migration
+- Backend 3.20.37, Schema 78, Launcher 0.47.30
+- CFS_COMMERCIAL_MODE=false
+
+v191 · Acceptance Tooling & Diagnostics
+
+- Repo-/Windows-Preflight für Version, Commerce-Off, Acceptance-Matrix, OBS-/Support-/Soak-Werkzeuge und optional OBS Port 4455
+- SHA-256-Evidence-Index unter `evidence/` ohne automatische PASS-Änderung
+- Secret-Scan für Text-Evidence sowie redigiertes JSONL-Diagnoseprotokoll
+- reproduzierbarer 60+-Minuten-Soak-Plan für Provider-Drop, Network-Drop und Launcher-Restart
+- Go/No-Go-Guard koppelt v190-Real-Acceptance an passende v191-Evidence
+- höchster automatischer Status `READY_FOR_MANUAL_GO_NO_GO`; niemals automatisches GO
+- keine neue DB-Migration und keine Änderung der Launcher-Runtime
+- Backend 3.20.36, Schema 78, Launcher 0.47.30
+- CFS_COMMERCIAL_MODE=false
+
+v190 · Release Candidate / Acceptance Prep
+
+- 48 reale Prüfungen in neun Bereichen: Windows, OBS, Twitch, TikTok, YouTube, Multistream, Stabilität, Browser und Security
+- lokale Statusmatrix mit `pending/pass/fail/skip/blocked`
+- Pflicht-SKIP bleibt Go/No-Go-Blocker; Conditional-SKIP benötigt Begründung
+- PASS benötigt sichere Evidence-Referenz
+- Secret-/RTMP-/absolute lokale Pfade werden aus Evidence-Feldern abgewehrt
+- keine automatischen realen PASS-Werte; eingecheckte Matrix startet vollständig pending
+- keine neue DB-Migration
+- Backend 3.20.35, Schema 78, Launcher 0.47.30
+- CFS_COMMERCIAL_MODE=false
+
+v189 · Creator UX Polish
+
+- gemeinsame UX-Schicht für zentrale geschützte Creator-Seiten
+- konsistente Empty-/Warning-/Error-/Success-Zustände mit ARIA-Live-Semantik
+- Retry bei echten Ladefehlern; legitime leere Bestände bleiben neutral
+- kontextuelle Hilfe in Dashboard, Account, Integrationen, Setup/Settings, Studios, Launcher und Diagnosebereichen
+- mobile Einspalten-Aktionen, touchfreundliche Ziele und horizontal erreichbare Tabs/Toolbars
+- Twitch-/YouTube-Aktionsfehler inline statt Browser-Alert
+- keine neue DB-Migration und keine neue öffentliche UX-API
+- Backend 3.20.34, Schema 78, Launcher 0.47.30
+- CFS_COMMERCIAL_MODE=false
+
+v188 · Shop → Studio Deep Links + Shop Workflow Polish
+
+- installierte Receipts liefern sichere Workflow-Links auf konkrete creator-eigene Studio-Objekte
+- Widget/Overlay -> konkretes Widget Studio Objekt; Scene -> konkrete Scene; Panel-Set -> Panel-Set-Bereich
+- Tool-Links bleiben auf bestehende interne Allowlist begrenzt
+- Shop-Karten und Produktdetail bieten nach Installation den direkten nächsten Arbeitsschritt
+- Teilinstallationen verlinken Provider-/Quota-Voraussetzungen auf passende Creator-Seiten
+- Shop-Empty-/Error-/Retry-/Mobile-Zustände gehärtet
+- keine neue DB-Migration und kein neuer öffentlicher Workflow-Endpunkt
+- Backend 3.20.33, Schema 78, Launcher 0.47.30
+- CFS_COMMERCIAL_MODE=false
+
+v187 · PNG/WebP Shop Cover & Media Workflow
+
+- Auto-SVG bleibt Standard; optionales PNG/WebP-Cover aus der privaten Admin-Medienbibliothek
+- kein separater Roh-Uploadpfad: nur bereits erkannte und rechtegeprüfte Admin-Assets
+- Creator-/Admin-Isolation und erneute Rechteprüfung bei Produkt- und Collection-Publish
+- Rechteentzug setzt betroffene veröffentlichte Produkte zurück auf Draft
+- öffentliche Cover-Auslieferung auf SVG/PNG/WebP allowlisted, `nosniff`, kein Surrogate Cache
+- keine neue DB-Migration; Schema bleibt 78
+- Backend 3.20.32, Schema 78, Launcher 0.47.30
+- CFS_COMMERCIAL_MODE=false
+
+v186 · Admin Catalog Search / Filter / Archive Overview
+
+- Freitextsuche über Produkt- und Collection-Metadaten im privaten Admin-Bestand
+- Filter nach Status, Plattform sowie Bundle/Einzelstück
+- getrennte Archiv-KPIs für Produkte und Collections mit Schnellumschaltung
+- `mixed` als eigener Collection-Status korrekt behandelt
+- keine neue DB-Migration und kein neuer öffentlicher Suchendpunkt
+- Backend 3.20.31, Schema 78, Launcher 0.47.30
+- CFS_COMMERCIAL_MODE=false
+
+v185 · Shop Install Self-Healing
+
+- gespeicherte Install-Receipts vor Wiederverwendung creatorgebunden validieren
+- fehlende Asset-/Panel-/Scene-/Widget-Ziele beim nächsten Install/Update sicher rematerialisieren
+- entfernte Manifestbestandteile als `retired` dokumentieren; Creator-Inhalte bleiben erhalten
+- keine neue DB-Migration; Shop-State Version 4
+- Backend 3.20.30, Schema 78, Launcher 0.47.30
+- CFS_COMMERCIAL_MODE=false
+
 v184 · Stream Lifecycle
 
 - Starting Soon, LIVE, BRB/Pause, Ending und Offline als zuordenbare Stream-Status-Scenes

@@ -1,6 +1,7 @@
 # CFS Projekt-Ablaufplan
+- [x] Website Brand Unification v192: neue CFS-Bildmarke, einheitliche Header/Footer/Icons auf allen Nutzerseiten.
 
-Stand: **v184** · zentrale Arbeitsreihenfolge
+Stand: **v195** · feste Acceptance-Basis
 
 ## 1. Nicht verhandelbare Produktgrenze
 - **Public:** cfs_zockt · Warum/Story · Gaming · Streams · aktuelle Games · Community · TikTok/Twitch/Discord · Live-Zahlen.
@@ -27,6 +28,9 @@ Backend/DB → Creator/Admin UI → betroffene Public-Kommunikation → Auth-/Si
 - [x] Stream-Status-Serie Starting/Pause/Ending/Offline vollständig machen.
 
 ### Phase B — Stabilität & reale Acceptance
+- [x] Release-Candidate / Acceptance Prep bündeln und reale Testmatrix finalisieren.
+- [x] Acceptance Tooling/Diagnostics: Preflight, Evidence-Index, Soak-Plan und Go/No-Go-Guard vorbereiten.
+- [x] v195 RC Freeze: Runtime/Tooling versiegeln, Secret-Scan, lokalen Rollback-Drill und festen Acceptance-Baseline-Report erzeugen.
 - [ ] Windows Launcher real abnehmen.
 - [ ] OBS Browser Source / WebSocket real testen.
 - [ ] TikTok/Twitch/YouTube mit echten Testaccounts abnehmen.
@@ -35,17 +39,17 @@ Backend/DB → Creator/Admin UI → betroffene Public-Kommunikation → Auth-/Si
 
 ### Phase C — Shop/Admin-Härtung
 - [x] Stream-Lifecycle Starting → LIVE → BRB → Ending → Offline integrieren; Launcher-Auto opt-in, BRB manuell.
-- [ ] stale Install-Receipts validieren/rematerialisieren.
-- [ ] entfernte Paketbestandteile als `retired` abbilden ohne Creator-Inhalte zu löschen.
-- [ ] größere Kataloge: Suche/Filter/Archivübersicht prüfen.
-- [ ] PNG/WebP-Shop-Cover zusätzlich zu SVG prüfen.
+- [x] stale Install-Receipts validieren/rematerialisieren.
+- [x] entfernte Paketbestandteile als `retired` abbilden ohne Creator-Inhalte zu löschen.
+- [x] größere Kataloge: Suche/Filter/Archivübersicht prüfen.
+- [x] PNG/WebP-Shop-Cover zusätzlich zu SVG prüfen.
 - [ ] geplante Veröffentlichung nur bei echtem Bedarf ergänzen.
 - [ ] externe Publisher/Signaturen nur bei echtem Bedarf.
 
 ### Phase D — Creator-Workflow-Polish
-- [ ] Shop → Studio Deep-Links vereinheitlichen.
-- [ ] Fehler-/Leerzustände und mobile Bedienung abnehmen.
-- [ ] Hilfetexte im Creator-Layer konsistent halten.
+- [x] Shop → Studio Deep-Links vereinheitlichen.
+- [x] Fehler-/Leerzustände und mobile Bedienung im übrigen Creator-Layer code-seitig vereinheitlichen. (Reale Browser-/Geräte-Abnahme bleibt Phase B.)
+- [x] Hilfetexte im Creator-Layer konsistent halten.
 
 ### Phase E — Commerce ganz zum Schluss
 - [ ] Checkout/Payment Provider.

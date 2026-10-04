@@ -1,0 +1,45 @@
+{
+  "schema": 1,
+  "tooling_version": "v191",
+  "generated_at": "2026-10-04T12:28:30.514Z",
+  "real_test_executed": false,
+  "duration_minutes": 60,
+  "expected_targets": 2,
+  "sample_interval_seconds": 2,
+  "scenarios": [
+    {
+      "id": "baseline",
+      "minute": 0,
+      "action": "Stream/Multistream starten und Baseline markieren."
+    },
+    {
+      "id": "provider_drop",
+      "minute": 15,
+      "action": "Genau ein Provider-Ziel kontrolliert unterbrechen; andere Ziele müssen weiterlaufen."
+    },
+    {
+      "id": "network_drop",
+      "minute": 30,
+      "action": "Kurze Netzwerkunterbrechung durchführen; Reconnect protokollieren."
+    },
+    {
+      "id": "launcher_restart",
+      "minute": 45,
+      "action": "Launcher kontrolliert neu starten und Recovery dokumentieren."
+    },
+    {
+      "id": "finish",
+      "minute": 60,
+      "action": "Soak beenden, Runtime-Evidence/Support-Bundle erzeugen und secret-frei prüfen."
+    }
+  ],
+  "required_acceptance_ids": [
+    "multistream.parallel",
+    "multistream.isolation",
+    "stability.network_drop",
+    "stability.provider_drop",
+    "stability.launcher_restart",
+    "stability.soak",
+    "stability.watchdog"
+  ]
+}

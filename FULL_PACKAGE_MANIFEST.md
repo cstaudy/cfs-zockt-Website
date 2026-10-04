@@ -1,8 +1,8 @@
 # Full Package Manifest
 
-Stand: v184
+Stand: v195
 
-Files: 1192
+Files: 1310
 
 ```text
         2700  .env.example
@@ -25,6 +25,7 @@ Files: 1192
         1523  .github/workflows/setup-labels.yml
          812  .gitignore
           46  .npmrc
+        6721  ABNAHME-ABLAUFPLAN-v195.md
         2008  ACCEPTANCE-STATUS-v155.md
         1793  ACCOUNT_CREDENTIAL_SECURITY_PASS.md
         4201  ACCOUNT_EMAIL_RECOVERY_SECURITY_PASS.md
@@ -33,24 +34,35 @@ Files: 1192
         4367  ACCOUNT_PASSKEY_SECURITY_PASS.md
         1803  ACCOUNT_PRIVACY_LIFECYCLE_PASS.md
         1124  ADMIN-BUNDLE-FACTORY-v175.md
+        1252  ADMIN-CATALOG-v186.md
         1676  ADMIN-COLLECTION-RELEASES-v177.md
+        1557  ADMIN-COVER-MEDIA-v187.md
         1649  ADMIN-PRODUCTION-SUITE-v176.md
         2046  ADMIN_AUDIT_INTEGRITY_SECURITY_PASS17.md
         2414  ADMIN_PRIVILEGED_ACTION_SECURITY_PASS16.md
         2285  APPLICATION_RECOVERY_ROLLBACK_PASS19.md
          564  APPLY-UPDATE-v124.txt
+         716  APPLY-UPDATE-v185.txt
+         580  APPLY-UPDATE-v186.txt
+         561  APPLY-UPDATE-v187.txt
+         577  APPLY-UPDATE-v188.txt
+         546  APPLY-UPDATE-v189.txt
+         485  APPLY-UPDATE-v190.txt
+         629  APPLY-UPDATE-v191.txt
+         602  APPLY-UPDATE-v192.txt
          120  APPLY-UPDATE-v193.txt
          559  APPLY-UPDATE-v194.txt
+         957  APPLY-UPDATE-v195.txt
          754  BEGINNER_UX_R9.md
         3366  BILLING_STRIPE_V37.md
         1809  BRAND-PUBLIC-WEBSITE-v180.md
          211  BUILD-LAUNCHER-WINDOWS.cmd
         1303  CFS-STUDIO-LAUNCHER-BOUNDARY-v167.md
         1500  CFS-STUDIO-OPERATOR-v168.md
-        1591  CFS_CREATOR_SUITE_MASTER_PLAN.md
+        2512  CFS_CREATOR_SUITE_MASTER_PLAN.md
        79763  CFS_MASTER_CHECKLIST_PASS21.md
        60347  CFS_WIDGET_STUDIO_MASTER_CHECKLIST.md
-       15442  CHANGED-FILES-CUMULATIVE.txt
+       26116  CHANGED-FILES-CUMULATIVE.txt
         1429  CHANGED-FILES-v124.txt
         1294  CHANGED-FILES-v153.txt
         1025  CHANGED-FILES-v154.txt
@@ -84,9 +96,18 @@ Files: 1192
         1082  CHANGED-FILES-v182.txt
         1044  CHANGED-FILES-v183.txt
          781  CHANGED-FILES-v184.txt
+         802  CHANGED-FILES-v185.txt
+         935  CHANGED-FILES-v186.txt
+         977  CHANGED-FILES-v187.txt
+         968  CHANGED-FILES-v188.txt
+        1503  CHANGED-FILES-v189.txt
+         886  CHANGED-FILES-v190.txt
+        1197  CHANGED-FILES-v191.txt
+        2541  CHANGED-FILES-v192.txt
          594  CHANGED-FILES-v193.txt
          261  CHANGED-FILES-v194.txt
-         909  CHANGED-FILES.txt
+        1268  CHANGED-FILES-v195.txt
+        1268  CHANGED-FILES.txt
         1641  CONFIG_DOCTOR_V41.md
         1599  CREATOR-DASHBOARD-ACCOUNT-v166.md
         1985  CREATOR-SUITE-COMPLETION-v140.md
@@ -134,10 +155,20 @@ Files: 1192
          426  CREATOR-SUITE-COMPLETION-v182.md
          328  CREATOR-SUITE-COMPLETION-v183.md
          578  CREATOR-SUITE-COMPLETION-v184.md
+         672  CREATOR-SUITE-COMPLETION-v185.md
+         631  CREATOR-SUITE-COMPLETION-v186.md
+         847  CREATOR-SUITE-COMPLETION-v187.md
+         576  CREATOR-SUITE-COMPLETION-v188.md
+         885  CREATOR-SUITE-COMPLETION-v189.md
+         512  CREATOR-SUITE-COMPLETION-v190.md
+         519  CREATOR-SUITE-COMPLETION-v191.md
+         538  CREATOR-SUITE-COMPLETION-v192.md
+         570  CREATOR-SUITE-COMPLETION-v195.md
         1463  CREATOR-SUITE-ROADMAP-v139.md
+        1925  CREATOR-UX-POLISH-v189.md
         2081  CUT_REFERENCE_LEARNING_V47.md
         3865  DATABASE_BACKUP_RECOVERY_PASS18.md
-       41396  DATEILISTE.txt
+       44554  DATEILISTE.txt
           34  DELETED-FILES-v124.txt
            0  DELETED-FILES-v175.txt
            0  DELETED-FILES-v193.txt
@@ -147,15 +178,15 @@ Files: 1192
         3476  END_TO_END_ACCEPTANCE_PASS21_6.md
         2214  FEATURE-FREEZE-v154.md
         2679  FINAL_TEST_V42.md
-       58147  FULL_PACKAGE_MANIFEST.md
+       62957  FULL_PACKAGE_MANIFEST.md
         3590  GITHUB_BOOTSTRAP_V41.md
         1491  GITHUB_RELEASE_FILES_V40.md
         2927  GITHUB_REPOSITORY_BOOTSTRAP_PASS21.md
         1167  GITHUB_REPOSITORY_READINESS_PASS21.md
         7404  GITHUB_SETUP_V40.md
-        1767  IDEAS-BACKLOG.md
+        2140  IDEAS-BACKLOG.md
         2884  INCIDENT_RESPONSE_PASS20.md
-        4715  INSTALLIEREN.txt
+        8438  INSTALLIEREN.txt
         2892  INTEGRATION_ACCEPTANCE_PASS21_5.md
         1992  LAUNCHER-DISTRIBUTION-v159.md
          663  LAUNCHER_RELEASE_SAFETY_RUNBOOK.md
@@ -175,8 +206,8 @@ Files: 1192
         1553  PRODUCTION_FINALIZATION_PASS12.md
         8087  PRODUCTION_GO_LIVE_RUNBOOK.md
         2242  PROJECT-STRUCTURE-AUDIT-v179.md
-        2875  PROJECT_CURRENT_STATE.md
-        2852  PROJECT_FLOW_PLAN.md
+        9047  PROJECT_CURRENT_STATE.md
+        3384  PROJECT_FLOW_PLAN.md
         2728  PROJECT_HEALTH_CHECK_PASS10.md
         1759  PROJECT_HEALTH_CHECK_PASS11.md
         1775  PROJECT_HEALTH_CHECK_PASS12.md
@@ -195,8 +226,11 @@ Files: 1192
         1495  PUBLIC-PRIVACY-AUDIT-v162.md
         1131  PUBLIC_REVIEW_ADMIN_PASS.md
         1596  R62_PROGRESS_V23.md
+        2616  RC-ACCEPTANCE-PREP-v190.md
+        1166  RC-FREEZE-v195.md
+        2709  RC-TOOLING-DIAGNOSTICS-v191.md
         2508  README-GITHUB.md
-       45065  README.md
+       49588  README.md
         1531  RELEASE-FILES-v22.txt
         4065  RELEASE-MANIFEST-v22.json
         6778  RELEASE-MANIFEST-v25.json
@@ -208,6 +242,8 @@ Files: 1192
          994  RENDER-ENV.txt
         1361  RENDER-TIKTOK-SETUP.txt
        10444  RENDER_SETUP_V40.md
+         536  RUN-FIXED-ACCEPTANCE-v195.cmd
+         694  RUN-FIXED-ACCEPTANCE-v195.ps1
          338  RUN-NEXT-PRODUCTION-TEST.cmd
         1944  RUN-PRIVATE-BETA-ACCEPTANCE.cmd
          408  RUN-PRODUCTION-LIVE-TESTS.cmd
@@ -220,6 +256,9 @@ Files: 1192
          221  RUN-R65-PRODUCTION-DRILL.cmd
          221  RUN-R66-PRODUCTION-DRILL.cmd
          221  RUN-R67-PRODUCTION-DRILL.cmd
+         377  RUN-RC-ACCEPTANCE-v190.cmd
+         748  RUN-RC-ACCEPTANCE-v191.cmd
+         319  RUN-RC-PREFLIGHT-v191.cmd
         1218  SCENE_TRANSITIONS_PASS21_7.md
         1776  SECURITY-BASELINE-v136.md
         3385  SECURITY-BASELINE-v137.md
@@ -259,9 +298,20 @@ Files: 1192
          672  SECURITY-BASELINE-v182.md
          394  SECURITY-BASELINE-v183.md
          449  SECURITY-BASELINE-v184.md
+         623  SECURITY-BASELINE-v185.md
+         650  SECURITY-BASELINE-v186.md
+         993  SECURITY-BASELINE-v187.md
+         631  SECURITY-BASELINE-v188.md
+         771  SECURITY-BASELINE-v189.md
+         750  SECURITY-BASELINE-v190.md
+         641  SECURITY-BASELINE-v191.md
+         610  SECURITY-BASELINE-v192.md
+         592  SECURITY-BASELINE-v195.md
         1317  SHOP-FOUNDATION-v172.md
+        1504  SHOP-INSTALL-HARDENING-v185.md
         2288  SHOP-PRODUCT-BUNDLES-v174.md
         1755  SHOP-PRODUCT-COMMERCE-v178.md
+        1408  SHOP-STUDIO-WORKFLOW-v188.md
          927  STREAM-LIFECYCLE-v184.md
         3057  STREAM_ENGINE_AUDIO_STABILITY_PASS21_10_2.md
         2683  STREAM_ENGINE_CORE_PASS21_10_1.md
@@ -357,18 +407,40 @@ Files: 1192
          508  TECHNIK-v182.md
          834  TECHNIK-v183.md
          292  TECHNIK-v184.md
+         373  TECHNIK-v185.md
+         425  TECHNIK-v186.md
+        1005  TECHNIK-v187.md
+         842  TECHNIK-v188.md
+         878  TECHNIK-v189.md
+        1063  TECHNIK-v190.md
+         752  TECHNIK-v191.md
+         508  TECHNIK-v192.md
+         647  TECHNIK-v195.md
         1108  THIRD_PARTY_LIVE_PROVIDER.md
         1855  TIKTOK-CARD-SHOP-IMPORT-v173.md
          978  UNIFIED-ADMIN-CONVERTER-v182.md
          786  UNIFIED-CONVERTER-v183.md
-        7496  UPDATE-INHALT.txt
+       12786  UPDATE-INHALT.txt
         4599  UPDATE-MANIFEST-v124.sha256
+        3820  UPDATE-MANIFEST-v191.sha256
+        7936  UPDATE-MANIFEST-v192.sha256
         2378  UPDATE-MANIFEST-v193.sha256
         1213  UPDATE-MANIFEST-v194.sha256
+        4023  UPDATE-MANIFEST-v195.sha256
          740  VALIDATION-v124.md
+        1238  VALIDATION-v185.md
+        1120  VALIDATION-v186.md
+        1255  VALIDATION-v187.md
+        1466  VALIDATION-v188.md
+        1316  VALIDATION-v189.md
+        1527  VALIDATION-v190.md
+        1282  VALIDATION-v191.md
+        1474  VALIDATION-v192.md
          826  VALIDATION-v193.md
          712  VALIDATION-v194.md
+        1634  VALIDATION-v195.md
          712  VALIDATION.md
+         997  WEBSITE-BRAND-UNIFICATION-v192.md
         1936  WEBSITE_ACCEPTANCE_PASS21_3_14.md
         1482  WEBSITE_ACCESSIBILITY_RESPONSIVE_PASS21_3_12.md
         1261  WEBSITE_AUTH_ENTRY_PASS21_3_6.md
@@ -399,7 +471,7 @@ Files: 1192
         2017  WIDGET_STUDIO_30S_UX_PASS.md
         4452  WIDGET_STUDIO_BRIDGE_PROTOCOL_V1.md
         1235  WIDGET_STUDIO_MILESTONE_V42.md
-         361  handoff/CURRENT-HANDOFF.md
+         781  handoff/CURRENT-HANDOFF.md
         5409  handoff/FINAL-GITHUB-MANIFEST-v19.txt
         1548  handoff/GITHUB-DEPLOY-v19.md
         2460  handoff/HANDOFF-v10.md
@@ -433,8 +505,17 @@ Files: 1192
          829  handoff/HANDOFF-v182.md
          512  handoff/HANDOFF-v183.md
          361  handoff/HANDOFF-v184.md
+         623  handoff/HANDOFF-v185.md
+         582  handoff/HANDOFF-v186.md
+         767  handoff/HANDOFF-v187.md
+         588  handoff/HANDOFF-v188.md
+         649  handoff/HANDOFF-v189.md
+         603  handoff/HANDOFF-v190.md
+         725  handoff/HANDOFF-v191.md
+        1064  handoff/HANDOFF-v192.md
          800  handoff/HANDOFF-v193.md
          775  handoff/HANDOFF-v194.md
+         781  handoff/HANDOFF-v195.md
          886  handoff/HANDOFF-v20.md
          852  handoff/HANDOFF-v21.md
          588  handoff/HANDOFF-v22.md
@@ -480,9 +561,9 @@ Files: 1192
         1557  launcher/LAUNCHER_RELEASE_CHECKLIST.md
         1922  launcher/PRODUCTION_RELEASE_GATE.md
         1779  launcher/README.md
+        1365  launcher/build-windows.bat
       112687  launcher/build/icon.ico
       309080  launcher/build/icon.png
-        1365  launcher/build-windows.bat
       167796  launcher/main.js
         2909  launcher/native/audio-loopback/README.md
         1851  launcher/native/audio-loopback/build.cmd
@@ -693,6 +774,9 @@ Files: 1192
        12942  lib/production-monitor-security.js
         2772  lib/production-release-readiness.js
         3666  lib/provider-oauth-contract.js
+       12188  lib/rc-acceptance-v190.js
+        6532  lib/rc-freeze-v195.js
+       17835  lib/rc-tooling-v191.js
         7489  lib/release-acceptance.js
         1907  lib/release-candidate-readiness.js
         2280  lib/release-go-no-go.js
@@ -703,17 +787,19 @@ Files: 1192
          673  ops/database-recovery-policy.json
         1250  ops/incident-response-policy.json
        49329  package-lock.json
-       38816  package.json
+       41372  package.json
          228  public/.well-known/security.txt
         1015  public/_headers
          310  public/_redirects
-      309080  public/app-icon.png
+      333765  public/app-icon.png
        13432  public/assets/css/account-professional.css
         2122  public/assets/css/admin-beta-handbook-v154.css
         5735  public/assets/css/admin-control-center-v181.css
-       38413  public/assets/css/admin-creators.css
+       40743  public/assets/css/admin-creators.css
         1026  public/assets/css/billing.css
         3092  public/assets/css/cfs-accessibility-v12.css
+        8702  public/assets/css/cfs-brand-unified-v192.css
+        4813  public/assets/css/cfs-creator-ux-v189.css
        25106  public/assets/css/cfs-dashboard-neon-v128.css
         8336  public/assets/css/cfs-dashboard-v9.css
         4313  public/assets/css/cfs-empty-v7.css
@@ -727,9 +813,9 @@ Files: 1192
         6987  public/assets/css/cfs-mobile-v11.css
         6380  public/assets/css/cfs-nav-v8.css
         6641  public/assets/css/cfs-onboarding-v4.css
-        6443  public/assets/css/cfs-public-entry-v165.css
+        6411  public/assets/css/cfs-public-entry-v165.css
        48204  public/assets/css/cfs-public-suite-v120.css
-       20136  public/assets/css/cfs-shop-v172.css
+       22632  public/assets/css/cfs-shop-v172.css
         4792  public/assets/css/cfs-technical-status-v131.css
        35160  public/assets/css/cfs-theme-v3.css
         4147  public/assets/css/cfs-tiktok-status-v122.css
@@ -748,8 +834,10 @@ Files: 1192
       210872  public/assets/css/styles.css
         1596  public/assets/css/widget-runtime.css
       284335  public/assets/css/widget-studio.css
-      318611  public/assets/img/app-icon.png
-       35902  public/assets/img/apple-touch-icon.png
+      333765  public/assets/img/app-icon.png
+       36223  public/assets/img/apple-touch-icon.png
+     1717088  public/assets/img/brand-showcase-01.png
+     1440340  public/assets/img/brand-showcase-02.png
        68357  public/assets/img/brand/cfs-zockt-logo.png
      2081765  public/assets/img/brand/cfs-zockt-mark-original.png
       869855  public/assets/img/brand/cfs-zockt-mark.png
@@ -763,9 +851,7 @@ Files: 1192
        33946  public/assets/img/brand/merch/shirt-schwarz-vorne.webp
       161878  public/assets/img/brand/merch/tshirts.webp
       142850  public/assets/img/brand/merch/wollmuetze.webp
-     1717088  public/assets/img/brand-showcase-01.png
-     1440340  public/assets/img/brand-showcase-02.png
-      105930  public/assets/img/favicon.ico
+       68977  public/assets/img/favicon.ico
        70962  public/assets/img/hero-reference.jpg
        10020  public/assets/img/home-v116/game-cs2.webp
         9700  public/assets/img/home-v116/game-fc25.webp
@@ -778,7 +864,7 @@ Files: 1192
        10684  public/assets/img/home-v116/stream-fc25.webp
        10758  public/assets/img/home-v116/stream-warzone-small.webp
        50970  public/assets/img/home-v116/stream-warzone.webp
-       17876  public/assets/img/logo-footer.png
+       21612  public/assets/img/logo-footer.png
        68357  public/assets/img/logo-header.png
         2767  public/assets/img/news-1.jpg
         2194  public/assets/img/news-2.jpg
@@ -788,12 +874,13 @@ Files: 1192
         5791  public/assets/js/admin-bundle-factory-v175.js
         9037  public/assets/js/admin-bundle-factory-v176.js
        13183  public/assets/js/admin-bundle-factory-v177.js
-       20497  public/assets/js/admin-bundle-factory-v178.js
+       27473  public/assets/js/admin-bundle-factory-v178.js
        11789  public/assets/js/admin-control-center-v181.js
        44569  public/assets/js/admin-creators.js
        19880  public/assets/js/app.js
         3632  public/assets/js/billing-plans.js
        10517  public/assets/js/cfs-accessibility-v12.js
+       13575  public/assets/js/cfs-creator-ux-v189.js
         4636  public/assets/js/cfs-dashboard-neon-v128.js
        16152  public/assets/js/cfs-dashboard-v9.js
        14446  public/assets/js/cfs-empty-v7.js
@@ -808,7 +895,7 @@ Files: 1192
        10647  public/assets/js/cfs-onboarding-v4.js
         4030  public/assets/js/cfs-public-content-v181.js
         7773  public/assets/js/cfs-scene-runtime.js
-       10505  public/assets/js/cfs-shell-v3.js
+       11438  public/assets/js/cfs-shell-v3.js
         4332  public/assets/js/cfs-shop-preview-v174.js
         5646  public/assets/js/cfs-technical-status-v131.js
       189625  public/assets/js/cfs-ui-v18.js
@@ -825,75 +912,75 @@ Files: 1192
        36415  public/assets/js/page-account.js
         1739  public/assets/js/page-audio-studio.js
        22811  public/assets/js/page-dashboard.js
-       81221  public/assets/js/page-editor.js
+       81230  public/assets/js/page-editor.js
         1550  public/assets/js/page-forgot-password.js
-        7442  public/assets/js/page-integrations.js
+        7928  public/assets/js/page-integrations.js
         3144  public/assets/js/page-launcher-download-v159.js
         8685  public/assets/js/page-login.js
         1357  public/assets/js/page-nexus.js
         1984  public/assets/js/page-reset-password.js
         4614  public/assets/js/page-setup.js
-        7052  public/assets/js/page-shop-product-v174.js
-        6968  public/assets/js/page-shop-v172.js
+       10609  public/assets/js/page-shop-product-v174.js
+        9018  public/assets/js/page-shop-v172.js
        10768  public/assets/js/page-system-check.js
         5260  public/assets/js/page-tiktok.js
         6324  public/assets/js/page-verify-email.js
-       15844  public/assets/js/scene-studio.js
+       16282  public/assets/js/scene-studio.js
         3287  public/assets/js/site.js
       120625  public/assets/js/stream-studio.js
         2917  public/assets/js/support.js
         3393  public/assets/js/webauthn-browser.js
         4162  public/assets/js/widget-follower-goal.js
-      519192  public/assets/js/widget-studio.js
-         683  public/auth/tiktok/callback.html
+      520256  public/assets/js/widget-studio.js
+        1905  public/auth/tiktok/callback.html
          602  public/cfs-studio.webmanifest
-      657477  public/cfs-zockt-logo.png
+       68357  public/cfs-zockt-logo.png
          508  public/config/monetization.json
-       14049  public/favicon.ico
+        7420  public/favicon.ico
          378  public/games/runtime.html
-       21645  public/index.html
-       24262  public/pages/account.html
-       37805  public/pages/admin-creators.html
-        7653  public/pages/audio-studio.html
-       16593  public/pages/creator-suite.html
-       28443  public/pages/cut-studio.html
-       15703  public/pages/dashboard.html
-       16311  public/pages/datenschutz.html
-      110288  public/pages/editor.html
-        1443  public/pages/error.html
-        4947  public/pages/forgot-password.html
-        9335  public/pages/games.html
-        6986  public/pages/impressum.html
-        9633  public/pages/integrations.html
-        4870  public/pages/launcher-connect.html
-       11142  public/pages/launcher-download.html
-        1942  public/pages/launcher-provider-connect.html
-       10756  public/pages/launcher.html
-       12150  public/pages/login.html
-       14767  public/pages/merch.html
-        6332  public/pages/nexus.html
-        1349  public/pages/not-found.html
-       12623  public/pages/nutzungsbedingungen.html
-       11159  public/pages/plans.html
-        4789  public/pages/reset-password.html
-       11407  public/pages/roadmap.html
-        8766  public/pages/scene-studio.html
-       18384  public/pages/security.html
-        6399  public/pages/settings.html
-        7391  public/pages/setup.html
-        2288  public/pages/shop-product.html
-        4424  public/pages/shop.html
-       43486  public/pages/stream-studio.html
-       12216  public/pages/support.html
-        7171  public/pages/system-check.html
-        7914  public/pages/technical-status.html
-        7735  public/pages/tiktok.html
-        4672  public/pages/verify-email.html
-      106322  public/pages/widget-studio.html
+       21713  public/index.html
+       24709  public/pages/account.html
+       40514  public/pages/admin-creators.html
+        8116  public/pages/audio-studio.html
+       16645  public/pages/creator-suite.html
+       28906  public/pages/cut-studio.html
+       16150  public/pages/dashboard.html
+       16427  public/pages/datenschutz.html
+      110751  public/pages/editor.html
+        1779  public/pages/error.html
+        5283  public/pages/forgot-password.html
+        9798  public/pages/games.html
+        7102  public/pages/impressum.html
+       10096  public/pages/integrations.html
+        5333  public/pages/launcher-connect.html
+       11337  public/pages/launcher-download.html
+        2405  public/pages/launcher-provider-connect.html
+       11219  public/pages/launcher.html
+       12438  public/pages/login.html
+       14883  public/pages/merch.html
+        6795  public/pages/nexus.html
+        1685  public/pages/not-found.html
+       12739  public/pages/nutzungsbedingungen.html
+       11275  public/pages/plans.html
+        5125  public/pages/reset-password.html
+       12195  public/pages/roadmap.html
+        9229  public/pages/scene-studio.html
+       18500  public/pages/security.html
+        6862  public/pages/settings.html
+        7854  public/pages/setup.html
+        2608  public/pages/shop-product.html
+        4744  public/pages/shop.html
+       43949  public/pages/stream-studio.html
+       12332  public/pages/support.html
+        7634  public/pages/system-check.html
+        8377  public/pages/technical-status.html
+        8198  public/pages/tiktok.html
+        5008  public/pages/verify-email.html
+      106785  public/pages/widget-studio.html
          686  public/robots.txt
          568  public/site.webmanifest
          349  public/sitemap.xml
-        3558  public/widgets/follower-goal.html
+        3567  public/widgets/follower-goal.html
          573  public/widgets/output.html
          382  public/widgets/scene.html
          694  public/widgets/studio.html
@@ -912,7 +999,19 @@ Files: 1192
          477  reports/production-go-no-go.md
         2758  reports/production-setup-doctor.json
         1040  reports/production-setup-doctor.md
-     1474784  server.js
+       14577  reports/rc-acceptance-v190.json
+        5838  reports/rc-acceptance-v190.md
+         219  reports/rc-evidence-v191.json
+         160  reports/rc-evidence-v191.md
+         579  reports/rc-fixed-baseline-v195.json
+         494  reports/rc-fixed-baseline-v195.md
+      129569  reports/rc-freeze-v195.json
+        1634  reports/rc-go-no-go-v191.json
+         292  reports/rc-go-no-go-v191.md
+        4285  reports/rc-preflight-v191.json
+        2097  reports/rc-preflight-v191.md
+        1199  reports/rc-soak-plan-v191.json
+     1486141  server.js
      1156993  server.js.bak-v142
         7411  tools/account-auth-production-drill-r62.mjs
         1614  tools/account-auth-production-pass62-test.mjs
@@ -929,8 +1028,10 @@ Files: 1192
         1927  tools/active-script-integrity-v150-test.mjs
         6110  tools/admin-audit-integrity-security-pass17-test.mjs
         8148  tools/admin-bundle-factory-v175-test.mjs
+        4559  tools/admin-catalog-v186-test.mjs
         9477  tools/admin-collection-releases-v177-test.mjs
         1133  tools/admin-config-doctor-v41-qa.mjs
+        6635  tools/admin-cover-media-v187-test.mjs
         5940  tools/admin-privileged-action-security-pass16-test.mjs
         8259  tools/admin-production-suite-v176-test.mjs
         2283  tools/application-recovery-doctor.mjs
@@ -942,7 +1043,7 @@ Files: 1192
         7675  tools/beta-test-handbook-v154-test.mjs
         3011  tools/billing-policy-v37-test.mjs
         3803  tools/billing-v37-qa.mjs
-        7890  tools/brand-public-website-v180-test.mjs
+        7878  tools/brand-public-website-v180-test.mjs
         1853  tools/bridge-smoke-test.mjs
         2000  tools/browser-request-integrity-security-test.mjs
         8816  tools/cfs-studio-operator-v168-test.mjs
@@ -951,7 +1052,7 @@ Files: 1192
         1449  tools/configuration-workflow-v41-qa.mjs
         1021  tools/creator-admin-health-test.mjs
         1129  tools/creator-cut-jobs-v29-test.mjs
-        9685  tools/creator-daily-account-v166-test.mjs
+        9645  tools/creator-daily-account-v166-test.mjs
         1236  tools/creator-game-rules-v29-test.mjs
         1352  tools/creator-games-v28-test.mjs
         2428  tools/creator-isolation-v21-qa.mjs
@@ -962,6 +1063,7 @@ Files: 1192
         4037  tools/creator-suite-integrations-v141-test.mjs
         2522  tools/creator-suite-release-gate-v138.mjs
         1604  tools/creator-tools-v28-qa.mjs
+        5976  tools/creator-ux-polish-v189-test.mjs
          927  tools/creator-widget-scenes-test.mjs
         4538  tools/current-contract-regression-v58.mjs
         1484  tools/cut-audio-transition-v32-test.mjs
@@ -1074,13 +1176,26 @@ Files: 1192
         5019  tools/provider-beta-access-v151-test.mjs
         1663  tools/provider-oauth-foundation-v141-test.mjs
         2432  tools/provider-widget-taxonomy-v147-test.mjs
-       10440  tools/public-entry-flow-v165-test.mjs
-        5885  tools/public-home-professional-v164-test.mjs
+       10418  tools/public-entry-flow-v165-test.mjs
+        5865  tools/public-home-professional-v164-test.mjs
         6010  tools/public-launcher-download-v159-test.mjs
         1881  tools/public-live-control-v132-test.mjs
         2924  tools/public-review-admin-test.mjs
-        9605  tools/public-tiktok-live-brand-v161-test.mjs
+        9494  tools/public-tiktok-live-brand-v161-test.mjs
         9120  tools/public-twitch-live-v160-test.mjs
+        5747  tools/rc-acceptance-v190-test.mjs
+        3400  tools/rc-acceptance-v190.mjs
+        1664  tools/rc-diagnostic-log-v191.mjs
+        2278  tools/rc-evidence-v191.mjs
+        2788  tools/rc-fixed-baseline-v195.mjs
+        4531  tools/rc-freeze-v195-test.mjs
+        1210  tools/rc-freeze-v195.mjs
+        1274  tools/rc-go-no-go-v191.mjs
+        2343  tools/rc-preflight-v191.mjs
+        1873  tools/rc-recovery-drill-v195.mjs
+         468  tools/rc-secret-scan-v195.mjs
+        1493  tools/rc-soak-plan-v191.mjs
+        6568  tools/rc-tooling-v191-test.mjs
         4917  tools/recording-game-context-v123-test.mjs
         2594  tools/recording-initial-clip-idempotency-v193-test.mjs
         1425  tools/release-acceptance-v39-test.mjs
@@ -1100,14 +1215,16 @@ Files: 1192
         6669  tools/scene-transitions-pass21-7-test.mjs
         3966  tools/security-release-v137-test.mjs
         1359  tools/server-runtime-symbols-v42-test.mjs
-       11113  tools/shop-product-bundles-v174-test.mjs
+        4087  tools/shop-install-self-healing-v185-test.mjs
+       11304  tools/shop-product-bundles-v174-test.mjs
         9768  tools/shop-product-commerce-v178-test.mjs
+        6554  tools/shop-studio-workflow-v188-test.mjs
        11902  tools/shop-unification-v172-test.mjs
         5009  tools/stream-control-center-pass21-10-7-test.mjs
         1768  tools/stream-deck-v25-qa.mjs
         9171  tools/stream-engine-audio-stability-pass21-10-2-test.mjs
        10675  tools/stream-engine-pass21-10-test.mjs
-        2446  tools/stream-lifecycle-v184-test.mjs
+        2593  tools/stream-lifecycle-v184-test.mjs
         7621  tools/stream-provider-targets-v153-test.mjs
        18978  tools/stream-studio-application-audio-pass21-10-15-test.mjs
        10905  tools/stream-studio-application-audio-recovery-pass21-10-17-test.mjs
@@ -1156,6 +1273,7 @@ Files: 1192
         9574  tools/website-acceptance-pass21-3-14-test.mjs
         3596  tools/website-accessibility-responsive-pass21-3-12-test.mjs
         2749  tools/website-auth-entry-pass21-3-6-test.mjs
+        6629  tools/website-brand-unification-v192-test.mjs
         4548  tools/website-conviction-account-start-pass14-test.mjs
         4566  tools/website-conviction-proof-test.mjs
         2454  tools/website-creator-shell-pass21-3-7-test.mjs
@@ -1176,7 +1294,7 @@ Files: 1192
         3612  tools/website-trust-conviction-test.mjs
         4763  tools/website-trust-security-pass2-test.mjs
         2766  tools/website-visual-polish-pass21-3-13-test.mjs
-        7525  tools/widget-converter-v169-test.mjs
+        7619  tools/widget-converter-v169-test.mjs
         6298  tools/widget-core-flow-pass-test.mjs
         3258  tools/widget-runtime-audio-part2-test.mjs
         3662  tools/widget-studio-30s-ux-test.mjs

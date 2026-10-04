@@ -1,10 +1,95 @@
-# cfs_zockt Creator Suite · v184
+# cfs_zockt Creator Suite · v195
 
-Aktueller Stand: Backend **3.20.29**, Schema **78**, Launcher **0.47.30**.
+Aktueller Stand: Backend **3.20.38**, Schema **78**, Launcher **0.47.30**.
 
-v184 ergänzt den **Stream Lifecycle** im geschützten Stream Studio. Der in v183 vereinheitlichte Admin-Umwandler bleibt die einzige sichtbare Produktionsstelle für Shop-Pakete.
 
-Die öffentliche Website ist **cfs_zockt** (Gaming, Streams, Games, Community). Die Creator Suite ist ein separates, geschütztes Produkt für registrierte Creator.
+v195 ist die feste Acceptance-Basis nach der vereinheitlichten v192-Website. Runtime und Acceptance-Tooling werden SHA-256-versiegelt; Freeze-Drift, Secret-/Config-Probleme oder ein fehlgeschlagener Rollback-Drill blockieren den Kandidaten. Die 48 Realtests bleiben bewusst offen, bis sie auf echter Zielumgebung mit Evidence durchgeführt wurden. Commerce bleibt deaktiviert.
+
+## v195 · Fixed Acceptance Baseline / RC Freeze
+
+- Runtime-/Tooling-Freeze mit SHA-256-Tree
+- Drift-Erkennung für fehlende, zusätzliche und veränderte Dateien
+- Secret-/Config-Scan vor Acceptance
+- lokaler Artifact-Rollback-Drill
+- feste Baseline bleibt 0/48 Realtests und HOLD bis zur echten Abnahme
+- Windows-Einstieg über `RUN-FIXED-ACCEPTANCE-v195.cmd` oder `.ps1`
+- vollständiger Ablauf in `ABNAHME-ABLAUFPLAN-v195.md`
+- Backend 3.20.38 · Schema 78 · Launcher 0.47.30 · `CFS_COMMERCIAL_MODE=false`
+
+## v192 · Website Brand Unification
+
+- Einheitlicher Brand-Lockup und neue CFS-Bildmarke auf allen 40 Nutzerseiten.
+- Einheitliche Header/Footer/Icons und Utility-Shell.
+- Public/Creator-Grenze bleibt sichtbar getrennt.
+- Keine Schema-/Commerce-Änderung; reale Acceptance bleibt offen.
+
+## v191 · Acceptance Tooling & Diagnostics
+- `npm run acceptance191:preflight` prüft RC-Voraussetzungen, ohne Realtests zu simulieren.
+- Evidence-Index bindet reale Artefakte per SHA-256 an Acceptance-IDs.
+- Diagnose-Log redigiert bekannte Secret-/RTMP-/lokale Pfadmuster.
+- `npm run acceptance191:go-no-go` bleibt bis zur echten Abnahme auf HOLD und kann niemals automatisch GO setzen.
+
+## v190 · Release Candidate / Acceptance Prep
+
+- 48 reale Einzelprüfungen in neun Abnahmebereichen
+- Statusmodell `pending/pass/fail/skip/blocked` mit harter HOLD-Auswertung
+- Pflichtprüfungen nur durch PASS auflösbar; Pflicht-SKIP bleibt Blocker
+- Conditional-SKIP nur mit dokumentierter Begründung
+- PASS benötigt sichere Evidence-Referenz; Secret-/RTMP-/absolute Pfadwerte werden im CLI blockiert
+- Windows-Einstieg über `RUN-RC-ACCEPTANCE-v190.cmd`
+- keine reale Acceptance automatisch vorgetragen
+- Backend 3.20.36 · Schema 78 · Launcher 0.47.30 · `CFS_COMMERCIAL_MODE=false`
+
+## v189 · Creator UX Polish
+
+- gemeinsame UX-Schicht für zentrale geschützte Creator-Seiten
+- konsistente Empty-/Warning-/Error-/Success-Zustände mit ARIA-Live-Semantik
+- Retry nur bei echten Ladefehlern; legitime leere Bestände bleiben neutral
+- kontextuelle Hilfe in Dashboard, Account, Integrationen, Setup/Settings, Studios, Launcher und Diagnosebereichen
+- mobile Einspalten-Aktionen, größere Touch-Ziele und horizontal erreichbare Tabs/Toolbars
+- Twitch-/YouTube-Sync-/Disconnect-Fehler inline statt Browser-Alert
+- keine DB-Migration, keine neue öffentliche UX-API
+- Backend 3.20.34 · Schema 78 · Launcher 0.47.30 · `CFS_COMMERCIAL_MODE=false`
+
+## v188 · Shop → Studio Workflow
+
+- konkrete Widget-/Overlay-Deep-Links ins Widget Studio
+- konkrete Scene-Deep-Links ins Scene Studio
+- Panel-Set-Deep-Link in den passenden Editorbereich
+- Tool-Links ausschließlich über bestehende Allowlist
+- creator-eigene Objektprüfung beim Öffnen von Widget/Scene/Panel-Set
+- nächste Aktion direkt auf Shop-Karte und Produktdetail
+- klare Hinweise/Links bei Teilinstallation, Provider- oder Quota-Voraussetzungen
+- Shop-Empty-/Error-/Retry-/Mobile-Zustände gehärtet
+- keine DB-Migration, keine neuen öffentlichen Workflow-Endpunkte
+- Backend 3.20.33 · Schema 78 · Launcher 0.47.30 · `CFS_COMMERCIAL_MODE=false`
+
+## v187 · PNG/WebP Shop Cover & Media Workflow
+
+- Auto-SVG bleibt Standard und kann jederzeit wiederhergestellt werden
+- optionale PNG/WebP-Cover nur aus freigegebenen Admin-Assets
+- creator-/admin-gebundene Auswahl und erneute Rechteprüfung beim Publish
+- Rechteentzug nimmt betroffene veröffentlichte Produkte automatisch aus dem Shop
+- kein Schema-Bump, kein neuer öffentlicher Uploadpfad
+- Backend 3.20.32 · Schema 78 · Launcher 0.47.30 · `CFS_COMMERCIAL_MODE=false`
+
+## v186 · Admin Catalog
+
+- Freitextsuche über Produkt-/Collection-Metadaten
+- Statusfilter inklusive `mixed` und Archiv
+- Plattformfilter Twitch/TikTok/YouTube/Neutral
+- Bundle-/Einzelstückfilter
+- Archiv-KPIs und Schnellumschaltung
+- keine DB-Migration und kein neuer öffentlicher Suchendpunkt
+- Backend 3.20.31 · Schema 78 · Launcher 0.47.30 · `CFS_COMMERCIAL_MODE=false`
+
+## v185 · Shop Install Self-Healing
+
+- echte Existenzprüfung für Asset-, Panel-Set-, Scene- und Widget-/Overlay-Receipt-Ziele
+- sichere Rematerialisierung fehlender Ziele über die bestehenden Rechte-/Provider-/Plan-/Quota-Prüfungen
+- `retired` für aus dem Manifest entfernte Bestandteile; keine automatische Löschung eigener Creator-Inhalte
+- Install-Antworten liefern getrennte Zähler für stale erkannt, repariert und retired
+- Backend 3.20.30 · Schema 78 · Launcher 0.47.30 · `CFS_COMMERCIAL_MODE=false`
 
 ## v184 · Stream Lifecycle
 

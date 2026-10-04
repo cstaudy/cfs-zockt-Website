@@ -4,15 +4,10 @@ Neue Ideen werden hier aufgenommen, bevor sie implementiert werden. Status: **Id
 
 ## Geprüft / nächste sinnvolle Kandidaten
 
-- **Install-Receipt Self-Healing** — Shop prüft vor Wiederverwendung, ob Widget/Panel/Scene/Asset wirklich noch existiert; sonst sichere Rematerialisierung.
-- **Retired Package Items** — aus einem neuen Release entfernte Bestandteile bleiben als Creator-Inhalt erhalten, werden aber als nicht mehr zum Paket gehörend markiert.
-- **Shop → Studio Deep Links** — nach Installation direkt das passende Widget/Panel/Scene im richtigen Studio öffnen.
-- **Admin Katalogfilter** — Suche nach Collection, Plattform, Status, Einzelangebot/Bundle und Archiv.
 - **Publisher Foundation** — Publisher-Metadaten, Release-Vertrauen und optional signierte externe Datenpakete; keine externe Codeausführung.
 
 ## Später
 
-- **PNG/WebP Cover Export** zusätzlich zu SVG-Covern.
 - **Geplante Veröffentlichung** von Collections/Produkten zu einem Datum.
 - **Collection Templates** für wiederkehrende Seasonal-/Event-Serien.
 - **Shop Analytics** für Views/Installationen, erst mit sauberer Privacy-/Retention-Regel.
@@ -25,4 +20,19 @@ Neue Ideen werden hier aufgenommen, bevor sie implementiert werden. Status: **Id
 - anteiliges „Bundle vervollständigen“
 - kommerzieller Go-Live
 
-Bereits umgesetzt und deshalb nicht mehr als offene Idee geführt: Admin Bild→Bundle Factory, Multi-Image Collections, Variantenvergleich, Collection Lifecycle, Cover/Release Notes, Bundle + Einzelangebote, Produkt-/Collection-Duplizieren, privates Admin Control Center sowie der zentrale v182-Umwandler inklusive Starting/Pause/Ending/Offline sowie Stream-Lifecycle v184.
+Bereits umgesetzt und deshalb nicht mehr als offene Idee geführt: Admin Bild→Bundle Factory, Multi-Image Collections, Variantenvergleich, Collection Lifecycle, Cover/Release Notes, Bundle + Einzelangebote, Produkt-/Collection-Duplizieren, privates Admin Control Center sowie der zentrale v182-Umwandler inklusive Starting/Pause/Ending/Offline sowie Stream-Lifecycle v184, Install-Receipt Self-Healing und Retired Package Items v185 sowie Admin-Katalogsuche/-Filter/-Archivübersicht v186 und rechtegeprüfte PNG/WebP-Shop-Cover zusätzlich zu SVG v187 sowie Shop→Studio Deep Links v188, Creator-UX-Polish v189 und RC-/Acceptance-Prep v190.
+
+
+## v191 Acceptance Tooling
+- Erledigt: Preflight, Evidence-Index, Diagnose-Log, Soak-Plan, manueller Go/No-Go-Guard.
+- Offen bleibt ausschließlich die reale Ausführung der v190-Matrix sowie spätere Commerce-Phase.
+
+## v192 Website Brand Unification
+- Erledigt: gemeinsame Bildmarke/Brand-Shell auf allen 40 Nutzerseiten, Favicon/App-Icons und Legacy-Logo-Aliase synchronisiert.
+- Offen bleibt die reale RC-/Windows-/OBS-/Provider-Acceptance und danach Commerce.
+
+
+## v195 Fixed Acceptance Baseline
+- RC Freeze, Secret-/Config-Scan, Rollback-Drill und Acceptance-Lock umgesetzt.
+- Keine neuen Produktideen vor Abschluss der realen 48-Punkte-Abnahme.
+- Nach Bugfix: neuer Kandidat statt stiller Änderung am Freeze.

@@ -1,0 +1,18 @@
+import fs from "node:fs";
+import path from "node:path";
+import { createRequire } from "node:module";
+const require=createRequire(import.meta.url), root=path.resolve(".");
+const freezeLib=require(path.join(root,"lib/rc-freeze-v195.js"));
+const acceptanceLib=require(path.join(root,"lib/rc-acceptance-v190.js"));
+const freezePath=path.join(root,"reports/rc-freeze-v195.json");
+if(!fs.existsSync(freezePath)) throw new Error("Freeze-Manifest fehlt.");
+const freeze=JSON.parse(fs.readFileSync(freezePath,"utf8")); const verify=freezeLib.verifyManifest(root,freeze);
+const acceptance=JSON.parse(fs.readFileSync(path.join(root,"reports/rc-acceptance-v190.json"),"utf8")); const a=acceptanceLib.evaluate(acceptance);
+const pkg=JSON.parse(fs.readFileSync(path.join(root,"package.json"),"utf8")); const launcher=JSON.parse(fs.readFileSync(path.join(root,"launcher/package.json"),"utf8"));
+const commerceOff=fs.readFileSync(path.join(root,"PROJECT_CURRENT_STATE.md"),"utf8").includes("CFS_COMMERCIAL_MODE=false");
+const allPending=a.counts.pending===a.total && a.resolved===0;
+const ok=verify.ok && a.total===48 && allPending && commerceOff && pkg.version===freeze.backend_version && launcher.version===freeze.launcher_version;
+const report={schema:1,baseline_version:"v195",status:ok?"FROZEN_ACCEPTANCE_BASELINE":"HOLD",backend_version:pkg.version,schema_version:freeze.schema_version,launcher_version:launcher.version,commerce_enabled:false,freeze_tree_sha256:freeze.tree_sha256,freeze_files:freeze.file_count,acceptance:{total:a.total,resolved:a.resolved,pending:a.counts.pending,recommendation:a.recommendation},real_acceptance_executed:false,next_required_step:"Run target Windows preflight and execute the 48 real acceptance cases with evidence."};
+fs.mkdirSync(path.join(root,"reports"),{recursive:true}); fs.writeFileSync(path.join(root,"reports/rc-fixed-baseline-v195.json"),JSON.stringify(report,null,2)+"\n");
+const md=["# Feste Acceptance-Basis v195","",`Status: **${report.status}**`,`Backend: **${report.backend_version}** · Schema: **${report.schema_version}** · Launcher: **${report.launcher_version}**`,`Commerce: **deaktiviert**`,`Freeze Tree SHA-256: \`${report.freeze_tree_sha256}\``,`Versiegelte Runtime-/Tooling-Dateien: **${report.freeze_files}**`,`Reale Acceptance: **${report.acceptance.resolved}/${report.acceptance.total}** · ${report.acceptance.recommendation}`,"","Die Basis ist technisch eingefroren. Das ist **kein Acceptance-PASS**. Änderungen an Runtime/Tooling invalidieren den Freeze und erfordern einen neuen Kandidaten.",""].join("\n");
+fs.writeFileSync(path.join(root,"reports/rc-fixed-baseline-v195.md"),md,"utf8"); console.log(JSON.stringify({ok,status:report.status,freeze:verify.ok,acceptance:`${a.resolved}/${a.total}`})); if(!ok) process.exitCode=2;
