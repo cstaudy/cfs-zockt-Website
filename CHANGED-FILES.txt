@@ -1,29 +1,30 @@
-v170 · Panel-Umwandler
+# v184 changed files
+# new: 7 · changed: 20 · deleted: 0
 
-NEU:
-- PANEL-CONVERTER-v170.md
-- TECHNIK-v170.md
-- CREATOR-SUITE-COMPLETION-v170.md
-- SECURITY-BASELINE-v170.md
-- handoff/HANDOFF-v170.md
-- tools/panel-converter-v170-test.mjs
-
-GEÄNDERT:
-- INSTALLIEREN.txt
-- PROJECT_CURRENT_STATE.md
-- README.md
-- UPDATE-INHALT.txt
-- handoff/CURRENT-HANDOFF.md
-- ops/application-recovery-policy.json
-- package-lock.json
-- package.json
-- public/assets/css/widget-studio.css
-- public/assets/js/page-system-check.js
-- public/assets/js/widget-studio.js
-- public/pages/roadmap.html
-- public/pages/widget-studio.html
-- server.js
-- tools/cfs-studio-operator-v168-test.mjs
-
-GELÖSCHT:
-- keine
+NEW	CHANGED-FILES-v184.txt
+NEW	CREATOR-SUITE-COMPLETION-v184.md
+NEW	SECURITY-BASELINE-v184.md
+NEW	STREAM-LIFECYCLE-v184.md
+NEW	TECHNIK-v184.md
+NEW	handoff/HANDOFF-v184.md
+NEW	tools/stream-lifecycle-v184-test.mjs
+CHANGED	CHANGED-FILES.txt
+CHANGED	DATEILISTE.txt
+CHANGED	FULL_PACKAGE_MANIFEST.md
+CHANGED	IDEAS-BACKLOG.md
+CHANGED	INSTALLIEREN.txt
+CHANGED	PROJECT_CURRENT_STATE.md
+CHANGED	PROJECT_FLOW_PLAN.md
+CHANGED	README.md
+CHANGED	UPDATE-INHALT.txt
+CHANGED	handoff/CURRENT-HANDOFF.md
+CHANGED	ops/application-recovery-policy.json
+CHANGED	package-lock.json
+CHANGED	package.json
+CHANGED	public/assets/css/stream-studio.css
+CHANGED	public/assets/js/page-system-check.js
+CHANGED	public/assets/js/stream-studio.js
+CHANGED	public/pages/roadmap.html
+CHANGED	public/pages/stream-studio.html
+CHANGED	server.js
+CHANGED	tools/cfs-studio-operator-v168-test.mjs

@@ -1,0 +1,40 @@
+# CHANGED FILES v184
+
+Neu: 7
+Geändert: 20
+Gelöscht: 0
+Gesamt Update: 27
+
+## Neu
+CHANGED-FILES-v184.txt
+CREATOR-SUITE-COMPLETION-v184.md
+SECURITY-BASELINE-v184.md
+STREAM-LIFECYCLE-v184.md
+TECHNIK-v184.md
+handoff/HANDOFF-v184.md
+tools/stream-lifecycle-v184-test.mjs
+
+## Geändert
+CHANGED-FILES.txt
+DATEILISTE.txt
+FULL_PACKAGE_MANIFEST.md
+IDEAS-BACKLOG.md
+INSTALLIEREN.txt
+PROJECT_CURRENT_STATE.md
+PROJECT_FLOW_PLAN.md
+README.md
+UPDATE-INHALT.txt
+handoff/CURRENT-HANDOFF.md
+ops/application-recovery-policy.json
+package-lock.json
+package.json
+public/assets/css/stream-studio.css
+public/assets/js/page-system-check.js
+public/assets/js/stream-studio.js
+public/pages/roadmap.html
+public/pages/stream-studio.html
+server.js
+tools/cfs-studio-operator-v168-test.mjs
+
+## Gelöscht
+- keine -

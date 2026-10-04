@@ -1,1 +1,141 @@
-v170: Panel-Umwandler für Twitch und TikTok. Twitch Info-Panels, TikTok Profil-/Social-Karten, PNG-Download + Medienbibliothek. Backend 3.20.15, Launcher 0.47.30.
+v184 · Stream Lifecycle
+
+- Starting Soon, LIVE, BRB/Pause, Ending und Offline als zuordenbare Stream-Status-Scenes
+- manuelle Lifecycle-Umschaltung direkt im Stream Studio
+- optionaler Launcher-Automatikmodus für Starting/LIVE/Ending/Offline; BRB bleibt manuell
+- Offline-Scene als Schnellstart-Preset
+- nur veröffentlichte Creator-Scenes; keine Provider-Secrets in der Lifecycle-Konfiguration
+- Backend 3.20.29, Schema 78, Launcher 0.47.30
+- CFS_COMMERCIAL_MODE=false
+
+v183 · Unified Admin Converter
+
+- zentraler Admin-Umwandler: Stream-Status, Overlays, Panels/Cards, Provider-Widgets, Creator-Packs
+- Plattformen Twitch/TikTok/YouTube/Neutral
+- Ausgabe Bundle / Einzelstücke / beides; 1/2/4 Varianten
+- Offline-Screen ergänzt; Status-Serie vollständig
+- Backend 3.20.29, Schema 78, Launcher 0.47.30
+- CFS_COMMERCIAL_MODE=false
+
+v181 · Private Admin Control Center
+
+- persönliches, serverseitig Admin-only Control Center innerhalb der bestehenden Admin-Seite
+- normale Creator erhalten die Admin-HTML-Seite nicht; Admin-APIs bleiben rollen-/elevationsgeschützt und auditiert
+- Website Studio mit Draft -> private Vorschau -> Publish/Revert für Identität, Games, Community, Creator-Einstieg und Ankündigung
+- öffentliche Site-Content-API liefert ausschließlich veröffentlichte Snapshots; Drafts werden dort nicht gelesen
+- zentrale Admin-KPIs für Website, Shop, Assets/Rechte und Creator
+- direkte Einstiege in bestehende Bundle Factory, Creator-, Produktions- und Release-Bereiche; keine zweite Shop-Engine
+- öffentliche Startseite kann veröffentlichte Admin-Inhalte sicher als Text übernehmen; max. 6 hervorgehobene Games
+- Backend 3.20.26, Schema 78, Launcher 0.47.30
+- `CFS_COMMERCIAL_MODE=false`; Commerce bleibt spätere Phase
+
+v180 · Brand & Public Website Reset
+
+- öffentliche Hauptwebsite ist cfs_zockt: Motivation, Games, Streams und Community zuerst
+- eigener Abschnitt „Warum cfs_zockt?“ und klarer Creator-Bereich als sekundärer Einstieg
+- öffentliche Main-Navigation enthält keine direkten Shop-/Launcher-/Studio-Links mehr
+- Creator Suite, Dashboard, Shop, Launcher und Studios werden serverseitig vor unauthentifiziertem HTML-Zugriff geschützt
+- private Produktseiten sind noindex/nofollow und aus der Sitemap entfernt
+- Creator-Shell nutzt das echte cfs_zockt-Logo plus zentrale Publisher-Signatur „developed by cfs_zockt“
+- dynamisches Copyright „© Jahr cfs_zockt · Alle Rechte vorbehalten.“
+- Shop-Produkte bleiben visuell eigenständig; Publisher-/Rechte-Metadaten ordnen sie cfs_zockt zu
+- historische Tests v159–v174 auf die neue Public-vs-Creator-Grenze aktualisiert, ohne Funktionsprüfungen zu entfernen
+- Backend 3.20.25, Schema 77, Launcher 0.47.30
+- `CFS_COMMERCIAL_MODE=false`; Commerce bleibt spätere Phase
+
+v179 · Project Structure & Main Integration
+
+- aktueller Projektstand auf eine einzige Current-State-Quelle reduziert
+- zentraler Arbeitsablauf in PROJECT_FLOW_PLAN.md
+- neue Ideen zentral in IDEAS-BACKLOG.md
+- Website Main zeigt Creator Shop sichtbar in Community, CTA und Footer
+- Creator Suite erklärt Bundle-/Einzelstück-Workflow und aktuellen Studio-Status
+- globale Public-/Creator-Navigation behält Shop + Launcher
+- öffentliche Roadmap auf Backend 3.20.24 / Schema 77 und aktuelle Phasen umgestellt
+- veraltete Audio-Studio-/alte 21.x-Planung entfernt
+- lokaler Link-/Asset-Audit für 1.134 Referenzen ergänzt
+- Commerce bleibt letzte Phase; kein Checkout
+
+v178 · Shop Product Commerce Structure
+
+- Produkt duplizieren mit neuer ID/Slug/Cover-Token/Versionshistorie
+- ganze Collection duplizieren mit neu verknüpften Parent-/Child-Produkten
+- Bundle- und Einzelpreise in EUR-Cent vorbereiten
+- je Bestandteil: nur Bundle / Bundle + einzeln / nur einzeln
+- automatische Einzelprodukt-Drafts aus validierten Paketbestandteilen
+- Paid Preview sichtbar, aber bei deaktiviertem Commerce nicht erwerb-/installierbar
+- Parent-Bundle-/Einzelprodukt-Verlinkung und vorbereitete Bundle-Vorteilsberechnung
+- Backend 3.20.23, Schema 77, Launcher 0.47.30
+- kein Live-Commerce
+
+v177 · Admin Collection Releases / Cover Files / Produktversionen
+
+- ganze Collection veröffentlichen, aus Shop nehmen, archivieren oder reaktivieren
+- Rechteprüfung aller Quellbilder vor Collection-Publish
+- gespeicherte SVG-Coverdatei pro Admin-Produkt mit Token + SHA-256
+- Draft-Cover nur im Admin, Public-Cover nur für veröffentlichte Produkte
+- Titeländerung rendert das gespeicherte Cover neu
+- Patch-/Minor-Versionen mit verpflichtenden Release Notes
+- persistente Versionshistorie im Creator Shop
+- Backend 3.20.22, Schema 76, Launcher 0.47.30
+- kein Live-Commerce
+
+v176 · Admin Production Suite / Multi-Image Collections
+
+- bis zu 6 freigegebene Quellbilder pro Collection
+- frei wählbare Inhalte: Branding, Panels/Cards, Overlays, Scenes, Provider-Widgets und Studio-Tools
+- Presets Custom, Cyber, Gaming, Seasonal und Minimal
+- vier Designvarianten pro Produktionslauf mit fortlaufenden Themenrunden
+- gemeinsame Collection-ID für zusammengehörige Produktentwürfe
+- automatische Hero-/2×2-Mosaik-Cover aus Quellbildern
+- Vergleich von bis zu drei Varianten im Admin-Bereich
+- Rechteprüfung aller Quellen bei Erzeugung und Veröffentlichung
+- Entzug einer Rechtefreigabe depubliziert auch Produkte mit sekundärer Bildquelle
+- Backend 3.20.21, Schema 75, Launcher 0.47.30
+- kein Live-Commerce
+
+v175 · Admin Bundle Factory
+
+- Admin-only Bild-Upload und Rechtefreigabe
+- Bild → Bundle-Produktentwürfe
+- Draft/Publish/Unpublish im Creator Shop
+- Creator-Import kopiert freigegebenes Branding in die eigene Medienbibliothek
+- Backend 3.20.20, Schema 74, Launcher 0.47.30
+- kein Live-Commerce
+
+v174 · Shop Produktdetail / Update / Bundles
+
+- eigene private Produktdetailseite für Shop-Produkte
+- produktspezifische Vorschauen für Widgets, Panels/Cards, Overlays, Scenes, Tools und Bundles
+- Update behält bestehende editierte Inhalte und ergänzt neue Paketbestandteile
+- Neuinstallation erzeugt frische Kopien ohne vorhandene Inhalte zu löschen
+- neuer allowlisted `scene_template`-Pakettyp, nur als Draft und mit Scene-Limit
+- CFS Scene Starter Pack
+- Twitch Full Branding Bundle
+- TikTok Creator Bundle
+- Backend 3.20.19, Schema 73, Launcher 0.47.30
+- kein Live-Commerce
+
+v173 · TikTok Card / echter Creator Shop Import
+
+- eigener TikTok 720×1280 Portrait-Renderer
+- 9:16-Vorschau vollständig in den Editor eingepasst
+- Panel-/Overlay-/Widget-Shop-Pakete materialisieren editierbare CFS-Inhalte
+- Provider-Widgets bleiben an Beta, Verbindung, Scopes, Plan und Quoten gebunden
+- partielle Installationen können fortgesetzt werden
+- v172-Installationsstempel werden als noch zu materialisierende Einträge erkannt
+- Backend 3.20.18, Schema 73, Launcher 0.47.30
+- kein Live-Commerce
+
+v172 · UI-Unification / Creator Shop / Panel Design Generator
+
+- gemeinsame visuelle Basis für öffentliche Website + Creator Workspace
+- Creator Shop mit Widgets, Panels, Overlays und Tools
+- Free-/Beta-Katalog + Meine Produkte
+- validierte server-owned Paketmanifeste; kein beliebiger Datei-/Code-Import
+- sechs Panel-Designvarianten: Classic, Split, Orbit, Frame, Signal, Minimal
+- wiederholtes „Neues Design erstellen“ rotiert Varianten
+- Backend 3.20.17, Schema 73, Launcher 0.47.30
+- kein Live-Commerce
+
+v171: Persistente Twitch-/TikTok-Panel-Sets mit gemeinsamem Branding, Einzel-/Batch-PNG, ZIP-Export, Medienbibliothek und strukturiertem Panel-Paket-Agent. Backend 3.20.16, Schema 73, Launcher 0.47.30.

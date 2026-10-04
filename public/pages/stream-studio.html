@@ -113,7 +113,7 @@
           <button type="button" data-scene-preset="chatting">JUST CHATTING</button>
           <button type="button" data-scene-preset="starting">STARTING SOON</button>
           <button type="button" data-scene-preset="brb">BRB / PAUSE</button>
-          <button type="button" data-scene-preset="ending">STREAM ENDE</button>
+          <button type="button" data-scene-preset="ending">STREAM ENDE</button><button type="button" data-scene-preset="offline">OFFLINE</button>
           <button type="button" data-scene-preset="vertical">VERTICAL LIVE</button>
         </div>
       </details>
@@ -351,6 +351,26 @@
   </div>
 
   <section class="stream-dock-zone stream-wide-dock" data-dock-zone="wide" aria-label="Breiter Studio-Bereich">
+
+  <section class="stream-rack" id="stream-lifecycle" data-dock-id="lifecycle" data-dock-title="Stream Lifecycle" aria-labelledby="streamLifecycleTitle">
+    <div class="stream-section-head">
+      <div><span>STREAM LIFECYCLE</span><strong id="streamLifecycleTitle">Starting · Live · Pause · Ending · Offline</strong></div>
+      <span class="stream-session-badge" id="streamLifecycleState">AUS</span>
+    </div>
+    <div class="stream-preflight-summary">
+      <label><span>AKTIV</span><input id="streamLifecycleEnabled" type="checkbox"><small>Status-Scenes zentral verwalten</small></label>
+      <label><span>LAUNCHER-AUTO</span><input id="streamLifecycleAuto" type="checkbox"><small>Engine-Status darf Program-Scene wechseln</small></label>
+    </div>
+    <div class="stream-lifecycle-grid">
+      <label><span>STARTING SOON</span><select data-lifecycle-scene="starting"></select><button class="btn" type="button" data-lifecycle-go="starting">ANZEIGEN</button></label>
+      <label><span>LIVE</span><select data-lifecycle-scene="live"></select><button class="btn" type="button" data-lifecycle-go="live">ANZEIGEN</button></label>
+      <label><span>PAUSE / BRB</span><select data-lifecycle-scene="brb"></select><button class="btn" type="button" data-lifecycle-go="brb">ANZEIGEN</button></label>
+      <label><span>STREAM ENDET</span><select data-lifecycle-scene="ending"></select><button class="btn" type="button" data-lifecycle-go="ending">ANZEIGEN</button></label>
+      <label><span>OFFLINE</span><select data-lifecycle-scene="offline"></select><button class="btn" type="button" data-lifecycle-go="offline">ANZEIGEN</button></label>
+    </div>
+    <p class="stream-engine-note"><strong>SICHERHEIT:</strong> Automatik nutzt nur bereits veröffentlichte, dir gehörende Scenes. Zugangsdaten und Provider-Secrets bleiben im Launcher.</p>
+  </section>
+
   <section class="stream-rack stream-preflight-rack" id="stream-preflight" data-dock-id="preflight" data-dock-title="Stream Check" aria-labelledby="streamPreflightTitle">
     <div class="stream-section-head">
       <div><span>STREAM CHECK</span><strong id="streamPreflightTitle">Vor dem Livegang kurz alles prüfen</strong></div>

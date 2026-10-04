@@ -2,7 +2,7 @@
  * ============================================================
  * cfs_zockt Creator Suite
  * Website Backend
- * Version 3.20.15
+ * Version 3.20.29
  * ============================================================
  */
 
@@ -75,7 +75,7 @@ const APP_NAME =
     "CFS_Zockt Creator Suite";
 
 const BACKEND_VERSION =
-    "3.20.15";
+    "3.20.29";
 
 // ============================================================
 // PRIVATE BETA / LEGAL BASELINE
@@ -1120,7 +1120,7 @@ const CONTENT_SECURITY_POLICY =
         "frame-ancestors 'self'",
         "frame-src 'self'",
         "form-action 'self'",
-        "script-src 'self' 'sha256-ED1mubiXpyMozAI/g79d/nbnX4u1UTwecpxPHS2u3f0='",
+        "script-src 'self' 'sha256-Ry4xEYrqIwRFkjnoF+r5wsPwh3+Uz+gYMK+GRXZ/SnE='",
         "script-src-attr 'none'",
         "style-src 'self' 'unsafe-inline'",
         "img-src 'self' data: blob: https:",
@@ -3646,6 +3646,125 @@ async function initDatabase() {
     `);
     await pool.query(`CREATE INDEX IF NOT EXISTS idx_creator_widget_assets_creator ON creator_widget_assets(creator_id,updated_at DESC)`);
     await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_creator_widget_assets_dedupe ON creator_widget_assets(creator_id,sha256)`);
+
+    // --------------------------------------------------------
+    // V175 ADMIN BUNDLE FACTORY
+    //
+    // Admin-only source assets and server-owned store product drafts.
+    // Rights approval is explicit and required before publication.
+    // --------------------------------------------------------
+    await pool.query(`
+        CREATE TABLE IF NOT EXISTS admin_bundle_assets (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            owner_creator_id TEXT NOT NULL REFERENCES creator_accounts(id) ON DELETE CASCADE,
+            original_name VARCHAR(160) NOT NULL,
+            label VARCHAR(120) NOT NULL,
+            mime_type VARCHAR(100) NOT NULL,
+            file_ext VARCHAR(16) NOT NULL,
+            byte_size BIGINT NOT NULL,
+            sha256 VARCHAR(64) NOT NULL,
+            metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+            public_token VARCHAR(80) NOT NULL UNIQUE,
+            rights_status VARCHAR(24) NOT NULL DEFAULT 'pending',
+            rights_source VARCHAR(240) NOT NULL DEFAULT '',
+            rights_note VARCHAR(1000) NOT NULL DEFAULT '',
+            shop_use_allowed BOOLEAN NOT NULL DEFAULT FALSE,
+            content BYTEA NOT NULL,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        )
+    `);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_admin_bundle_assets_owner ON admin_bundle_assets(owner_creator_id,updated_at DESC)`);
+    await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_admin_bundle_assets_owner_sha ON admin_bundle_assets(owner_creator_id,sha256)`);
+
+    await pool.query(`
+        CREATE TABLE IF NOT EXISTS admin_store_products (
+            id TEXT PRIMARY KEY,
+            owner_creator_id TEXT NOT NULL REFERENCES creator_accounts(id) ON DELETE CASCADE,
+            source_asset_id UUID REFERENCES admin_bundle_assets(id) ON DELETE RESTRICT,
+            slug VARCHAR(120) NOT NULL UNIQUE,
+            category VARCHAR(24) NOT NULL DEFAULT 'bundles',
+            title VARCHAR(140) NOT NULL,
+            description VARCHAR(1000) NOT NULL DEFAULT '',
+            platform VARCHAR(24) NOT NULL,
+            publisher VARCHAR(120) NOT NULL DEFAULT 'cfs_zockt',
+            version VARCHAR(32) NOT NULL DEFAULT '1.0.0',
+            pricing_mode VARCHAR(24) NOT NULL DEFAULT 'free',
+            accent VARCHAR(16) NOT NULL DEFAULT '#20c7ff',
+            status VARCHAR(24) NOT NULL DEFAULT 'draft',
+            design_variant VARCHAR(24) NOT NULL DEFAULT 'classic',
+            manifest JSONB NOT NULL DEFAULT '{}'::jsonb,
+            preview JSONB NOT NULL DEFAULT '{}'::jsonb,
+            features JSONB NOT NULL DEFAULT '[]'::jsonb,
+            compatibility JSONB NOT NULL DEFAULT '[]'::jsonb,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            published_at TIMESTAMPTZ
+        )
+    `);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_admin_store_products_status ON admin_store_products(status,updated_at DESC)`);
+    // V176 Admin Production Suite: multi-image sources, generated cover metadata and collections.
+    await pool.query(`ALTER TABLE admin_store_products ADD COLUMN IF NOT EXISTS source_asset_ids JSONB NOT NULL DEFAULT '[]'::jsonb`);
+    await pool.query(`ALTER TABLE admin_store_products ADD COLUMN IF NOT EXISTS bundle_config JSONB NOT NULL DEFAULT '{}'::jsonb`);
+    await pool.query(`ALTER TABLE admin_store_products ADD COLUMN IF NOT EXISTS collection_key VARCHAR(100) NOT NULL DEFAULT ''`);
+    await pool.query(`ALTER TABLE admin_store_products ADD COLUMN IF NOT EXISTS collection_title VARCHAR(140) NOT NULL DEFAULT ''`);
+    await pool.query(`ALTER TABLE admin_store_products ADD COLUMN IF NOT EXISTS cover_mode VARCHAR(24) NOT NULL DEFAULT 'mosaic'`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_admin_store_products_collection ON admin_store_products(owner_creator_id,collection_key,updated_at DESC)`);
+    // V177 Admin Collection Releases: rendered cover files, collection lifecycle and immutable version snapshots.
+    await pool.query(`ALTER TABLE admin_store_products ADD COLUMN IF NOT EXISTS release_notes TEXT NOT NULL DEFAULT 'Initial release.'`);
+    await pool.query(`ALTER TABLE admin_store_products ADD COLUMN IF NOT EXISTS cover_public_token VARCHAR(48)`);
+    await pool.query(`ALTER TABLE admin_store_products ADD COLUMN IF NOT EXISTS cover_mime VARCHAR(80) NOT NULL DEFAULT 'image/svg+xml'`);
+    await pool.query(`ALTER TABLE admin_store_products ADD COLUMN IF NOT EXISTS cover_content BYTEA`);
+    await pool.query(`ALTER TABLE admin_store_products ADD COLUMN IF NOT EXISTS cover_sha256 CHAR(64)`);
+    await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_admin_store_products_cover_token ON admin_store_products(cover_public_token) WHERE cover_public_token IS NOT NULL`);
+    await pool.query(`
+        CREATE TABLE IF NOT EXISTS admin_store_product_versions (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            product_id TEXT NOT NULL REFERENCES admin_store_products(id) ON DELETE CASCADE,
+            owner_creator_id TEXT NOT NULL REFERENCES creator_accounts(id) ON DELETE CASCADE,
+            version VARCHAR(32) NOT NULL,
+            release_notes TEXT NOT NULL DEFAULT '',
+            manifest JSONB NOT NULL DEFAULT '{}'::jsonb,
+            preview JSONB NOT NULL DEFAULT '{}'::jsonb,
+            features JSONB NOT NULL DEFAULT '[]'::jsonb,
+            compatibility JSONB NOT NULL DEFAULT '[]'::jsonb,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            published_at TIMESTAMPTZ,
+            UNIQUE(product_id,version)
+        )
+    `);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_admin_store_product_versions_product ON admin_store_product_versions(product_id,created_at DESC)`);
+    // V178 Shop Product Commerce Structure: bundle/item offers, planned prices and duplication metadata.
+    await pool.query(`ALTER TABLE admin_store_products ADD COLUMN IF NOT EXISTS offer_type VARCHAR(24) NOT NULL DEFAULT 'bundle'`);
+    await pool.query(`ALTER TABLE admin_store_products ADD COLUMN IF NOT EXISTS sale_mode VARCHAR(32) NOT NULL DEFAULT 'bundle_only'`);
+    await pool.query(`ALTER TABLE admin_store_products ADD COLUMN IF NOT EXISTS list_price_cents INTEGER NOT NULL DEFAULT 0`);
+    await pool.query(`ALTER TABLE admin_store_products ADD COLUMN IF NOT EXISTS currency CHAR(3) NOT NULL DEFAULT 'EUR'`);
+    await pool.query(`ALTER TABLE admin_store_products ADD COLUMN IF NOT EXISTS parent_bundle_id TEXT REFERENCES admin_store_products(id) ON DELETE SET NULL`);
+    await pool.query(`ALTER TABLE admin_store_products ADD COLUMN IF NOT EXISTS source_item_key VARCHAR(180) NOT NULL DEFAULT ''`);
+    await pool.query(`ALTER TABLE admin_store_products ADD COLUMN IF NOT EXISTS commerce_config JSONB NOT NULL DEFAULT '{}'::jsonb`);
+    await pool.query(`ALTER TABLE admin_store_products ADD COLUMN IF NOT EXISTS offer_enabled BOOLEAN NOT NULL DEFAULT TRUE`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_admin_store_products_parent_bundle ON admin_store_products(parent_bundle_id,updated_at DESC)`);
+
+    // V181 Private Admin Control Center: website content drafts/published snapshots.
+    // Draft content is never exposed through public endpoints. Only the explicitly
+    // published JSON snapshot is readable by the public homepage runtime.
+    await pool.query(`
+        CREATE TABLE IF NOT EXISTS admin_site_content (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            owner_creator_id TEXT NOT NULL REFERENCES creator_accounts(id) ON DELETE CASCADE,
+            content_key VARCHAR(80) NOT NULL,
+            draft_content JSONB NOT NULL DEFAULT '{}'::jsonb,
+            published_content JSONB NOT NULL DEFAULT '{}'::jsonb,
+            draft_revision INTEGER NOT NULL DEFAULT 1,
+            published_revision INTEGER NOT NULL DEFAULT 0,
+            draft_updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            published_at TIMESTAMPTZ,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            UNIQUE(owner_creator_id,content_key)
+        )
+    `);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_admin_site_content_owner ON admin_site_content(owner_creator_id,updated_at DESC)`);
 
     // --------------------------------------------------------
     // V28 CREATOR TOOLS — GAME RUNTIME + CUT STUDIO PROJECTS
@@ -6358,6 +6477,19 @@ const CREATOR_MODULES =
                 true,
             status:
                 "roadmap"
+        },
+
+        shop: {
+            key:
+                "shop",
+            title:
+                "Creator Shop",
+            minimum_plan:
+                "free",
+            stateful:
+                true,
+            status:
+                "active"
         }
 
     });
@@ -8026,7 +8158,7 @@ function streamStudioDefaultTargets(){
 }
 
 const STREAM_STUDIO_DOCK_ZONES=["left","center","right","bottom","wide"];
-const STREAM_STUDIO_DOCK_ITEMS=["scenes","monitors","scene_composer","transition","overlay_rack","sources","capture","audio","output","preflight","session","health","activity","multistream"];
+const STREAM_STUDIO_DOCK_ITEMS=["scenes","monitors","scene_composer","transition","overlay_rack","sources","capture","audio","output","preflight","lifecycle","session","health","activity","multistream"];
 
 function streamStudioWorkspaceDefaults(){
     return {
@@ -8034,7 +8166,7 @@ function streamStudioWorkspaceDefaults(){
         zones:{
             left:["scenes","sources"],
             center:["monitors","scene_composer","transition","overlay_rack"],
-            right:["session","preflight","multistream"],
+            right:["session","lifecycle","preflight","multistream"],
             bottom:["audio","capture","output"],
             wide:["activity","health"]
         },
@@ -8046,7 +8178,7 @@ function streamStudioWorkspaceDefaults(){
 function streamStudioWorkspaceLooksLegacyDefault(source={}){
     if(Number(source?.version||0)>=3)return false;
     const zones=source?.zones&&typeof source.zones==="object"&&!Array.isArray(source.zones)?source.zones:{};
-    const legacy={left:["scenes"],center:["monitors","scene_composer","transition","overlay_rack"],right:["sources"],bottom:["capture","audio","output"],wide:["preflight","session","health","activity","multistream"]};
+    const legacy={left:["scenes"],center:["monitors","scene_composer","transition","overlay_rack"],right:["sources"],bottom:["capture","audio","output"],wide:["preflight","lifecycle","session","health","activity","multistream"]};
     const columns=source?.columns&&typeof source.columns==="object"&&!Array.isArray(source.columns)?source.columns:{};
     const legacyColumns=(columns.left_px===undefined||Number(columns.left_px)===250)&&(columns.right_px===undefined||Number(columns.right_px)===310);
     return STREAM_STUDIO_DOCK_ZONES.every(zone=>JSON.stringify(Array.isArray(zones[zone])?zones[zone]:[])===JSON.stringify(legacy[zone]))&&!Object.keys(source?.sizes||{}).length&&legacyColumns;
@@ -8107,13 +8239,14 @@ function sanitizeStreamStudioWorkspacePresets(input=[]){
 
 function streamStudioDefaults(){
     return {
-        version:4,
+        version:5,
         program_scene_id:"",
         preview_scene_id:"",
         scene_order:[],
         overlay_widget_ids:[],
         overlay_layout:{},
         transition:{type:"fade",duration_ms:350},
+        lifecycle:{enabled:false,auto_runtime:false,starting_scene_id:"",live_scene_id:"",brb_scene_id:"",ending_scene_id:"",offline_scene_id:""},
         workspace_layout:streamStudioWorkspaceDefaults(),
         workspace_presets:[],
         capture_sources:{display:false,window:false,game:false,camera:false},
@@ -8186,6 +8319,16 @@ function sanitizeStreamStudioConfig(input={},allowedSceneIds=null,allowedWidgetI
     const transition=source.transition&&typeof source.transition==="object"?source.transition:{};
     clean.transition.type=STREAM_STUDIO_TRANSITIONS.has(String(transition.type||""))?String(transition.type):"fade";
     clean.transition.duration_ms=clean.transition.type==="cut"?0:Math.round(clampNumber(transition.duration_ms,120,2500,350));
+    const lifecycle=source.lifecycle&&typeof source.lifecycle==="object"&&!Array.isArray(source.lifecycle)?source.lifecycle:{};
+    clean.lifecycle={
+        enabled:lifecycle.enabled===true,
+        auto_runtime:lifecycle.auto_runtime===true,
+        starting_scene_id:safeScene(lifecycle.starting_scene_id),
+        live_scene_id:safeScene(lifecycle.live_scene_id),
+        brb_scene_id:safeScene(lifecycle.brb_scene_id),
+        ending_scene_id:safeScene(lifecycle.ending_scene_id),
+        offline_scene_id:safeScene(lifecycle.offline_scene_id)
+    };
     clean.workspace_layout=sanitizeStreamStudioWorkspace(source.workspace_layout);
     clean.workspace_presets=sanitizeStreamStudioWorkspacePresets(source.workspace_presets);
     for(const key of Object.keys(clean.capture_sources))clean.capture_sources[key]=source.capture_sources?.[key]===true;
@@ -10485,6 +10628,12 @@ const WIDGET_STUDIO_WIDGET_TYPES = Object.freeze({
         source: "Freie Stream-Szene", source_kind: "static", provider: "obs", platform: "obs", studio_areas: ["obs"],
         description: "Abschlussszene für Danke, Community-Hinweise und den nächsten Stream – vollständig frei gestaltbar."
     },
+    offline_screen: {
+        key: "offline_screen", label: "Offline Screen", short_label: "OFFLINE",
+        category: "overlay", library_group: "scene", static_kind: "screen", static_screen: "offline", mode: "static", metric: "",
+        source: "Freie Stream-Szene", source_kind: "static", provider: "obs", platform: "obs", studio_areas: ["obs"],
+        description: "Offline-Szene für Kanalhinweis, nächste Termine und Community-Links – vollständig frei gestaltbar."
+    },
     chat_overlay: {
         key: "chat_overlay", minimum_plan: "creator", label: "Chat Fenster", short_label: "LIVE CHAT",
         category: "chat", mode: "chat", event_type: "chat",
@@ -11717,8 +11866,8 @@ function studioWidgetTemplateConfig(widgetType = "follower_goal", templateKey = 
             const width = 1280, height = 720;
             if (template === "blank") return {...common,canvas:{width,height,background:"transparent"},elements:[]};
             const screen = String(def.static_screen || "starting");
-            const title = screen === "brb" ? "BIN GLEICH ZURÜCK" : screen === "ending" ? "DANKE FÜRS ZUSCHAUEN" : "STREAM STARTET GLEICH";
-            const sub = screen === "brb" ? "KURZE PAUSE · GLEICH GEHT'S WEITER" : screen === "ending" ? "BIS ZUM NÄCHSTEN STREAM" : "MACH ES DIR BEQUEM · WIR LEGEN GLEICH LOS";
+            const title = screen === "brb" ? "BIN GLEICH ZURÜCK" : screen === "ending" ? "DANKE FÜRS ZUSCHAUEN" : screen === "offline" ? "STREAM IST OFFLINE" : "STREAM STARTET GLEICH";
+            const sub = screen === "brb" ? "KURZE PAUSE · GLEICH GEHT'S WEITER" : screen === "ending" ? "BIS ZUM NÄCHSTEN STREAM" : screen === "offline" ? "FOLGE FÜR DEN NÄCHSTEN STREAM · COMMUNITY & UPDATES" : "MACH ES DIR BEQUEM · WIR LEGEN GLEICH LOS";
             return {...common,canvas:{width,height,background:"transparent"},elements:[
                 shape("screen_bg","Szenen Hintergrund",0,0,width,height,template === "minimal" ? "rgba(3,8,14,.78)" : bg,0,"transparent",0,0,{glowBlur:0,shadowBlur:0}),
                 shape("screen_frame","Szenen Rahmen",34,34,width-68,height-68,"transparent",template === "minimal" ? 8 : 30,accent,template === "minimal" ? 2 : 4,4,{glowColor:accent,glowBlur:glow,shadowBlur:0}),
@@ -14687,6 +14836,196 @@ async function studioAssetUsageCount(creatorId,publicToken) {
           AND (draft_config::text LIKE $2 OR COALESCE(published_config::text,'') LIKE $2)
     `,[creatorId,`%${marker}%`]);
     return Number(result.rows[0]?.count||0);
+}
+
+// ============================================================
+// WIDGET STUDIO · PANEL SETS V171
+//
+// Panel-Sets werden bewusst im bereits creator-isolierten
+// widget_studio Modul-State gespeichert. Dadurch braucht v171 keine
+// neue Schema-Generation. Die dedizierte API validiert die
+// Plattformgrenze serverseitig und schreibt niemals Provider-Secrets.
+// ============================================================
+
+const PANEL_SET_MAX_COUNT=24;
+const PANEL_SET_MODULE_KEY="widget_studio";
+const PANEL_SET_STYLES=new Set(["platform","dark","clean"]);
+const PANEL_SET_LOGO_POSITIONS=new Set(["left","right"]);
+const PANEL_SET_DESIGNS=new Set(["classic","split","orbit","frame","signal","minimal"]);
+const PANEL_SET_DEFINITIONS=Object.freeze({
+    twitch:Object.freeze([
+        {key:"about",label:"Über mich",title:"ÜBER MICH",body:"Gaming · LIVE · Community"},
+        {key:"social",label:"Socials",title:"SOCIALS",body:"TikTok · Discord · YouTube"},
+        {key:"rules",label:"Regeln",title:"REGELN",body:"Respekt · Kein Spam · Viel Spaß"},
+        {key:"schedule",label:"Streamplan",title:"STREAMPLAN",body:"LIVE-Zeiten & nächste Streams"},
+        {key:"setup",label:"Setup",title:"MEIN SETUP",body:"PC · Audio · Gear"},
+        {key:"games",label:"Games",title:"MEINE GAMES",body:"Aktuelle Games & Favoriten"},
+        {key:"discord",label:"Discord",title:"DISCORD",body:"Community beitreten"},
+        {key:"support",label:"Support",title:"SUPPORT",body:"Danke für deinen Support"},
+        {key:"contact",label:"Kontakt",title:"KONTAKT",body:"Business & Anfragen"}
+    ]),
+    tiktok:Object.freeze([
+        {key:"about",label:"Über mich",title:"ÜBER MICH",body:"Gaming · LIVE · Community"},
+        {key:"social",label:"Socials",title:"SOCIALS",body:"Twitch · Discord · YouTube"},
+        {key:"live",label:"LIVE Info",title:"LIVE INFO",body:"Wann & wo ich live bin"},
+        {key:"games",label:"Games",title:"MEINE GAMES",body:"Aktuelle Games & Favoriten"},
+        {key:"discord",label:"Discord",title:"DISCORD",body:"Community beitreten"},
+        {key:"setup",label:"Setup",title:"MEIN SETUP",body:"PC · Audio · Gear"},
+        {key:"support",label:"Support",title:"SUPPORT",body:"Danke für deinen Support"},
+        {key:"contact",label:"Kontakt",title:"KONTAKT",body:"Business & Anfragen"}
+    ])
+});
+
+function panelSetError(message,code="panel_set_invalid",statusCode=400){
+    const error=new Error(message);error.code=code;error.statusCode=statusCode;return error;
+}
+
+function panelSetDefinitions(platform){return PANEL_SET_DEFINITIONS[String(platform||"").toLowerCase()]||[];}
+function panelSetDefinition(platform,key){return panelSetDefinitions(platform).find(item=>item.key===key)||null;}
+function validPanelSetUuid(value){return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(value||""));}
+function defaultPanelSetTypes(platform){return platform==="tiktok"?["about","social","live","games","discord","support"]:["about","social","discord","rules","setup","support"];}
+
+function sanitizePanelSetOverrides(value){
+    if(!value||typeof value!=="object"||Array.isArray(value))return{};
+    const clean={};
+    if(PANEL_SET_LOGO_POSITIONS.has(String(value.logo_position||"")))clean.logo_position=String(value.logo_position);
+    if(PANEL_SET_DESIGNS.has(String(value.design_variant||"")))clean.design_variant=String(value.design_variant);
+    const accent=String(value.accent||"").trim();if(/^#[0-9a-f]{6}$/i.test(accent))clean.accent=accent.toLowerCase();
+    return clean;
+}
+
+function sanitizePanelSetInput(input,{existing=null,id=null,now=new Date().toISOString()}={}){
+    const source=input&&typeof input==="object"&&!Array.isArray(input)?input:{};
+    const platform=String(source.platform||existing?.platform||"").toLowerCase();
+    if(!PANEL_SET_DEFINITIONS[platform])throw panelSetError("Panel-Sets müssen Twitch oder TikTok zugeordnet sein.","panel_platform_invalid");
+    const definitions=panelSetDefinitions(platform),allowed=new Set(definitions.map(item=>item.key));
+    const style=String(source.style||existing?.style||"platform").toLowerCase();
+    if(!PANEL_SET_STYLES.has(style))throw panelSetError("Unbekannter Panel-Stil.","panel_style_invalid");
+    const logoPosition=String(source.logo_position||existing?.logo_position||"left").toLowerCase();
+    if(!PANEL_SET_LOGO_POSITIONS.has(logoPosition))throw panelSetError("Unbekannte Logo-Position.","panel_logo_position_invalid");
+    const designVariant=String(source.design_variant||existing?.design_variant||"classic").toLowerCase();
+    if(!PANEL_SET_DESIGNS.has(designVariant))throw panelSetError("Unbekanntes Panel-Design.","panel_design_invalid");
+    const rawAccent=String(source.accent??existing?.accent??"").trim();
+    if(rawAccent&&!/^#[0-9a-f]{6}$/i.test(rawAccent))throw panelSetError("Akzentfarbe muss eine HEX-Farbe wie #20C7FF sein.","panel_accent_invalid");
+    const logoAssetId=String(source.logo_asset_id??existing?.logo_asset_id??"").trim();
+    if(logoAssetId&&!validPanelSetUuid(logoAssetId))throw panelSetError("Ungültige Logo-Referenz.","panel_logo_invalid");
+    const requested=Array.isArray(source.items)?source.items:(Array.isArray(existing?.items)?existing.items:[]);
+    if(!requested.length)throw panelSetError("Ein Panel-Set benötigt mindestens ein Panel.","panel_set_empty");
+    if(requested.length>definitions.length)throw panelSetError("Zu viele Panels für diese Plattform.","panel_set_too_many_items");
+    const seen=new Set(),items=[];
+    for(const raw of requested){
+        const item=raw&&typeof raw==="object"&&!Array.isArray(raw)?raw:{};
+        const type=String(item.panel_type||item.type||"").toLowerCase();
+        if(!allowed.has(type))throw panelSetError(`Panel-Typ „${studioText(type,40,"unbekannt")}“ gehört nicht zu ${platform}.`,"panel_platform_mismatch");
+        if(seen.has(type))throw panelSetError(`Panel-Typ „${type}“ ist im Set doppelt enthalten.`,"panel_set_duplicate_type");
+        seen.add(type);
+        const def=panelSetDefinition(platform,type);
+        const generatedMediaId=String(item.generated_media_id||"").trim();
+        if(generatedMediaId&&!validPanelSetUuid(generatedMediaId))throw panelSetError("Ungültige Medien-Referenz im Panel-Set.","panel_media_invalid");
+        items.push({
+            panel_type:type,
+            title:studioText(item.title,60,def?.title||"PANEL"),
+            body:studioText(item.body,180,def?.body||""),
+            order:Math.max(0,Math.min(99,Math.round(Number(item.order)||items.length))),
+            overrides:sanitizePanelSetOverrides(item.overrides),
+            generated_media_id:generatedMediaId||null
+        });
+    }
+    items.sort((a,b)=>a.order-b.order).forEach((item,index)=>{item.order=index;});
+    return{
+        id:String(existing?.id||id||crypto.randomUUID()),
+        platform,
+        name:studioText(source.name,80,existing?.name||`${platform==="twitch"?"Twitch":"TikTok"} Panel-Paket`),
+        description:studioText(source.description,300,existing?.description||""),
+        style,
+        accent:rawAccent?rawAccent.toLowerCase():"",
+        logo_asset_id:logoAssetId||null,
+        logo_position:logoPosition,
+        design_variant:designVariant,
+        items,
+        created_at:existing?.created_at||now,
+        updated_at:now
+    };
+}
+
+function normalizeStoredPanelSetStore(raw){
+    const source=raw&&typeof raw==="object"&&!Array.isArray(raw)?raw:{};
+    const sets=[];
+    for(const candidate of Array.isArray(source.sets)?source.sets:[]){
+        try{sets.push(sanitizePanelSetInput(candidate,{existing:candidate,id:candidate.id,now:candidate.updated_at||new Date().toISOString()}));}catch{}
+    }
+    return{version:1,sets:sets.slice(0,PANEL_SET_MAX_COUNT)};
+}
+
+async function panelSetAssertLogoOwnership(client,creatorId,panelSet){
+    if(!panelSet.logo_asset_id)return;
+    const row=(await client.query(`SELECT id,media_type FROM creator_widget_assets WHERE creator_id=$1 AND id=$2 LIMIT 1`,[creatorId,panelSet.logo_asset_id])).rows[0];
+    if(!row||row.media_type!=="image")throw panelSetError("Das gewählte Panel-Logo ist nicht mehr in deiner Bildbibliothek verfügbar.","panel_logo_missing",409);
+}
+
+async function mutatePanelSetStore(creatorId,mutator){
+    return withCreatorResourceLock(creatorId,async client=>{
+        await client.query(`INSERT INTO creator_module_state(creator_id,module_key,state,updated_at) VALUES($1,$2,'{}'::jsonb,NOW()) ON CONFLICT(creator_id,module_key) DO NOTHING`,[creatorId,PANEL_SET_MODULE_KEY]);
+        const row=(await client.query(`SELECT state FROM creator_module_state WHERE creator_id=$1 AND module_key=$2 FOR UPDATE`,[creatorId,PANEL_SET_MODULE_KEY])).rows[0]||{};
+        const moduleState=row.state&&typeof row.state==="object"&&!Array.isArray(row.state)?row.state:{};
+        const store=normalizeStoredPanelSetStore(moduleState.panel_sets);
+        const result=await mutator(store,client);
+        const next=sanitizeModuleState({...moduleState,panel_sets:{version:1,sets:store.sets}});
+        await client.query(`UPDATE creator_module_state SET state=$3::jsonb,updated_at=NOW() WHERE creator_id=$1 AND module_key=$2`,[creatorId,PANEL_SET_MODULE_KEY,JSON.stringify(next)]);
+        return{result,module_state:next,sets:store.sets};
+    });
+}
+
+function panelSetAgentPlan(input,{variation=0,excludeVariant=""}={}){
+    const prompt=studioText(input,2000,"");
+    if(!prompt)throw panelSetError("Beschreibe zuerst dein gewünschtes Panel-Paket.","panel_agent_prompt_empty");
+    const lower=prompt.toLocaleLowerCase("de-DE");
+    const mentionsTwitch=/\btwitch\b/.test(lower),mentionsTikTok=/\btik\s*tok\b|\btiktok\b/.test(lower);
+    if(mentionsTwitch&&mentionsTikTok)throw panelSetError("Ein Panel-Paket darf nur zu einer Plattform gehören. Wähle Twitch oder TikTok.","panel_agent_platform_ambiguous");
+    const platform=mentionsTikTok?"tiktok":mentionsTwitch?"twitch":"";
+    if(!platform)throw panelSetError("Nenne im Auftrag Twitch oder TikTok, damit das Paket plattformrein bleibt.","panel_agent_platform_required");
+    const aliases={
+        about:["über mich","ueber mich","about"],social:["socials","social"],rules:["regeln","rules"],schedule:["streamplan","stream plan","zeitplan","schedule"],
+        setup:["setup","gear"],games:["games","spiele"],discord:["discord"],support:["support","unterstützung","unterstuetzung"],contact:["kontakt","contact","business"],live:["live info","live-info","liveinfo"]
+    };
+    const allowed=new Set(panelSetDefinitions(platform).map(item=>item.key));
+    let types=[];
+    for(const [key,words] of Object.entries(aliases))if(allowed.has(key)&&words.some(word=>lower.includes(word)))types.push(key);
+    if(!types.length)types=defaultPanelSetTypes(platform);
+    types=[...new Set(types)];
+    const explicitStyle=/clean|light|hell/.test(lower)?"clean":/cfs\s*dark|dark|dunkel|navy/.test(lower)?"dark":/plattform|platform/.test(lower)?"platform":"";
+    const explicitAccent=(prompt.match(/#[0-9a-fA-F]{6}\b/)||[])[0]||"";
+    const requestedLogo=/\brechts\b|\bright\b/.test(lower)?"right":/\blinks\b|\bleft\b/.test(lower)?"left":"";
+    const designCycle=["classic","split","orbit","frame","signal","minimal"];
+    const styleCycle=platform==="twitch"?["platform","dark","clean","dark","platform","clean"]:["platform","dark","clean","platform","dark","clean"];
+    const accentCycle=platform==="twitch"?["#9146ff","#20c7ff","#5a7dff","#d86cff","#148cff","#45e0ff"]:["#25f4ee","#fe2c55","#20c7ff","#8b5cff","#35f6b8","#ff5d8f"];
+    const designIteration=Math.abs(Math.trunc(Number(variation)||0));
+    let index=designIteration%designCycle.length;
+    const themeRound=Math.floor(designIteration/designCycle.length);
+    if(excludeVariant&&designCycle[index]===excludeVariant)index=(index+1)%designCycle.length;
+    const designVariant=designCycle[index];
+    const paletteIndex=(index+(themeRound*2))%accentCycle.length;
+    const styleIndex=(index+themeRound)%styleCycle.length;
+    const style=explicitStyle||styleCycle[styleIndex];
+    const accent=explicitAccent||(lower.includes("cyan")?"#20c7ff":lower.includes("blau")?"#148cff":lower.includes("lila")||lower.includes("violett")?"#9146ff":lower.includes("rot")?"#fe2c55":accentCycle[paletteIndex]);
+    const logoPosition=requestedLogo||((index+themeRound)%2?"right":"left");
+    const itemCopyVariants={
+        classic:["Gaming · LIVE · Community","Socials & Community","Respekt · Fair Play · Kein Spam"],
+        split:["Creator · Games · LIVE","Alle Links auf einen Blick","Fair bleiben · Chat genießen"],
+        orbit:["Streams · Games · Community","Connect · Follow · Join","Gemeinsam gute Vibes"],
+        frame:["Creator Space · LIVE","Meine Kanäle & Links","Klare Regeln · guter Stream"],
+        signal:["LIVE Creator · Gaming","Folgen · Joinen · Verbinden","Respekt zuerst · Spaß danach"],
+        minimal:["Gaming. LIVE. Community.","Links & Socials","Kurz. Fair. Respektvoll."]
+    };
+    const copyVariant=itemCopyVariants[designVariant]||itemCopyVariants.classic;
+    const items=types.map((type,order)=>{const def=panelSetDefinition(platform,type);let body=def.body;if(type==="about")body=copyVariant[0];if(type==="social")body=copyVariant[1];if(type==="rules")body=copyVariant[2];return{panel_type:type,title:def.title,body,order,overrides:{design_variant:designVariant},generated_media_id:null};});
+    const plan=sanitizePanelSetInput({
+        platform,
+        name:`${platform==="twitch"?"Twitch":"TikTok"} Panel-Paket · ${designVariant.toUpperCase()} ${themeRound+1}`,
+        description:`CFS Designvariante ${designVariant}, Themenrunde ${themeRound+1}. Strukturiert vom Panel-Paket-Agent geplant.`,
+        style,accent,logo_position:logoPosition,design_variant:designVariant,items
+    });
+    return{...plan,agent_design:{variant:designVariant,sequence:designIteration,theme_round:themeRound+1,label:`${designVariant.charAt(0).toUpperCase()+designVariant.slice(1)} · ${themeRound+1}`}};
 }
 
 function replaceStudioAssetUrl(value, oldUrl, newUrl) {
@@ -17822,6 +18161,632 @@ app.get(
 // ============================================================
 // WIDGET STUDIO · CREATOR DATEIBIBLIOTHEK
 // ============================================================
+
+
+// ============================================================
+// CREATOR SHOP · V174 PRODUCT DETAIL / UPDATE / BUNDLES
+// Free/Beta only while CFS_COMMERCIAL_MODE=false. All products and package
+// manifests are server-owned allowlists; no package executes arbitrary code,
+// writes arbitrary files, stores secrets, or publishes to providers.
+// ============================================================
+const CFS_STORE_ALLOWED_CATEGORIES=new Set(["widgets","panels","overlays","tools","scenes","bundles"]);
+const CFS_STORE_ALLOWED_PLATFORMS=new Set(["twitch","tiktok","youtube","neutral"]);
+const CFS_STORE_ALLOWED_PACKAGE_KINDS=new Set(["branding_asset","widget_template","panel_set_template","overlay_template","scene_template","tool_link"]);
+const CFS_STORE_TOOL_LINKS=Object.freeze({
+  stream_studio:"/pages/stream-studio.html",
+  scene_studio:"/pages/scene-studio.html",
+  widget_studio:"/pages/widget-studio.html",
+  launcher:"/pages/launcher.html"
+});
+const CFS_STORE_PANEL_TEMPLATES=Object.freeze({
+  "twitch-starter":Object.freeze({platform:"twitch",name:"Twitch Panel Starter Pack",description:"Aus dem CFS Creator Shop importiert.",style:"dark",accent:"#20c7ff",logo_position:"left",design_variant:"frame",types:["about","social","discord","rules","setup","support"]}),
+  "tiktok-creator":Object.freeze({platform:"tiktok",name:"TikTok Creator Cards",description:"Vertikale 9:16 Creator Cards aus dem CFS Creator Shop.",style:"platform",accent:"#25f4ee",logo_position:"left",design_variant:"signal",types:["about","social","live","games","discord","support"]})
+});
+const CFS_STORE_SCENE_TEMPLATES=Object.freeze({
+  "landscape-live":Object.freeze({platform:"neutral",name:"Landscape · LIVE",config:{profile:"landscape",transition:{type:"fade",duration_ms:420,easing:"smooth"},layouts:{landscape:{canvas:{background:"#020812",safe_area:true},items:[{id:"game",source_kind:"native",source_id:"native:game",native_source:{id:"native:game",type:"game",label:"Game Capture",width:1920,height:1080},x:0,y:0,scale:1,z_index:0},{id:"camera",source_kind:"native",source_id:"native:camera",native_source:{id:"native:camera",type:"camera",label:"Kamera",width:1280,height:720},x:1420,y:690,scale:.34,z_index:10}]},tiktok_vertical:{canvas:{background:"#020812",safe_area:true},items:[{id:"game",source_kind:"native",source_id:"native:game",native_source:{id:"native:game",type:"game",label:"Game Capture",width:1920,height:1080},x:0,y:430,scale:.56,z_index:0},{id:"camera",source_kind:"native",source_id:"native:camera",native_source:{id:"native:camera",type:"camera",label:"Kamera",width:1280,height:720},x:100,y:80,scale:.38,z_index:10}]}}}}),
+  "landscape-break":Object.freeze({platform:"neutral",name:"Landscape · Pause",config:{profile:"landscape",transition:{type:"dissolve",duration_ms:520,easing:"smooth"},layouts:{landscape:{canvas:{background:"#03111f",safe_area:true},items:[{id:"camera",source_kind:"native",source_id:"native:camera",native_source:{id:"native:camera",type:"camera",label:"Kamera",width:1280,height:720},x:320,y:180,scale:1,z_index:0}]},tiktok_vertical:{canvas:{background:"#03111f",safe_area:true},items:[{id:"camera",source_kind:"native",source_id:"native:camera",native_source:{id:"native:camera",type:"camera",label:"Kamera",width:1280,height:720},x:80,y:480,scale:.72,z_index:0}]}}}}),
+  "tiktok-live":Object.freeze({platform:"tiktok",name:"TikTok · LIVE 9:16",config:{profile:"tiktok_vertical",transition:{type:"fade",duration_ms:360,easing:"smooth"},layouts:{landscape:{canvas:{background:"#020812",safe_area:true},items:[{id:"game",source_kind:"native",source_id:"native:game",native_source:{id:"native:game",type:"game",label:"Game Capture",width:1920,height:1080},x:0,y:0,scale:1,z_index:0}]},tiktok_vertical:{canvas:{background:"#020812",safe_area:true},items:[{id:"camera",source_kind:"native",source_id:"native:camera",native_source:{id:"native:camera",type:"camera",label:"Kamera",width:1280,height:720},x:118,y:90,scale:.34,z_index:10},{id:"game",source_kind:"native",source_id:"native:game",native_source:{id:"native:game",type:"game",label:"Game Capture",width:1920,height:1080},x:0,y:520,scale:.56,z_index:0}]}}}})
+});
+const CFS_STORE_PRODUCTS=Object.freeze([
+  {id:"cfs-twitch-stream-widgets",slug:"twitch-stream-widgets",category:"widgets",title:"Twitch Stream Widgets",description:"Follow, Chat, LIVE Timer, Subs und Cheers als kuratiertes Twitch-Starterpaket.",platform:"twitch",publisher:"cfs_zockt",version:"1.1.0",pricing_mode:"free",accent:"#9146ff",launch_url:"/pages/widget-studio.html",preview:{kind:"twitch_widgets",ratio:"16:9",eyebrow:"TWITCH LIVE",title:"Alert · Chat · Timer"},features:["Fünf Twitch-LIVE-Bausteine","Provider-/Scope-Gates bleiben aktiv","Als editierbare Drafts importiert"],compatibility:["Twitch","Widget Studio","Creator/Pro je nach Widget"],manifest:{format:"cfs-store-package-v1",items:[{kind:"widget_template",key:"twitch_follow_alert"},{kind:"widget_template",key:"twitch_chat_overlay"},{kind:"widget_template",key:"twitch_live_timer"},{kind:"widget_template",key:"twitch_sub_alert"},{kind:"widget_template",key:"twitch_cheer_alert"}]}},
+  {id:"cfs-tiktok-live-widgets",slug:"tiktok-live-widgets",category:"widgets",title:"TikTok LIVE Widgets",description:"LIVE Goals, Counter und Alerts für den verbundenen TikTok-LIVE-Provider.",platform:"tiktok",publisher:"cfs_zockt",version:"1.1.0",pricing_mode:"beta",accent:"#25f4ee",launch_url:"/pages/widget-studio.html",preview:{kind:"tiktok_widgets",ratio:"9:16",eyebrow:"TIKTOK LIVE",title:"Goal · Counter · Alert"},features:["Drei TikTok-LIVE-Bausteine","Launcher-/Provider-Verbindung erforderlich","Keine inoffizielle Browser-Abfrage"],compatibility:["TikTok","Widget Studio","Provider Beta"],manifest:{format:"cfs-store-package-v1",items:[{kind:"widget_template",key:"follower_goal"},{kind:"widget_template",key:"live_like_counter"},{kind:"widget_template",key:"gift_alert"}]}},
+  {id:"cfs-twitch-panel-starter",slug:"twitch-panel-starter",category:"panels",title:"Twitch Panel Starter Pack",description:"Zusammengehörige Panels für Über mich, Socials, Discord, Regeln, Setup und Support.",platform:"twitch",publisher:"cfs_zockt",version:"1.1.0",pricing_mode:"free",accent:"#20c7ff",launch_url:"/pages/widget-studio.html#panel-sets",preview:{kind:"twitch_panels",ratio:"8:3",eyebrow:"320 × 120",title:"6 Panels · 1 Branding"},features:["Ein editierbares Panel-Set","Gemeinsame Farben, Logo und Typografie","PNG-/ZIP-Export im Widget Studio"],compatibility:["Twitch","Panel Sets","320 × 120 px"],manifest:{format:"cfs-store-package-v1",items:[{kind:"panel_set_template",key:"twitch-starter",platform:"twitch"}]}},
+  {id:"cfs-tiktok-profile-cards",slug:"tiktok-profile-cards",category:"panels",title:"TikTok Creator Cards",description:"Vertikale Profil- und Social-Karten für About, Socials, LIVE Info, Games und Support.",platform:"tiktok",publisher:"cfs_zockt",version:"1.1.0",pricing_mode:"free",accent:"#fe2c55",launch_url:"/pages/widget-studio.html#panel-sets",preview:{kind:"tiktok_cards",ratio:"9:16",eyebrow:"720 × 1280",title:"Creator Card Set"},features:["Eigener 9:16-Portrait-Renderer","Sechs editierbare Creator Cards","PNG-/ZIP-Export im Widget Studio"],compatibility:["TikTok","Panel Sets","720 × 1280 px"],manifest:{format:"cfs-store-package-v1",items:[{kind:"panel_set_template",key:"tiktok-creator",platform:"tiktok"}]}},
+  {id:"cfs-neon-overlay-pack",slug:"neon-overlay-pack",category:"overlays",title:"CFS Neon Overlay Pack",description:"Plattformneutrale Kamera-, Social-, Header- und Scene-Overlay-Ausgangspunkte im CFS-Look.",platform:"neutral",publisher:"cfs_zockt",version:"1.1.0",pricing_mode:"free",accent:"#148cff",launch_url:"/pages/widget-studio.html",preview:{kind:"overlay_landscape",ratio:"16:9",eyebrow:"OVERLAY PACK",title:"Frame · Social · Header"},features:["Fünf statische Overlay-Drafts","Keine Provider-Daten nötig","Für OBS/CFS Studio frei positionierbar"],compatibility:["Plattformneutral","Widget Studio","OBS optional"],manifest:{format:"cfs-store-package-v1",items:[{kind:"overlay_template",key:"camera_frame",platform:"neutral"},{kind:"overlay_template",key:"social_bar",platform:"neutral"},{kind:"overlay_template",key:"stream_header",platform:"neutral"},{kind:"overlay_template",key:"starting_screen",platform:"neutral"},{kind:"overlay_template",key:"ending_screen",platform:"neutral"}]}},
+  {id:"cfs-scene-starter-pack",slug:"scene-starter-pack",category:"scenes",title:"CFS Scene Starter Pack",description:"Vorbereitete Landscape- und Vertical-Scenes mit sicheren lokalen Capture-Platzhaltern.",platform:"neutral",publisher:"cfs_zockt",version:"1.0.0",pricing_mode:"free",accent:"#35d6ff",launch_url:"/pages/scene-studio.html",preview:{kind:"scene_dual",ratio:"16:9",eyebrow:"SCENE PACK",title:"Landscape + Vertical"},features:["LIVE- und Pause-Scene als Draft","Native Game-/Kamera-Platzhalter","Keine automatische Veröffentlichung"],compatibility:["CFS Studio","Scene Studio","Landscape + 9:16"],manifest:{format:"cfs-store-package-v1",items:[{kind:"scene_template",key:"landscape-live",platform:"neutral"},{kind:"scene_template",key:"landscape-break",platform:"neutral"}]}},
+  {id:"cfs-creator-workflow-tools",slug:"creator-workflow-tools",category:"tools",title:"Creator Workflow Tools",description:"Direkte Einstiege zu CFS Studio, Scene Studio, Widget Studio und Launcher als Creator-Tool-Paket.",platform:"neutral",publisher:"cfs_zockt",version:"1.1.0",pricing_mode:"beta",accent:"#35d6ff",launch_url:"/pages/dashboard.html",preview:{kind:"tools_flow",ratio:"16:9",eyebrow:"CREATOR FLOW",title:"Studio → Scene → Widget"},features:["Allowlisted Tool-Verknüpfungen","Keine lokale Software-Nachinstallation","Direkte Creator-Workflows"],compatibility:["Creator Dashboard","CFS Studio","Launcher"],manifest:{format:"cfs-store-package-v1",items:[{kind:"tool_link",key:"stream_studio"},{kind:"tool_link",key:"scene_studio"},{kind:"tool_link",key:"widget_studio"},{kind:"tool_link",key:"launcher"}]}},
+  {id:"cfs-twitch-branding-bundle",slug:"twitch-branding-bundle",category:"bundles",title:"Twitch Full Branding Bundle",description:"Twitch-Panel-Set, neutrale Stream-Overlays, zwei Scene-Drafts und direkte Studio-Einstiege als zusammenhängendes Paket.",platform:"twitch",publisher:"cfs_zockt",version:"1.0.0",pricing_mode:"beta",accent:"#9146ff",launch_url:"/pages/widget-studio.html#panel-sets",preview:{kind:"bundle_twitch",ratio:"16:9",eyebrow:"FULL BUNDLE",title:"Panels · Overlays · Scenes"},features:["Twitch Panel-Set","Kamera-, Social- und Header-Overlays","LIVE-/Pause-Scene-Drafts"],compatibility:["Twitch Branding","CFS Studio","OBS optional"],manifest:{format:"cfs-store-package-v1",items:[{kind:"panel_set_template",key:"twitch-starter",platform:"twitch"},{kind:"overlay_template",key:"camera_frame",platform:"neutral"},{kind:"overlay_template",key:"social_bar",platform:"neutral"},{kind:"overlay_template",key:"stream_header",platform:"neutral"},{kind:"scene_template",key:"landscape-live",platform:"neutral"},{kind:"scene_template",key:"landscape-break",platform:"neutral"},{kind:"tool_link",key:"stream_studio"}]}},
+  {id:"cfs-tiktok-creator-bundle",slug:"tiktok-creator-bundle",category:"bundles",title:"TikTok Creator Bundle",description:"9:16 Creator Cards, Portrait-Overlays, eine TikTok-LIVE-Scene und Studio-Einstiege als vertikales Branding-Paket.",platform:"tiktok",publisher:"cfs_zockt",version:"1.0.0",pricing_mode:"beta",accent:"#25f4ee",launch_url:"/pages/widget-studio.html#panel-sets",preview:{kind:"bundle_tiktok",ratio:"9:16",eyebrow:"9:16 BUNDLE",title:"Cards · Overlay · Scene"},features:["TikTok 9:16 Card-Set","Portrait-Kamera- und Stream-Rahmen","TikTok-LIVE-Scene-Draft"],compatibility:["TikTok Branding","CFS Studio","720×1280 Cards"],manifest:{format:"cfs-store-package-v1",items:[{kind:"panel_set_template",key:"tiktok-creator",platform:"tiktok"},{kind:"overlay_template",key:"camera_frame_portrait",platform:"neutral"},{kind:"overlay_template",key:"stream_frame_vertical",platform:"neutral"},{kind:"overlay_template",key:"social_bar",platform:"neutral"},{kind:"scene_template",key:"tiktok-live",platform:"tiktok"},{kind:"tool_link",key:"stream_studio"}]}}
+]);
+
+const CFS_DYNAMIC_STORE_PRODUCTS=new Map();
+function adminStoreRowToProduct(row){
+  const manifest=row.manifest&&typeof row.manifest==="object"?row.manifest:{format:"cfs-store-package-v1",items:[]};
+  const preview=row.preview&&typeof row.preview==="object"?row.preview:{};
+  const sourceAssetIds=Array.isArray(row.source_asset_ids)?row.source_asset_ids.map(String):[];
+  const bundleConfig=row.bundle_config&&typeof row.bundle_config==="object"&&!Array.isArray(row.bundle_config)?row.bundle_config:{};
+  const commerceConfig=row.commerce_config&&typeof row.commerce_config==="object"&&!Array.isArray(row.commerce_config)?row.commerce_config:{};
+  return{id:String(row.id),slug:String(row.slug),category:String(row.category||"bundles"),title:String(row.title),description:String(row.description||""),platform:String(row.platform),publisher:String(row.publisher||"cfs_zockt"),version:String(row.version||"1.0.0"),pricing_mode:String(row.pricing_mode||"free"),accent:String(row.accent||"#20c7ff"),launch_url:"/pages/widget-studio.html",preview:{...preview,asset_url:preview.asset_url||(row.asset_public_token?`/store-assets/${row.asset_public_token}`:""),cover_url:row.cover_public_token?`/store-covers/${row.cover_public_token}`:(preview.cover_url||"")},features:Array.isArray(row.features)?row.features:[],compatibility:Array.isArray(row.compatibility)?row.compatibility:[],manifest,admin_generated:true,source_asset_id:row.source_asset_id||null,source_asset_ids:sourceAssetIds,bundle_config:bundleConfig,collection_key:String(row.collection_key||""),collection_title:String(row.collection_title||""),cover_mode:String(row.cover_mode||"mosaic"),design_variant:String(row.design_variant||"classic"),release_notes:String(row.release_notes||""),offer_type:String(row.offer_type||"bundle"),sale_mode:String(row.sale_mode||"bundle_only"),list_price_cents:Math.max(0,Number(row.list_price_cents||0)),currency:String(row.currency||"EUR").toUpperCase(),parent_bundle_id:row.parent_bundle_id?String(row.parent_bundle_id):null,source_item_key:String(row.source_item_key||""),commerce_config:commerceConfig,offer_enabled:row.offer_enabled!==false};
+}
+async function refreshDynamicStoreProducts(){
+  const rows=(await pool.query(`SELECT p.*,a.public_token AS asset_public_token FROM admin_store_products p LEFT JOIN admin_bundle_assets a ON a.id=p.source_asset_id WHERE p.status='published' AND p.offer_enabled=TRUE ORDER BY p.updated_at DESC`)).rows;
+  CFS_DYNAMIC_STORE_PRODUCTS.clear();for(const row of rows){const product=adminStoreRowToProduct(row);try{validateStoreProduct(product);CFS_DYNAMIC_STORE_PRODUCTS.set(product.id,product);}catch(error){safeLogError("Admin Store Produkt übersprungen:",error);}}
+  return[...CFS_DYNAMIC_STORE_PRODUCTS.values()];
+}
+function allStoreProducts(){return[...CFS_STORE_PRODUCTS,...CFS_DYNAMIC_STORE_PRODUCTS.values()];}
+function factoryAccentFromSha(sha,variant=0){const palettes=["#20c7ff","#9146ff","#25f4ee","#fe2c55","#35f6b8","#ffb84d","#ff5fd2","#7cff5b"];const n=parseInt(String(sha||"0").slice(0,8),16)||0;return palettes[(n+variant)%palettes.length];}
+function normalizeFactoryContent(raw,platform){
+  const source=raw&&typeof raw==="object"&&!Array.isArray(raw)?raw:{};
+  const result={branding:source.branding!==false,panels:Boolean(source.panels),overlays:Boolean(source.overlays),scenes:Boolean(source.scenes),widgets:Boolean(source.widgets),tools:Boolean(source.tools)};
+  if(platform==="neutral"){result.panels=false;result.widgets=false;}
+  if(platform==="youtube")result.panels=false;
+  if(!Object.values(result).some(Boolean))result.branding=true;
+  return result;
+}
+function factoryManifest(platform,content,assetIds){
+  const cfg=normalizeFactoryContent(content,platform),ids=[...new Set((assetIds||[]).map(String))].slice(0,6),items=[];
+  if(cfg.branding)ids.forEach((id,index)=>items.push({kind:"branding_asset",key:id,role:index===0?"primary":"support",order:index}));
+  if(cfg.overlays)items.push({kind:"overlay_template",key:"camera_frame",platform:"neutral"},{kind:"overlay_template",key:"social_bar",platform:"neutral"},{kind:"overlay_template",key:"stream_header",platform:"neutral"},...(platform==="tiktok"?[{kind:"overlay_template",key:"camera_frame_portrait",platform:"neutral"},{kind:"overlay_template",key:"stream_frame_vertical",platform:"neutral"}]:[]));
+  if(cfg.scenes)items.push({kind:"scene_template",key:platform==="tiktok"?"tiktok-live":"landscape-live",platform:platform==="tiktok"?"tiktok":"neutral"},{kind:"scene_template",key:"landscape-break",platform:"neutral"});
+  if(cfg.panels&&["twitch","tiktok"].includes(platform))items.push({kind:"panel_set_template",key:platform==="tiktok"?"tiktok-creator":"twitch-starter",platform});
+  if(cfg.widgets&&platform==="twitch")items.push({kind:"widget_template",key:"twitch_follow_alert",platform:"twitch"},{kind:"widget_template",key:"twitch_chat_overlay",platform:"twitch"},{kind:"widget_template",key:"twitch_live_timer",platform:"twitch"});
+  if(cfg.widgets&&platform==="tiktok")items.push({kind:"widget_template",key:"follower_goal",platform:"tiktok"},{kind:"widget_template",key:"live_like_counter",platform:"tiktok"},{kind:"widget_template",key:"gift_alert",platform:"tiktok"});
+  if(cfg.widgets&&platform==="youtube")items.push({kind:"widget_template",key:"youtube_subscriber_goal",platform:"youtube"},{kind:"widget_template",key:"youtube_chat_overlay",platform:"youtube"},{kind:"widget_template",key:"youtube_live_timer",platform:"youtube"});
+  if(cfg.tools)items.push({kind:"tool_link",key:"stream_studio"},{kind:"tool_link",key:"scene_studio"},{kind:"tool_link",key:"widget_studio"});
+  return{format:"cfs-store-package-v1",items};
+}
+const CFS_ADMIN_CONVERTER_OUTPUT_MODES=new Set(["bundle_only","singles_only","bundle_and_singles"]);
+const CFS_ADMIN_CONVERTER_TYPES=new Set(["stream_status","overlays","panels","widgets","creator_pack"]);
+const CFS_ADMIN_CONVERTER_SINGLE_KINDS=new Set(["widget_template","panel_set_template","overlay_template","scene_template"]);
+function adminConverterPlatformLabel(platform){return platform==="twitch"?"Twitch":platform==="tiktok"?"TikTok":platform==="youtube"?"YouTube":"Plattformneutral";}
+function adminConverterWidgetItems(platform,detail){
+  const sets={
+    twitch:{starter:["twitch_follow_alert","twitch_chat_overlay","twitch_live_timer"],alerts:["twitch_follow_alert","twitch_sub_alert","twitch_cheer_alert"],live:["twitch_chat_overlay","twitch_live_timer","twitch_latest_follower"]},
+    tiktok:{starter:["follower_goal","live_like_counter","gift_alert"],alerts:["follow_alert","gift_alert","share_alert"],goals:["follower_goal","live_like_goal","gift_goal"]},
+    youtube:{starter:["youtube_subscriber_goal","youtube_chat_overlay","youtube_live_timer"],alerts:["youtube_member_alert","youtube_super_chat_alert"],live:["youtube_chat_overlay","youtube_live_timer","youtube_latest_member"]}
+  },choices=sets[platform];
+  if(!choices)throw new Error("Für Plattformneutral gibt es keine Provider-Widgets.");
+  const keys=choices[detail]||choices.starter;return keys.map(key=>({kind:"widget_template",key,platform}));
+}
+function adminConverterStatusItems(detail="full"){
+  const map={starting:["starting_screen"],pause:["brb_screen"],ending:["ending_screen"],offline:["offline_screen"],full:["starting_screen","brb_screen","ending_screen","offline_screen"]};
+  const keys=map[detail]||map.full;return keys.map(key=>({kind:"overlay_template",key,platform:"neutral"}));
+}
+function adminConverterOverlayItems(platform,detail="branding"){
+  if(detail==="status")return adminConverterStatusItems("full");
+  if(detail==="frames"){
+    if(platform==="tiktok")return[{kind:"overlay_template",key:"camera_frame_portrait",platform:"neutral"},{kind:"overlay_template",key:"stream_frame_vertical",platform:"neutral"}];
+    if(platform==="neutral")return[{kind:"overlay_template",key:"camera_frame",platform:"neutral"},{kind:"overlay_template",key:"stream_frame",platform:"neutral"},{kind:"overlay_template",key:"camera_frame_portrait",platform:"neutral"},{kind:"overlay_template",key:"stream_frame_vertical",platform:"neutral"}];
+    return[{kind:"overlay_template",key:"camera_frame",platform:"neutral"},{kind:"overlay_template",key:"stream_frame",platform:"neutral"}];
+  }
+  if(detail==="full")return[...adminConverterOverlayItems(platform,"branding"),...adminConverterStatusItems("full")];
+  return[{kind:"overlay_template",key:platform==="tiktok"?"camera_frame_portrait":"camera_frame",platform:"neutral"},{kind:"overlay_template",key:"social_bar",platform:"neutral"},{kind:"overlay_template",key:"stream_header",platform:"neutral"}];
+}
+function adminConverterManifest(platform,type,detail,assetIds,{includeBranding=true}={}){
+  if(!CFS_STORE_ALLOWED_PLATFORMS.has(platform))throw new Error("Unbekannte Plattform im Umwandler.");
+  if(!CFS_ADMIN_CONVERTER_TYPES.has(type))throw new Error("Unbekannter Produkttyp im Umwandler.");
+  if(type==="panels"&&!["twitch","tiktok"].includes(platform))throw new Error("Panel-/Card-Sets sind derzeit nur für Twitch oder TikTok verfügbar.");
+  if(type==="widgets"&&platform==="neutral")throw new Error("Provider-Widgets benötigen Twitch, TikTok oder YouTube.");
+  const ids=[...new Set((assetIds||[]).map(String))].slice(0,6),items=[];
+  if(includeBranding)ids.forEach((id,index)=>items.push({kind:"branding_asset",key:id,role:index===0?"primary":"support",order:index}));
+  if(type==="stream_status")items.push(...adminConverterStatusItems(detail));
+  if(type==="overlays")items.push(...adminConverterOverlayItems(platform,detail));
+  if(type==="panels")items.push({kind:"panel_set_template",key:platform==="tiktok"?"tiktok-creator":"twitch-starter",platform});
+  if(type==="widgets")items.push(...adminConverterWidgetItems(platform,detail));
+  if(type==="creator_pack"){
+    const packDetail=["full","stream","branding"].includes(detail)?detail:"full";
+    items.push(...adminConverterOverlayItems(platform,packDetail==="branding"?"branding":"full"));
+    if(packDetail!=="branding")items.push({kind:"scene_template",key:platform==="tiktok"?"tiktok-live":"landscape-live",platform:platform==="tiktok"?"tiktok":"neutral"},{kind:"scene_template",key:"landscape-break",platform:"neutral"});
+    if(["twitch","tiktok"].includes(platform))items.push({kind:"panel_set_template",key:platform==="tiktok"?"tiktok-creator":"twitch-starter",platform});
+    if(platform!=="neutral"&&packDetail!=="branding")items.push(...adminConverterWidgetItems(platform,"starter"));
+    if(packDetail==="full")items.push({kind:"tool_link",key:"stream_studio"},{kind:"tool_link",key:"scene_studio"},{kind:"tool_link",key:"widget_studio"});
+  }
+  const unique=[];const seen=new Set();for(const item of items){const key=`${item.kind}:${item.key}`;if(!seen.has(key)){seen.add(key);unique.push(item);}}
+  if(!unique.length)throw new Error("Der Umwandler hat keine Produktbestandteile erzeugt.");
+  return{format:"cfs-store-package-v1",items:unique};
+}
+function adminConverterCategory(type){return type==="stream_status"||type==="overlays"?"overlays":type==="panels"?"panels":type==="widgets"?"widgets":"bundles";}
+function adminConverterSingleEligible(item){return CFS_ADMIN_CONVERTER_SINGLE_KINDS.has(String(item?.kind||""));}
+function factoryPreview(platform,variant,assets,collectionTitle=""){
+  const urls=(assets||[]).slice(0,6).map(row=>`/store-assets/${row.public_token}`);
+  return{kind:"admin_bundle",ratio:platform==="tiktok"?"9:16":"16:9",eyebrow:`ADMIN COLLECTION · ${String(variant).toUpperCase()}`,title:collectionTitle|| (platform==="tiktok"?"TikTok Creator Bundle":"Stream Branding Bundle"),asset_url:urls[0]||"",asset_urls:urls,cover_mode:urls.length>1?"mosaic":"hero",design_variant:variant};
+}
+function factoryCoverXml(value){return String(value||"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&apos;"})[ch]);}
+function renderFactoryCoverSvg(platform,variant,assets,title,accent){
+  const portrait=platform==="tiktok",width=portrait?900:1600,height=portrait?1600:900,rows=(assets||[]).slice(0,4),count=Math.max(1,rows.length),gap=18,pad=48,heroH=Math.round(height*.72),cellW=count===1?width-pad*2:Math.floor((width-pad*2-gap)/2),cellH=count<=2?heroH:Math.floor((heroH-gap)/2);
+  const cells=rows.map((row,index)=>{const x=count===1?pad:pad+(index%2)*(cellW+gap),y=pad+Math.floor(index/2)*(cellH+gap),w=count===1?width-pad*2:cellW,h=count<=2?heroH:cellH;return `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="28" fill="#071525"/><image href="/store-assets/${factoryCoverXml(row.public_token)}" x="${x}" y="${y}" width="${w}" height="${h}" preserveAspectRatio="xMidYMid slice"/><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="28" fill="none" stroke="${factoryCoverXml(accent)}" stroke-opacity=".55" stroke-width="4"/>`;}).join("");
+  const footerY=height-150;return Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"><defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#020812"/><stop offset="1" stop-color="#071d31"/></linearGradient><linearGradient id="shade" x1="0" y1="0" x2="0" y2="1"><stop offset=".55" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".86"/></linearGradient></defs><rect width="100%" height="100%" fill="url(#bg)"/>${cells}<rect width="100%" height="100%" fill="url(#shade)"/><rect x="${pad}" y="${footerY-38}" width="${Math.min(width-pad*2,420)}" height="10" rx="5" fill="${factoryCoverXml(accent)}"/><text x="${pad}" y="${footerY+18}" fill="#fff" font-family="Arial,sans-serif" font-size="${portrait?48:52}" font-weight="700">${factoryCoverXml(title)}</text><text x="${pad}" y="${footerY+74}" fill="#a9c8dd" font-family="Arial,sans-serif" font-size="${portrait?24:26}">CFS ORIGINALS · ${factoryCoverXml(String(variant).toUpperCase())} · ${factoryCoverXml(String(platform).toUpperCase())}</text></svg>`);
+}
+function bumpStoreVersion(version,mode="patch"){const m=String(version||"1.0.0").match(/^(\d+)\.(\d+)\.(\d+)$/);let [major,minor,patch]=m?[Number(m[1]),Number(m[2]),Number(m[3])]:[1,0,0];if(mode==="minor"){minor+=1;patch=0;}else patch+=1;return `${major}.${minor}.${patch}`;}
+function safeFactorySlug(value){return String(value||"").toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"").slice(0,80)||"cfs-bundle";}
+function safeFactoryCollection(value){return safeFactorySlug(value).slice(0,72)||`collection-${Date.now()}`;}
+
+function storePackageItemLabel(item){
+  if(item.kind==="branding_asset")return "Branding-Bild";
+  if(item.kind==="panel_set_template")return CFS_STORE_PANEL_TEMPLATES[item.key]?.name||item.key;
+  if(item.kind==="scene_template")return CFS_STORE_SCENE_TEMPLATES[item.key]?.name||item.key;
+  if(item.kind==="tool_link")return({stream_studio:"CFS Studio",scene_studio:"Scene Studio",widget_studio:"Widget Studio",launcher:"Launcher"})[item.key]||item.key;
+  return studioWidgetDefinition(item.key)?.label||item.key;
+}
+function publicStoreProduct(product){return{id:product.id,slug:product.slug,category:product.category,title:product.title,description:product.description,platform:product.platform,publisher:product.publisher,version:product.version,pricing_mode:product.pricing_mode,accent:product.accent,launch_url:product.launch_url,detail_url:`/pages/shop-product.html?id=${encodeURIComponent(product.id)}`,preview:{...(product.preview||{})},features:[...(product.features||[])],compatibility:[...(product.compatibility||[])],release_notes:String(product.release_notes||""),offer_type:String(product.offer_type||"bundle"),sale_mode:String(product.sale_mode||"bundle_only"),list_price_cents:Math.max(0,Number(product.list_price_cents||0)),currency:String(product.currency||"EUR"),parent_bundle_id:product.parent_bundle_id||null,source_item_key:String(product.source_item_key||""),commerce_ready:Boolean(product.list_price_cents>0),package_summary:product.manifest.items.map(item=>({kind:item.kind,key:item.key,platform:item.platform||"",label:storePackageItemLabel(item)}))};}
+function cfsStoreProduct(id){const key=String(id||"");return CFS_STORE_PRODUCTS.find(product=>product.id===key)||CFS_DYNAMIC_STORE_PRODUCTS.get(key)||null;}
+function validateStoreProduct(product){
+  if(!product||!CFS_STORE_ALLOWED_CATEGORIES.has(product.category)||!CFS_STORE_ALLOWED_PLATFORMS.has(product.platform))throw new Error("Ungültiges Shop-Produkt.");
+  if(!product.manifest||product.manifest.format!=="cfs-store-package-v1"||!Array.isArray(product.manifest.items)||!product.manifest.items.length)throw new Error("Ungültiges Paketmanifest.");
+  if(product.manifest.items.length>32)throw new Error("Paket ist zu groß.");
+  for(const item of product.manifest.items){
+    if(!item||!CFS_STORE_ALLOWED_PACKAGE_KINDS.has(String(item.kind||""))||!/^[a-z0-9_-]{1,80}$/.test(String(item.key||"")))throw new Error("Paket enthält einen nicht erlaubten Eintrag.");
+    if(item.kind==="branding_asset"){
+      if(!/^[0-9a-f-]{36}$/i.test(String(item.key||"")))throw new Error("Ungültige Branding-Asset-Referenz.");
+    }else if(item.kind==="panel_set_template"){
+      const template=CFS_STORE_PANEL_TEMPLATES[item.key];if(!template||template.platform!==product.platform||String(item.platform||template.platform)!==template.platform)throw new Error("Panel-Paket verletzt die Plattformgrenze.");
+    }else if(item.kind==="scene_template"){
+      const template=CFS_STORE_SCENE_TEMPLATES[item.key],itemPlatform=String(item.platform||template?.platform||"");if(!template||itemPlatform!==template.platform||!["neutral",product.platform].includes(template.platform))throw new Error("Scene-Paket verletzt die Plattformgrenze.");
+    }else if(item.kind==="tool_link"){
+      if(!CFS_STORE_TOOL_LINKS[item.key])throw new Error("Unbekannter Tool-Link im Paket.");
+    }else{
+      if(!WIDGET_STUDIO_WIDGET_TYPE_KEYS.has(item.key))throw new Error("Unbekannter Widget-/Overlay-Typ im Paket.");
+      const definition=studioWidgetDefinition(item.key),provider=studioWidgetProvider(definition),itemPlatform=String(item.platform||product.platform);
+      if(item.kind==="overlay_template"&&(definition.category!=="overlay"||provider!=="obs"||itemPlatform!=="neutral"))throw new Error("Overlay-Paket enthält einen nicht neutralen Typ.");
+      if(item.kind==="widget_template"&&(provider!==product.platform||!["twitch","tiktok","youtube"].includes(product.platform)))throw new Error("Widget-Paket verletzt die Provider-Grenze.");
+    }
+  }
+  return true;
+}
+function normalizeStoreInstalledItem(raw){
+  const source=raw&&typeof raw==="object"&&!Array.isArray(raw)?raw:{},kind=String(source.kind||""),key=String(source.key||"");
+  if(!CFS_STORE_ALLOWED_PACKAGE_KINDS.has(kind)||!/^[a-z0-9_-]{1,80}$/.test(key))return null;
+  const status=["installed","pending"].includes(String(source.status||""))?String(source.status):"pending";
+  return{kind,key,status,ref:studioText(source.ref,160,""),reason:studioText(source.reason,64,""),message:studioText(source.message,220,""),source_version:studioText(source.source_version,32,"")};
+}
+function normalizeStoreState(raw){
+  const source=raw&&typeof raw==="object"&&!Array.isArray(raw)?raw:{},library=[];
+  for(const item of Array.isArray(source.library)?source.library:[]){
+    const product=cfsStoreProduct(item?.product_id);if(!product)continue;
+    const installedItems=(Array.isArray(item.installed_items)?item.installed_items:[]).map(normalizeStoreInstalledItem).filter(Boolean).slice(0,32);
+    const complete=installedItems.length===product.manifest.items.length&&installedItems.every(entry=>entry.status==="installed");
+    const legacyRecorded=!installedItems.length&&Boolean(item.installed_version);
+    library.push({product_id:product.id,entitlement:"beta",acquired_at:item.acquired_at||new Date().toISOString(),installed_version:complete?String(item.installed_version||product.version):String(item.installed_version||""),installed_at:complete?(item.installed_at||null):null,install_state:complete?"installed":installedItems.length?"partial":legacyRecorded?"recorded":"library",installed_items:installedItems,last_install_attempt_at:item.last_install_attempt_at||null,install_generation:Math.max(0,Number(item.install_generation||0))});
+  }
+  return{version:3,library:library.slice(0,128)};
+}
+async function mutateStoreState(creatorId,mutator){return withCreatorResourceLock(creatorId,async client=>{await client.query(`INSERT INTO creator_module_state(creator_id,module_key,state,updated_at) VALUES($1,'shop','{}'::jsonb,NOW()) ON CONFLICT(creator_id,module_key) DO NOTHING`,[creatorId]);const row=(await client.query(`SELECT state FROM creator_module_state WHERE creator_id=$1 AND module_key='shop' FOR UPDATE`,[creatorId])).rows[0]||{};const state=normalizeStoreState(row.state);const result=await mutator(state,client);await client.query(`UPDATE creator_module_state SET state=$2::jsonb,updated_at=NOW() WHERE creator_id=$1 AND module_key='shop'`,[creatorId,JSON.stringify(state)]);return{state,result};});}
+function storePending(kind,key,reason,message,sourceVersion=""){return{kind,key,status:"pending",ref:"",reason,message,source_version:sourceVersion};}
+function storeInstalled(kind,key,ref,message="",sourceVersion=""){return{kind,key,status:"installed",ref:String(ref||""),reason:"",message,source_version:sourceVersion};}
+function storeWidgetEligibility(account,access,providerAccess,widgetType){
+  const definition=studioWidgetDefinition(widgetType);if(!definition)return{ok:false,reason:"widget_type_invalid",message:"Widget-Typ ist nicht verfügbar."};
+  const provider=studioWidgetProvider(definition),entitlements=access.entitlements||{};
+  if(["tiktok","twitch"].includes(provider)&&providerAccess?.[provider]?.beta_access?.allowed===false)return{ok:false,reason:"provider_beta_required",message:`${provider==="twitch"?"Twitch":"TikTok"} ist für diesen Account noch nicht in der Provider-Beta freigeschaltet.`};
+  if(provider!=="obs"&&providerAccess?.[provider]?.connected!==true)return{ok:false,reason:"provider_not_connected",message:`Verbinde zuerst ${provider==="twitch"?"Twitch":provider==="youtube"?"YouTube":"TikTok"}, danach kann der Shop diesen Bestandteil importieren.`};
+  if(["twitch","youtube"].includes(provider)){
+    const granted=new Set(providerAccess?.[provider]?.scopes||[]),missing=studioWidgetRequiredScopes(definition).filter(scope=>!granted.has(scope));
+    if(missing.length)return{ok:false,reason:"provider_scope_missing",message:`Es fehlen Provider-Berechtigungen: ${missing.join(", ")}.`};
+  }
+  const minimumPlan=definition.minimum_plan||"free",allowed=minimumPlan==="free"||(["alert","latest","goal_alert"].includes(definition.mode)?Boolean(entitlements.alerts):Boolean(entitlements.live_widgets));
+  if(!allowed)return{ok:false,reason:"plan_required",message:`${definition.label} benötigt mindestens den ${minimumPlan.toUpperCase()} Plan.`};
+  if(!templateAllowed("cfs-standard",entitlements))return{ok:false,reason:"template_not_allowed",message:"Das Standard-Template ist für diesen Account nicht verfügbar."};
+  return{ok:true,definition,provider};
+}
+async function loadStorePanelContext(client,creatorId){
+  await client.query(`INSERT INTO creator_module_state(creator_id,module_key,state,updated_at) VALUES($1,$2,'{}'::jsonb,NOW()) ON CONFLICT(creator_id,module_key) DO NOTHING`,[creatorId,PANEL_SET_MODULE_KEY]);
+  const row=(await client.query(`SELECT state FROM creator_module_state WHERE creator_id=$1 AND module_key=$2 FOR UPDATE`,[creatorId,PANEL_SET_MODULE_KEY])).rows[0]||{};
+  const moduleState=row.state&&typeof row.state==="object"&&!Array.isArray(row.state)?row.state:{};return{moduleState,store:normalizeStoredPanelSetStore(moduleState.panel_sets),dirty:false};
+}
+async function saveStorePanelContext(client,creatorId,context){
+  if(!context?.dirty)return;const next=sanitizeModuleState({...context.moduleState,panel_sets:{version:1,sets:context.store.sets}});await client.query(`UPDATE creator_module_state SET state=$3::jsonb,updated_at=NOW() WHERE creator_id=$1 AND module_key=$2`,[creatorId,PANEL_SET_MODULE_KEY,JSON.stringify(next)]);
+}
+function buildStorePanelSet(item,product,logoAssetId=null){
+  const template=CFS_STORE_PANEL_TEMPLATES[item.key];if(!template)throw new Error("Panel-Vorlage fehlt.");
+  return sanitizePanelSetInput({platform:template.platform,name:product.admin_generated?product.title:template.name,description:template.description,style:product.admin_generated?"dark":template.style,accent:product.admin_generated?product.accent:template.accent,logo_asset_id:logoAssetId,logo_position:template.logo_position,design_variant:product.design_variant||template.design_variant,items:template.types.map((panel_type,order)=>{const def=panelSetDefinition(template.platform,panel_type);return{panel_type,title:def?.title||"PANEL",body:def?.body||"",order,overrides:{},generated_media_id:null};})},{id:crypto.randomUUID()});
+}
+function buildStoreSceneDraft(item){const template=CFS_STORE_SCENE_TEMPLATES[item.key];if(!template)throw new Error("Scene-Vorlage fehlt.");return{name:template.name,config:sanitizeSceneConfig(template.config)};}
+async function installStorePackage(account,product,state,client,{access,providerAccess,mode="install"}={}){
+  const installMode=["install","update","reinstall"].includes(mode)?mode:"install";let libraryItem=state.library.find(entry=>entry.product_id===product.id);
+  if(!libraryItem){libraryItem={product_id:product.id,entitlement:"beta",acquired_at:new Date().toISOString(),installed_version:"",installed_at:null,install_state:"library",installed_items:[],last_install_attempt_at:null,install_generation:0};state.library.unshift(libraryItem);}
+  const previousInstalledVersion=String(libraryItem.installed_version||"");const previousInstalledAt=libraryItem.installed_at||null;const previous=new Map((libraryItem.installed_items||[]).map(entry=>[`${entry.kind}:${entry.key}`,entry])),receipts=[];let panelContext=null,widgetCount=null,sceneCount=null,brandingAssetId=null;
+  for(const manifestItem of product.manifest.items){
+    const receiptKey=`${manifestItem.kind}:${manifestItem.key}`,existing=previous.get(receiptKey);if(installMode!=="reinstall"&&existing?.status==="installed"&&existing.ref){receipts.push(existing);continue;}
+    if(manifestItem.kind==="branding_asset"){
+      const source=(await client.query(`SELECT * FROM admin_bundle_assets WHERE id=$1 AND shop_use_allowed=TRUE AND rights_status='approved' LIMIT 1`,[manifestItem.key])).rows[0];
+      if(!source){receipts.push(storePending(manifestItem.kind,manifestItem.key,"branding_rights_missing","Das Branding-Bild ist nicht mehr für Shop-Nutzung freigegeben.",product.version));continue;}
+      let target=(await client.query(`SELECT * FROM creator_widget_assets WHERE creator_id=$1 AND sha256=$2 LIMIT 1`,[account.id,source.sha256])).rows[0];
+      if(!target){const usage=(await client.query(`SELECT COUNT(*)::int AS count,COALESCE(SUM(byte_size),0)::bigint AS bytes FROM creator_widget_assets WHERE creator_id=$1`,[account.id])).rows[0]||{};if(Number(usage.count||0)>=MAX_ASSET_COUNT){receipts.push(storePending(manifestItem.kind,manifestItem.key,"asset_count_limit",`Deine Medienbibliothek ist voll (${MAX_ASSET_COUNT} Dateien).`,product.version));continue;}if(Number(usage.bytes||0)+Number(source.byte_size||0)>MAX_TOTAL_BYTES){receipts.push(storePending(manifestItem.kind,manifestItem.key,"asset_storage_limit","Deine Medienbibliothek hat ihr Speicherlimit erreicht.",product.version));continue;}const token=crypto.randomBytes(24).toString("hex");target=(await client.query(`INSERT INTO creator_widget_assets(creator_id,original_name,label,media_type,mime_type,file_ext,byte_size,sha256,auto_category,category,metadata,public_token,content,created_at,updated_at) VALUES($1,$2,$3,'image',$4,$5,$6,$7,'branding','branding',$8::jsonb,$9,$10,NOW(),NOW()) RETURNING *`,[account.id,source.original_name,source.label,source.mime_type,source.file_ext,source.byte_size,source.sha256,JSON.stringify({...source.metadata,store_product_id:product.id}),token,source.content])).rows[0];}
+      if(!brandingAssetId||manifestItem.role==="primary")brandingAssetId=target.id;receipts.push(storeInstalled(manifestItem.kind,manifestItem.key,target.id,manifestItem.role==="primary"?"Primäres Branding-Bild wurde in deine CFS-Medienbibliothek kopiert.":"Zusätzliches Branding-Bild wurde in deine CFS-Medienbibliothek kopiert.",product.version));continue;
+    }
+    if(manifestItem.kind==="tool_link"){receipts.push(storeInstalled(manifestItem.kind,manifestItem.key,CFS_STORE_TOOL_LINKS[manifestItem.key],"Tool-Verknüpfung ist im Creator-Bereich verfügbar.",product.version));continue;}
+    if(manifestItem.kind==="panel_set_template"){
+      if(!panelContext)panelContext=await loadStorePanelContext(client,account.id);
+      if(panelContext.store.sets.length>=PANEL_SET_MAX_COUNT){receipts.push(storePending(manifestItem.kind,manifestItem.key,"panel_set_limit",`Maximal ${PANEL_SET_MAX_COUNT} Panel-Sets möglich.`,product.version));continue;}
+      const set=buildStorePanelSet(manifestItem,product,brandingAssetId);panelContext.store.sets.unshift(set);panelContext.dirty=true;receipts.push(storeInstalled(manifestItem.kind,manifestItem.key,set.id,`${set.name} wurde als editierbares Panel-Set angelegt.`,product.version));continue;
+    }
+    if(manifestItem.kind==="scene_template"){
+      if(sceneCount===null)sceneCount=Number((await client.query(`SELECT COUNT(*)::int AS count FROM creator_widget_scenes WHERE creator_id=$1`,[account.id])).rows[0]?.count||0);
+      const maxScenes=Number(access.entitlements?.max_scenes||0);if(sceneCount>=maxScenes){receipts.push(storePending(manifestItem.kind,manifestItem.key,"scene_limit",`Dein Plan erlaubt maximal ${maxScenes} Scenes.`,product.version));continue;}
+      const scene=buildStoreSceneDraft(manifestItem),id=crypto.randomUUID();await client.query(`INSERT INTO creator_widget_scenes (id,creator_id,name,status,draft_config,public_token) VALUES($1,$2,$3,'draft',$4::jsonb,$5)`,[id,account.id,scene.name,JSON.stringify(scene.config),scenePublicToken()]);sceneCount+=1;receipts.push(storeInstalled(manifestItem.kind,manifestItem.key,id,`${scene.name} wurde als editierbare Scene angelegt.`,product.version));continue;
+    }
+    const eligibility=storeWidgetEligibility(account,access,providerAccess,manifestItem.key);if(!eligibility.ok){receipts.push(storePending(manifestItem.kind,manifestItem.key,eligibility.reason,eligibility.message,product.version));continue;}
+    if(widgetCount===null)widgetCount=Number((await client.query(`SELECT COUNT(*)::int AS count FROM creator_widgets WHERE creator_id=$1`,[account.id])).rows[0]?.count||0);
+    if(widgetCount>=Number(access.entitlements?.max_widgets||0)){receipts.push(storePending(manifestItem.kind,manifestItem.key,"widget_limit",`Dein Plan erlaubt maximal ${access.entitlements?.max_widgets||0} Widgets.`,product.version));continue;}
+    const definition=eligibility.definition,templateKey="cfs-standard",draftConfig=sanitizeStudioWidgetConfig(studioWidgetTemplateConfig(manifestItem.key,templateKey),manifestItem.key),id=crypto.randomUUID(),publicToken=createStudioWidgetToken(),name=studioWidgetName(`${product.title} · ${definition.label}`);
+    await client.query(`INSERT INTO creator_widgets (id,creator_id,widget_type,name,template_key,status,draft_config,public_token,version,created_at,updated_at) VALUES ($1,$2,$3,$4,$5,'draft',$6::jsonb,$7,1,NOW(),NOW())`,[id,account.id,manifestItem.key,name,templateKey,JSON.stringify(draftConfig),publicToken]);widgetCount+=1;
+    receipts.push(storeInstalled(manifestItem.kind,manifestItem.key,id,`${definition.label} wurde als editierbarer Entwurf angelegt.`,product.version));
+  }
+  await saveStorePanelContext(client,account.id,panelContext);
+  const installedCount=receipts.filter(entry=>entry.status==="installed").length,pendingCount=receipts.length-installedCount,complete=pendingCount===0,now=new Date().toISOString();
+  libraryItem.installed_items=receipts;libraryItem.install_state=complete?"installed":"partial";libraryItem.last_install_attempt_at=now;libraryItem.installed_version=complete?product.version:previousInstalledVersion;libraryItem.installed_at=complete?now:previousInstalledAt;if(installMode==="reinstall")libraryItem.install_generation=Math.max(0,Number(libraryItem.install_generation||0))+1;
+  return{libraryItem,receipts,complete,installed_count:installedCount,pending_count:pendingCount,mode:installMode};
+}
+function storeInstallMessage(result){
+  if(result.mode==="reinstall")return result.complete?`${result.installed_count} Paketbestandteile wurden als frische Kopien neu installiert. Bestehende eigene Entwürfe bleiben erhalten.`:`Neuinstallation teilweise abgeschlossen: ${result.installed_count} importiert · ${result.pending_count} ausstehend.`;
+  if(result.mode==="update")return result.complete?`Paket ist auf dem aktuellen Stand. Bestehende editierte Inhalte wurden beibehalten; neue Bestandteile wurden ergänzt.`:`Update teilweise abgeschlossen: ${result.installed_count} verfügbar · ${result.pending_count} Voraussetzung(en) offen.`;
+  return result.complete?`${result.installed_count} Paketbestandteile wurden als editierbare CFS-Inhalte importiert.`:`${result.installed_count} Paketbestandteile importiert · ${result.pending_count} ausstehend. Offene Provider-/Plan-Voraussetzungen werden nicht umgangen.`;
+}
+app.get("/api/creator/shop/catalog",requireCreatorAccount,async(req,res)=>{res.set("Cache-Control","no-store");try{await refreshDynamicStoreProducts();const stored=normalizeStoreState((await getModuleState(req.creatorAccount.id,"shop")).state);return res.json({ok:true,commercial_mode:COMMERCIAL_MODE,products:allStoreProducts().map(publicStoreProduct),library:stored.library,categories:["widgets","panels","overlays","scenes","tools","bundles"]});}catch(error){safeLogError("Creator Shop Katalog Fehler:",error);return res.status(500).json({ok:false,error:"Shop konnte nicht geladen werden."});}});
+app.get("/api/creator/shop/products/:id",requireCreatorAccount,async(req,res)=>{
+  res.set("Cache-Control","no-store");await refreshDynamicStoreProducts();const product=cfsStoreProduct(req.params.id);if(!product)return res.status(404).json({ok:false,error:"Produkt nicht gefunden."});
+  try{
+    validateStoreProduct(product);const stored=normalizeStoreState((await getModuleState(req.creatorAccount.id,"shop")).state),library_item=stored.library.find(item=>item.product_id===product.id)||null;let version_history=[],related_offers=[];
+    if(product.admin_generated){
+      version_history=(await pool.query(`SELECT version,release_notes,created_at,published_at FROM admin_store_product_versions WHERE product_id=$1 AND published_at IS NOT NULL ORDER BY created_at DESC LIMIT 20`,[product.id])).rows;
+      const rows=(await pool.query(`SELECT p.*,a.public_token AS asset_public_token FROM admin_store_products p LEFT JOIN admin_bundle_assets a ON a.id=p.source_asset_id WHERE p.status='published' AND p.offer_enabled=TRUE AND (p.parent_bundle_id=$1 OR p.id=$2) ORDER BY p.offer_type,p.title`,[product.id,product.parent_bundle_id||""])).rows;
+      related_offers=rows.map(adminStoreRowToProduct).map(publicStoreProduct);
+    }
+    const childSum=related_offers.filter(x=>x.parent_bundle_id===product.id&&x.list_price_cents>0).reduce((sum,x)=>sum+x.list_price_cents,0),bundle_savings_cents=product.offer_type==="bundle"&&product.list_price_cents>0&&childSum>product.list_price_cents?childSum-product.list_price_cents:0;
+    return res.json({ok:true,commercial_mode:COMMERCIAL_MODE,product:publicStoreProduct(product),library_item,version_history,related_offers,bundle_savings_cents});
+  }catch(error){safeLogError("Creator Shop Produktdetail Fehler:",error);return res.status(400).json({ok:false,error:"Produktdetail konnte nicht geladen werden."});}
+});
+app.post("/api/creator/shop/products/:id/acquire",requireCreatorAccount,async(req,res)=>{res.set("Cache-Control","no-store");await refreshDynamicStoreProducts();const product=cfsStoreProduct(req.params.id);if(!product)return res.status(404).json({ok:false,error:"Produkt nicht gefunden."});if(!["free","beta"].includes(product.pricing_mode))return res.status(403).json({ok:false,error:"Dieses Produkt ist in der privaten Beta noch nicht verfügbar."});try{validateStoreProduct(product);const out=await mutateStoreState(req.creatorAccount.id,async state=>{let item=state.library.find(entry=>entry.product_id===product.id);if(!item){item={product_id:product.id,entitlement:"beta",acquired_at:new Date().toISOString(),installed_version:"",installed_at:null,install_state:"library",installed_items:[],last_install_attempt_at:null,install_generation:0};state.library.unshift(item);}return item;});return res.json({ok:true,product:publicStoreProduct(product),library:out.state.library});}catch(error){safeLogError("Creator Shop Acquire Fehler:",error);return res.status(400).json({ok:false,error:"Produkt konnte nicht hinzugefügt werden."});}});
+async function handleStoreInstallAction(req,res,mode){res.set("Cache-Control","no-store");await refreshDynamicStoreProducts();const product=cfsStoreProduct(req.params.id);if(!product)return res.status(404).json({ok:false,error:"Produkt nicht gefunden."});if(!["free","beta"].includes(product.pricing_mode))return res.status(403).json({ok:false,error:"Dieses Produkt ist noch nicht installierbar."});try{validateStoreProduct(product);const stored=normalizeStoreState((await getModuleState(req.creatorAccount.id,"shop")).state),owned=stored.library.some(item=>item.product_id===product.id);if(["update","reinstall"].includes(mode)&&!owned)return res.status(409).json({ok:false,error:"Füge das Produkt zuerst deiner Bibliothek hinzu."});const [access,providerAccess]=await Promise.all([creatorAccessProfile(req.creatorAccount),creatorWidgetProviderAccess(req.creatorAccount.id)]);const out=await mutateStoreState(req.creatorAccount.id,(state,client)=>installStorePackage(req.creatorAccount,product,state,client,{access,providerAccess,mode}));const result=out.result;return res.json({ok:true,installed:result.complete,partial:!result.complete,product:publicStoreProduct(product),library:out.state.library,library_item:out.state.library.find(item=>item.product_id===product.id)||null,install_summary:{installed:result.installed_count,pending:result.pending_count,items:result.receipts,mode:result.mode},message:storeInstallMessage(result),launch_url:product.launch_url});}catch(error){safeLogError(`Creator Shop ${mode} Fehler:`,error);return res.status(400).json({ok:false,error:"Paket konnte nicht sicher verarbeitet werden."});}}
+app.post("/api/creator/shop/products/:id/install",requireCreatorAccount,(req,res)=>handleStoreInstallAction(req,res,"install"));
+app.post("/api/creator/shop/products/:id/update",requireCreatorAccount,(req,res)=>handleStoreInstallAction(req,res,"update"));
+app.post("/api/creator/shop/products/:id/reinstall",requireCreatorAccount,(req,res)=>handleStoreInstallAction(req,res,"reinstall"));
+
+
+// ============================================================
+// ADMIN BUNDLE FACTORY · V175
+// Admin-only image -> bundle production. No creator self-service.
+// ============================================================
+function publicAdminBundleAsset(row){return{id:row.id,name:row.label||row.original_name,original_name:row.original_name,mime_type:row.mime_type,byte_size:Number(row.byte_size||0),sha256:row.sha256,metadata:row.metadata||{},rights_status:row.rights_status,rights_source:row.rights_source||"",rights_note:row.rights_note||"",shop_use_allowed:Boolean(row.shop_use_allowed),preview_url:`/store-assets/${row.public_token}`,created_at:row.created_at,updated_at:row.updated_at};}
+function publicAdminStoreDraft(row){const product=adminStoreRowToProduct(row),sourceItems=Array.isArray(product.commerce_config?.source_manifest_items)&&product.commerce_config.source_manifest_items.length?product.commerce_config.source_manifest_items:product.manifest.items;return{...publicStoreProduct(product),status:row.status,source_asset_id:row.source_asset_id,source_asset_ids:product.source_asset_ids,bundle_config:product.bundle_config,collection_key:product.collection_key,collection_title:product.collection_title,cover_mode:product.cover_mode,design_variant:row.design_variant,commerce_config:product.commerce_config,commerce_items:sourceItems.map(item=>({kind:item.kind,key:item.key,label:storePackageItemLabel(item),platform:item.platform||""})),offer_enabled:product.offer_enabled,admin_cover_url:row.cover_content?`/api/admin/store/bundle-products/${encodeURIComponent(row.id)}/cover`:"",published_at:row.published_at,created_at:row.created_at,updated_at:row.updated_at,versions:Array.isArray(row.versions)?row.versions:[]};}
+async function listAdminFactoryState(ownerId){const [assets,products,versions]=await Promise.all([pool.query(`SELECT * FROM admin_bundle_assets WHERE owner_creator_id=$1 ORDER BY updated_at DESC`,[ownerId]),pool.query(`SELECT p.*,a.public_token AS asset_public_token FROM admin_store_products p LEFT JOIN admin_bundle_assets a ON a.id=p.source_asset_id WHERE p.owner_creator_id=$1 ORDER BY p.updated_at DESC`,[ownerId]),pool.query(`SELECT product_id,version,release_notes,created_at,published_at FROM admin_store_product_versions WHERE owner_creator_id=$1 ORDER BY created_at DESC`,[ownerId])]);const byProduct=new Map();for(const row of versions.rows){if(!byProduct.has(row.product_id))byProduct.set(row.product_id,[]);byProduct.get(row.product_id).push(row);}const productRows=products.rows.map(row=>publicAdminStoreDraft({...row,versions:byProduct.get(row.id)||[]})),keys=[...new Set(productRows.map(p=>p.collection_key).filter(Boolean))],collections=keys.map(key=>{const rows=productRows.filter(p=>p.collection_key===key),active=rows.filter(p=>p.offer_enabled!==false),statusCounts=active.reduce((acc,p)=>(acc[p.status]=(acc[p.status]||0)+1,acc),{});return{key,title:rows[0]?.collection_title||rows[0]?.title||key,products:active.length,all_products:rows.length,standalone:active.filter(p=>p.offer_type==="item").length,published:statusCounts.published||0,draft:statusCounts.draft||0,archived:statusCounts.archived||0,status:(!active.length?"draft":statusCounts.archived===active.length?"archived":statusCounts.published===active.length?"published":statusCounts.published?"mixed":"draft")};});return{assets:assets.rows.map(publicAdminBundleAsset),products:productRows,collections};}
+
+
+// ============================================================
+// PRIVATE ADMIN CONTROL CENTER · V181
+//
+// The public website only sees explicitly published snapshots. Drafts,
+// previews, internal notes, product work and source assets remain admin-only.
+// All non-safe /api/admin writes are additionally protected by the global
+// admin elevation middleware above.
+// ============================================================
+const ADMIN_SITE_CONTENT_KEYS=Object.freeze(["home.identity","home.games","home.community","home.creator_entry","home.announcement"]);
+const ADMIN_SITE_CONTENT_DEFAULTS=Object.freeze({
+  "home.identity":Object.freeze({
+    hero_kicker:"GAMING · STREAMS · COMMUNITY",
+    hero_text:"Ich bin cfs_zockt. Hier geht es um meine Games, LIVE-Streams, Community und darum, warum ich dieses Projekt überhaupt aufgebaut habe.",
+    why_kicker:"WARUM CFS_ZOCKT?",
+    why_title:"AUS GAMING WURDE EIN EIGENES PROJEKT.",
+    why_text_1:"cfs_zockt ist mein Platz für Gaming, LIVE-Streams und Community. Ich möchte zeigen, was ich aktuell spiele, was auf meinen Kanälen passiert und warum ich Dinge lieber selbst entwickle, statt nur irgendeine fertige Oberfläche zu benutzen.",
+    why_text_2:"Aus diesem Projekt ist später auch die CFS Creator Suite entstanden. Sie ist aber ein eigenes Produkt für registrierte Creator – nicht die Identität dieser Website."
+  }),
+  "home.games":Object.freeze({
+    kicker:"PLAYSTATION",
+    title:"ZULETZT GESPIELT",
+    intro:"Aktuelle Spielaktivität wird automatisch geladen. Hier kann ich zusätzlich ausgewählte Games oder Projekte hervorheben.",
+    featured:[]
+  }),
+  "home.community":Object.freeze({
+    kicker:"COMMUNITY",
+    title:"COMMUNITY",
+    intro:"Twitch, TikTok, Discord und die Menschen, mit denen aus Gaming mehr als nur ein einzelner Stream wird.",
+    twitch_url:"https://www.twitch.tv/cfs_zockt",
+    tiktok_url:"https://www.tiktok.com/@cfs_zockt",
+    discord_url:"https://discord.gg/3bfAkcJTp"
+  }),
+  "home.creator_entry":Object.freeze({
+    kicker:"CREATOR BEREICH",
+    title:"MEINE TOOLS FÜR REGISTRIERTE CREATOR.",
+    text:"Dashboard, Creator Suite, Shop, Studios und Launcher gehören zum geschützten Produktbereich. Die öffentliche Website bleibt cfs_zockt, Gaming und Community.",
+    register_label:"CREATOR REGISTRIERUNG",
+    login_label:"CREATOR LOGIN"
+  }),
+  "home.announcement":Object.freeze({enabled:false,kicker:"UPDATE",title:"",text:"",link_label:"",link_url:""})
+});
+
+function adminSiteText(value,max,fallback=""){
+  const text=String(value??"").replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g,"").trim();
+  return (text||String(fallback||"")).slice(0,max);
+}
+function adminSiteUrl(value,{allowEmpty=true}={}){
+  const raw=String(value||"").trim();
+  if(!raw&&allowEmpty)return "";
+  if(raw.startsWith("/")&&!raw.startsWith("//")&&!/[\r\n]/.test(raw))return raw.slice(0,500);
+  try{
+    const url=new URL(raw);
+    if(url.protocol!=="https:")throw new Error("Nur HTTPS-Links sind erlaubt.");
+    return url.toString().slice(0,500);
+  }catch{throw new Error("Ungültiger Link. Erlaubt sind HTTPS-URLs oder interne /Pfade.");}
+}
+function normalizeAdminSiteContent(key,input){
+  const raw=input&&typeof input==="object"&&!Array.isArray(input)?input:{};
+  const d=ADMIN_SITE_CONTENT_DEFAULTS[key];
+  if(!d)throw new Error("Unbekannter Website-Bereich.");
+  if(key==="home.identity")return{
+    hero_kicker:adminSiteText(raw.hero_kicker,70,d.hero_kicker),hero_text:adminSiteText(raw.hero_text,420,d.hero_text),
+    why_kicker:adminSiteText(raw.why_kicker,70,d.why_kicker),why_title:adminSiteText(raw.why_title,140,d.why_title),
+    why_text_1:adminSiteText(raw.why_text_1,700,d.why_text_1),why_text_2:adminSiteText(raw.why_text_2,700,d.why_text_2)
+  };
+  if(key==="home.games"){
+    const featured=(Array.isArray(raw.featured)?raw.featured:[]).slice(0,6).map(item=>({
+      title:adminSiteText(item?.title,100,""),platform:adminSiteText(item?.platform,60,""),note:adminSiteText(item?.note,220,"")
+    })).filter(item=>item.title);
+    return{kicker:adminSiteText(raw.kicker,70,d.kicker),title:adminSiteText(raw.title,140,d.title),intro:adminSiteText(raw.intro,420,d.intro),featured};
+  }
+  if(key==="home.community")return{
+    kicker:adminSiteText(raw.kicker,70,d.kicker),title:adminSiteText(raw.title,140,d.title),intro:adminSiteText(raw.intro,420,d.intro),
+    twitch_url:adminSiteUrl(raw.twitch_url||d.twitch_url,{allowEmpty:false}),tiktok_url:adminSiteUrl(raw.tiktok_url||d.tiktok_url,{allowEmpty:false}),discord_url:adminSiteUrl(raw.discord_url||d.discord_url,{allowEmpty:false})
+  };
+  if(key==="home.creator_entry")return{
+    kicker:adminSiteText(raw.kicker,70,d.kicker),title:adminSiteText(raw.title,140,d.title),text:adminSiteText(raw.text,520,d.text),
+    register_label:adminSiteText(raw.register_label,60,d.register_label),login_label:adminSiteText(raw.login_label,60,d.login_label)
+  };
+  return{
+    enabled:raw.enabled===true,kicker:adminSiteText(raw.kicker,70,d.kicker),title:adminSiteText(raw.title,140,""),text:adminSiteText(raw.text,700,""),
+    link_label:adminSiteText(raw.link_label,60,""),link_url:adminSiteUrl(raw.link_url||"",{allowEmpty:true})
+  };
+}
+function publicAdminSiteContentRow(row){
+  const key=String(row?.content_key||"");
+  const defaults=ADMIN_SITE_CONTENT_DEFAULTS[key]||{};
+  return{key,draft:normalizeAdminSiteContent(key,row?.draft_content||defaults),published:normalizeAdminSiteContent(key,row?.published_content&&Object.keys(row.published_content).length?row.published_content:defaults),draft_revision:Number(row?.draft_revision??0),published_revision:Number(row?.published_revision??0),draft_updated_at:row?.draft_updated_at||null,published_at:row?.published_at||null,dirty:Number(row?.draft_revision??0)!==Number(row?.published_revision??0)};
+}
+async function listAdminSiteContent(ownerId){
+  const rows=(await pool.query(`SELECT content_key,draft_content,published_content,draft_revision,published_revision,draft_updated_at,published_at FROM admin_site_content WHERE owner_creator_id=$1 ORDER BY content_key`,[ownerId])).rows;
+  const byKey=new Map(rows.map(row=>[row.content_key,row]));
+  return ADMIN_SITE_CONTENT_KEYS.map(key=>publicAdminSiteContentRow(byKey.get(key)||{content_key:key,draft_content:ADMIN_SITE_CONTENT_DEFAULTS[key],published_content:ADMIN_SITE_CONTENT_DEFAULTS[key],draft_revision:0,published_revision:0}));
+}
+async function loadPublicSiteContent(){
+  const emails=[...CFS_ADMIN_EMAILS];
+  if(!emails.length)return Object.fromEntries(ADMIN_SITE_CONTENT_KEYS.map(key=>[key,ADMIN_SITE_CONTENT_DEFAULTS[key]]));
+  const rows=(await pool.query(`SELECT s.content_key,s.published_content,s.published_revision,s.published_at,c.email FROM admin_site_content s JOIN creator_accounts c ON c.id=s.owner_creator_id WHERE LOWER(c.email)=ANY($1::text[]) AND s.published_revision>0 ORDER BY s.published_at DESC NULLS LAST`,[emails])).rows;
+  const result=Object.fromEntries(ADMIN_SITE_CONTENT_KEYS.map(key=>[key,ADMIN_SITE_CONTENT_DEFAULTS[key]]));
+  const seen=new Set();
+  for(const row of rows){const key=String(row.content_key||"");if(!ADMIN_SITE_CONTENT_DEFAULTS[key]||seen.has(key))continue;result[key]=normalizeAdminSiteContent(key,row.published_content);seen.add(key);}
+  return result;
+}
+
+app.get("/api/public/site-content",publicRuntimeIpLimiter,async(req,res)=>{
+  res.set("Cache-Control","public, max-age=60, stale-while-revalidate=300");
+  try{return res.json({ok:true,content:await loadPublicSiteContent()});}
+  catch(error){safeLogError("Public Site Content Fehler:",error);return res.json({ok:true,fallback:true,content:Object.fromEntries(ADMIN_SITE_CONTENT_KEYS.map(key=>[key,ADMIN_SITE_CONTENT_DEFAULTS[key]]))});}
+});
+
+app.get("/api/admin/control-center/summary",requireCreatorAccount,requireCreatorAdmin,async(req,res)=>{
+  res.set("Cache-Control","no-store");
+  try{
+    const [site,products,assets,versions,creators]=await Promise.all([
+      pool.query(`SELECT content_key,draft_revision,published_revision,draft_updated_at,published_at FROM admin_site_content WHERE owner_creator_id=$1`,[req.creatorAccount.id]),
+      pool.query(`SELECT status,offer_type,pricing_mode,COUNT(*)::int AS count FROM admin_store_products WHERE owner_creator_id=$1 GROUP BY status,offer_type,pricing_mode`,[req.creatorAccount.id]),
+      pool.query(`SELECT rights_status,shop_use_allowed,COUNT(*)::int AS count FROM admin_bundle_assets WHERE owner_creator_id=$1 GROUP BY rights_status,shop_use_allowed`,[req.creatorAccount.id]),
+      pool.query(`SELECT COUNT(*)::int AS count FROM admin_store_product_versions WHERE owner_creator_id=$1`,[req.creatorAccount.id]),
+      pool.query(`SELECT COUNT(*)::int AS count FROM creator_accounts`)
+    ]);
+    const productRows=products.rows,assetRows=assets.rows;
+    return res.json({ok:true,private:true,generated_at:new Date().toISOString(),version:{backend:BACKEND_VERSION,schema:DATABASE_SCHEMA_VERSION},website:{sections:ADMIN_SITE_CONTENT_KEYS.length,configured:site.rows.length,dirty:site.rows.filter(r=>Number(r.draft_revision)!==Number(r.published_revision)).length,published:site.rows.filter(r=>Number(r.published_revision)>0).length,last_published_at:site.rows.map(r=>r.published_at).filter(Boolean).sort().at(-1)||null},shop:{products:productRows.reduce((n,r)=>n+Number(r.count||0),0),draft:productRows.filter(r=>r.status==="draft").reduce((n,r)=>n+Number(r.count||0),0),published:productRows.filter(r=>r.status==="published").reduce((n,r)=>n+Number(r.count||0),0),bundles:productRows.filter(r=>r.offer_type==="bundle").reduce((n,r)=>n+Number(r.count||0),0),items:productRows.filter(r=>r.offer_type==="item").reduce((n,r)=>n+Number(r.count||0),0),paid_preview:productRows.filter(r=>r.pricing_mode==="paid_preview").reduce((n,r)=>n+Number(r.count||0),0),versions:Number(versions.rows[0]?.count||0)},assets:{total:assetRows.reduce((n,r)=>n+Number(r.count||0),0),approved:assetRows.filter(r=>r.rights_status==="approved"&&r.shop_use_allowed===true).reduce((n,r)=>n+Number(r.count||0),0),pending:assetRows.filter(r=>r.rights_status==="pending").reduce((n,r)=>n+Number(r.count||0),0),rejected:assetRows.filter(r=>r.rights_status==="rejected").reduce((n,r)=>n+Number(r.count||0),0)},creators:Number(creators.rows[0]?.count||0)});
+  }catch(error){safeLogError("Admin Control Center Summary Fehler:",error);return res.status(500).json({ok:false,error:"Admin Control Center konnte nicht geladen werden."});}
+});
+
+app.get("/api/admin/site-content",requireCreatorAccount,requireCreatorAdmin,requireCreatorAdminSensitiveRead,async(req,res)=>{
+  res.set("Cache-Control","no-store");
+  try{return res.json({ok:true,private:true,sections:await listAdminSiteContent(req.creatorAccount.id)});}catch(error){safeLogError("Admin Site Content Liste Fehler:",error);return res.status(500).json({ok:false,error:"Website-Entwürfe konnten nicht geladen werden."});}
+});
+app.put("/api/admin/site-content/:key/draft",requireCreatorAccount,requireCreatorAdmin,async(req,res)=>{
+  res.set("Cache-Control","no-store");
+  try{
+    const key=String(req.params.key||"");if(!ADMIN_SITE_CONTENT_DEFAULTS[key])return res.status(404).json({ok:false,error:"Website-Bereich nicht gefunden."});
+    const content=normalizeAdminSiteContent(key,req.body?.content);
+    const row=(await pool.query(`INSERT INTO admin_site_content(owner_creator_id,content_key,draft_content,published_content,draft_revision,published_revision,draft_updated_at) VALUES($1,$2,$3::jsonb,'{}'::jsonb,1,0,NOW()) ON CONFLICT(owner_creator_id,content_key) DO UPDATE SET draft_content=EXCLUDED.draft_content,draft_revision=admin_site_content.draft_revision+1,draft_updated_at=NOW(),updated_at=NOW() RETURNING content_key,draft_content,published_content,draft_revision,published_revision,draft_updated_at,published_at`,[req.creatorAccount.id,key,JSON.stringify(content)])).rows[0];
+    return res.json({ok:true,section:publicAdminSiteContentRow(row)});
+  }catch(error){safeLogError("Admin Site Draft Fehler:",error);return res.status(400).json({ok:false,error:error.message||"Website-Entwurf konnte nicht gespeichert werden."});}
+});
+app.post("/api/admin/site-content/:key/publish",requireCreatorAccount,requireCreatorAdmin,async(req,res)=>{
+  res.set("Cache-Control","no-store");
+  try{
+    const key=String(req.params.key||"");if(!ADMIN_SITE_CONTENT_DEFAULTS[key])return res.status(404).json({ok:false,error:"Website-Bereich nicht gefunden."});
+    const existing=(await pool.query(`SELECT * FROM admin_site_content WHERE owner_creator_id=$1 AND content_key=$2 LIMIT 1`,[req.creatorAccount.id,key])).rows[0];
+    if(!existing){const defaults=normalizeAdminSiteContent(key,ADMIN_SITE_CONTENT_DEFAULTS[key]);const row=(await pool.query(`INSERT INTO admin_site_content(owner_creator_id,content_key,draft_content,published_content,draft_revision,published_revision,draft_updated_at,published_at) VALUES($1,$2,$3::jsonb,$3::jsonb,1,1,NOW(),NOW()) RETURNING *`,[req.creatorAccount.id,key,JSON.stringify(defaults)])).rows[0];return res.json({ok:true,section:publicAdminSiteContentRow(row)});}
+    const normalized=normalizeAdminSiteContent(key,existing.draft_content);
+    const row=(await pool.query(`UPDATE admin_site_content SET draft_content=$3::jsonb,published_content=$3::jsonb,published_revision=draft_revision,published_at=NOW(),updated_at=NOW() WHERE owner_creator_id=$1 AND content_key=$2 RETURNING *`,[req.creatorAccount.id,key,JSON.stringify(normalized)])).rows[0];
+    return res.json({ok:true,section:publicAdminSiteContentRow(row)});
+  }catch(error){safeLogError("Admin Site Publish Fehler:",error);return res.status(400).json({ok:false,error:error.message||"Website-Bereich konnte nicht veröffentlicht werden."});}
+});
+app.post("/api/admin/site-content/:key/revert",requireCreatorAccount,requireCreatorAdmin,async(req,res)=>{
+  res.set("Cache-Control","no-store");
+  try{
+    const key=String(req.params.key||"");if(!ADMIN_SITE_CONTENT_DEFAULTS[key])return res.status(404).json({ok:false,error:"Website-Bereich nicht gefunden."});
+    const row=(await pool.query(`UPDATE admin_site_content SET draft_content=CASE WHEN published_revision>0 THEN published_content ELSE draft_content END,draft_revision=CASE WHEN published_revision>0 THEN published_revision ELSE draft_revision END,draft_updated_at=NOW(),updated_at=NOW() WHERE owner_creator_id=$1 AND content_key=$2 RETURNING *`,[req.creatorAccount.id,key])).rows[0];
+    if(!row)return res.status(404).json({ok:false,error:"Für diesen Bereich existiert noch kein Entwurf."});
+    return res.json({ok:true,section:publicAdminSiteContentRow(row)});
+  }catch(error){safeLogError("Admin Site Revert Fehler:",error);return res.status(400).json({ok:false,error:"Website-Entwurf konnte nicht zurückgesetzt werden."});}
+});
+app.get("/api/admin/store/bundle-factory",requireCreatorAccount,requireCreatorAdmin,async(req,res)=>{res.set("Cache-Control","no-store");try{return res.json({ok:true,...await listAdminFactoryState(req.creatorAccount.id),commercial_mode:COMMERCIAL_MODE});}catch(error){safeLogError("Admin Bundle Factory Liste Fehler:",error);return res.status(500).json({ok:false,error:"Bundle Factory konnte nicht geladen werden."});}});
+app.post("/api/admin/store/bundle-assets",requireCreatorAccount,requireCreatorAdmin,express.raw({type:()=>true,limit:MAX_UPLOAD_BYTES}),async(req,res)=>{res.set("Cache-Control","no-store");try{const content=Buffer.isBuffer(req.body)?req.body:Buffer.alloc(0);let rawName=String(req.get("X-CFS-File-Name")||"");try{rawName=decodeURIComponent(rawName);}catch{}const detected=detectWidgetAsset(content,{filename:rawName,mimeHint:req.get("Content-Type")||""});if(detected.kind!=="image")return res.status(400).json({ok:false,error:"Für die Bundle Factory sind nur PNG, JPG oder WebP-Bilder erlaubt."});const sha256=crypto.createHash("sha256").update(content).digest("hex"),metadata={width:detected.width||0,height:detected.height||0,hasAlpha:Boolean(detected.hasAlpha),animated:Boolean(detected.animated)};let row=(await pool.query(`SELECT * FROM admin_bundle_assets WHERE owner_creator_id=$1 AND sha256=$2 LIMIT 1`,[req.creatorAccount.id,sha256])).rows[0];if(!row)row=(await pool.query(`INSERT INTO admin_bundle_assets(owner_creator_id,original_name,label,mime_type,file_ext,byte_size,sha256,metadata,public_token,content) VALUES($1,$2,$3,$4,$5,$6,$7,$8::jsonb,$9,$10) RETURNING *`,[req.creatorAccount.id,safeWidgetAssetName(detected.originalName),safeWidgetAssetLabel(detected.originalName.replace(/\.[^.]+$/,""),"Bundle Bild"),detected.mime,detected.ext,content.length,sha256,JSON.stringify(metadata),crypto.randomBytes(24).toString("hex"),content])).rows[0];return res.status(201).json({ok:true,asset:publicAdminBundleAsset(row)});}catch(error){safeLogError("Admin Bundle Asset Upload Fehler:",error);return res.status(400).json({ok:false,error:error.message||"Bild konnte nicht gespeichert werden."});}});
+app.patch("/api/admin/store/bundle-assets/:id/rights",requireCreatorAccount,requireCreatorAdmin,async(req,res)=>{res.set("Cache-Control","no-store");try{const status=["pending","approved","rejected"].includes(String(req.body?.rights_status||""))?String(req.body.rights_status):"pending";const allowed=status==="approved"&&req.body?.shop_use_allowed===true;const source=studioText(req.body?.rights_source,240,""),note=studioText(req.body?.rights_note,1000,"");if(allowed&&!source)return res.status(400).json({ok:false,error:"Dokumentiere vor der Freigabe kurz Quelle, Lizenz oder Eigentum am Bild."});const row=(await pool.query(`UPDATE admin_bundle_assets SET rights_status=$3,shop_use_allowed=$4,rights_source=$5,rights_note=$6,updated_at=NOW() WHERE id=$1 AND owner_creator_id=$2 RETURNING *`,[req.params.id,req.creatorAccount.id,status,allowed,source,note])).rows[0];if(!row)return res.status(404).json({ok:false,error:"Bild nicht gefunden."});if(!allowed)await pool.query(`UPDATE admin_store_products SET status='draft',updated_at=NOW() WHERE (source_asset_id=$1 OR source_asset_ids ? $2) AND status='published'`,[row.id,String(row.id)]);await refreshDynamicStoreProducts();return res.json({ok:true,asset:publicAdminBundleAsset(row)});}catch(error){safeLogError("Admin Bundle Rechte Fehler:",error);return res.status(400).json({ok:false,error:"Rechtefreigabe konnte nicht gespeichert werden."});}});
+app.post("/api/admin/store/converter/generate",requireCreatorAccount,requireCreatorAdmin,async(req,res)=>{res.set("Cache-Control","no-store");const client=await pool.connect();try{
+  await client.query("BEGIN");
+  const requestedIds=[...new Set((Array.isArray(req.body?.asset_ids)?req.body.asset_ids:[req.body?.asset_id]).map(String).filter(Boolean))].slice(0,6);if(!requestedIds.length)throw new Error("Wähle mindestens ein freigegebenes Quellbild aus.");
+  const assets=(await client.query(`SELECT * FROM admin_bundle_assets WHERE owner_creator_id=$1 AND id=ANY($2::uuid[]) ORDER BY array_position($2::uuid[],id) FOR UPDATE`,[req.creatorAccount.id,requestedIds])).rows;if(assets.length!==requestedIds.length)throw new Error("Mindestens ein Quellbild wurde nicht gefunden.");if(assets.some(a=>a.rights_status!=="approved"||a.shop_use_allowed!==true))throw new Error("Alle ausgewählten Bilder müssen für Shop-Nutzung freigegeben sein.");
+  const platform=CFS_STORE_ALLOWED_PLATFORMS.has(String(req.body?.platform||""))?String(req.body.platform):"neutral",type=String(req.body?.product_type||"stream_status"),detail=String(req.body?.detail||"full"),outputMode=CFS_ADMIN_CONVERTER_OUTPUT_MODES.has(String(req.body?.output_mode||""))?String(req.body.output_mode):"bundle_only",variantCount=[1,2,4].includes(Number(req.body?.variant_count))?Number(req.body.variant_count):1,stylePreset=["custom","cyber","gaming","seasonal","minimal"].includes(String(req.body?.style_preset||""))?String(req.body.style_preset):"custom",includeBranding=req.body?.include_branding!==false;
+  const sourceManifest=adminConverterManifest(platform,type,detail,requestedIds,{includeBranding}),baseTitle=studioText(req.body?.title,120,`${adminConverterPlatformLabel(platform)} ${type==="stream_status"?"Stream Status Pack":"Creator Pack"}`),collectionTitle=studioText(req.body?.collection_title,140,baseTitle),collectionKey=`${safeFactoryCollection(collectionTitle)}-${crypto.randomBytes(3).toString("hex")}`,designCycle=["frame","signal","minimal","classic","split","orbit"],existingCount=Number((await client.query(`SELECT COUNT(*)::int AS count FROM admin_store_products WHERE owner_creator_id=$1`,[req.creatorAccount.id])).rows[0]?.count||0),shaMix=assets.map(a=>a.sha256).join(""),createdParents=[],createdItems=[];
+  const bundleEnabled=outputMode!=="singles_only",singlesEnabled=outputMode!=="bundle_only";
+  for(let i=0;i<variantCount;i++){
+    const sequence=existingCount+i,variant=designCycle[sequence%designCycle.length],accent=factoryAccentFromSha(shaMix,sequence),title=variantCount===1?baseTitle:`${baseTitle} · ${variant.charAt(0).toUpperCase()+variant.slice(1)}`,id=`admin-${crypto.randomUUID()}`,slug=`${safeFactorySlug(title)}-${crypto.randomBytes(3).toString("hex")}`,preview=factoryPreview(platform,variant,assets,collectionTitle),category=adminConverterCategory(type),singleMode=outputMode==="bundle_and_singles"?"standalone_and_bundle":"standalone_only",itemOffers=sourceManifest.items.map(item=>({kind:item.kind,key:item.key,sale_mode:singlesEnabled&&adminConverterSingleEligible(item)?singleMode:"bundle_only",price_cents:0})),commerceConfig={source_manifest_items:sourceManifest.items,item_offers:itemOffers,bundle_price_cents:0,currency:"EUR",complete_bundle_supported:outputMode==="bundle_and_singles",converter_recipe:{product_type:type,detail,platform,output_mode:outputMode,variant_count:variantCount,style_preset:stylePreset,include_branding:includeBranding}},bundleConfig={preset:stylePreset,content:{converter:true},asset_count:assets.length,collection_key:collectionKey,converter:{product_type:type,detail,platform,output_mode:outputMode,style_preset:stylePreset}},description=`Admin-Umwandler · ${adminConverterPlatformLabel(platform)} · ${type.replaceAll("_"," ")} · ${detail.replaceAll("_"," ")} · ${stylePreset}.`,features=[`Umwandler: ${type.replaceAll("_"," ")}`,`Detail: ${detail.replaceAll("_"," ")}`,`Design: ${stylePreset.toUpperCase()}`,`Ausgabe: ${outputMode.replaceAll("_"," ")}`],compatibility=[adminConverterPlatformLabel(platform),"CFS Creator Shop","Admin Draft"],coverToken=crypto.randomBytes(24).toString("hex"),coverContent=renderFactoryCoverSvg(platform,variant,assets,title,accent),coverSha=crypto.createHash("sha256").update(coverContent).digest("hex"),releaseNotes="Initial converter draft.";
+    const parent=(await client.query(`INSERT INTO admin_store_products(id,owner_creator_id,source_asset_id,source_asset_ids,slug,category,title,description,platform,publisher,version,pricing_mode,accent,status,design_variant,manifest,preview,features,compatibility,bundle_config,collection_key,collection_title,cover_mode,release_notes,cover_public_token,cover_mime,cover_content,cover_sha256,offer_type,sale_mode,list_price_cents,currency,parent_bundle_id,source_item_key,commerce_config,offer_enabled) VALUES($1,$2,$3,$4::jsonb,$5,$6,$7,$8,$9,'cfs_zockt','1.0.0','beta',$10,'draft',$11,$12::jsonb,$13::jsonb,$14::jsonb,$15::jsonb,$16::jsonb,$17,$18,'rendered',$19,$20,'image/svg+xml',$21,$22,'bundle','bundle_only',0,'EUR',NULL,'',$23::jsonb,$24) RETURNING *`,[id,req.creatorAccount.id,assets[0].id,JSON.stringify(requestedIds),slug,category,title,description,platform,accent,variant,JSON.stringify(sourceManifest),JSON.stringify(preview),JSON.stringify(features),JSON.stringify(compatibility),JSON.stringify(bundleConfig),collectionKey,collectionTitle,releaseNotes,coverToken,coverContent,coverSha,JSON.stringify(commerceConfig),bundleEnabled])).rows[0];
+    await client.query(`INSERT INTO admin_store_product_versions(product_id,owner_creator_id,version,release_notes,manifest,preview,features,compatibility) VALUES($1,$2,'1.0.0',$3,$4::jsonb,$5::jsonb,$6::jsonb,$7::jsonb)`,[parent.id,req.creatorAccount.id,releaseNotes,JSON.stringify(sourceManifest),JSON.stringify(preview),JSON.stringify(features),JSON.stringify(compatibility)]);createdParents.push(parent);
+    if(singlesEnabled){for(const item of sourceManifest.items.filter(adminConverterSingleEligible)){const childTitle=storeStandaloneTitle(parent,item),childId=`admin-${crypto.randomUUID()}`,childSlug=`${safeFactorySlug(childTitle)}-${crypto.randomBytes(3).toString("hex")}`,childManifest={format:"cfs-store-package-v1",items:[item]},childNotes=`Einzelstück aus ${title}.`,childCoverToken=crypto.randomBytes(24).toString("hex");const child=(await client.query(`INSERT INTO admin_store_products(id,owner_creator_id,source_asset_id,source_asset_ids,slug,category,title,description,platform,publisher,version,pricing_mode,accent,status,design_variant,manifest,preview,features,compatibility,bundle_config,collection_key,collection_title,cover_mode,release_notes,cover_public_token,cover_mime,cover_content,cover_sha256,offer_type,sale_mode,list_price_cents,currency,parent_bundle_id,source_item_key,commerce_config,offer_enabled) VALUES($1,$2,$3,$4::jsonb,$5,$6,$7,$8,$9,'cfs_zockt','1.0.0','beta',$10,'draft',$11,$12::jsonb,$13::jsonb,$14::jsonb,$15::jsonb,$16::jsonb,$17,$18,'rendered',$19,$20,'image/svg+xml',$21,$22,'item',$23,0,'EUR',$24,$25,'{}'::jsonb,TRUE) RETURNING *`,[childId,req.creatorAccount.id,assets[0].id,JSON.stringify(requestedIds),childSlug,storeItemCategory(item),childTitle,`Einzeln erzeugter Bestandteil aus ${title}.`,platform,accent,variant,JSON.stringify(childManifest),JSON.stringify(preview),JSON.stringify([storePackageItemLabel(item),`Teil von ${title}`]),JSON.stringify(compatibility),JSON.stringify(bundleConfig),collectionKey,collectionTitle,childNotes,childCoverToken,coverContent,coverSha,singleMode,parent.id,storeItemIdentity(item)])).rows[0];await client.query(`INSERT INTO admin_store_product_versions(product_id,owner_creator_id,version,release_notes,manifest,preview,features,compatibility) VALUES($1,$2,'1.0.0',$3,$4::jsonb,$5::jsonb,$6::jsonb,$7::jsonb)`,[child.id,req.creatorAccount.id,childNotes,JSON.stringify(childManifest),JSON.stringify(preview),JSON.stringify(child.features||[]),JSON.stringify(child.compatibility||[])]);createdItems.push(child);}}
+  }
+  await client.query("COMMIT");await refreshDynamicStoreProducts();return res.status(201).json({ok:true,recipe:{platform,product_type:type,detail,output_mode:outputMode,variant_count:variantCount,style_preset:stylePreset},collection:{key:collectionKey,title:collectionTitle,parents:createdParents.length,items:createdItems.length},...await listAdminFactoryState(req.creatorAccount.id)});
+}catch(error){try{await client.query("ROLLBACK");}catch{}safeLogError("Admin Unified Converter Fehler:",error);return res.status(400).json({ok:false,error:error.message||"Umwandler konnte keine Produkte erzeugen."});}finally{client.release();}});
+app.post("/api/admin/store/bundle-products/generate",requireCreatorAccount,requireCreatorAdmin,async(req,res)=>{res.set("Cache-Control","no-store");try{
+  const requestedIds=[...new Set((Array.isArray(req.body?.asset_ids)?req.body.asset_ids:[req.body?.asset_id]).map(String).filter(Boolean))].slice(0,6);if(!requestedIds.length)return res.status(400).json({ok:false,error:"Wähle mindestens ein Quellbild aus."});
+  const assets=(await pool.query(`SELECT * FROM admin_bundle_assets WHERE owner_creator_id=$1 AND id=ANY($2::uuid[]) ORDER BY array_position($2::uuid[],id)`,[req.creatorAccount.id,requestedIds])).rows;if(assets.length!==requestedIds.length)return res.status(404).json({ok:false,error:"Mindestens ein Quellbild wurde nicht gefunden."});
+  if(assets.some(a=>a.rights_status!=="approved"||a.shop_use_allowed!==true))return res.status(409).json({ok:false,error:"Alle ausgewählten Bilder müssen ausdrücklich für Shop-Nutzung freigegeben sein."});
+  const platform=CFS_STORE_ALLOWED_PLATFORMS.has(String(req.body?.platform||""))?String(req.body.platform):"neutral",content=normalizeFactoryContent(req.body?.content,platform),preset=["custom","cyber","gaming","seasonal","minimal"].includes(String(req.body?.preset||""))?String(req.body.preset):"custom";
+  const baseTitle=studioText(req.body?.title,120,assets[0].label||"CFS Collection"),collectionTitle=studioText(req.body?.collection_title,140,baseTitle),collectionKey=`${safeFactoryCollection(collectionTitle)}-${crypto.randomBytes(3).toString("hex")}`,designCycle=["frame","signal","minimal","classic","split","orbit"],existingCount=Number((await pool.query(`SELECT COUNT(*)::int AS count FROM admin_store_products WHERE owner_creator_id=$1`,[req.creatorAccount.id])).rows[0]?.count||0),created=[];
+  const shaMix=assets.map(a=>a.sha256).join("");
+  for(let i=0;i<4;i++){
+    const sequence=existingCount+i,variant=designCycle[sequence%designCycle.length],themeRound=Math.floor(sequence/designCycle.length)+1,accent=factoryAccentFromSha(shaMix,sequence),id=`admin-${crypto.randomUUID()}`,slug=`${safeFactorySlug(baseTitle)}-${variant}-${crypto.randomBytes(3).toString("hex")}`,manifest=factoryManifest(platform,content,requestedIds),preview=factoryPreview(platform,variant,assets,collectionTitle),title=`${baseTitle} · ${variant.charAt(0).toUpperCase()+variant.slice(1)} ${themeRound}`,enabled=Object.entries(content).filter(([,v])=>v).map(([k])=>k),description=`Admin-produzierte ${preset==="custom"?"Collection":preset.charAt(0).toUpperCase()+preset.slice(1)+" Collection"} aus ${assets.length} freigegebenen Bild${assets.length===1?"":"ern"}.`,features=[`${assets.length} freigegebene Quellbilder`,`Inhalte: ${enabled.join(", ")}`,`Designvariante ${variant} · Themenrunde ${themeRound}`],compatibility=[adminConverterPlatformLabel(platform),"CFS Creator Shop","Free/Beta"],bundleConfig={preset,content,asset_count:assets.length,collection_key:collectionKey},releaseNotes="Initial release.",coverToken=crypto.randomBytes(24).toString("hex"),coverContent=renderFactoryCoverSvg(platform,variant,assets,title,accent),coverSha=crypto.createHash("sha256").update(coverContent).digest("hex");
+    const row=(await pool.query(`INSERT INTO admin_store_products(id,owner_creator_id,source_asset_id,source_asset_ids,slug,title,description,platform,version,pricing_mode,accent,status,design_variant,manifest,preview,features,compatibility,bundle_config,collection_key,collection_title,cover_mode,release_notes,cover_public_token,cover_mime,cover_content,cover_sha256) VALUES($1,$2,$3,$4::jsonb,$5,$6,$7,$8,'1.0.0','free',$9,'draft',$10,$11::jsonb,$12::jsonb,$13::jsonb,$14::jsonb,$15::jsonb,$16,$17,'rendered',$18,$19,'image/svg+xml',$20,$21) RETURNING *`,[id,req.creatorAccount.id,assets[0].id,JSON.stringify(requestedIds),slug,title,description,platform,accent,variant,JSON.stringify(manifest),JSON.stringify(preview),JSON.stringify(features),JSON.stringify(compatibility),JSON.stringify(bundleConfig),collectionKey,collectionTitle,releaseNotes,coverToken,coverContent,coverSha])).rows[0];
+    await pool.query(`INSERT INTO admin_store_product_versions(product_id,owner_creator_id,version,release_notes,manifest,preview,features,compatibility) VALUES($1,$2,$3,$4,$5::jsonb,$6::jsonb,$7::jsonb,$8::jsonb) ON CONFLICT(product_id,version) DO NOTHING`,[id,req.creatorAccount.id,"1.0.0",releaseNotes,JSON.stringify(manifest),JSON.stringify(preview),JSON.stringify(features),JSON.stringify(compatibility)]);
+    created.push(publicAdminStoreDraft({...row,asset_public_token:assets[0].public_token,versions:[{version:"1.0.0",release_notes:releaseNotes,created_at:row.created_at,published_at:null}]}));
+  }
+  return res.status(201).json({ok:true,products:created,collection:{key:collectionKey,title:collectionTitle,preset,asset_count:assets.length,content}});
+}catch(error){safeLogError("Admin Bundle Generate Fehler:",error);return res.status(400).json({ok:false,error:error.message||"Bundle-Varianten konnten nicht erzeugt werden."});}});
+app.patch("/api/admin/store/bundle-products/:id",requireCreatorAccount,requireCreatorAdmin,async(req,res)=>{res.set("Cache-Control","no-store");try{const current=(await pool.query(`SELECT p.*,a.public_token AS asset_public_token FROM admin_store_products p LEFT JOIN admin_bundle_assets a ON a.id=p.source_asset_id WHERE p.id=$1 AND p.owner_creator_id=$2 LIMIT 1`,[req.params.id,req.creatorAccount.id])).rows[0];if(!current)return res.status(404).json({ok:false,error:"Produktentwurf nicht gefunden."});const title=studioText(req.body?.title,140,current.title),description=studioText(req.body?.description,1000,current.description),pricing=["free","beta"].includes(String(req.body?.pricing_mode||""))?String(req.body.pricing_mode):current.pricing_mode;let coverContent=current.cover_content,coverSha=current.cover_sha256;if(title!==current.title){const ids=Array.isArray(current.source_asset_ids)&&current.source_asset_ids.length?current.source_asset_ids.map(String):[String(current.source_asset_id||"")].filter(Boolean),assets=ids.length?(await pool.query(`SELECT * FROM admin_bundle_assets WHERE owner_creator_id=$1 AND id=ANY($2::uuid[]) ORDER BY array_position($2::uuid[],id)`,[req.creatorAccount.id,ids])).rows:[];if(assets.length){coverContent=renderFactoryCoverSvg(current.platform,current.design_variant,assets,title,current.accent);coverSha=crypto.createHash("sha256").update(coverContent).digest("hex");}}const row=(await pool.query(`UPDATE admin_store_products SET title=$3,description=$4,pricing_mode=$5,cover_content=$6,cover_sha256=$7,updated_at=NOW() WHERE id=$1 AND owner_creator_id=$2 RETURNING *`,[req.params.id,req.creatorAccount.id,title,description,pricing,coverContent,coverSha])).rows[0];return res.json({ok:true,product:publicAdminStoreDraft({...row,asset_public_token:current.asset_public_token})});}catch(error){return res.status(400).json({ok:false,error:"Produktentwurf konnte nicht gespeichert werden."});}});
+app.post("/api/admin/store/bundle-products/:id/publish",requireCreatorAccount,requireCreatorAdmin,async(req,res)=>{res.set("Cache-Control","no-store");try{const row=(await pool.query(`SELECT p.*,a.public_token AS asset_public_token FROM admin_store_products p LEFT JOIN admin_bundle_assets a ON a.id=p.source_asset_id WHERE p.id=$1 AND p.owner_creator_id=$2 LIMIT 1`,[req.params.id,req.creatorAccount.id])).rows[0];if(!row)return res.status(404).json({ok:false,error:"Produktentwurf nicht gefunden."});if(row.offer_enabled===false)return res.status(409).json({ok:false,error:"Dieses Angebot ist deaktiviert. Aktiviere es zuerst in der Commerce-Struktur."});const ids=Array.isArray(row.source_asset_ids)&&row.source_asset_ids.length?row.source_asset_ids.map(String):[String(row.source_asset_id||"")].filter(Boolean),rights=(await pool.query(`SELECT id,rights_status,shop_use_allowed FROM admin_bundle_assets WHERE owner_creator_id=$1 AND id=ANY($2::uuid[])`,[req.creatorAccount.id,ids])).rows;if(rights.length!==ids.length||rights.some(a=>a.rights_status!=="approved"||a.shop_use_allowed!==true))return res.status(409).json({ok:false,error:"Veröffentlichung blockiert: Alle Bildrechte müssen für Shop-Nutzung freigegeben sein."});const product=adminStoreRowToProduct(row);validateStoreProduct(product);const saved=(await pool.query(`UPDATE admin_store_products SET status='published',published_at=COALESCE(published_at,NOW()),updated_at=NOW() WHERE id=$1 RETURNING *`,[row.id])).rows[0];await pool.query(`UPDATE admin_store_product_versions SET published_at=COALESCE(published_at,NOW()) WHERE product_id=$1 AND version=$2`,[row.id,saved.version]);await refreshDynamicStoreProducts();return res.json({ok:true,product:publicAdminStoreDraft({...saved,asset_public_token:row.asset_public_token})});}catch(error){safeLogError("Admin Bundle Publish Fehler:",error);return res.status(400).json({ok:false,error:error.message||"Produkt konnte nicht veröffentlicht werden."});}});
+app.post("/api/admin/store/bundle-products/:id/unpublish",requireCreatorAccount,requireCreatorAdmin,async(req,res)=>{res.set("Cache-Control","no-store");try{const row=(await pool.query(`UPDATE admin_store_products SET status='draft',updated_at=NOW() WHERE id=$1 AND owner_creator_id=$2 RETURNING *`,[req.params.id,req.creatorAccount.id])).rows[0];if(!row)return res.status(404).json({ok:false,error:"Produkt nicht gefunden."});await refreshDynamicStoreProducts();return res.json({ok:true,product:publicAdminStoreDraft(row)});}catch(error){return res.status(400).json({ok:false,error:"Produkt konnte nicht aus dem Shop genommen werden."});}});
+app.get("/api/admin/store/bundle-products/:id/cover",requireCreatorAccount,requireCreatorAdmin,async(req,res)=>{try{const row=(await pool.query(`SELECT cover_mime,cover_content,cover_sha256 FROM admin_store_products WHERE id=$1 AND owner_creator_id=$2 LIMIT 1`,[req.params.id,req.creatorAccount.id])).rows[0];if(!row?.cover_content)return res.status(404).end();res.set("Content-Type",String(row.cover_mime||"image/svg+xml"));res.set("Cache-Control","no-store");res.set("ETag",`"${String(row.cover_sha256||"")}"`);res.set("X-Content-Type-Options","nosniff");return res.send(row.cover_content);}catch(error){return res.status(500).end();}});
+app.post("/api/admin/store/bundle-products/:id/version",requireCreatorAccount,requireCreatorAdmin,async(req,res)=>{res.set("Cache-Control","no-store");try{const current=(await pool.query(`SELECT * FROM admin_store_products WHERE id=$1 AND owner_creator_id=$2 LIMIT 1`,[req.params.id,req.creatorAccount.id])).rows[0];if(!current)return res.status(404).json({ok:false,error:"Produkt nicht gefunden."});if(current.status==="archived")return res.status(409).json({ok:false,error:"Archivierte Produkte zuerst über die Collection reaktivieren."});const notes=studioText(req.body?.release_notes,1200,"");if(!notes)return res.status(400).json({ok:false,error:"Für eine neue Produktversion sind Release Notes erforderlich."});const mode=String(req.body?.bump||"")==="minor"?"minor":"patch",version=bumpStoreVersion(current.version,mode);const client=await pool.connect();try{await client.query("BEGIN");const row=(await client.query(`UPDATE admin_store_products SET version=$3,release_notes=$4,updated_at=NOW() WHERE id=$1 AND owner_creator_id=$2 RETURNING *`,[current.id,req.creatorAccount.id,version,notes])).rows[0];await client.query(`INSERT INTO admin_store_product_versions(product_id,owner_creator_id,version,release_notes,manifest,preview,features,compatibility,published_at) VALUES($1,$2,$3,$4,$5::jsonb,$6::jsonb,$7::jsonb,$8::jsonb,$9)`,[row.id,req.creatorAccount.id,version,notes,JSON.stringify(row.manifest||{}),JSON.stringify(row.preview||{}),JSON.stringify(row.features||[]),JSON.stringify(row.compatibility||[]),row.status==="published"?new Date():null]);await client.query("COMMIT");}catch(error){await client.query("ROLLBACK");throw error;}finally{client.release();}await refreshDynamicStoreProducts();const versions=(await pool.query(`SELECT version,release_notes,created_at,published_at FROM admin_store_product_versions WHERE product_id=$1 ORDER BY created_at DESC`,[current.id])).rows;const fresh=(await pool.query(`SELECT p.*,a.public_token AS asset_public_token FROM admin_store_products p LEFT JOIN admin_bundle_assets a ON a.id=p.source_asset_id WHERE p.id=$1`,[current.id])).rows[0];return res.json({ok:true,product:publicAdminStoreDraft({...fresh,versions})});}catch(error){safeLogError("Admin Produktversion Fehler:",error);return res.status(400).json({ok:false,error:error.message||"Produktversion konnte nicht erstellt werden."});}});
+
+// ============================================================
+// ADMIN SHOP COMMERCE STRUCTURE · V178
+// Paid offers are catalog previews only while CFS_COMMERCIAL_MODE=false.
+// ============================================================
+const CFS_STORE_SALE_MODES=new Set(["bundle_only","standalone_and_bundle","standalone_only"]);
+function normalizeStoreMoney(value,max=999999){const n=Math.round(Number(value||0));return Number.isFinite(n)?Math.max(0,Math.min(max,n)):0;}
+function storeItemIdentity(item){return `${String(item?.kind||"")}:${String(item?.key||"")}`;}
+function storeItemCategory(item){return item?.kind==="panel_set_template"?"panels":item?.kind==="scene_template"?"scenes":item?.kind==="overlay_template"?"overlays":item?.kind==="tool_link"?"tools":item?.kind==="branding_asset"?"bundles":"widgets";}
+function storeStandaloneTitle(parent,item){return `${String(parent.title||"CFS Produkt")} · ${storePackageItemLabel(item)}`.slice(0,140);}
+async function storeCoverAssets(client,ownerId,row){const ids=Array.isArray(row.source_asset_ids)&&row.source_asset_ids.length?row.source_asset_ids.map(String):[String(row.source_asset_id||"")].filter(Boolean);return ids.length?(await client.query(`SELECT * FROM admin_bundle_assets WHERE owner_creator_id=$1 AND id=ANY($2::uuid[]) ORDER BY array_position($2::uuid[],id)`,[ownerId,ids])).rows:[];}
+async function insertAdminProductClone(client,ownerId,source,{collectionKey=source.collection_key,collectionTitle=source.collection_title,title=`${source.title} · Kopie`,parentBundleId=source.parent_bundle_id||null}={}){
+  const id=`admin-${crypto.randomUUID()}`,slug=`${safeFactorySlug(title)}-${crypto.randomBytes(3).toString("hex")}`,assets=await storeCoverAssets(client,ownerId,source),coverToken=crypto.randomBytes(24).toString("hex"),coverContent=assets.length?renderFactoryCoverSvg(source.platform,source.design_variant,assets,title,source.accent):source.cover_content,coverSha=coverContent?crypto.createHash("sha256").update(coverContent).digest("hex"):source.cover_sha256,notes=`Dupliziert aus ${source.title} · Ausgangsversion ${source.version}.`;
+  const row=(await client.query(`INSERT INTO admin_store_products(id,owner_creator_id,source_asset_id,source_asset_ids,slug,category,title,description,platform,publisher,version,pricing_mode,accent,status,design_variant,manifest,preview,features,compatibility,bundle_config,collection_key,collection_title,cover_mode,release_notes,cover_public_token,cover_mime,cover_content,cover_sha256,offer_type,sale_mode,list_price_cents,currency,parent_bundle_id,source_item_key,commerce_config,offer_enabled) VALUES($1,$2,$3,$4::jsonb,$5,$6,$7,$8,$9,$10,'1.0.0',$11,$12,'draft',$13,$14::jsonb,$15::jsonb,$16::jsonb,$17::jsonb,$18::jsonb,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33::jsonb,$34) RETURNING *`,[id,ownerId,source.source_asset_id,JSON.stringify(source.source_asset_ids||[]),slug,source.category,title,source.description,source.platform,source.publisher||"cfs_zockt",source.pricing_mode,source.accent,source.design_variant,JSON.stringify(source.manifest||{}),JSON.stringify(source.preview||{}),JSON.stringify(source.features||[]),JSON.stringify(source.compatibility||[]),JSON.stringify(source.bundle_config||{}),collectionKey,collectionTitle,source.cover_mode||"rendered",notes,coverToken,source.cover_mime||"image/svg+xml",coverContent,coverSha,source.offer_type||"bundle",source.sale_mode||"bundle_only",normalizeStoreMoney(source.list_price_cents),String(source.currency||"EUR"),parentBundleId,source.source_item_key||"",JSON.stringify(source.commerce_config||{}),source.offer_enabled!==false])).rows[0];
+  await client.query(`INSERT INTO admin_store_product_versions(product_id,owner_creator_id,version,release_notes,manifest,preview,features,compatibility) VALUES($1,$2,'1.0.0',$3,$4::jsonb,$5::jsonb,$6::jsonb,$7::jsonb)`,[id,ownerId,notes,JSON.stringify(row.manifest||{}),JSON.stringify(row.preview||{}),JSON.stringify(row.features||[]),JSON.stringify(row.compatibility||[])]);
+  return row;
+}
+app.post("/api/admin/store/bundle-products/:id/duplicate",requireCreatorAccount,requireCreatorAdmin,async(req,res)=>{res.set("Cache-Control","no-store");const client=await pool.connect();try{await client.query("BEGIN");const source=(await client.query(`SELECT * FROM admin_store_products WHERE id=$1 AND owner_creator_id=$2 LIMIT 1 FOR UPDATE`,[req.params.id,req.creatorAccount.id])).rows[0];if(!source){await client.query("ROLLBACK");return res.status(404).json({ok:false,error:"Produkt nicht gefunden."});}const row=await insertAdminProductClone(client,req.creatorAccount.id,source,{parentBundleId:null});await client.query("COMMIT");return res.status(201).json({ok:true,product:publicAdminStoreDraft(row),...await listAdminFactoryState(req.creatorAccount.id)});}catch(error){try{await client.query("ROLLBACK");}catch{}safeLogError("Admin Produkt Duplizieren Fehler:",error);return res.status(400).json({ok:false,error:error.message||"Produkt konnte nicht dupliziert werden."});}finally{client.release();}});
+app.post("/api/admin/store/collections/:key/duplicate",requireCreatorAccount,requireCreatorAdmin,async(req,res)=>{res.set("Cache-Control","no-store");const client=await pool.connect();try{await client.query("BEGIN");const sourceRows=await adminCollectionRows(req.creatorAccount.id,String(req.params.key||""),client);if(!sourceRows.length){await client.query("ROLLBACK");return res.status(404).json({ok:false,error:"Collection nicht gefunden."});}const baseTitle=studioText(req.body?.title,140,`${sourceRows[0].collection_title||"Collection"} · Kopie`),newKey=`${safeFactoryCollection(baseTitle)}-${crypto.randomBytes(3).toString("hex")}`,idMap=new Map(),created=[];for(const source of sourceRows){const row=await insertAdminProductClone(client,req.creatorAccount.id,source,{collectionKey:newKey,collectionTitle:baseTitle,title:`${source.title} · Kopie`,parentBundleId:null});idMap.set(source.id,row.id);created.push(row);}for(let i=0;i<sourceRows.length;i++){const oldParent=sourceRows[i].parent_bundle_id;if(oldParent&&idMap.has(oldParent)){created[i]=(await client.query(`UPDATE admin_store_products SET parent_bundle_id=$2 WHERE id=$1 RETURNING *`,[created[i].id,idMap.get(oldParent)])).rows[0];}}await client.query("COMMIT");return res.status(201).json({ok:true,collection:{key:newKey,title:baseTitle,products:created.length},...await listAdminFactoryState(req.creatorAccount.id)});}catch(error){try{await client.query("ROLLBACK");}catch{}safeLogError("Admin Collection Duplizieren Fehler:",error);return res.status(400).json({ok:false,error:error.message||"Collection konnte nicht dupliziert werden."});}finally{client.release();}});
+app.patch("/api/admin/store/bundle-products/:id/commerce",requireCreatorAccount,requireCreatorAdmin,async(req,res)=>{res.set("Cache-Control","no-store");const client=await pool.connect();try{await client.query("BEGIN");let parent=(await client.query(`SELECT * FROM admin_store_products WHERE id=$1 AND owner_creator_id=$2 LIMIT 1 FOR UPDATE`,[req.params.id,req.creatorAccount.id])).rows[0];if(!parent){await client.query("ROLLBACK");return res.status(404).json({ok:false,error:"Produkt nicht gefunden."});}if(String(parent.offer_type||"bundle")!=="bundle")throw new Error("Einzelangebote werden über ihr Bundle konfiguriert.");const oldCfg=parent.commerce_config&&typeof parent.commerce_config==="object"?parent.commerce_config:{},sourceItems=Array.isArray(oldCfg.source_manifest_items)&&oldCfg.source_manifest_items.length?oldCfg.source_manifest_items:(Array.isArray(parent.manifest?.items)?parent.manifest.items:[]);if(!sourceItems.length)throw new Error("Das Bundle enthält keine konfigurierbaren Bestandteile.");const requested=Array.isArray(req.body?.items)?req.body.items:[],requestedMap=new Map(requested.map(x=>[`${String(x?.kind||"")}:${String(x?.key||"")}`,x]));const bundlePrice=normalizeStoreMoney(req.body?.bundle_price_cents),currency="EUR",itemOffers=[],bundleItems=[];
+  for(const item of sourceItems){const identity=storeItemIdentity(item),input=requestedMap.get(identity)||{},mode=CFS_STORE_SALE_MODES.has(String(input.sale_mode||""))?String(input.sale_mode):"bundle_only",price=normalizeStoreMoney(input.price_cents,99999);itemOffers.push({kind:item.kind,key:item.key,sale_mode:mode,price_cents:price});if(mode!=="standalone_only")bundleItems.push(item);let child=(await client.query(`SELECT * FROM admin_store_products WHERE owner_creator_id=$1 AND parent_bundle_id=$2 AND source_item_key=$3 LIMIT 1 FOR UPDATE`,[req.creatorAccount.id,parent.id,identity])).rows[0];if(mode==="bundle_only"){if(child)await client.query(`UPDATE admin_store_products SET offer_enabled=FALSE,status='draft',sale_mode='bundle_only',updated_at=NOW() WHERE id=$1`,[child.id]);continue;}const childPricing=price>0?"paid_preview":"beta",childTitle=storeStandaloneTitle(parent,item),childManifest={format:"cfs-store-package-v1",items:[item]},childCategory=storeItemCategory(item);if(child){child=(await client.query(`UPDATE admin_store_products SET offer_enabled=TRUE,status=CASE WHEN status='archived' THEN 'draft' ELSE status END,sale_mode=$2,list_price_cents=$3,currency=$4,pricing_mode=$5,title=$6,category=$7,manifest=$8::jsonb,updated_at=NOW() WHERE id=$1 RETURNING *`,[child.id,mode,price,currency,childPricing,childTitle,childCategory,JSON.stringify(childManifest)])).rows[0];}else{const id=`admin-${crypto.randomUUID()}`,slug=`${safeFactorySlug(childTitle)}-${crypto.randomBytes(3).toString("hex")}`,notes=`Einzelangebot aus ${parent.title}.`,coverToken=crypto.randomBytes(24).toString("hex");child=(await client.query(`INSERT INTO admin_store_products(id,owner_creator_id,source_asset_id,source_asset_ids,slug,category,title,description,platform,publisher,version,pricing_mode,accent,status,design_variant,manifest,preview,features,compatibility,bundle_config,collection_key,collection_title,cover_mode,release_notes,cover_public_token,cover_mime,cover_content,cover_sha256,offer_type,sale_mode,list_price_cents,currency,parent_bundle_id,source_item_key,commerce_config,offer_enabled) VALUES($1,$2,$3,$4::jsonb,$5,$6,$7,$8,$9,$10,'1.0.0',$11,$12,'draft',$13,$14::jsonb,$15::jsonb,$16::jsonb,$17::jsonb,$18::jsonb,$19,$20,$21,$22,$23,$24,$25,$26,'item',$27,$28,$29,$30,$31,'{}'::jsonb,TRUE) RETURNING *`,[id,req.creatorAccount.id,parent.source_asset_id,JSON.stringify(parent.source_asset_ids||[]),slug,childCategory,childTitle,`Einzeln erhältlicher Bestandteil aus ${parent.title}.`,parent.platform,parent.publisher||"cfs_zockt",childPricing,parent.accent,parent.design_variant,JSON.stringify(childManifest),JSON.stringify(parent.preview||{}),JSON.stringify([storePackageItemLabel(item),`Teil von ${parent.title}`]),JSON.stringify(parent.compatibility||[]),JSON.stringify(parent.bundle_config||{}),parent.collection_key,parent.collection_title,parent.cover_mode||"rendered",notes,coverToken,parent.cover_mime||"image/svg+xml",parent.cover_content,parent.cover_sha256,mode,price,currency,parent.id,identity])).rows[0];await client.query(`INSERT INTO admin_store_product_versions(product_id,owner_creator_id,version,release_notes,manifest,preview,features,compatibility) VALUES($1,$2,'1.0.0',$3,$4::jsonb,$5::jsonb,$6::jsonb,$7::jsonb)`,[child.id,req.creatorAccount.id,notes,JSON.stringify(child.manifest||{}),JSON.stringify(child.preview||{}),JSON.stringify(child.features||[]),JSON.stringify(child.compatibility||[])]);}}
+  const parentEnabled=bundleItems.length>0,parentPricing=bundlePrice>0?"paid_preview":(["free","beta"].includes(String(parent.pricing_mode||""))?parent.pricing_mode:"beta"),commerceConfig={...oldCfg,source_manifest_items:sourceItems,item_offers:itemOffers,bundle_price_cents:bundlePrice,currency,complete_bundle_supported:true};parent=(await client.query(`UPDATE admin_store_products SET manifest=$3::jsonb,commerce_config=$4::jsonb,list_price_cents=$5,currency=$6,pricing_mode=$7,offer_enabled=$8,status=CASE WHEN $8 THEN status ELSE 'draft' END,updated_at=NOW() WHERE id=$1 AND owner_creator_id=$2 RETURNING *`,[parent.id,req.creatorAccount.id,JSON.stringify({format:"cfs-store-package-v1",items:bundleItems}),JSON.stringify(commerceConfig),bundlePrice,currency,parentPricing,parentEnabled])).rows[0];await client.query("COMMIT");await refreshDynamicStoreProducts();return res.json({ok:true,product:publicAdminStoreDraft(parent),...await listAdminFactoryState(req.creatorAccount.id)});}catch(error){try{await client.query("ROLLBACK");}catch{}safeLogError("Admin Commerce Struktur Fehler:",error);return res.status(400).json({ok:false,error:error.message||"Angebotsstruktur konnte nicht gespeichert werden."});}finally{client.release();}});
+
+async function adminCollectionRows(ownerId,key,client=pool){return(await client.query(`SELECT p.*,a.public_token AS asset_public_token FROM admin_store_products p LEFT JOIN admin_bundle_assets a ON a.id=p.source_asset_id WHERE p.owner_creator_id=$1 AND p.collection_key=$2 ORDER BY p.created_at`,[ownerId,key])).rows;}
+async function assertAdminCollectionPublishable(ownerId,key,client){const allRows=await adminCollectionRows(ownerId,key,client),rows=allRows.filter(row=>row.offer_enabled!==false);if(!allRows.length)throw new Error("Collection nicht gefunden.");if(!rows.length)throw new Error("Collection enthält keine aktiven Angebote.");if(rows.some(row=>row.status==="archived"))throw new Error("Archivierte Collection zuerst reaktivieren.");for(const row of rows){const ids=Array.isArray(row.source_asset_ids)&&row.source_asset_ids.length?row.source_asset_ids.map(String):[String(row.source_asset_id||"")].filter(Boolean),rights=(await client.query(`SELECT id,rights_status,shop_use_allowed FROM admin_bundle_assets WHERE owner_creator_id=$1 AND id=ANY($2::uuid[])`,[ownerId,ids])).rows;if(rights.length!==ids.length||rights.some(a=>a.rights_status!=="approved"||a.shop_use_allowed!==true))throw new Error("Collection kann nicht veröffentlicht werden: Bildrechte sind nicht vollständig freigegeben.");validateStoreProduct(adminStoreRowToProduct(row));}return rows;}
+app.post("/api/admin/store/collections/:key/:action",requireCreatorAccount,requireCreatorAdmin,async(req,res)=>{res.set("Cache-Control","no-store");const key=String(req.params.key||""),action=String(req.params.action||"");if(!["publish","unpublish","archive","restore"].includes(action))return res.status(404).json({ok:false,error:"Collection-Aktion nicht gefunden."});const client=await pool.connect();try{await client.query("BEGIN");let rows=await adminCollectionRows(req.creatorAccount.id,key,client);if(!rows.length){await client.query("ROLLBACK");return res.status(404).json({ok:false,error:"Collection nicht gefunden."});}if(action==="publish"){rows=await assertAdminCollectionPublishable(req.creatorAccount.id,key,client);await client.query(`UPDATE admin_store_products SET status='published',published_at=COALESCE(published_at,NOW()),updated_at=NOW() WHERE owner_creator_id=$1 AND collection_key=$2 AND offer_enabled=TRUE`,[req.creatorAccount.id,key]);await client.query(`UPDATE admin_store_product_versions v SET published_at=COALESCE(v.published_at,NOW()) FROM admin_store_products p WHERE v.product_id=p.id AND v.version=p.version AND p.owner_creator_id=$1 AND p.collection_key=$2 AND p.offer_enabled=TRUE`,[req.creatorAccount.id,key]);}else if(action==="unpublish"){await client.query(`UPDATE admin_store_products SET status='draft',updated_at=NOW() WHERE owner_creator_id=$1 AND collection_key=$2 AND status<>'archived'`,[req.creatorAccount.id,key]);}else if(action==="archive"){await client.query(`UPDATE admin_store_products SET status='archived',updated_at=NOW() WHERE owner_creator_id=$1 AND collection_key=$2`,[req.creatorAccount.id,key]);}else{await client.query(`UPDATE admin_store_products SET status='draft',updated_at=NOW() WHERE owner_creator_id=$1 AND collection_key=$2 AND status='archived'`,[req.creatorAccount.id,key]);}await client.query("COMMIT");await refreshDynamicStoreProducts();return res.json({ok:true,action,...await listAdminFactoryState(req.creatorAccount.id)});}catch(error){try{await client.query("ROLLBACK");}catch{}safeLogError("Admin Collection Aktion Fehler:",error);return res.status(400).json({ok:false,error:error.message||"Collection konnte nicht verarbeitet werden."});}finally{client.release();}});
+
+// WIDGET STUDIO · PANEL SET ROUTES
+app.get("/api/creator/widget-studio/panel-sets",requireCreatorAccount,async(req,res)=>{
+    res.set("Cache-Control","no-store");
+    try{
+        const moduleState=await getModuleState(req.creatorAccount.id,PANEL_SET_MODULE_KEY);
+        const store=normalizeStoredPanelSetStore(moduleState.state?.panel_sets);
+        return res.json({ok:true,sets:store.sets,module_state:moduleState.state||{},limits:{max_sets:PANEL_SET_MAX_COUNT}});
+    }catch(error){
+        safeLogError("Panel Set Liste Fehler:",error);
+        return res.status(500).json({ok:false,error:"Panel-Sets konnten nicht geladen werden."});
+    }
+});
+
+app.post("/api/creator/widget-studio/panel-set-agent/plan",requireCreatorAccount,async(req,res)=>{
+    res.set("Cache-Control","no-store");
+    try{
+        const plan=panelSetAgentPlan(req.body?.prompt,{variation:req.body?.variation,excludeVariant:String(req.body?.exclude_variant||"")});
+        return res.json({ok:true,plan,planner:"structured_panel_set_v1",planner_version:2,design_generator:"panel_design_v2",requires_confirmation:true});
+    }catch(error){
+        const status=Number(error?.statusCode)||400;
+        return res.status(status).json({ok:false,code:error?.code||"panel_agent_invalid",error:error?.message||"Panel-Paket konnte nicht geplant werden."});
+    }
+});
+
+app.post("/api/creator/widget-studio/panel-sets",requireCreatorAccount,async(req,res)=>{
+    res.set("Cache-Control","no-store");
+    try{
+        const outcome=await mutatePanelSetStore(req.creatorAccount.id,async(store,client)=>{
+            if(store.sets.length>=PANEL_SET_MAX_COUNT)throw panelSetError(`Du kannst maximal ${PANEL_SET_MAX_COUNT} Panel-Sets speichern.`,"panel_set_limit",403);
+            const panelSet=sanitizePanelSetInput(req.body?.set||req.body||{});
+            await panelSetAssertLogoOwnership(client,req.creatorAccount.id,panelSet);
+            store.sets.unshift(panelSet);
+            return panelSet;
+        });
+        return res.status(201).json({ok:true,set:outcome.result,sets:outcome.sets,module_state:outcome.module_state});
+    }catch(error){
+        const status=Number(error?.statusCode)||500;
+        if(status<500)return res.status(status).json({ok:false,code:error?.code||"panel_set_invalid",error:error.message});
+        safeLogError("Panel Set Erstellen Fehler:",error);
+        return res.status(500).json({ok:false,error:"Panel-Set konnte nicht gespeichert werden."});
+    }
+});
+
+app.put("/api/creator/widget-studio/panel-sets/:id",requireCreatorAccount,async(req,res)=>{
+    res.set("Cache-Control","no-store");
+    try{
+        const id=String(req.params.id||"");
+        if(!validPanelSetUuid(id))return res.status(404).json({ok:false,error:"Panel-Set nicht gefunden."});
+        const outcome=await mutatePanelSetStore(req.creatorAccount.id,async(store,client)=>{
+            const index=store.sets.findIndex(item=>item.id===id);
+            if(index<0)throw panelSetError("Panel-Set nicht gefunden.","panel_set_missing",404);
+            const current=store.sets[index];
+            const expected=studioText(req.body?.expected_updated_at,80,"");
+            if(expected&&expected!==String(current.updated_at||""))throw panelSetError("Dieses Panel-Set wurde zwischenzeitlich geändert. Öffne es neu und versuche es erneut.","panel_set_conflict",409);
+            const panelSet=sanitizePanelSetInput(req.body?.set||req.body||{},{existing:current,id:current.id});
+            if(panelSet.platform!==current.platform&&current.items.some(item=>!panelSetDefinitions(panelSet.platform).some(def=>def.key===item.panel_type))){
+                throw panelSetError("Plattformwechsel mit unpassenden Panel-Typen ist nicht erlaubt.","panel_platform_mismatch",400);
+            }
+            await panelSetAssertLogoOwnership(client,req.creatorAccount.id,panelSet);
+            store.sets[index]=panelSet;
+            return panelSet;
+        });
+        return res.json({ok:true,set:outcome.result,sets:outcome.sets,module_state:outcome.module_state});
+    }catch(error){
+        const status=Number(error?.statusCode)||500;
+        if(status<500)return res.status(status).json({ok:false,code:error?.code||"panel_set_invalid",error:error.message});
+        safeLogError("Panel Set Update Fehler:",error);
+        return res.status(500).json({ok:false,error:"Panel-Set konnte nicht aktualisiert werden."});
+    }
+});
+
+app.post("/api/creator/widget-studio/panel-sets/:id/duplicate",requireCreatorAccount,async(req,res)=>{
+    res.set("Cache-Control","no-store");
+    try{
+        const id=String(req.params.id||"");
+        if(!validPanelSetUuid(id))return res.status(404).json({ok:false,error:"Panel-Set nicht gefunden."});
+        const outcome=await mutatePanelSetStore(req.creatorAccount.id,async(store,client)=>{
+            if(store.sets.length>=PANEL_SET_MAX_COUNT)throw panelSetError(`Du kannst maximal ${PANEL_SET_MAX_COUNT} Panel-Sets speichern.`,"panel_set_limit",403);
+            const current=store.sets.find(item=>item.id===id);
+            if(!current)throw panelSetError("Panel-Set nicht gefunden.","panel_set_missing",404);
+            const copy=sanitizePanelSetInput({...current,id:undefined,name:`${current.name} · Kopie`,items:current.items.map(item=>({...item,generated_media_id:null}))},{id:crypto.randomUUID()});
+            await panelSetAssertLogoOwnership(client,req.creatorAccount.id,copy);
+            store.sets.unshift(copy);
+            return copy;
+        });
+        return res.status(201).json({ok:true,set:outcome.result,sets:outcome.sets,module_state:outcome.module_state});
+    }catch(error){
+        const status=Number(error?.statusCode)||500;
+        if(status<500)return res.status(status).json({ok:false,code:error?.code||"panel_set_invalid",error:error.message});
+        safeLogError("Panel Set Duplizieren Fehler:",error);
+        return res.status(500).json({ok:false,error:"Panel-Set konnte nicht dupliziert werden."});
+    }
+});
+
+app.delete("/api/creator/widget-studio/panel-sets/:id",requireCreatorAccount,async(req,res)=>{
+    res.set("Cache-Control","no-store");
+    try{
+        const id=String(req.params.id||"");
+        if(!validPanelSetUuid(id))return res.status(404).json({ok:false,error:"Panel-Set nicht gefunden."});
+        const outcome=await mutatePanelSetStore(req.creatorAccount.id,async store=>{
+            const index=store.sets.findIndex(item=>item.id===id);
+            if(index<0)throw panelSetError("Panel-Set nicht gefunden.","panel_set_missing",404);
+            const [removed]=store.sets.splice(index,1);
+            return removed;
+        });
+        return res.json({ok:true,deleted:true,set:outcome.result,sets:outcome.sets,module_state:outcome.module_state});
+    }catch(error){
+        const status=Number(error?.statusCode)||500;
+        if(status<500)return res.status(status).json({ok:false,code:error?.code||"panel_set_invalid",error:error.message});
+        safeLogError("Panel Set Löschen Fehler:",error);
+        return res.status(500).json({ok:false,error:"Panel-Set konnte nicht gelöscht werden."});
+    }
+});
 
 app.get("/api/creator/widget-studio/assets",requireCreatorAccount,async(req,res)=>{
     res.set("Cache-Control","no-store");
@@ -21519,6 +22484,9 @@ app.post("/api/bridge/widget-studio/actions/nack", widgetBridgeEventLimiter, req
 // ============================================================
 // WIDGET STUDIO · ÖFFENTLICHE CREATOR-ASSETS
 // ============================================================
+
+app.get("/store-covers/:publicToken",publicRuntimeIpLimiter,widgetReadLimiter,async(req,res)=>{const token=String(req.params.publicToken||"");if(!/^[a-f0-9]{48}$/i.test(token))return res.status(404).end();try{const row=(await pool.query(`SELECT cover_mime,cover_content,cover_sha256 FROM admin_store_products WHERE cover_public_token=$1 AND status='published' LIMIT 1`,[token])).rows[0];if(!row?.cover_content)return res.status(404).end();res.set("Content-Type",String(row.cover_mime||"image/svg+xml"));res.set("Cache-Control","private, max-age=300, must-revalidate");res.set("CDN-Cache-Control","no-store");res.set("ETag",`"${String(row.cover_sha256||"")}"`);res.set("Content-Disposition","inline");res.set("X-Content-Type-Options","nosniff");return res.send(row.cover_content);}catch(error){safeLogError("Store Cover Public Fehler:",error);return res.status(500).end();}});
+app.get("/store-assets/:publicToken",publicRuntimeIpLimiter,widgetReadLimiter,async(req,res)=>{const token=String(req.params.publicToken||"");if(!/^[a-f0-9]{48}$/i.test(token))return res.status(404).end();try{const row=(await pool.query(`SELECT mime_type,content,sha256 FROM admin_bundle_assets WHERE public_token=$1 AND rights_status='approved' AND shop_use_allowed=TRUE LIMIT 1`,[token])).rows[0];if(!row)return res.status(404).end();res.set("Content-Type",String(row.mime_type||"application/octet-stream"));res.set("Cache-Control","private, max-age=300, must-revalidate");res.set("CDN-Cache-Control","no-store");res.set("Surrogate-Control","no-store");res.set("ETag",`"${String(row.sha256||"")}"`);res.set("Content-Disposition","inline");res.set("X-Content-Type-Options","nosniff");return res.send(row.content);}catch(error){safeLogError("Store Asset Public Fehler:",error);return res.status(500).end();}});
 
 app.get("/widget-assets/:publicToken",publicRuntimeIpLimiter,widgetReadLimiter,async(req,res)=>{
     const token=String(req.params.publicToken||"");
@@ -29312,6 +30280,80 @@ app.get("/go/tiktok/community", (_req, res) => {
 
 
 // ============================================================
+// CREATOR PRODUCT HTML ACCESS · v180 BRAND / PUBLIC BOUNDARY
+//
+// Die öffentliche Website ist cfs_zockt. Produktoberflächen (Creator Suite,
+// Dashboard, Shop, Studios, Launcher, Account/Setup und Admin) werden erst
+// nach einer gültigen Creator-Session als HTML ausgeliefert. API-Endpunkte
+// behalten zusätzlich ihre bestehenden requireCreatorAccount/Admin-Gates.
+// ============================================================
+
+const PUBLIC_PAGE_HTML_ALLOWLIST = new Set([
+    "/pages/login.html",
+    "/pages/forgot-password.html",
+    "/pages/reset-password.html",
+    "/pages/verify-email.html",
+    "/pages/roadmap.html",
+    "/pages/support.html",
+    "/pages/security.html",
+    "/pages/impressum.html",
+    "/pages/datenschutz.html",
+    "/pages/nutzungsbedingungen.html",
+    "/pages/merch.html",
+    "/pages/not-found.html",
+    "/pages/error.html"
+]);
+
+function canonicalHtmlPagePath(pathname) {
+    const value = String(pathname || "");
+    if (!value.startsWith("/pages/")) return "";
+    if (value.endsWith(".html")) return value;
+    if (path.posix.extname(value)) return value;
+    return `${value}.html`;
+}
+
+function safeCreatorReturnTo(req) {
+    const raw = String(req.originalUrl || req.url || "");
+    if (!raw.startsWith("/pages/") || raw.length > 700 || /[\r\n]/.test(raw)) {
+        return "/pages/dashboard.html";
+    }
+    return raw;
+}
+
+app.use(async (req, res, next) => {
+    if (!isSafeHttpMethod(req.method)) return next();
+
+    const pagePath = canonicalHtmlPagePath(req.path);
+    if (!pagePath || PUBLIC_PAGE_HTML_ALLOWLIST.has(pagePath)) return next();
+
+    const pagesRoot = path.join(PUBLIC_DIR, "pages") + path.sep;
+    const candidate = path.resolve(PUBLIC_DIR, pagePath.slice(1));
+    if (!candidate.startsWith(pagesRoot) || !fs.existsSync(candidate)) return next();
+
+    res.setHeader("X-Robots-Tag", "noindex, nofollow, noarchive");
+    res.setHeader("Cache-Control", "no-store");
+
+    try {
+        const account = await getCreatorFromRequest(req);
+        if (!account) {
+            const returnTo = encodeURIComponent(safeCreatorReturnTo(req));
+            return res.redirect(302, `/pages/login.html?returnTo=${returnTo}`);
+        }
+        req.creatorAccount = account;
+        if (pagePath === "/pages/admin-creators.html" && !(await isCreatorSuiteAdmin(account))) {
+            return res.status(404).sendFile(path.join(PUBLIC_DIR, "pages", "not-found.html"));
+        }
+        ensureCreatorCsrfCookie(req, res);
+        return next();
+    }
+    catch (error) {
+        safeLogError("Creator HTML Access Fehler:", error);
+        return res.status(500).sendFile(path.join(PUBLIC_DIR, "pages", "error.html"));
+    }
+});
+
+
+// ============================================================
 // SEO URL CANONICALIZATION · WEBSITE SEO PASS
 //
 // express.static({extensions:["html"]}) kann ansonsten auch
@@ -29322,10 +30364,7 @@ app.get("/go/tiktok/community", (_req, res) => {
 
 const SEO_CANONICAL_PATHS = new Map([
     ["/index.html", "/"],
-    ["/pages/creator-suite", "/pages/creator-suite.html"],
-    ["/pages/launcher-download", "/pages/launcher-download.html"],
     ["/pages/merch", "/pages/merch.html"],
-    ["/pages/plans", "/pages/plans.html"],
     ["/pages/roadmap", "/pages/roadmap.html"],
     ["/pages/support", "/pages/support.html"],
     ["/pages/security", "/pages/security.html"],

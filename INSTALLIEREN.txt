@@ -1,5 +1,79 @@
-cfs_zockt v170
-Backend 3.20.15 · Schema 73 · Launcher 0.47.30
+cfs_zockt v184
+Backend 3.20.29 · Schema 78 · Launcher 0.47.30
 
-Updatepaket über die vollständige Projektbasis legen und anschließend `npm run release:v170` ausführen.
+Updatepaket über eine vollständige v183-Projektbasis legen und anschließend `npm run release:v184` ausführen.
+v184: Stream Lifecycle mit Starting/LIVE/BRB/Ending/Offline, manueller Umschaltung und optionalem Launcher-Auto. `CFS_COMMERCIAL_MODE=false`.
+
+cfs_zockt v183
+Backend 3.20.29 · Schema 78 · Launcher 0.47.30
+
+Updatepaket über eine vollständige v182-Projektbasis legen und anschließend `npm run release:v183` ausführen.
+v183: Unified Admin Converter für Plattform-/Detail-Auswahl und Bundle-/Einzelstück-Ausgabe. `CFS_COMMERCIAL_MODE=false`.
+
+cfs_zockt v181
+Backend 3.20.26 · Schema 78
+
+Updatepaket über eine vollständige v180-Projektbasis legen und anschließend `npm run release:v181` ausführen.
+v181: Privates Admin Control Center mit Website Draft/Preview/Publish, zentraler Produktionsübersicht und serverseitig Admin-only Admin-HTML. `CFS_COMMERCIAL_MODE=false`.
+
+cfs_zockt v180
+Backend 3.20.25 · Schema 77 · Launcher 0.47.30
+
+Updatepaket über eine vollständige v179-Projektbasis legen und anschließend `npm run release:v180` ausführen.
+v180: öffentliche Website konsequent auf cfs_zockt/Warum/Games/Streams/Community ausgerichtet; Creator Suite, Shop, Launcher und Studios sind geschützte Creator-Produkte hinter Login. Zentrales Logo-/Publisher-/Copyright-Branding im Creator-Bereich. `CFS_COMMERCIAL_MODE=false`.
+
+cfs_zockt v179
+Backend 3.20.24 · Schema 77 · Launcher 0.47.30
+
+Updatepaket über eine vollständige v178-Projektbasis legen und anschließend `npm run structure179:check` sowie `npm run project:check` ausführen.
+v179: Projektstruktur konsolidiert, Website Main/Creator Suite/Navigation mit Creator Shop synchronisiert, Roadmap und Ideen-/Ablaufplan bereinigt. `CFS_COMMERCIAL_MODE=false`.
+
+cfs_zockt v178
+Backend 3.20.23 · Schema 77 · Launcher 0.47.30
+
+Updatepaket über eine vollständige v177-Projektbasis legen und anschließend `npm run release:v178` ausführen.
+v178: Produkt-/Collection-Duplikation, Bundle + Einzelstück-Angebote und Preisvorbereitung. `CFS_COMMERCIAL_MODE=false`; kein Checkout.
+
+cfs_zockt v177
+Backend 3.20.22 · Schema 76 · Launcher 0.47.30
+
+Updatepaket über eine vollständige v176-Projektbasis legen und anschließend `npm run release:v177` ausführen.
+Das Updatepaket ist kein Full Project Build. Ein separates Full-Project-Archiv wird zusätzlich bereitgestellt.
+v177: Collection Lifecycle, gespeicherte SVG-Cover und Produktversionen/Release Notes. `CFS_COMMERCIAL_MODE=false`; kein Live-Commerce.
+
+cfs_zockt v174
+Backend 3.20.19 · Schema 73 · Launcher 0.47.30
+
+Updatepaket über eine vollständige v173-Projektbasis legen und anschließend `npm run release:v174` ausführen.
+Das Updatepaket ist kein Full Project Build. Ein separates Full-Project-Archiv darf nur als solches bezeichnet werden.
+v174: Shop-Produktdetail, produktspezifische Vorschauen, Update/Reinstall, Scene- und Branding-Bundles. `CFS_COMMERCIAL_MODE=false`; kein Live-Commerce.
+
+cfs_zockt v173
+Backend 3.20.18 · Schema 73 · Launcher 0.47.30
+
+Updatepaket über eine vollständige v172-Projektbasis legen und anschließend `npm run release:v173` ausführen.
+Das Updatepaket ist kein Full Project Build. Ein separates Full-Project-Archiv darf nur als solches bezeichnet werden.
+v173: TikTok 9:16 Card Polish + echter allowlisted Creator-Shop-Import. `CFS_COMMERCIAL_MODE=false`; kein Live-Commerce.
+
+cfs_zockt v172
+Backend 3.20.17 · Schema 73 · Launcher 0.47.30
+
+Updatepaket über eine vollständige v171-Projektbasis legen und anschließend `npm run release:v172` ausführen.
+Das Updatepaket ist kein Full Project Build. Ein separates Full-Project-Archiv darf nur als solches bezeichnet werden.
+v172: UI-Unification, Creator Shop Foundation (Widgets/Panels/Overlays/Tools) und Panel Design Generator v2. `CFS_COMMERCIAL_MODE=false`; kein Live-Commerce.
+
+cfs_zockt v171
+Backend 3.20.16 · Schema 73 · Launcher 0.47.30
+
+Updatepaket über die vollständige Projektbasis legen und anschließend `npm run release:v171` ausführen.
 Dieses Paket ist ein kumulatives Update, kein vollständiger Full Project Build.
+
+V175: Admin Bundle Factory uses schema 74. Apply the cumulative update only to a verified v174 baseline.
+
+
+cfs_zockt v176
+Backend 3.20.21 · Schema 75 · Launcher 0.47.30
+
+Updatepaket über eine vollständige v175-Projektbasis legen und anschließend `npm run release:v176` ausführen.
+Das Updatepaket ist kein Full Project Build. Ein separates Full-Project-Archiv wird zusätzlich bereitgestellt.
+v176: Admin Production Suite mit Multi-Image Collections, Bundle Composer, automatischen Mosaik-Covern und Variantenvergleich. `CFS_COMMERCIAL_MODE=false`; kein Live-Commerce.

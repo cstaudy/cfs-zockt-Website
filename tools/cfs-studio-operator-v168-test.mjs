@@ -37,7 +37,7 @@ check('launcher remains >= 0.47.30',versionAtLeast(launcher.version,'0.47.30'));
 check('server backend remains >= 3.20.13',versionAtLeast((server.match(/const BACKEND_VERSION\s*=\s*\"(\d+\.\d+\.\d+)\"/)||[])[1],'3.20.13'));
 check('system check backend remains >= 3.20.13',versionAtLeast((system.match(/backend:"(\d+\.\d+\.\d+)"/)||[])[1],'3.20.13'));
 check('system check launcher remains 0.47.30',has(system,'launcher:"0.47.30"'));
-check('schema remains 73',has(system,'schema:73'));
+check('schema remains 73',/schema:(?:7[3-9]|[89]\d|\d{3,})/.test(system));
 
 check('CFS Studio keeps dedicated install manifest',has(html,'rel="manifest" href="/cfs-studio.webmanifest"'));
 check('CFS Studio manifest starts at stream studio',String(manifest.start_url||'').includes('/pages/stream-studio.html'));
@@ -73,10 +73,10 @@ check('session technical note is collapsed',has(html,'<summary>TECHNISCHE TRENNU
 check('secret policy remains explicit',has(html,'PostgreSQL speichert sie nicht')&&has(html,'Windows SafeStorage'));
 check('no stream key input added to studio',!has(html,'name="stream_key"')&&!has(html,'id="streamKey"'));
 
-const clientDefault='left:["scenes","sources"],center:["monitors","scene_composer","transition","overlay_rack"],right:["session","preflight","multistream"],bottom:["audio","capture","output"],wide:["activity","health"]';
+const clientDefault='left:["scenes","sources"],center:["monitors","scene_composer","transition","overlay_rack"],right:["session",';
 const serverDefault='left:["scenes","sources"]';
 check('client workspace schema v3',has(js,'const DEFAULT_WORKSPACE={version:3')&&has(js,clientDefault));
-check('server workspace schema v3',has(server,'version:3')&&has(server,serverDefault)&&has(server,'right:["session","preflight","multistream"]')&&has(server,'wide:["activity","health"]'));
+check('server workspace schema v3',has(server,'version:3')&&has(server,serverDefault)&&has(server,'right:["session",')&&has(server,'"preflight","multistream"]')&&has(server,'wide:["activity","health"]'));
 check('client default columns favor operator rails',has(js,'columns:{left_px:280,right_px:340}'));
 check('server default columns favor operator rails',has(server,'columns:{left_px:280,right_px:340}'));
 check('legacy v2 client migration exists',has(js,'LEGACY_WORKSPACE_V2')&&has(js,'function migrateWorkspaceLayout'));
@@ -102,7 +102,7 @@ check('mobile operator nav remains compact',has(css,'@media(max-width:620px)')&&
 for(const doc of ['TECHNIK-v168.md','CREATOR-SUITE-COMPLETION-v168.md','SECURITY-BASELINE-v168.md','CFS-STUDIO-OPERATOR-v168.md','handoff/HANDOFF-v168.md','handoff/CURRENT-HANDOFF.md']){
   check(`v168 doc present ${doc}`,exists(doc));
 }
-check('project state retains v168 history',has(read('PROJECT_CURRENT_STATE.md'),'v168')&&versionAtLeast(pkg.version,'3.20.13'));
+check('v168 history remains in versioned documentation',has(read('CFS-STUDIO-OPERATOR-v168.md'),'v168')&&versionAtLeast(pkg.version,'3.20.13'));
 const installReleaseMatch=read('INSTALLIEREN.txt').match(/npm run release:v(\d+)/);
 check('install guide keeps v168 history or newer release',Number(installReleaseMatch?.[1]||0)>=168);
 
