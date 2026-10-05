@@ -3974,6 +3974,27 @@ async function initDatabase() {
         ON creator_widget_scenes (creator_id, updated_at DESC)
     `);
 
+    // V203 Universal Widget & Bundle Builder.  The builder stores only
+    // sanitized creator configuration. Provider credentials and live event
+    // data remain in the existing adapter/NEXUS paths.
+    await pool.query(`
+        CREATE TABLE IF NOT EXISTS creator_universal_bundles (
+            id TEXT PRIMARY KEY,
+            creator_id TEXT NOT NULL REFERENCES creator_accounts(id) ON DELETE CASCADE,
+            name VARCHAR(140) NOT NULL DEFAULT 'Mein Bundle',
+            design_key VARCHAR(48) NOT NULL DEFAULT 'blitze',
+            platforms JSONB NOT NULL DEFAULT '["obs"]'::jsonb,
+            elements JSONB NOT NULL DEFAULT '[]'::jsonb,
+            settings JSONB NOT NULL DEFAULT '{}'::jsonb,
+            status VARCHAR(20) NOT NULL DEFAULT 'draft',
+            version INTEGER NOT NULL DEFAULT 1,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            UNIQUE(creator_id, id)
+        )
+    `);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_creator_universal_bundles_creator ON creator_universal_bundles(creator_id, updated_at DESC)`);
+
 
     await pool.query(`
         CREATE TABLE IF NOT EXISTS creator_beta_testers (
@@ -11291,6 +11312,117 @@ function studioWidgetRegistryPublic(plan = "free", entitlements = null, provider
     }).filter(item=>!hasProviderFilter||item.provider==="obs"||item.provider_connected);
 }
 
+// ============================================================
+// V203 UNIVERSAL WIDGET & BUNDLE BUILDER
+// ============================================================
+
+const UNIVERSAL_BUILDER_PLATFORMS = Object.freeze([
+    {key:"tiktok",label:"TikTok LIVE",short_label:"TIKTOK",kind:"live"},
+    {key:"twitch",label:"Twitch",short_label:"TWITCH",kind:"live"},
+    {key:"obs",label:"OBS / Allgemein",short_label:"ALLGEMEIN",kind:"neutral"}
+]);
+
+const UNIVERSAL_BUILDER_DESIGNS = Object.freeze([
+    {key:"blitze",label:"Blitze",description:"Klar, elektrisch und direkt.",accent:"#20c7ff",second:"#8be9ff",surface:"#071827"},
+    {key:"mecha",label:"Mecha",description:"Technisch, präzise und kraftvoll.",accent:"#ff7a45",second:"#20c7ff",surface:"#17131d"},
+    {key:"futuristisch",label:"Futuristisch",description:"Ruhige Sci-Fi-Flächen mit klaren Linien.",accent:"#7b8cff",second:"#20d4e6",surface:"#0c1024"},
+    {key:"nachtgarten",label:"Nachtgarten",description:"Dunkle Naturtöne mit frischem Akzent.",accent:"#60d394",second:"#b9f3a7",surface:"#081b19"},
+    {key:"sternenatlas",label:"Sternenatlas",description:"Tiefes Blau und leuchtende Orientierung.",accent:"#a6b9ff",second:"#f1d38a",surface:"#0a1028"},
+    {key:"pixelhafen",label:"Pixelhafen",description:"Spielerisch, kompakt und kontrastreich.",accent:"#ffcf5a",second:"#ff78c8",surface:"#181327"},
+    {key:"tuschefluss",label:"Tuschefluss",description:"Reduziert, grafisch und lesbar.",accent:"#f4f8ff",second:"#8da2b8",surface:"#10151b"},
+    {key:"eiskristall",label:"Eiskristall",description:"Helle Cyan-Akzente auf kühlem Grund.",accent:"#8be9ff",second:"#d9fbff",surface:"#081a27"},
+    {key:"abendstudio",label:"Abendstudio",description:"Warm, ruhig und kameratauglich.",accent:"#ffb86b",second:"#ff7aa8",surface:"#21131a"},
+    {key:"flutlichtliga",label:"Flutlichtliga",description:"Sportlich, hell und schnell erfassbar.",accent:"#f6f06d",second:"#5ee7a1",surface:"#111b18"},
+    {key:"nebelrevier",label:"Nebelrevier",description:"Gedämpfte Flächen mit starkem Fokus.",accent:"#b9c2d0",second:"#7a9cff",surface:"#121722"}
+]);
+
+const UNIVERSAL_BUILDER_PLATFORM_KEYS = new Set(UNIVERSAL_BUILDER_PLATFORMS.map(item=>item.key));
+const UNIVERSAL_BUILDER_DESIGN_KEYS = new Set(UNIVERSAL_BUILDER_DESIGNS.map(item=>item.key));
+const UNIVERSAL_BUILDER_ELEMENT_TYPES = new Set([
+    "starting","pause","ending","offline","countdown","schedule","social_bar","ticker","sponsor",
+    "camera_frame","panels","text","image","counter","goal","alert","chat","event_feed"
+]);
+
+function universalBuilderPricing(count) {
+    const n=Math.max(0,Math.round(Number(count)||0));
+    const cents=n<=5?0:n===6?99:n===7?149:n===8?199:n===9?249:n<=12?399:499;
+    return {elements:n,currency:"EUR",amount_cents:cents,amount:(cents/100).toFixed(2),label:cents===0?"Kostenlos":`${(cents/100).toFixed(2).replace(".",",")} €`,beta:true};
+}
+
+function universalBuilderText(value,max=160,fallback="") {
+    return String(value??"").replace(/[\u0000-\u001f\u007f]/g," ").trim().slice(0,max)||fallback;
+}
+
+function sanitizeUniversalBuilderSettings(input={}) {
+    const source=input&&typeof input==="object"&&!Array.isArray(input)?input:{};
+    const allowedAnimation=new Set(["none","soft","pulse","glow","slide","pop"]);
+    const animation=allowedAnimation.has(String(source.animation||""))?String(source.animation):"soft";
+    const color=value=>studioColor(value,"transparent");
+    return {
+        channel_name:universalBuilderText(source.channel_name,80,""),
+        subtitle:universalBuilderText(source.subtitle,120,""),
+        logo_source:studioImageSource(source.logo_source||source.logoSource||""),
+        background_source:studioImageSource(source.background_source||source.backgroundSource||""),
+        accent:color(source.accent,"#20c7ff"),
+        text_color:color(source.text_color||source.textColor,"#f4f8ff"),
+        background:color(source.background,"transparent"),
+        transparency:Math.round(studioClamp(source.transparency,0,1,0)*100)/100,
+        font_family:studioFontFamily(source.font_family||source.fontFamily||"Inter"),
+        font_size:Math.round(studioClamp(source.font_size||source.fontSize,10,180,28)),
+        font_weight:Math.round(studioClamp(source.font_weight||source.fontWeight,300,900,700)),
+        animation,
+        animation_speed:Math.round(studioClamp(source.animation_speed||source.animationSpeed,0.25,3,1)*100)/100,
+        format:["landscape","vertical","square","custom"].includes(String(source.format||""))?String(source.format):"landscape",
+        width:Math.round(studioClamp(source.width,160,4096,1920)),
+        height:Math.round(studioClamp(source.height,160,4096,1080))
+    };
+}
+
+function sanitizeUniversalBuilderElement(input={},index=0) {
+    const source=input&&typeof input==="object"&&!Array.isArray(input)?input:{};
+    const type=UNIVERSAL_BUILDER_ELEMENT_TYPES.has(String(source.type||""))?String(source.type):"text";
+    const platform=UNIVERSAL_BUILDER_PLATFORM_KEYS.has(String(source.platform||""))?String(source.platform):"obs";
+    const item={
+        id:universalBuilderText(source.id,80,`element_${index+1}`),
+        type,
+        platform,
+        source_key:universalBuilderText(source.source_key||source.sourceKey,100,""),
+        widget_type:universalBuilderText(source.widget_type||source.widgetType,100,""),
+        label:universalBuilderText(source.label,120,type.replaceAll("_"," ").toUpperCase()),
+        text:universalBuilderText(source.text,180,""),
+        subtitle:universalBuilderText(source.subtitle,180,""),
+        goal:Math.round(studioClamp(source.goal,0,1000000000,1000)),
+        metric:universalBuilderText(source.metric,80,""),
+        enabled:source.enabled!==false,
+        position:{x:Math.round(studioClamp(source.position?.x,-4000,4000,0)),y:Math.round(studioClamp(source.position?.y,-4000,4000,0))},
+        size:{width:Math.round(studioClamp(source.size?.width,20,4096,640)),height:Math.round(studioClamp(source.size?.height,20,4096,120))}
+    };
+    return item;
+}
+
+function sanitizeUniversalBuilderConfig(input={}) {
+    const source=input&&typeof input==="object"&&!Array.isArray(input)?input:{};
+    const seen=new Set(),elements=[];
+    for(const[index,item] of (Array.isArray(source.elements)?source.elements:[]).slice(0,24).entries()){
+        const clean=sanitizeUniversalBuilderElement(item,index);
+        if(seen.has(clean.id))clean.id=`${clean.id}_${index+1}`;
+        seen.add(clean.id);elements.push(clean);
+    }
+    const platforms=[...new Set((Array.isArray(source.platforms)?source.platforms:["obs"]).map(value=>String(value)).filter(value=>UNIVERSAL_BUILDER_PLATFORM_KEYS.has(value)))].slice(0,3);
+    return {
+        design_key:UNIVERSAL_BUILDER_DESIGN_KEYS.has(String(source.design_key||source.designKey||""))?String(source.design_key||source.designKey):"blitze",
+        platforms:platforms.length?platforms:["obs"],
+        elements,
+        settings:sanitizeUniversalBuilderSettings(source.settings||source)
+    };
+}
+
+function publicUniversalBuilderBundle(row) {
+    if(!row)return null;
+    const config=sanitizeUniversalBuilderConfig({design_key:row.design_key,platforms:row.platforms,elements:row.elements,settings:row.settings});
+    return {id:String(row.id),name:String(row.name||"Mein Bundle"),status:String(row.status||"draft"),version:Number(row.version||1),...config,pricing:universalBuilderPricing(config.elements.length),created_at:row.created_at||null,updated_at:row.updated_at||null};
+}
+
 function studioClamp(
     value,
     min,
@@ -18482,6 +18614,78 @@ app.get(
 
     }
 );
+
+// ============================================================
+// V203 UNIVERSAL BUILDER API
+// ============================================================
+
+app.get("/api/creator/universal-builder",requireCreatorAccount,async(req,res)=>{
+    res.set("Cache-Control","no-store");
+    try{
+        const access=await creatorAccessProfile(req.creatorAccount);
+        const [widgets,assets,bundles,providerAccess]=await Promise.all([
+            listStudioWidgets(req.creatorAccount.id),
+            pool.query(`SELECT * FROM creator_widget_assets WHERE creator_id=$1 ORDER BY updated_at DESC LIMIT 100`,[req.creatorAccount.id]),
+            pool.query(`SELECT * FROM creator_universal_bundles WHERE creator_id=$1 ORDER BY updated_at DESC`,[req.creatorAccount.id]),
+            creatorWidgetProviderAccess(req.creatorAccount.id)
+        ]);
+        return res.json({
+            ok:true,
+            access,
+            platforms:UNIVERSAL_BUILDER_PLATFORMS,
+            designs:UNIVERSAL_BUILDER_DESIGNS,
+            pricing:[0,1,2,3,4,5,6,7,8,9,10,11,12].map(universalBuilderPricing),
+            registry:studioWidgetRegistryPublic(req.creatorAccount.plan,access.entitlements,null),
+            provider_access:providerAccess,
+            widgets:widgets.map(publicStudioWidgetRow),
+            assets:assets.rows.map(row=>publicWidgetAsset(row)),
+            bundles:bundles.rows.map(publicUniversalBuilderBundle)
+        });
+    }catch(error){
+        safeLogError("Universal Builder Bootstrap Fehler:",error);
+        return res.status(500).json({ok:false,error:"Universal Builder konnte nicht geladen werden."});
+    }
+});
+
+app.post("/api/creator/universal-builder/bundles",requireCreatorAccount,async(req,res)=>{
+    res.set("Cache-Control","no-store");
+    try{
+        const access=await creatorAccessProfile(req.creatorAccount);
+        const config=sanitizeUniversalBuilderConfig(req.body?.config||req.body||{});
+        const invalid=config.elements.find(item=>item.widget_type&&!WIDGET_STUDIO_WIDGET_TYPE_KEYS.has(item.widget_type));
+        if(invalid)return res.status(400).json({ok:false,error:"Das Bundle enthält einen unbekannten Widget-Typ."});
+        const count=Number((await pool.query(`SELECT COUNT(*)::int AS count FROM creator_universal_bundles WHERE creator_id=$1`,[req.creatorAccount.id])).rows[0]?.count||0);
+        const maxBundles=Number(access.entitlements?.max_bundles||50);
+        if(count>=maxBundles)return res.status(403).json({ok:false,code:"bundle_limit",error:`Dein Zugriff erlaubt maximal ${maxBundles} Bundles.`});
+        const name=universalBuilderText(req.body?.name,140,"Mein Bundle");
+        const row=(await pool.query(`INSERT INTO creator_universal_bundles(id,creator_id,name,design_key,platforms,elements,settings,status,version) VALUES($1,$2,$3,$4,$5::jsonb,$6::jsonb,$7::jsonb,'draft',1) RETURNING *`,[crypto.randomUUID(),req.creatorAccount.id,name,config.design_key,JSON.stringify(config.platforms),JSON.stringify(config.elements),JSON.stringify(config.settings)])).rows[0];
+        return res.status(201).json({ok:true,bundle:publicUniversalBuilderBundle(row)});
+    }catch(error){safeLogError("Universal Builder Bundle Create Fehler:",error);return res.status(500).json({ok:false,error:"Bundle konnte nicht gespeichert werden."});}
+});
+
+app.put("/api/creator/universal-builder/bundles/:id",requireCreatorAccount,async(req,res)=>{
+    res.set("Cache-Control","no-store");
+    try{
+        const current=(await pool.query(`SELECT * FROM creator_universal_bundles WHERE creator_id=$1 AND id=$2 LIMIT 1`,[req.creatorAccount.id,req.params.id])).rows[0];
+        if(!current)return res.status(404).json({ok:false,error:"Bundle nicht gefunden."});
+        const config=sanitizeUniversalBuilderConfig(req.body?.config||req.body||{});
+        const invalid=config.elements.find(item=>item.widget_type&&!WIDGET_STUDIO_WIDGET_TYPE_KEYS.has(item.widget_type));
+        if(invalid)return res.status(400).json({ok:false,error:"Das Bundle enthält einen unbekannten Widget-Typ."});
+        const name=universalBuilderText(req.body?.name,140,current.name||"Mein Bundle");
+        const expected=Number.isFinite(Number(req.body?.version))?Math.round(Number(req.body.version)):null;
+        const result=await pool.query(`UPDATE creator_universal_bundles SET name=$3,design_key=$4,platforms=$5::jsonb,elements=$6::jsonb,settings=$7::jsonb,version=version+1,updated_at=NOW() WHERE creator_id=$1 AND id=$2 AND ($8::int IS NULL OR version=$8) RETURNING *`,[req.creatorAccount.id,current.id,name,config.design_key,JSON.stringify(config.platforms),JSON.stringify(config.elements),JSON.stringify(config.settings),expected]);
+        if(!result.rows[0])return res.status(409).json({ok:false,code:"bundle_version_conflict",error:"Dieses Bundle wurde inzwischen geändert. Bitte neu laden."});
+        return res.json({ok:true,bundle:publicUniversalBuilderBundle(result.rows[0])});
+    }catch(error){safeLogError("Universal Builder Bundle Save Fehler:",error);return res.status(500).json({ok:false,error:"Bundle konnte nicht gespeichert werden."});}
+});
+
+app.delete("/api/creator/universal-builder/bundles/:id",requireCreatorAccount,async(req,res)=>{
+    try{
+        const result=await pool.query(`DELETE FROM creator_universal_bundles WHERE creator_id=$1 AND id=$2 RETURNING id`,[req.creatorAccount.id,req.params.id]);
+        if(!result.rows[0])return res.status(404).json({ok:false,error:"Bundle nicht gefunden."});
+        return res.json({ok:true,deleted:true,id:result.rows[0].id});
+    }catch(error){safeLogError("Universal Builder Bundle Delete Fehler:",error);return res.status(500).json({ok:false,error:"Bundle konnte nicht gelöscht werden."});}
+});
 
 
 // ============================================================

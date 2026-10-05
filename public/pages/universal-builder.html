@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#030711">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<title>Universal Builder | cfs_zockt Creator Suite</title>
+<link rel="stylesheet" href="/assets/css/styles.css">
+<link rel="stylesheet" href="/assets/css/cfs-theme-v3.css">
+<link rel="stylesheet" href="/assets/css/cfs-creator-ux-v189.css">
+<link rel="stylesheet" href="/assets/css/cfs-brand-v198.css">
+<link rel="stylesheet" href="/assets/css/cfs-product-v199.css">
+<link rel="stylesheet" href="/assets/css/universal-builder.css?v=v203">
+<script src="/assets/js/cfs-shell-v3.js" defer></script>
+</head>
+<body class="creator-workspace" data-cfs-product-v199="1" data-cfs-brand-v198="1">
+<header class="site-header creator-site-header"><div class="container header-inner creator-header-inner">
+  <a class="creator-brand" href="/pages/dashboard.html"><img class="creator-brand-logo" src="/assets/img/brand/cfs-zockt-mark-clean.png" alt="cfs_zockt"><span>CREATOR SUITE</span></a>
+  <button class="mobile-toggle creator-mobile-toggle" data-mobile-toggle type="button">MENÜ</button>
+  <nav class="nav creator-nav" data-nav data-creator-nav aria-label="Creator Suite Navigation">
+    <a data-creator-link href="/pages/dashboard.html">DASHBOARD</a>
+    <a data-creator-link href="/pages/universal-builder.html" class="active">BUILDER</a>
+    <a data-creator-link href="/pages/widget-studio.html">WIDGETS</a>
+    <a data-creator-link href="/pages/stream-studio.html">STREAM</a>
+    <a data-creator-link href="/pages/integrations.html">INTEGRATIONEN</a>
+    <a data-creator-link href="/pages/account.html">ACCOUNT</a>
+    <button class="creator-logout" data-logout type="button">LOGOUT</button>
+  </nav>
+</div></header>
+
+<main class="ub-page" id="builderApp">
+  <section class="ub-hero container"><div><span class="eyebrow">CFS ZOCKT · V203</span><h1>UNIVERSAL BUILDER</h1><p>Ein Design, passende Widgets und ein komplettes Bundle – in einem geführten Ablauf.</p></div><div class="ub-hero-status"><span id="ubPlan">LÄDT…</span><small id="ubStatus">Builder wird geladen …</small></div></section>
+  <section class="ub-shell container">
+    <div id="ubMessage" class="notice" role="status" aria-live="polite" hidden></div>
+    <nav class="ub-steps" aria-label="Builder Schritte">
+      <button class="active" data-step="design"><b>01</b><span>DESIGN</span><small>Look wählen</small></button>
+      <button data-step="platform"><b>02</b><span>PLATTFORM</span><small>Datenquelle</small></button>
+      <button data-step="widget"><b>03</b><span>WIDGET</span><small>Element wählen</small></button>
+      <button data-step="content"><b>04</b><span>INHALT</span><small>Text & Werte</small></button>
+      <button data-step="preview"><b>05</b><span>VORSCHAU</span><small>Bundle & Export</small></button>
+    </nav>
+
+    <section class="ub-panel active" data-panel="design"><div class="ub-panel-head"><div><span>01 · DESIGN</span><h2>Welche Designwelt passt zu deinem Stream?</h2><p>Design und Plattform bleiben getrennt. Du kannst die Designwelt später erneut verwenden.</p></div><strong id="ubDesignCount">0 Looks</strong></div><div id="ubDesignGrid" class="ub-design-grid"></div><div class="ub-actions"><button class="btn primary" data-next="platform">PLATTFORM WÄHLEN →</button></div></section>
+
+    <section class="ub-panel" data-panel="platform"><div class="ub-panel-head"><div><span>02 · PLATTFORM</span><h2>Wo soll dein Bundle funktionieren?</h2><p>Wähle eine oder mehrere Plattformen. Live-Widgets kennen nur normalisierte Events.</p></div></div><div id="ubPlatformGrid" class="ub-platform-grid"></div><div class="ub-actions"><button class="btn" data-back="design">← ZURÜCK</button><button class="btn primary" data-next="widget">WIDGET WÄHLEN →</button></div></section>
+
+    <section class="ub-panel" data-panel="widget"><div class="ub-panel-head"><div><span>03 · WIDGET</span><h2>Was soll dein Stream zeigen?</h2><p>Füge Live-Widgets, Ziele und allgemeine Stream-Elemente zu deinem Bundle hinzu.</p></div><label class="ub-inline-select"><span>PLATTFORM</span><select id="ubWidgetPlatform"></select></label></div><div class="ub-widget-layout"><div id="ubWidgetGrid" class="ub-widget-grid"></div><aside class="ub-selection-card"><span>DEIN BUNDLE</span><strong id="ubSelectionCount">0 Elemente</strong><div id="ubSelectionList"></div><div class="ub-price"><small>AKTUELLER BETA-PREIS</small><strong id="ubWidgetPrice">0,00 €</strong><span>Bearbeiten & Vorschau kostenlos</span></div></aside></div><div class="ub-actions"><button class="btn" data-back="platform">← ZURÜCK</button><button class="btn primary" data-next="content">INHALT BEARBEITEN →</button></div></section>
+
+    <section class="ub-panel" data-panel="content"><div class="ub-panel-head"><div><span>04 · INHALT</span><h2>Mach das Bundle zu deinem Stream.</h2><p>Zentrale Einstellungen wirken auf die Vorschau. Jedes Element bleibt einzeln bearbeitbar.</p></div></div><div class="ub-content-layout"><div class="ub-form-card"><div class="ub-form-section"><span>AKTIVES ELEMENT</span><div id="ubActiveElement" class="ub-active-element">Wähle links ein Element aus.</div><label><span>TITEL / TEXT</span><input id="ubElementText" maxlength="180" placeholder="z. B. LIKE GOAL"></label><label><span>UNTERTITEL</span><input id="ubElementSubtitle" maxlength="180" placeholder="z. B. Gemeinsam zum nächsten Ziel"></label><div class="ub-field-row"><label><span>ZIEL</span><input id="ubElementGoal" type="number" min="0" max="1000000000"></label><label><span>METRIK</span><input id="ubElementMetric" maxlength="80" placeholder="likes"></label></div></div><div class="ub-form-section"><span>GEMEINSAMER LOOK</span><div class="ub-field-row"><label><span>AKZENT</span><input id="ubAccent" type="color"></label><label><span>TEXT</span><input id="ubTextColor" type="color"></label><label><span>HINTERGRUND</span><input id="ubBackground" type="color"></label></div><div class="ub-field-row"><label><span>SCHRIFT</span><select id="ubFont"><option>Inter</option><option>system-ui</option><option>Arial</option><option>Verdana</option><option>Trebuchet MS</option></select></label><label><span>ANIMATION</span><select id="ubAnimation"><option value="soft">Ruhig</option><option value="pulse">Pulse</option><option value="glow">Glow</option><option value="slide">Slide</option><option value="pop">Pop</option><option value="none">Keine</option></select></label></div></div><div class="ub-form-section"><span>FORMAT</span><div class="ub-format-buttons"><button data-format="landscape" class="active">16:9 Desktop</button><button data-format="vertical">9:16 Vertical</button><button data-format="square">1:1 Social</button></div><label><span>KANALNAME</span><input id="ubChannel" maxlength="80" placeholder="Dein Kanalname"></label></div></div><div class="ub-mini-preview" id="ubMiniPreview"></div></div><div class="ub-actions"><button class="btn" data-back="widget">← ZURÜCK</button><button class="btn primary" data-next="preview">VORSCHAU ÖFFNEN →</button></div></section>
+
+    <section class="ub-panel" data-panel="preview"><div class="ub-panel-head"><div><span>05 · VORSCHAU & EXPORT</span><h2>Sieht gut aus? Dann wird daraus dein Bundle.</h2><p>Vorschau und Bearbeitung bleiben in der Beta kostenlos. Der Preis wird erst beim Export angezeigt.</p></div><span class="ub-beta-pill">BETA · ZAHLUNG DEAKTIVIERT</span></div><div class="ub-preview-layout"><div><div class="ub-preview-toolbar"><button class="active" data-preview-format="landscape">DESKTOP 16:9</button><button data-preview-format="vertical">VERTICAL 9:16</button><button data-preview-format="square">SOCIAL 1:1</button></div><div class="ub-stage-wrap"><div id="ubStage" class="ub-stage"></div></div></div><aside class="ub-export-card"><label><span>BUNDLE-NAME</span><input id="ubBundleName" maxlength="140" value="Mein Creator Bundle"></label><div class="ub-export-summary"><span id="ubExportElements">0 Elemente</span><strong id="ubExportPrice">0,00 €</strong><small>Beta-Preis · Export ohne Zahlung</small></div><button class="btn primary" id="ubSaveBundle">BUNDLE SPEICHERN</button><button class="btn" id="ubExportBundle">OBS / HTML BUNDLE EXPORTIEREN</button><button class="btn" id="ubExportManifest">CFS MANIFEST EXPORTIEREN</button><a class="btn" href="/pages/scene-studio.html">IN CFS STUDIO WEITER</a><div id="ubSavedBundles" class="ub-saved-bundles"></div></aside></div><div class="ub-actions"><button class="btn" data-back="content">← ZURÜCK</button><button class="btn" data-step="design">NEUES BUNDLE</button></div></section>
+  </section>
+</main>
+<script src="/assets/js/universal-builder.js?v=v203" defer></script>
+</body></html>

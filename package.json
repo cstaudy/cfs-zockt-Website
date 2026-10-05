@@ -12,6 +12,7 @@
     "funnel:check": "node tools/website-monetization-funnel-test.mjs .",
     "check:v9": "node tools/widget-studio-v9-qa.mjs .",
     "check:v10": "node tools/widget-studio-v10-qa.mjs .",
+    "check:v203": "node tools/universal-builder-v203-test.mjs .",
     "check:v37": "node tools/billing-policy-v37-test.mjs && node tools/production-readiness-v37-test.mjs && node tools/billing-v37-qa.mjs .",
     "check:v38": "node tools/production-evidence-v38-test.mjs && node tools/stripe-testmode-e2e-v38-test.mjs && node tools/production-canary-v38-test.mjs && node tools/production-v38-qa.mjs .",
     "check:v39": "node tools/release-acceptance-v39-test.mjs && node tools/beta-cohort-v39-test.mjs && node tools/release-go-no-go-v39-test.mjs && node tools/release-ops-admin-v39-qa.mjs . && node tools/release-ops-v39-qa.mjs .",

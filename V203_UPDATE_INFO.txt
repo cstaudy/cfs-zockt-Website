@@ -1,0 +1,31 @@
+CFS_ZOCKT · v203 UPDATE
+
+Der neue Universal Builder verbindet den vorhandenen Widget- und Provider-Bestand
+in einem geführten Ablauf:
+
+DESIGN → PLATTFORM → WIDGET → INHALT → VORSCHAU → BUNDLE / EXPORT
+
+Neu:
+- public/pages/universal-builder.html
+- public/assets/js/universal-builder.js
+- public/assets/css/universal-builder.css
+- /api/creator/universal-builder Bootstrap, Bundle Create/Update/Delete
+- creator_universal_bundles als creator-isolierte, versionierte Konfiguration
+- 11 Designwelten aus der v202-Übergabe
+- TikTok LIVE, Twitch und OBS/Allgemein als getrennte Plattformwahl
+- Beta-Preislogik gemäß Übergabe (1–5 Elemente kostenlos)
+- lokaler OBS/HTML-ZIP-Export mit manifest.json und README.txt
+- Einstieg aus dem vorhandenen Widget Studio
+- statischer QA-Check: npm run check:v203
+
+Sicherheitsgrenzen:
+- Der Builder speichert keine Provider-Secrets und ruft keine Provider-API direkt auf.
+- Bestehende Provider-Adapter, normalisierte Events und veröffentlichte Widget-URLs
+  bleiben die technische Quelle.
+- Es wird nichts automatisch veröffentlicht, gemerged oder deployed.
+
+Bekannte Ausgangslage im gelieferten ZIP:
+- widget-universal-v19-QA erwartet noch Config-Version 6, während der Bestand
+  bereits Version 7 erzeugt.
+- shop-studio-workflow-v188-Test referenziert PROJECT_FLOW_PLAN.md, das im ZIP
+  nicht enthalten ist.
