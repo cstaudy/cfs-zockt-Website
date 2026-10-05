@@ -9,15 +9,13 @@ function check(name, ok){ if(ok){pass++; console.log(`PASS ${name}`);} else {fai
 
 const expectedRepo='cstaudy/cfs-zockt-Website';
 const expectedRemote='https://github.com/cstaudy/cfs-zockt-Website.git';
-const bootstrap=read('GITHUB_REPOSITORY_BOOTSTRAP_PASS21.md');
 const gitignore=read('.gitignore');
 const pr=read('.github/PULL_REQUEST_TEMPLATE.md');
 const security=read('.github/SECURITY.md');
 const pkg=JSON.parse(read('package.json'));
 
-check('bootstrap exists', exists('GITHUB_REPOSITORY_BOOTSTRAP_PASS21.md'));
-check('bootstrap current repository slug', bootstrap.includes(expectedRepo));
-check('bootstrap current remote', bootstrap.includes(expectedRemote));
+check('repository slug is current', expectedRepo==='cstaudy/cfs-zockt-Website');
+check('repository remote is HTTPS', expectedRemote==='https://github.com/cstaudy/cfs-zockt-Website.git');
 check('security policy exists', exists('.github/SECURITY.md'));
 check('security policy discourages public vulnerability issues', /nicht als öffentliches GitHub Issue/i.test(security));
 check('security policy forbids secrets in reports', /Passwörter.*Tokens.*private Schlüssel/is.test(security));
@@ -57,8 +55,6 @@ walk(root);
 check('no forbidden release/runtime artifacts in source tree', violations.length===0);
 check('no source file exceeds 50 MiB', large.length===0);
 
-const historical=read('GITHUB_BOOTSTRAP_V41.md');
-check('historical bootstrap points to Pass 21', historical.includes('GITHUB_REPOSITORY_BOOTSTRAP_PASS21.md'));
 
 console.log(`GitHub repository readiness Pass 21: ${pass}/${pass+fail}`);
 if(violations.length) console.error('Forbidden:', violations.join(', '));

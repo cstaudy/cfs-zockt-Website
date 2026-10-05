@@ -2,6 +2,15 @@ document.addEventListener("DOMContentLoaded", async () => {
   const me = await CFS.requireAuth();
   if (!me) return;
 
+  const actionError = (error, title = "Provider-Aktion nicht abgeschlossen") => {
+    const message = error?.message || "Die Aktion konnte nicht abgeschlossen werden.";
+    if (window.CFSCreatorUX?.announce) {
+      window.CFSCreatorUX.announce(message, "error", { title });
+      return;
+    }
+    console.error(title, error);
+  };
+
   try {
     const tt = await CFS.json("/api/creator/tiktok/status");
     const betaBlocked = tt?.beta_access?.required === true && tt?.beta_access?.allowed !== true;
@@ -56,13 +65,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (twitchSync) twitchSync.onclick = async () => {
       twitchSync.disabled = true;
       try { await CFS.json("/api/creator/twitch/sync",{method:"POST",body:"{}"}); location.reload(); }
-      catch(error){ alert(error.message); twitchSync.disabled=false; }
+      catch(error){ actionError(error,"Twitch-Synchronisierung fehlgeschlagen"); twitchSync.disabled=false; }
     };
     if (twitchDisconnect) twitchDisconnect.onclick = async () => {
       if(!confirm("Twitch-Verbindung für dein Creator-Konto wirklich trennen?"))return;
       twitchDisconnect.disabled=true;
       try { await CFS.json("/api/creator/twitch/disconnect",{method:"POST",body:"{}"}); location.reload(); }
-      catch(error){ alert(error.message); twitchDisconnect.disabled=false; }
+      catch(error){ actionError(error,"Twitch konnte nicht getrennt werden"); twitchDisconnect.disabled=false; }
     };
   } catch(error) {
     if (twitchIntegrationStatus) twitchIntegrationStatus.textContent = error.message;
@@ -87,13 +96,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (youtubeSync) youtubeSync.onclick = async () => {
       youtubeSync.disabled = true;
       try { await CFS.json("/api/creator/youtube/sync",{method:"POST",body:"{}"}); location.reload(); }
-      catch(error){ alert(error.message); youtubeSync.disabled=false; }
+      catch(error){ actionError(error,"YouTube-Synchronisierung fehlgeschlagen"); youtubeSync.disabled=false; }
     };
     if (youtubeDisconnect) youtubeDisconnect.onclick = async () => {
       if(!confirm("YouTube-Verbindung für dein Creator-Konto wirklich trennen?"))return;
       youtubeDisconnect.disabled=true;
       try { await CFS.json("/api/creator/youtube/disconnect",{method:"POST",body:"{}"}); location.reload(); }
-      catch(error){ alert(error.message); youtubeDisconnect.disabled=false; }
+      catch(error){ actionError(error,"YouTube konnte nicht getrennt werden"); youtubeDisconnect.disabled=false; }
     };
   } catch(error) {
     if (youtubeIntegrationStatus) youtubeIntegrationStatus.textContent = error.message;

@@ -193,6 +193,6 @@ function bind(){
 
 document.addEventListener("DOMContentLoaded",async()=>{
   const me=await CFS.requireAuth();if(!me)return;bind();
-  try{await load()}catch(e){toast(e.message,true)}
+  try{await load();const params=new URLSearchParams(location.search),requestedScene=params.get("scene");if(requestedScene){const found=state.scenes.find(scene=>String(scene.id)===String(requestedScene));if(found){open(found.id);if(params.get("source")==="shop")toast(`Shop-Scene „${found.name}“ ist direkt zur Bearbeitung geöffnet.`)}else toast("Die verlinkte Shop-Scene ist nicht mehr vorhanden. Deine übrigen Scenes wurden nicht verändert.",true)}}catch(e){toast(e.message,true)}
 });
 })();

@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#030711">
+  <title>CFS AI | Creator Suite</title>
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <link rel="stylesheet" href="/assets/css/styles.css">
+  <link rel="stylesheet" href="/assets/css/cfs-theme-v3.css">
+  <link rel="stylesheet" href="/assets/css/cfs-ai.css">
+  <script src="/assets/js/cfs-shell-v3.js" defer></script>
+</head>
+<body class="creator-workspace cfs-ai-page">
+<header class="site-header creator-site-header">
+  <div class="container header-inner creator-header-inner">
+    <a class="creator-brand" href="/pages/dashboard.html" aria-label="cfs_zockt Creator Suite Dashboard">
+      <img class="creator-brand-logo" src="/assets/img/brand/cfs-zockt-wordmark-transparent.png" alt="cfs_zockt">
+      <span>CREATOR SUITE</span>
+    </a>
+    <button class="mobile-toggle creator-mobile-toggle" data-mobile-toggle id="mobileNavToggle" type="button">MENÜ</button>
+    <nav class="nav creator-nav" data-nav data-creator-nav id="mainNav" aria-label="Creator Suite Navigation">
+      <a data-creator-link href="/pages/dashboard.html">DASHBOARD</a>
+      <a data-creator-link href="/pages/widget-studio.html">WIDGETS</a>
+      <a data-creator-link href="/pages/stream-studio.html">STREAM</a>
+      <a data-creator-link href="/pages/integrations.html">INTEGRATIONEN</a>
+      <a class="active" data-creator-link href="/pages/cfs-ai.html" aria-current="page">CFS AI</a>
+      <details class="creator-nav-more" data-creator-more>
+        <summary>MEHR</summary>
+        <div class="creator-nav-more-menu">
+          <a data-creator-link href="/pages/games.html">GAMES</a>
+          <a data-creator-link href="/pages/scene-studio.html">SCENE STUDIO</a>
+          <a data-creator-link href="/pages/cut-studio.html">CUT STUDIO</a>
+          <a data-creator-link href="/pages/nexus.html">NEXUS</a>
+          <a data-creator-link href="/pages/admin-creators.html">ADMIN CONTROL</a>
+        </div>
+      </details>
+      <button class="creator-logout" data-logout type="button">LOGOUT</button>
+    </nav>
+  </div>
+</header>
+
+<main class="container cfs-ai-shell">
+  <section class="cfs-ai-hero">
+    <div>
+      <span class="cfs-ai-kicker">ROOT / PRIVATE DEVELOPMENT AGENT</span>
+      <h1>CFS <strong>AI</strong></h1>
+      <p>Entwicklungs-, Design- und Gaming-Agent für cfs-zockt.de. Vorlagen sammeln, Ideen prüfen, Code vorbereiten und Änderungen erst nach deiner Freigabe übernehmen.</p>
+    </div>
+    <div class="cfs-ai-status-card" id="aiStatusCard" aria-live="polite">
+      <span class="cfs-ai-status-dot offline" id="aiStatusDot"></span>
+      <div><small>AI SERVICE</small><strong id="aiStatusText">wird geprüft …</strong><span id="aiModelText">–</span></div>
+      <button class="btn" id="refreshAiStatus" type="button">PRÜFEN</button>
+    </div>
+  </section>
+
+  <section class="cfs-ai-metrics" aria-label="CFS AI Übersicht">
+    <article><span>VORLAGEN</span><strong id="metricTemplates">0</strong><small>im Preview Vault</small></article>
+    <article><span>PROPOSALS</span><strong id="metricProposals">0</strong><small>warten / vorhanden</small></article>
+    <article><span>WISSEN</span><strong id="metricKnowledge">–</strong><small>Knowledge Engine</small></article>
+    <article><span>ROADMAP</span><strong id="metricRoadmap">–</strong><small>aktive Ideen</small></article>
+    <article><span>BRIDGE</span><strong id="metricBridge">–</strong><small>Laptop-Verbindung</small></article>
+  </section>
+
+  <nav class="cfs-ai-tabs" aria-label="CFS AI Bereiche">
+    <button class="active" data-ai-tab="templates" type="button">PREVIEW VAULT</button>
+    <button data-ai-tab="chat" type="button">AI CHAT</button>
+    <button data-ai-tab="proposals" type="button">PROPOSALS</button>
+    <button data-ai-tab="roadmap" type="button">ROADMAP</button>
+    <button data-ai-tab="bridge" type="button">BRIDGE</button>
+  </nav>
+
+  <section class="cfs-ai-panel" data-ai-panel="templates">
+    <div class="cfs-ai-panel-head">
+      <div><span>TEMPLATE FACTORY</span><h2>Ideen sammeln. Erst später bauen.</h2><p>Erzeuge hochwertige Vorlagen für Widgets, Tools, Overlays, Games, Bundles und Gaming-Bereiche der Website.</p></div>
+      <button class="btn primary" id="harvestTemplates" type="button">VORLAGEN SAMMELN</button>
+    </div>
+    <div class="cfs-ai-harvest-grid" id="harvestCategories">
+      <label><input type="checkbox" value="widgets" checked> Widgets</label>
+      <label><input type="checkbox" value="overlays" checked> Overlays</label>
+      <label><input type="checkbox" value="tools" checked> Tools</label>
+      <label><input type="checkbox" value="games" checked> Games</label>
+      <label><input type="checkbox" value="bundles" checked> Bundles</label>
+      <label><input type="checkbox" value="website-sections" checked> Website</label>
+    </div>
+    <div class="cfs-ai-filterbar">
+      <input id="templateSearch" type="search" placeholder="Vorlagen durchsuchen …" autocomplete="off">
+      <select id="templateCategory"><option value="">Alle Kategorien</option><option value="widgets">Widgets</option><option value="overlays">Overlays</option><option value="tools">Tools</option><option value="games">Games</option><option value="bundles">Bundles</option><option value="website-sections">Website</option></select>
+      <select id="templatePlatform"><option value="">Alle Plattformen</option><option value="twitch">Twitch</option><option value="youtube">YouTube</option><option value="tiktok">TikTok</option><option value="obs">OBS</option><option value="website">Website</option></select>
+      <select id="templateStatus"><option value="">Alle Stati</option><option value="favorite">Favoriten</option><option value="build_later">Später bauen</option><option value="proposal_ready">Proposal bereit</option><option value="new">Neu</option><option value="rejected">Verworfen</option></select>
+    </div>
+    <p class="cfs-ai-inline-status" id="templateInfo">Preview Vault wird geladen …</p>
+    <div class="cfs-ai-gallery" id="templateGallery"></div>
+  </section>
+
+  <section class="cfs-ai-panel hidden" data-ai-panel="chat">
+    <div class="cfs-ai-panel-head"><div><span>PROJECT CHAT</span><h2>Sprich direkt mit deiner CFS AI.</h2><p>Die KI verwendet dein Website-Wissen, Skills, Plattform-Matrix und bestätigte Projektregeln.</p></div></div>
+    <div class="cfs-ai-chat-log" id="aiChatLog" aria-live="polite"></div>
+    <form class="cfs-ai-chat-form" id="aiChatForm">
+      <textarea id="aiChatInput" rows="4" maxlength="12000" placeholder="z. B. Analysiere meine Games und schlage drei hochwertige Erweiterungen vor."></textarea>
+      <div><select id="aiChatMode"><option value="assistant">Assistent</option><option value="developer">Developer</option><option value="review">Review</option></select><button class="btn primary" type="submit">SENDEN</button></div>
+    </form>
+  </section>
+
+  <section class="cfs-ai-panel hidden" data-ai-panel="proposals">
+    <div class="cfs-ai-panel-head"><div><span>APPROVAL QUEUE</span><h2>Keine Codeänderung ohne deine Entscheidung.</h2><p>Hier landen vorbereitete Änderungen. Du siehst Dateien, Risiko und Vorschau, bevor etwas übernommen wird.</p></div><button class="btn" id="refreshProposals" type="button">AKTUALISIEREN</button></div>
+    <div class="cfs-ai-split">
+      <div class="cfs-ai-list" id="proposalList"></div>
+      <div class="cfs-ai-proposal-detail" id="proposalDetail"><p class="muted">Wähle links einen Vorschlag aus.</p></div>
+    </div>
+  </section>
+
+  <section class="cfs-ai-panel hidden" data-ai-panel="roadmap">
+    <div class="cfs-ai-panel-head"><div><span>SMART ROADMAP</span><h2>Ideen nach Nutzen statt nach Zufall.</h2><p>CFS AI priorisiert autonome Ideen nach CFS-Fit, Creator-Nutzen, Plattformwert, Aufwand und Wartungsrisiko.</p></div><button class="btn" id="refreshRoadmap" type="button">AKTUALISIEREN</button></div>
+    <div class="cfs-ai-roadmap" id="roadmapList"></div>
+  </section>
+
+  <section class="cfs-ai-panel hidden" data-ai-panel="bridge">
+    <div class="cfs-ai-panel-head"><div><span>OUTBOUND BRIDGE</span><h2>Dein Laptop verbindet sich sicher mit der Live-Website.</h2><p>Kein offener Ollama-Port: Der lokale Worker holt Jobs ausgehend über HTTPS ab. Hier siehst du Heartbeat und die letzten Bridge-Jobs.</p></div><button class="btn" id="refreshBridge" type="button">AKTUALISIEREN</button></div>
+    <div class="cfs-ai-bridge-grid">
+      <article><span>TRANSPORT</span><strong id="bridgeTransport">–</strong><small id="bridgeWorkerId">kein Worker</small></article>
+      <article><span>HEARTBEAT</span><strong id="bridgeHeartbeat">–</strong><small id="bridgeWorkerStatus">wartet</small></article>
+    </div>
+    <div class="cfs-ai-list" id="bridgeJobList"><p class="muted">Bridge-Status wird geladen …</p></div>
+  </section>
+</main>
+
+<script src="/assets/js/app.js"></script>
+<script src="/assets/js/page-cfs-ai.js"></script>
+</body>
+</html>

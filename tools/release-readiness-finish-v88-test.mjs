@@ -26,7 +26,7 @@ const checks=[
   ['env evidence version matches launcher',env.includes(`CFS_RELEASE_EVIDENCE_VERSION=${currentLauncher}`)],
   ['render build target matches launcher',render.includes('CFS_LAUNCHER_BUILD_TARGET_VERSION')&&render.includes(`value: ${currentLauncher}`)],
   ['recovery policy matches launcher',recovery.launcher_version===currentLauncher],
-  ['homepage current launcher copy',index.includes(`Launcher ${currentLauncher}`)],
+  ['homepage keeps launcher out of public brand surface',!index.includes(`Launcher ${currentLauncher}`)&&!index.includes('href="/pages/launcher-download.html"')],
   ['roadmap current launcher copy',roadmap.includes(`Launcher ${currentLauncher}`)],
   ['creator suite current launcher copy',suite.includes(`Launcher ${currentLauncher}`)&&suite.includes(`LAUNCHER ${currentLauncher}`)],
   ['system check v3 title',system.includes('System Check v3')&&system.includes('SYSTEM CHECK V3')],

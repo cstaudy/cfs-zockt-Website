@@ -8,6 +8,8 @@
     "/pages/dashboard.html": { label:"Dashboard", group:"Creator Suite", parent:"/pages/dashboard.html", parentLabel:"Dashboard" },
     "/pages/widget-studio.html": { label:"Widget Studio", group:"Creator Suite", parent:"/pages/dashboard.html", parentLabel:"Dashboard" },
     "/pages/stream-studio.html": { label:"Stream Studio", group:"Creator Suite", parent:"/pages/dashboard.html", parentLabel:"Dashboard" },
+    "/pages/shop.html": { label:"Creator Shop", group:"Creator Suite", parent:"/pages/dashboard.html", parentLabel:"Dashboard" },
+    "/pages/shop-product.html": { label:"Shop Produkt", group:"Creator Suite", parent:"/pages/shop.html", parentLabel:"Creator Shop" },
     "/pages/account.html": { label:"Account", group:"Creator Suite", parent:"/pages/dashboard.html", parentLabel:"Dashboard" },
 
     "/pages/tiktok.html": { label:"TikTok", group:"Verbindungen", parent:"/pages/integrations.html", parentLabel:"Integrationen" },
@@ -28,6 +30,9 @@
 
   const PUBLIC_META = Object.freeze({
     "/pages/creator-suite.html": "Creator Suite",
+    "/pages/shop.html": "Creator Shop",
+    "/pages/shop-product.html": "Shop Produkt",
+    "/pages/launcher-download.html": "Launcher",
     "/pages/plans.html": "Pläne",
     "/pages/roadmap.html": "Roadmap",
     "/pages/security.html": "Sicherheit",
@@ -144,40 +149,32 @@
     nav.classList.add("cfs-nav-v8");
 
     const links = Array.from(nav.querySelectorAll(":scope > a"));
-    const start = findLink(links,"/");
-    const suite = findLink(links,"/pages/creator-suite.html");
-    const plans = findLink(links,"/pages/plans.html");
-    const support = findLink(links,"/pages/support.html");
-    const login = links.find(link => link.hasAttribute("data-login-link")) || findLink(links,"/pages/login.html");
-    const register = links.find(link => link.hasAttribute("data-auth-cta")) || null;
-
-    const explore = group("ENTDECKEN",{wide:true});
-    explore.menu.append(menuTitle("CREATOR TOOLS"));
-
-    const exploreItems = [
-      findLink(links,"/pages/creator-suite.html","#widget-studio"),
-      findLink(links,"/pages/creator-suite.html","#games"),
-      findLink(links,"/pages/creator-suite.html","#launcher")
-    ].filter(Boolean);
-
-    exploreItems.forEach(link => explore.menu.appendChild(link));
-
-    explore.menu.append(separator(),menuTitle("PROJEKT"));
-    [
-      findLink(links,"/pages/roadmap.html"),
-      findLink(links,"/pages/security.html")
-    ].filter(Boolean).forEach(link => explore.menu.appendChild(link));
-
+    const find = pathname => findLink(links,pathname);
     const accountZone = document.createElement("div");
     accountZone.className = "cfs-nav-v8-account-zone";
-    if (login) accountZone.appendChild(login);
+
+    const login = links.find(link => link.hasAttribute("data-login-link")) || find("/pages/login.html") || (() => {
+      const link=document.createElement("a");
+      link.href="/pages/login.html";
+      link.dataset.loginLink="";
+      link.textContent="CREATOR BEREICH";
+      return link;
+    })();
+    login.textContent="CREATOR BEREICH";
+    accountZone.appendChild(login);
+
+    const register = links.find(link => link.hasAttribute("data-auth-cta"));
     if (register) accountZone.appendChild(register);
 
-    nav.replaceChildren();
-    [start,suite,plans,support].filter(Boolean).forEach(link => nav.appendChild(link));
-    if (explore.menu.querySelector("a")) nav.appendChild(explore.details);
-    if (accountZone.children.length) nav.appendChild(accountZone);
+    const keep = [
+      find("/"),
+      find("/pages/roadmap.html"),
+      find("/pages/support.html"),
+      find("/pages/security.html"),
+      find("/pages/merch.html")
+    ].filter(Boolean);
 
+    nav.replaceChildren(...keep,accountZone);
     markPublicActive(nav);
   }
 
@@ -202,6 +199,7 @@
       byPath("/pages/dashboard.html"),
       byPath("/pages/widget-studio.html"),
       byPath("/pages/stream-studio.html"),
+      byPath("/pages/shop.html"),
       byPath("/pages/account.html")
     ].filter(Boolean);
 
@@ -293,6 +291,7 @@
       byPath("/pages/dashboard.html"),
       byPath("/pages/widget-studio.html"),
       byPath("/pages/stream-studio.html"),
+      byPath("/pages/shop.html"),
       byPath("/pages/account.html")
     ].filter(Boolean).forEach(link => aside.appendChild(link));
 

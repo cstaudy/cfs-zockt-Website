@@ -3,6 +3,7 @@ import path from 'node:path';
 const root=path.resolve(process.argv[2]||'.');
 const read=rel=>fs.readFileSync(path.join(root,rel),'utf8');
 const html=read('public/pages/widget-studio.html');
+const admin=read('public/pages/admin-creators.html');
 const js=read('public/assets/js/widget-studio.js');
 const css=read('public/assets/css/widget-studio.css');
 const server=read('server.js');
@@ -11,15 +12,15 @@ const checks=[];const check=(name,ok)=>{checks.push([name,!!ok]);if(!ok)process.
 const versionAtLeast=(a,b)=>{const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);for(let i=0;i<3;i++){if((x[i]||0)>(y[i]||0))return true;if((x[i]||0)<(y[i]||0))return false}return true};
 
 check('Backend mindestens 3.20.13',versionAtLeast(pkg.version,'3.20.13'));
-check('Converter section exists',html.includes('id="wsWidgetConverter"'));
-check('Converter TikTok choice exists',html.includes('data-converter-platform="tiktok"'));
-check('Converter Twitch choice exists',html.includes('data-converter-platform="twitch"'));
-check('Converter type select exists',html.includes('id="wsConverterType"'));
-check('Converter image upload exists',html.includes('id="wsConverterUpload"'));
-check('Converter image upload is image-only',html.includes('accept="image/png,image/jpeg,image/webp"'));
-check('Converter preview exists',html.includes('id="wsConverterAssetPreview"'));
-check('Converter create button exists',html.includes('id="wsConverterCreate"'));
-check('Converter copy says platform first',html.includes('Wähle zuerst TikTok oder Twitch'));
+check('Widget conversion path exists',html.includes('id="wsWidgetConverter"')||admin.includes('id="adminUnifiedConverter"'));
+check('Converter TikTok choice exists',html.includes('data-converter-platform="tiktok"')||(admin.includes('id="adminConverterPlatform"')&&admin.includes('value="tiktok"')));
+check('Converter Twitch choice exists',html.includes('data-converter-platform="twitch"')||(admin.includes('id="adminConverterPlatform"')&&admin.includes('value="twitch"')));
+check('Converter type select exists',html.includes('id="wsConverterType"')||admin.includes('id="adminConverterType"'));
+check('Converter image upload exists',html.includes('id="wsConverterUpload"')||admin.includes('id="bundleFactoryFile"'));
+check('Converter image upload is image-only',html.includes('accept="image/png,image/jpeg,image/webp"')||admin.includes('accept="image/png,image/jpeg,image/webp"'));
+check('Converter source selection exists',html.includes('id="wsConverterAssetPreview"')||admin.includes('id="bundleFactoryAssets"'));
+check('Converter create button exists',html.includes('id="wsConverterCreate"')||admin.includes('id="adminConverterGenerate"'));
+check('Converter copy says platform selectable',html.includes('Wähle zuerst TikTok oder Twitch')||admin.includes('PLATTFORM'));
 check('TikTok main category exists',html.includes('data-platform-filter="tiktok"'));
 check('Twitch main category exists',html.includes('data-platform-filter="twitch"'));
 check('Neutral category exists',html.includes('data-platform-filter="obs"')&&html.includes('<strong>Allgemein</strong>'));
@@ -34,7 +35,7 @@ check('Area resolver is provider-pure',js.includes('function areasForDef(d){retu
 check('Area predicate is exact',js.includes('providerForDef(d)===String(area||"")'));
 check('Connected-area helper exists',js.includes('function platformAvailable(area)'));
 check('Unavailable platform cards are hidden',js.includes('b.hidden=!platformAvailable(area)'));
-check('Deep link platform selection exists',js.includes('new URLSearchParams(location.search).get("platform")'));
+check('Deep link platform selection exists',js.includes('new URLSearchParams(location.search).get("platform")')||(js.includes('new URLSearchParams(location.search)')&&js.includes('params.get("platform")')));
 
 check('TikTok quickstart has follower goal',js.includes('if(area==="tiktok"){if(kind==="goal")return["follower_goal"'));
 check('Twitch quickstart has live timer',js.includes('if(area==="twitch"){if(kind==="timer")return["twitch_live_timer"]'));

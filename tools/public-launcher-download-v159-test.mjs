@@ -13,7 +13,7 @@ check("backend version mindestens 3.20.5",semverGte(pkg.version,"3.20.5")&&semve
 check("launcher version mindestens 0.47.29",semverGte(launcher.version,"0.47.29")&&launcherLock.version===launcher.version&&launcherLock.packages?.[""]?.version===launcher.version);
 check("launcher build target matches package",env.includes(`CFS_LAUNCHER_BUILD_TARGET_VERSION=${launcher.version}`)&&system.includes(`launcher:"${launcher.version}"`)&&server.includes(`"${launcher.version}"`));
 check("public launcher page exists",page.includes("CFS LAUNCHER")&&page.includes("WINDOWS SETUP (.EXE)")&&page.includes("PORTABLE (.EXE)"));
-check("download page is indexable",page.includes('name="robots" content="index,follow')&&page.includes('rel="canonical" href="https://cfs-zockt.de/pages/launcher-download.html"'));
+check("download page is private in v180+",page.includes('name="robots" content="noindex')||server.includes('/pages/launcher-download.html'));
 check("download page has x64 disclosure",page.includes("Windows x64"));
 check("download page explains local boundary",page.includes("LOKALE FUNKTIONEN BLEIBEN LOKAL")&&page.includes("lokal verschlüsselt"));
 check("download JS uses public endpoint",js.includes('fetch("/api/public/launcher/releases"'));
@@ -24,12 +24,12 @@ check("public API uses normalized release summary",server.includes("launcherRele
 check("public API is read-only GET",server.includes('app.get(\n    "/api/public/launcher/releases"'));
 check("public API does not require creator auth",!server.match(/"\/api\/public\/launcher\/releases"[\s\S]{0,120}requireCreatorAccount/));
 check("public response omits creator/device secrets",server.includes("published: Boolean(stableRelease?.setup?.url)")&&!server.match(/"\/api\/public\/launcher\/releases"[\s\S]{0,1300}(stream_key|bridge_token|device_secret|access_token)/i));
-check("home nav exposes launcher download",home.includes('<a href="/pages/launcher-download.html">Launcher</a>'));
-check("home launcher CTA uses download page",/href="\/pages\/launcher-download\.html"[^>]*>[^<]*WINDOWS LAUNCHER/i.test(home)||home.includes('href="/pages/launcher-download.html">WINDOWS LAUNCHER →</a>'));
+check("home nav no longer exposes launcher download",!home.includes('<a href="/pages/launcher-download.html">Launcher</a>'));
+check("home launcher CTA removed from public layer",!home.includes('href="/pages/launcher-download.html">WINDOWS LAUNCHER →</a>'));
 check("home primary nav no longer promotes merch",!home.match(/<nav class="nav gaming-nav"[\s\S]{0,1200}Merch Shop/));
 check("creator suite nav exposes launcher download",suite.includes('<a href="/pages/launcher-download.html">LAUNCHER</a>'));
 check("creator suite launcher CTA is public",suite.includes("WINDOWS LAUNCHER LADEN")&&suite.includes('href="/pages/launcher-download.html"'));
-check("sitemap includes launcher download",sitemap.includes("https://cfs-zockt.de/pages/launcher-download.html"));
+check("sitemap excludes private launcher download",!sitemap.includes("https://cfs-zockt.de/pages/launcher-download.html"));
 check("Windows build produces setup and portable",launcher.scripts?.["dist:win"]?.includes("electron-builder --win nsis portable"));
 check("Windows package target remains x64",JSON.stringify(launcher.build?.win||{}).includes('"x64"'));
 check("setup artifact naming is explicit",launcher.build?.nsis?.artifactName?.includes("Setup-${version}-${arch}.${ext}"));

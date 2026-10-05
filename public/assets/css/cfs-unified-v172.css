@@ -1,0 +1,185 @@
+/* cfs_zockt v172 · unified public + creator visual system */
+:root{
+  --cfs172-bg:#020812;
+  --cfs172-bg-soft:#04111f;
+  --cfs172-surface:#071827;
+  --cfs172-surface-2:#0a2033;
+  --cfs172-border:rgba(44,174,238,.28);
+  --cfs172-border-strong:rgba(32,199,255,.58);
+  --cfs172-cyan:#20c7ff;
+  --cfs172-blue:#148cff;
+  --cfs172-text:#f6fbff;
+  --cfs172-muted:#9eb7cb;
+  --cfs172-radius:16px;
+  --cfs172-header:68px;
+  --cfs172-shadow:0 18px 54px rgba(0,0,0,.34);
+}
+
+body.public-home,
+body.public-marketing,
+body.creator-workspace{
+  background:
+    radial-gradient(circle at 78% -12%,rgba(20,140,255,.13),transparent 29rem),
+    linear-gradient(180deg,#020812 0%,#020a14 55%,#01060d 100%)!important;
+  color:var(--cfs172-text);
+}
+
+/* One header language for public website + Creator Suite */
+body.public-home .gaming-header,
+body.public-marketing .public-site-header,
+body.creator-workspace .creator-site-header{
+  min-height:var(--cfs172-header)!important;
+  border-bottom:1px solid var(--cfs172-border-strong)!important;
+  background:rgba(2,9,20,.94)!important;
+  box-shadow:0 12px 38px rgba(0,0,0,.34),0 1px 0 rgba(32,199,255,.08)!important;
+  backdrop-filter:blur(18px)!important;
+}
+body.public-home .gaming-header-inner,
+body.public-marketing .brand-header-inner,
+body.creator-workspace .creator-header-inner{
+  min-height:var(--cfs172-header)!important;
+  gap:14px!important;
+}
+body.public-home .gaming-brand.cfs-brand-lockup,
+body.public-marketing .cfs-brand-lockup,
+body.creator-workspace .cfs-brand-lockup{
+  display:flex!important;align-items:center!important;gap:10px!important;min-width:0!important;width:auto!important;flex:0 1 auto!important;
+}
+body.public-home .gaming-brand.cfs-brand-lockup .cfs-brand-mark,
+body.public-marketing .cfs-brand-lockup .cfs-brand-mark,
+body.creator-workspace .cfs-brand-lockup .cfs-brand-mark{
+  width:38px;height:38px;display:grid;place-items:center;flex:0 0 38px;border:1px solid rgba(32,199,255,.28);border-radius:11px;background:rgba(4,31,52,.74);box-shadow:inset 0 0 18px rgba(32,199,255,.06),0 0 20px rgba(20,140,255,.08);
+}
+body.public-home .gaming-brand.cfs-brand-lockup .cfs-brand-mark img,
+body.public-marketing .cfs-brand-lockup .cfs-brand-mark img,
+body.creator-workspace .cfs-brand-lockup .cfs-brand-mark img{width:30px!important;height:30px!important;object-fit:contain!important;filter:drop-shadow(0 0 8px rgba(32,199,255,.22))!important}
+body.public-home .gaming-brand.cfs-brand-lockup .cfs-brand-copy,
+body.public-marketing .cfs-brand-lockup .cfs-brand-copy,
+body.creator-workspace .cfs-brand-lockup .cfs-brand-copy{display:grid;gap:1px;min-width:0}
+body.public-home .gaming-brand.cfs-brand-lockup .cfs-brand-copy strong,
+body.public-marketing .cfs-brand-lockup .cfs-brand-copy strong,
+body.creator-workspace .cfs-brand-lockup .cfs-brand-copy strong{font-size:18px;line-height:1;font-weight:950;letter-spacing:-.035em;color:#fff;white-space:nowrap}
+body.public-home .gaming-brand.cfs-brand-lockup .cfs-brand-prefix,
+body.public-marketing .cfs-brand-lockup .cfs-brand-prefix,
+body.creator-workspace .cfs-brand-lockup .cfs-brand-prefix{color:var(--cfs172-cyan)}
+body.public-home .gaming-brand.cfs-brand-lockup .cfs-brand-copy small,
+body.public-marketing .cfs-brand-lockup .cfs-brand-copy small,
+body.creator-workspace .cfs-brand-lockup .cfs-brand-copy small{font-size:7px!important;line-height:1.2;color:#7fa8c5!important;font-weight:900;letter-spacing:.15em!important;margin:0!important;white-space:nowrap}
+
+body.public-home .gaming-nav a,
+body.public-marketing .public-nav a,
+body.creator-workspace .creator-nav>a,
+body.creator-workspace .creator-nav>button,
+body.creator-workspace .creator-nav-more>summary{
+  min-height:38px!important;padding:0 9px!important;border:1px solid transparent!important;border-radius:9px!important;background:transparent!important;color:#c4d8e8!important;font-size:9.5px!important;font-weight:850!important;letter-spacing:.035em!important;text-transform:uppercase!important;box-shadow:none!important;
+}
+body.public-home .gaming-nav a:hover,
+body.public-marketing .public-nav a:hover,
+body.creator-workspace .creator-nav>a:hover,
+body.creator-workspace .creator-nav>button:hover,
+body.creator-workspace .creator-nav-more>summary:hover{
+  color:#fff!important;border-color:rgba(32,199,255,.2)!important;background:rgba(8,58,94,.38)!important;
+}
+body.public-home .gaming-nav a.active,
+body.public-marketing .public-nav a.active,
+body.creator-workspace .creator-nav>a.active,
+body.creator-workspace .creator-nav>a[aria-current="page"]{
+  color:#fff!important;border-color:rgba(32,199,255,.32)!important;background:linear-gradient(180deg,rgba(12,88,146,.38),rgba(5,37,66,.3))!important;box-shadow:inset 0 -2px var(--cfs172-cyan)!important;
+}
+body.public-home .gaming-nav a.active:after,
+body.public-home .gaming-nav a[aria-current="true"]:after{display:none!important}
+
+/* Shared typography and surfaces */
+body.public-home .gaming-hero h1,
+body.public-marketing .marketing-hero h1,
+body.creator-workspace .creator-dashboard-hero h1,
+body.creator-workspace .beginner-hero h1{
+  font-family:Impact,"Arial Black","Segoe UI Black",sans-serif!important;
+  font-style:normal!important;
+  letter-spacing:-.02em!important;
+  line-height:.88!important;
+  text-transform:uppercase;
+}
+body.public-home .gaming-kicker,
+body.public-marketing .eyebrow,
+body.public-marketing .marketing-kicker,
+body.creator-workspace .eyebrow{
+  color:var(--cfs172-cyan)!important;font-weight:950!important;letter-spacing:.16em!important;
+}
+body.public-home .gaming-btn,
+body.public-marketing .btn,
+body.creator-workspace .btn{
+  border-radius:11px!important;border-color:rgba(70,172,230,.38)!important;background:linear-gradient(180deg,rgba(9,42,69,.95),rgba(4,22,39,.98))!important;color:#eef8ff!important;box-shadow:none!important;
+}
+body.public-home .gaming-btn-primary,
+body.public-marketing .btn.primary,
+body.creator-workspace .btn.primary{
+  border-color:#1d9ee7!important;background:linear-gradient(135deg,#0a73c9,#0957a8)!important;box-shadow:0 0 24px rgba(20,140,255,.18)!important;
+}
+body.public-home .gaming-btn:hover,
+body.public-marketing .btn:hover,
+body.creator-workspace .btn:hover{transform:translateY(-1px);border-color:var(--cfs172-cyan)!important}
+
+body.public-home :is(.gaming-live-card,.gaming-community-grid article,.gaming-game-card),
+body.public-marketing :is(.cfs-suite-preview,.suite-entry-grid>a,.marketing-tool-grid article,.marketing-mode-card,.marketing-version-card,.marketing-final-card),
+body.creator-workspace :is(.creator-next-step,.creator-dashboard-actions-v166,.cfs-public-live-control,.creator-dashboard-diagnostics-v166,.creator-operation-card,.card,.panel){
+  border-color:var(--cfs172-border)!important;border-radius:var(--cfs172-radius)!important;background:linear-gradient(145deg,rgba(7,24,39,.94),rgba(3,14,26,.96))!important;box-shadow:var(--cfs172-shadow)!important;
+}
+body.creator-workspace .creator-dashboard-hero{
+  border-radius:0 0 var(--cfs172-radius) var(--cfs172-radius)!important;
+  border-color:var(--cfs172-border)!important;
+  background:radial-gradient(circle at 82% 18%,rgba(20,140,255,.18),transparent 33%),linear-gradient(145deg,rgba(6,30,51,.96),rgba(2,14,27,.98))!important;
+}
+body.public-home .gaming-hero,
+body.public-marketing .marketing-hero{
+  border-bottom-color:var(--cfs172-border)!important;
+  background:radial-gradient(circle at 78% 26%,rgba(20,140,255,.20),transparent 33%),linear-gradient(180deg,#041223,#020812)!important;
+}
+
+/* Keep public and app containers on the same grid; the creator sidebar remains app-only. */
+body.public-home .container,
+body.public-marketing .container{width:min(1220px,calc(100% - 44px))!important}
+body.creator-workspace:not(.cfs-sidebar-ready) main.container{width:min(1220px,calc(100% - 44px))!important}
+
+/* Store entry pills share the same visual language. */
+.cfs172-shop-link{position:relative}
+.cfs172-shop-link:before{content:"";width:6px;height:6px;border-radius:50%;background:var(--cfs172-cyan);box-shadow:0 0 10px rgba(32,199,255,.8);margin-right:6px}
+
+@media(max-width:760px){
+  :root{--cfs172-header:64px}
+  body.public-home .container,body.public-marketing .container{width:min(100% - 28px,1220px)!important}
+  body.public-home .gaming-header-inner,body.public-marketing .brand-header-inner,body.creator-workspace .creator-header-inner{min-height:64px!important}
+  body.public-home .gaming-brand.cfs-brand-lockup .cfs-brand-copy small,
+  body.public-marketing .cfs-brand-lockup .cfs-brand-copy small,
+  body.creator-workspace .cfs-brand-lockup .cfs-brand-copy small{display:none}
+}
+
+/* v180 · cfs_zockt brand/public boundary */
+body.public-home .gaming-brand.cfs-brand-lockup,
+body.public-marketing .cfs-brand-lockup,
+body.creator-workspace .cfs-brand-lockup{gap:12px!important}
+body.public-home .gaming-brand.cfs-brand-lockup .cfs-brand-wordmark,
+body.public-marketing .cfs-brand-lockup .cfs-brand-wordmark,
+body.creator-workspace .cfs-brand-lockup .cfs-brand-wordmark{display:flex;align-items:center;min-width:0}
+body.public-home .gaming-brand.cfs-brand-lockup .cfs-brand-wordmark img,
+body.public-marketing .cfs-brand-lockup .cfs-brand-wordmark img,
+body.creator-workspace .cfs-brand-lockup .cfs-brand-wordmark img{display:block;width:150px!important;height:auto!important;max-height:46px;object-fit:contain;filter:drop-shadow(0 0 9px rgba(32,199,255,.16))}
+body.public-home .gaming-brand.cfs-brand-lockup .cfs-brand-copy,
+body.public-marketing .cfs-brand-lockup .cfs-brand-copy,
+body.creator-workspace .cfs-brand-lockup .cfs-brand-copy{padding-left:10px;border-left:1px solid rgba(44,174,238,.3)}
+body.public-home .gaming-brand.cfs-brand-lockup .cfs-brand-copy small,
+body.public-marketing .cfs-brand-lockup .cfs-brand-copy small,
+body.creator-workspace .cfs-brand-lockup .cfs-brand-copy small{display:block!important;color:#8eb6cf!important;font-size:7px!important;letter-spacing:.12em!important;line-height:1.35!important}
+.cfs-product-signature-v180{display:flex;align-items:center;justify-content:space-between;gap:18px;margin:36px auto 0;padding:18px max(24px,calc((100vw - 1220px)/2));border-top:1px solid rgba(44,174,238,.2);background:#010711;color:#8daabe;font-size:11px}
+.cfs-product-signature-v180>div{display:flex;align-items:center;gap:14px;color:#c8dcea;font-weight:800;letter-spacing:.04em}
+.cfs-product-signature-v180 img{width:118px;height:auto;max-height:34px;object-fit:contain}
+.cfs-product-signature-v180 small{color:#7894aa}
+@media(max-width:760px){
+  body.public-home .gaming-brand.cfs-brand-lockup .cfs-brand-wordmark img,
+  body.public-marketing .cfs-brand-lockup .cfs-brand-wordmark img,
+  body.creator-workspace .cfs-brand-lockup .cfs-brand-wordmark img{width:128px!important;max-height:40px}
+  body.public-home .gaming-brand.cfs-brand-lockup .cfs-brand-copy,
+  body.public-marketing .cfs-brand-lockup .cfs-brand-copy,
+  body.creator-workspace .cfs-brand-lockup .cfs-brand-copy{display:none}
+  .cfs-product-signature-v180{display:grid;justify-items:center;text-align:center;padding:16px 18px}
+}

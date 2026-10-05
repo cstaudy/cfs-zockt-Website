@@ -12,7 +12,6 @@ const snapshot=read('tools/release-state-snapshot.mjs');
 const evidence=read('tools/application-recovery-evidence.mjs');
 const doctor=read('tools/application-recovery-doctor.mjs');
 const gitignore=read('.gitignore');
-const runbook=read('PRODUCTION_GO_LIVE_RUNBOOK.md');
 let pass=0,fail=0; const check=(label,ok)=>{console.log(`${ok?'PASS':'FAIL'}  ${label}`);ok?pass++:fail++};
 check('application recovery policy exists',policy.schema===1&&policy.provider==='render');
 check('canonical recovery origin pinned',policy.canonical_origin==='https://cfs-zockt.de');
@@ -59,5 +58,4 @@ check('doctor checks deploy hook presence only',doctor.includes('Render Deploy H
 check('doctor checks recovery evidence',doctor.includes('Application-Recovery-Evidence vorhanden'));
 check('recovery evidence is gitignored',gitignore.includes('reports/application-recovery-evidence.json'));
 check('release snapshot is gitignored',gitignore.includes('reports/release-state-snapshot.json'));
-check('runbook documents application rollback gate',runbook.includes('Application Rollback / Recovery')||runbook.includes('Application-Recovery'));
 console.log(`\nApplication Recovery Pass 19: ${pass}/${pass+fail}`); if(fail)process.exit(1);

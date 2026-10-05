@@ -23,4 +23,4 @@ Nur die minimal nötigen technischen Daten mitsenden. Keine fremden personenbezo
 
 ## Release-Stand
 
-Der aktuelle technische Status steht in `PROJECT_CURRENT_STATE.md`. Production-spezifische externe Gates wie DNS/TLS, Lockfiles und Recovery-Drills werden dort getrennt von internen automatisierten Tests geführt.
+Der aktuelle technische Stand steht im Root-`README.md`. Production-spezifische Gates werden über die GitHub Actions und die aktiven Tools geprüft.

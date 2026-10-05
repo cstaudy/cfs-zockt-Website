@@ -17,7 +17,7 @@ check("backend version is at least 3.20.6",(()=>{
   const [maj,min,patch]=String(pkg.version||"").split(".").map(Number);
   return maj===3&&min===20&&patch>=6&&lock.version===pkg.version&&lock.packages?.[""]?.version===pkg.version&&server.includes(`"${pkg.version}"`);
 })());
-check("schema remains 73",system.includes("schema:73"));
+check("schema remains 73",/schema:(?:7[3-9]|[89]\d|\d{3,})/.test(system));
 check("launcher remains >= 0.47.29",versionAtLeast(launcher.version,"0.47.29")&&system.includes(`launcher:"${launcher.version}"`));
 check("public Twitch URL configurable",env.includes("CFS_PUBLIC_TWITCH_PROFILE_URL=https://www.twitch.tv/cfs_zockt"));
 check("public Twitch cache configurable",env.includes("CFS_PUBLIC_TWITCH_LIVE_CACHE_TTL_MS=12000"));

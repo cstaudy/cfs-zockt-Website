@@ -7,12 +7,17 @@
   <title>Admin Control Center | cfs_zockt</title>
   <link rel="stylesheet" href="/assets/css/styles.css">
   <link rel="stylesheet" href="/assets/css/admin-creators.css">
+  <link rel="stylesheet" href="/assets/css/admin-control-center-v181.css">
   <link rel="stylesheet" href="/assets/css/admin-beta-handbook-v154.css">
   <meta name="robots" content="noindex,nofollow,noarchive">
   <link rel="stylesheet" href="/assets/css/cfs-theme-v3.css">
   <script src="/assets/js/cfs-shell-v3.js" defer></script>
+  <link rel="stylesheet" href="/assets/css/cfs-brand-unified-v192.css" data-cfs-brand-v192>
+  <link rel="icon" href="/assets/img/favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="600x600" href="/assets/img/app-icon.png">
+  <link rel="apple-touch-icon" href="/assets/img/apple-touch-icon.png">
 </head>
-<body>
+<body data-cfs-brand-v192="1" class="creator-workspace cfs-private-product-v180">
 <header class="site-header">
   <div class="container header-inner">
     <a class="brand" href="/">cfs_<span>zockt</span></a>
@@ -87,6 +92,11 @@
       <p>Öffne nur den Bereich, den du gerade brauchst. Technische Details bleiben sonst eingeklappt.</p>
     </div>
     <div class="admin-start-grid">
+      <button class="admin-start-card" type="button" data-admin-open="adminControlCenterPanel">
+        <span class="admin-start-icon">00</span>
+        <strong>Website & Produkte</strong>
+        <small>Dein privater Arbeitsbereich für Website, Games, Bundles, Einzelstücke & Releases</small>
+      </button>
       <button class="admin-start-card active" type="button" data-admin-open="adminCreatorsPanel">
         <span class="admin-start-icon">01</span>
         <strong>Creator verwalten</strong>
@@ -158,6 +168,58 @@
       <button type="button" data-admin-open="adminSupportPanel"><strong id="focusSupportReports">–</strong><span>Support / Security</span><small>neu oder kritisch</small></button>
     </div>
   </section>
+
+
+  <details class="admin-workspace admin-control-center-v181" id="adminControlCenterPanel" open>
+    <summary class="admin-workspace-summary">
+      <span class="admin-workspace-number">00</span>
+      <span class="admin-workspace-copy"><strong>Privates Admin Dashboard</strong><small>Website bearbeiten, Entwürfe prüfen und Produktionsbereiche steuern – nur für cfs_zockt Admin.</small></span>
+      <span class="admin-workspace-toggle">ÖFFNEN</span>
+    </summary>
+    <div class="admin-workspace-body">
+      <div class="admin-section-heading">
+        <div><span class="admin-step">V181 · PRIVATE ADMIN CONTROL CENTER</span><h2>Dein persönlicher Arbeitsbereich</h2><p>Öffentliche Inhalte werden zuerst als Entwurf gespeichert. Erst „Veröffentlichen“ macht den jeweiligen Abschnitt auf der Website sichtbar. Shop-Entwürfe, Assets, Rechte und interne Daten bleiben privat.</p></div>
+        <button class="btn" id="controlCenterRefresh" type="button">STATUS AKTUALISIEREN</button>
+      </div>
+      <div class="admin-private-badge"><b>PRIVATE ADMIN ONLY</b><span>Normale Creator erhalten weder diese Seite noch die Admin-APIs.</span></div>
+      <section class="admin-control-kpis" aria-label="Admin Control Center Status">
+        <article><span>WEBSITE ENTWÜRFE</span><strong id="ccSiteDirty">–</strong><small>noch nicht veröffentlicht</small></article>
+        <article><span>SHOP DRAFTS</span><strong id="ccShopDrafts">–</strong><small>Bundles & Einzelstücke</small></article>
+        <article><span>LIVE PRODUKTE</span><strong id="ccShopPublished">–</strong><small>aktuell veröffentlicht</small></article>
+        <article><span>ASSETS FREIGEGEBEN</span><strong id="ccAssetsApproved">–</strong><small>Rechte geprüft</small></article>
+        <article><span>ASSETS OFFEN</span><strong id="ccAssetsPending">–</strong><small>Rechte noch prüfen</small></article>
+        <article><span>CREATOR</span><strong id="ccCreators">–</strong><small>registrierte Accounts</small></article>
+      </section>
+
+      <div class="admin-control-grid">
+        <section class="admin-control-editor">
+          <div class="admin-control-editor-head"><div><span class="admin-step">WEBSITE STUDIO</span><h3>Öffentliche Website bearbeiten</h3></div><button class="btn" id="siteContentLoad" type="button">ENTWÜRFE LADEN</button></div>
+          <div class="admin-control-toolbar">
+            <label><span>BEREICH</span><select id="siteContentKey"><option value="home.identity">Start & Warum</option><option value="home.games">Games</option><option value="home.community">Community</option><option value="home.creator_entry">Creator Einstieg</option><option value="home.announcement">Update / Hinweis</option></select></label>
+            <div id="siteContentState" class="admin-site-state">Admin-Schutz entsperren und Entwürfe laden.</div>
+          </div>
+          <div id="siteContentForm" class="admin-site-form"><div class="admin-empty">Noch keine Website-Daten geladen.</div></div>
+          <div class="admin-site-actions">
+            <button class="btn" id="sitePreview" type="button">VORSCHAU</button>
+            <button class="btn" id="siteSaveDraft" type="button">ENTWURF SPEICHERN</button>
+            <button class="btn" id="siteRevert" type="button">AUF LIVE ZURÜCK</button>
+            <button class="btn primary" id="sitePublish" type="button">VERÖFFENTLICHEN</button>
+          </div>
+        </section>
+        <aside class="admin-site-preview" aria-live="polite">
+          <div class="admin-control-editor-head"><div><span class="admin-step">PRIVATE VORSCHAU</span><h3>So würde der Abschnitt wirken</h3></div></div>
+          <div id="sitePreviewHost" class="admin-site-preview-host"><div class="admin-empty">Vorschau bleibt ausschließlich in deinem Admin-Bereich.</div></div>
+        </aside>
+      </div>
+
+      <section class="admin-control-links" aria-label="Admin Produktionsbereiche">
+        <button type="button" data-admin-open="adminBundleFactoryPanel"><b>BUNDLES & EINZELSTÜCKE</b><span>Produkte erzeugen, duplizieren, aufwerten und veröffentlichen.</span></button>
+        <button type="button" data-admin-open="adminCreatorsPanel"><b>CREATOR & ACCOUNTS</b><span>Accounts, Beta, Launcher und Verbindungen kontrollieren.</span></button>
+        <button type="button" data-admin-open="adminProductionPanel"><b>PRODUCTION</b><span>Readiness, Konfiguration und technische Evidence prüfen.</span></button>
+        <button type="button" data-admin-open="adminReleasePanel"><b>RELEASES</b><span>Versionen, Acceptance und Freigabeentscheidungen steuern.</span></button>
+      </section>
+    </div>
+  </details>
 
   <details class="admin-workspace admin-creators-workspace" id="adminCreatorsPanel" open>
     <summary class="admin-workspace-summary">
@@ -298,7 +360,37 @@
     </div>
   </details>
 
-  <details class="admin-workspace admin-production" id="adminProductionPanel">
+  <details class="admin-workspace admin-bundle-factory" id="adminBundleFactoryPanel">
+    <summary class="admin-workspace-summary"><span class="admin-workspace-number">04</span><span class="admin-workspace-copy"><strong>Produkt-Umwandler & Bundle Factory</strong><small>Plattform, Produkttyp, Detail und Ausgabeform zentral auswählen.</small></span><span class="admin-workspace-toggle">ÖFFNEN</span></summary>
+    <div class="admin-workspace-body">
+      <div class="admin-section-heading"><div><span class="admin-step">V183 · EIN UMWANDLER</span><h2>Ein zentraler Produkt-Umwandler</h2><p>Alle bisherigen Umwandler laufen hier zusammen. Produkttyp, Plattform, Detail, Stil und Ausgabe als Bundle, Einzelstücke oder beides werden vor der Erzeugung festgelegt.</p></div><button class="btn" id="bundleFactoryRefresh" type="button">AKTUALISIEREN</button></div>
+      <section class="bundle-factory-grid">
+        <article class="bundle-factory-card"><h3>1 · Quellbilder</h3><input id="bundleFactoryFile" type="file" accept="image/png,image/jpeg,image/webp"><button class="btn" id="bundleFactoryUpload" type="button">BILD HOCHLADEN</button><small>Für eine Collection bis zu 6 freigegebene Bilder markieren.</small><div id="bundleFactoryAssets" class="bundle-factory-list"></div></article>
+        <article class="bundle-factory-card"><h3>2 · Rechte</h3><select id="bundleFactoryAsset"></select><select id="bundleFactoryRights"><option value="pending">NOCH NICHT FREIGEGEBEN</option><option value="approved">FÜR SHOP-NUTZUNG FREIGEGEBEN</option><option value="rejected">NICHT VERWENDEN</option></select><input id="bundleFactoryRightsSource" maxlength="240" placeholder="Quelle / Lizenz / eigener Upload"><textarea id="bundleFactoryRightsNote" maxlength="1000" placeholder="Interne Rechte-Notiz"></textarea><button class="btn" id="bundleFactorySaveRights" type="button">RECHTE SPEICHERN</button></article>
+        <article class="bundle-factory-card bundle-factory-guide"><h3>3 · Bereit zum Umwandeln</h3><p>Freigegebene Bilder oben markieren. Danach wird ausschließlich der zentrale Umwandler verwendet.</p><small>Keine zweite Bundle-/Widget-/Panel-Erzeugung mehr: Produkttyp, Plattform, Detail, Stil, Ausgabe und Varianten werden unten in einem Ablauf gewählt.</small></article>
+      </section>
+      <section class="admin-unified-converter" id="adminUnifiedConverter">
+        <div class="admin-section-heading compact"><div><span class="admin-step">ZENTRALER UMWANDLER</span><h2>Aus Bildern gezielt Produkte bauen</h2><p>Verwendet die oben markierten, freigegebenen Quellbilder. Entwürfe bleiben privat, bis du sie selbst veröffentlichst.</p></div></div>
+        <div class="admin-converter-grid">
+          <label><span>PRODUKTTYP</span><select id="adminConverterType"><option value="stream_status">STREAM-STATUS</option><option value="overlays">OVERLAYS</option><option value="panels">PANELS / CARDS</option><option value="widgets">PROVIDER-WIDGETS</option><option value="creator_pack">KOMPLETTER CREATOR-PACK</option></select></label>
+          <label><span>PLATTFORM</span><select id="adminConverterPlatform"><option value="twitch">TWITCH</option><option value="tiktok">TIKTOK</option><option value="youtube">YOUTUBE</option><option value="neutral">PLATTFORMNEUTRAL</option></select></label>
+          <label><span>DETAIL</span><select id="adminConverterDetail"></select></label>
+          <label><span>AUSGABE</span><select id="adminConverterOutput"><option value="bundle_only">NUR BUNDLE</option><option value="singles_only">NUR EINZELSTÜCKE</option><option value="bundle_and_singles">BUNDLE + EINZELSTÜCKE</option></select></label>
+          <label><span>VARIANTEN</span><select id="adminConverterVariants"><option value="1">1 ENTWURF</option><option value="2">2 VARIANTEN</option><option value="4">4 VARIANTEN</option></select></label>
+          <label><span>DESIGN / PRESET</span><select id="adminConverterPreset"><option value="custom">CUSTOM</option><option value="cyber">CYBER</option><option value="gaming">GAMING</option><option value="seasonal">SEASONAL</option><option value="minimal">MINIMAL</option></select></label>
+          <label class="admin-converter-check"><input id="adminConverterBranding" type="checkbox" checked><span>QUELLBILDER ALS BRANDING MITNEHMEN</span></label>
+          <label><span>PRODUKTNAME</span><input id="adminConverterTitle" maxlength="120" placeholder="z. B. Neon Wolf Status Pack"></label>
+          <label><span>COLLECTION</span><input id="adminConverterCollection" maxlength="140" placeholder="z. B. Neon Wolf Collection"></label>
+        </div>
+        <div class="admin-converter-result"><div><b id="adminConverterSummary">–</b><small id="adminConverterHint">Nach der Erzeugung kannst du weiterhin einzelne Produkte oder die komplette Collection duplizieren.</small></div><button class="btn primary" id="adminConverterGenerate" type="button">AUSWAHL UMWANDELN</button></div>
+      </section>
+      <section class="bundle-compare" id="bundleFactoryCompare" hidden><div class="admin-section-heading compact"><div><span class="admin-step">VARIANTENVERGLEICH</span><h2>Bis zu 3 Entwürfe nebeneinander</h2></div><button class="btn" id="bundleFactoryClearCompare" type="button">AUSWAHL LEEREN</button></div><div id="bundleFactoryCompareGrid" class="bundle-compare-grid"></div></section>
+      <section class="bundle-catalog-tools" aria-labelledby="adminCatalogTitle"><div class="admin-section-heading compact"><div><span class="admin-step">V186 · ADMIN-KATALOG</span><h2 id="adminCatalogTitle">Suchen, filtern & Archiv überblicken</h2><p>Filter wirken nur auf den bereits autorisierten privaten Admin-Bestand. Archivierte Inhalte bleiben erhalten und können gezielt reaktiviert werden.</p></div><button class="btn" id="adminCatalogReset" type="button">FILTER ZURÜCKSETZEN</button></div><div class="bundle-catalog-kpis"><button type="button" class="bundle-catalog-kpi active" data-catalog-quick="all"><strong id="adminCatalogProductCount">0</strong><span>PRODUKTE</span></button><div class="bundle-catalog-kpi"><strong id="adminCatalogCollectionCount">0</strong><span>COLLECTIONS</span></div><button type="button" class="bundle-catalog-kpi archive" data-catalog-quick="archived"><strong id="adminCatalogArchivedProductCount">0</strong><span>ARCHIV-PRODUKTE</span></button><div class="bundle-catalog-kpi archive"><strong id="adminCatalogArchivedCollectionCount">0</strong><span>ARCHIV-COLLECTIONS</span></div></div><div class="bundle-catalog-filter-grid"><label><span>SUCHE</span><input id="adminCatalogSearch" type="search" maxlength="120" autocomplete="off" placeholder="Produkt, Collection, Plattform, Version …"></label><label><span>STATUS</span><select id="adminCatalogStatus"><option value="all">ALLE</option><option value="active">NICHT ARCHIVIERT</option><option value="published">IM SHOP</option><option value="draft">ENTWURF</option><option value="mixed">GEMISCHT</option><option value="archived">ARCHIVIERT</option></select></label><label><span>PLATTFORM</span><select id="adminCatalogPlatform"><option value="all">ALLE</option><option value="twitch">TWITCH</option><option value="tiktok">TIKTOK</option><option value="youtube">YOUTUBE</option><option value="neutral">PLATTFORMNEUTRAL</option></select></label><label><span>ANGEBOT</span><select id="adminCatalogOffer"><option value="all">ALLE</option><option value="bundle">BUNDLES</option><option value="item">EINZELSTÜCKE</option></select></label></div><div class="bundle-catalog-result"><b id="adminCatalogResultSummary">0 Produkte · 0 Collections</b><small id="adminCatalogArchiveSummary">0 archivierte Collections · 0 archivierte Produkte</small></div></section>
+      <section class="bundle-collection-manager"><div class="admin-section-heading compact"><div><span class="admin-step">COLLECTION LIFECYCLE</span><h2>Serien komplett steuern</h2></div><div id="bundleFactoryCollections" class="bundle-collection-summary"></div></div><div id="bundleFactoryCollectionCards" class="bundle-collection-grid"></div></section><section class="bundle-factory-products"><div class="admin-section-heading compact"><div><span class="admin-step">V187 · SHOP ENTWÜRFE</span><h2>Produkte, Cover & Versionen · SVG/PNG/WebP</h2></div></div><div id="bundleFactoryProducts" class="bundle-product-grid"></div></section>
+    </div>
+  </details>
+
+<details class="admin-workspace admin-production" id="adminProductionPanel">
     <summary class="admin-workspace-summary">
       <span class="admin-workspace-number">05</span>
       <span class="admin-workspace-copy"><strong>Production prüfen</strong><small>Config, Billing und Evidence für technische Abnahmen.</small></span>
@@ -369,5 +461,7 @@
 <div class="admin-toast" id="adminToast" hidden></div>
 <script src="/assets/js/app.js"></script>
 <script src="/assets/js/admin-creators.js"></script>
+<script src="/assets/js/admin-control-center-v181.js"></script>
+<script src="/assets/js/admin-bundle-factory-v178.js"></script>
 </body>
 </html>

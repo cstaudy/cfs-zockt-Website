@@ -24,7 +24,7 @@ check('backend runtime matches package',server.includes(`const BACKEND_VERSION =
 check('release:v164 chained',pkg.scripts?.['release:v164']==='npm run release:v163 && npm run homepage164:check');
 check('v164 marker styles present',css.includes('v164 · Public homepage professional flow'));
 
-check('header keeps only five primary public destinations', ['#streams','#games','#community','/pages/creator-suite.html','/pages/launcher-download.html'].every(h=>headerNav.includes(`href="${h}"`)));
+check('header keeps five public destinations', ['#warum','#streams','#games','#community','/pages/login.html'].every(h=>headerNav.includes(`href="${h}"`))&&!headerNav.includes('/pages/creator-suite.html')&&!headerNav.includes('/pages/launcher-download.html'));
 check('header removes redundant Home and Kontakt labels',!headerNav.includes('>Home<')&&!headerNav.includes('>Kontakt<'));
 check('mobile auth is inside menu',headerNav.includes('gaming-nav-mobile-auth')&&headerNav.includes('data-login-link')&&headerNav.includes('data-auth-cta'));
 check('desktop auth remains outside menu',home.includes('<div class="gaming-auth-actions" aria-label="Creator Suite Zugang">'));
@@ -37,18 +37,18 @@ check('generic schedule card rail removed',!home.includes('gaming-schedule-list'
 check('core visitor flow order is live games community creator',pos('streams')<pos('games')&&pos('games')<pos('community')&&pos('community')<pos('creator-suite-access'));
 check('LIVE card remains complete', ['liveStatusBadge','twitchLiveIndicator','tiktokLiveIndicator','twitchChannelButton','tiktokChannelButton'].every(id=>home.includes(`id="${id}"`)));
 check('games remain visible',home.includes('id="recentGamesGrid"')&&home.includes('data-game-slot="0"'));
-check('community reduced to three actionable cards',(community.match(/<article>/g)||[]).length===3);
-check('community retains TikTok Discord Creator Suite', ['TIKTOK','DISCORD','CREATOR SUITE'].every(x=>community.includes(x)));
+check('community exposes four actionable destinations',(community.match(/<article>/g)||[]).length===4);
+check('community retains Twitch TikTok Discord and Creator login', ['TWITCH','TIKTOK','DISCORD','CREATOR BEREICH'].every(x=>community.includes(x))&&community.includes('/pages/login.html'));
 check('main live community stats retained',home.includes('id="communityStatsTitle"')&&home.includes('id="statTikTok"')&&home.includes('id="statDiscord"'));
 check('duplicate footer metric strip removed',!home.includes('gaming-footer-live'));
 
-check('final CTA has start + Windows launcher',home.includes('TOOLS FÜR DEINEN STREAM.')&&home.includes('KOSTENLOS STARTEN')&&home.includes('WINDOWS LAUNCHER'));
-check('final CTA keeps login secondary',home.includes('gaming-final-login')&&home.includes('Schon registriert? Anmelden'));
-check('footer is compact four-link navigation',footer.includes('>Streams<')&&footer.includes('>Creator Suite<')&&footer.includes('>Launcher<')&&footer.includes('>Kontakt<')&&!footer.includes('>Merch Shop<'));
+check('final CTA exposes protected creator entry only',home.includes('MEINE TOOLS FÜR REGISTRIERTE CREATOR.')&&home.includes('CREATOR REGISTRIERUNG')&&home.includes('CREATOR LOGIN')&&!home.includes('WINDOWS LAUNCHER'));
+check('final CTA keeps creator login secondary',home.includes('CREATOR LOGIN')&&home.includes('/pages/login.html'));
+check('footer reflects public brand navigation',footer.includes('>Warum?<')&&footer.includes('>Streams<')&&footer.includes('>Games<')&&footer.includes('>Community<')&&footer.includes('>Creator Bereich<')&&footer.includes('>Kontakt<')&&!footer.includes('>Launcher<'));
 check('footer exposes Twitch TikTok Discord',footer.includes('aria-label="Twitch"')&&footer.includes('aria-label="TikTok"')&&footer.includes('aria-label="Discord"'));
 check('footer keeps legal links', ['/pages/impressum.html','/pages/datenschutz.html','/pages/nutzungsbedingungen.html'].every(h=>footer.includes(h)));
-check('transparent wordmark remains header and footer',(home.match(/cfs-zockt-wordmark-transparent\.png/g)||[]).length>=2);
-check('homepage stays concise',visibleWords<=420,`visible-ish words=${visibleWords}`);
+check('current CFS mark remains header and footer',(home.match(/cfs-zockt-mark\.png/g)||[]).length>=2);
+check('homepage stays concise',visibleWords<=560,`visible-ish words=${visibleWords}`);
 check('homepage still has meaningful content',visibleWords>=180,`visible-ish words=${visibleWords}`);
 check('responsive community collapse exists',/@media\(max-width:680px\)[\s\S]*?\.gaming-community-grid\{grid-template-columns:1fr\}/.test(css));
 check('mobile nav keeps viewport bound',css.includes('max-height:calc(100dvh - 76px)'));

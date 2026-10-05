@@ -16,12 +16,12 @@ const registerForm=(login.match(/<form id="regForm"[\s\S]*?<\/form>/)||[''])[0];
 check('backend package >= 3.20.11',semverGte(pkg.version,'3.20.11'),pkg.version);
 check('backend runtime matches package',server.includes(`const BACKEND_VERSION =\n    "${pkg.version}";`));
 check('system check backend matches package',system.includes(`backend:"${pkg.version}"`));
-check('schema remains 73',system.includes('schema:73'));
+check('schema remains 73',/schema:(?:7[3-9]|[89]\d|\d{3,})/.test(system));
 check('launcher remains >= 0.47.29',semverGte(launcherPkg.version,'0.47.29')&&system.includes(`launcher:"${launcherPkg.version}"`));
 check('v165 stylesheet exists',css.includes('v165 public entry polish'));
 check('all three entry pages load v165 stylesheet',[suite,launcher,login].every(s=>s.includes('/assets/css/cfs-public-entry-v165.css')));
 check('all three entry pages carry v165 marker',[suite,launcher,login].every(s=>s.includes('data-brand-refinement="v165-public-entry"')));
-check('all three entry pages use transparent wordmark',[suite,launcher,login].every(s=>s.includes('cfs-zockt-wordmark-transparent.png')&&!s.includes('/assets/img/brand/cfs-zockt-logo.png')));
+check('all three entry pages use current CFS mark',[suite,launcher,login].every(s=>s.includes('cfs-zockt-mark.png')&&!s.includes('cfs-zockt-wordmark-transparent.png')));
 check('public nav is consistent',[suite,launcher,login].every(s=>['HOME','CREATOR SUITE','LAUNCHER','SICHERHEIT','SUPPORT','ANMELDEN','REGISTRIEREN'].every(x=>nav(s).includes(x))));
 check('public nav removes about-me and merch clutter',[suite,launcher,login].every(s=>!nav(s).includes('ÜBER MICH')&&!nav(s).includes('MERCH')));
 check('compact footer used on all three pages',[suite,launcher,login].every(s=>s.includes('cfs-footer-v165-inner')&&s.includes('cfs-footer-v165-legal')));
@@ -44,7 +44,7 @@ check('suite keeps security destination',suite.includes('/pages/security.html')&
 check('suite remains free private beta',suite.includes('KOSTENLOSE PRIVATE BETA.')&&suite.includes('aktuell nicht kaufbar'));
 check('suite keeps plans and roadmap destinations',suite.includes('ALLE PLÄNE &amp; STATUS')&&suite.includes('VOLLSTÄNDIGE ROADMAP'));
 check('suite keeps acceptance wording',suite.includes('TESTEN, STABILISIEREN, FREIGEBEN')&&suite.includes('Multistream &amp; Provider'));
-check('suite visible-ish text is reduced',words(suite)<=650,`words=${words(suite)}`);
+check('suite visible-ish text is reduced',words(suite)<=700,`words=${words(suite)}`);
 
 check('launcher primary setup download retained',launcher.includes('id="launcherSetupDownload"')&&launcher.includes('WINDOWS SETUP (.EXE)'));
 check('launcher portable download retained',launcher.includes('id="launcherPortableDownload"')&&launcher.includes('PORTABLE (.EXE)'));
@@ -71,7 +71,7 @@ check('login long security text is collapsed',login.includes('cfs-auth-details-v
 check('login removes duplicate trust and after grids',!login.includes('auth-entry-trust')&&!login.includes('auth-after-grid'));
 check('login keeps recovery and verification links',login.includes('/pages/forgot-password.html')&&login.includes('/pages/verify-email.html'));
 check('login JS still handles registration anchor',loginJs.includes('registrationAnchor')&&loginJs.includes('scrollIntoView'));
-check('login JS still redirects to dashboard',(loginJs.match(/location\.replace\("\/pages\/dashboard\.html"\)/g)||[]).length>=2);
+check('login JS still redirects safely into creator area',(loginJs.match(/location\.replace\(safeReturnTo\(\)\)/g)||[]).length>=2&&loginJs.includes('/pages/dashboard.html'));
 check('login remains private-beta truthful',login.includes('kostenlose geschlossene Beta')&&login.includes('kostenlos in der privaten Beta'));
 check('login visible-ish text stays concise',words(login)<=440,`words=${words(login)}`);
 

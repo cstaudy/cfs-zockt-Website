@@ -1,12 +1,14 @@
 import fs from "node:fs";import path from "node:path";
 const root=path.resolve(process.argv[2]||path.join(import.meta.dirname,"..")),must=(v,m)=>{if(!v)throw new Error(m)};
+const pkg=JSON.parse(fs.readFileSync(path.join(root,"package.json"),"utf8"));
 const deploy=fs.readFileSync(path.join(root,".github/workflows/production-deploy.yml"),"utf8");
 const quality=fs.readFileSync(path.join(root,".github/workflows/quality-gate.yml"),"utf8");
 const verify=fs.readFileSync(path.join(root,".github/workflows/production-verification.yml"),"utf8");
-must(/default: "3\.(?:10|11|12)\.0"/.test(deploy),"deploy expected backend 3.10+");
-must(/default: "3\.(?:10|11|12)\.0"/.test(verify),"verification expected backend 3.10+");
+const expected=`default: "${pkg.version}"`;
+must(deploy.includes(expected),`deploy expected backend ${pkg.version}`);
+must(verify.includes(expected),`verification expected backend ${pkg.version}`);
 must(deploy.includes("production-canary-check.mjs"),"canary after deploy");
 must(deploy.includes("concurrency:")&&deploy.includes("cancel-in-progress: false"),"deploy concurrency");
 must(quality.includes("cancel-in-progress: true"),"quality concurrency");
-must(!deploy.includes("push:\\n    branches:"),"production deploy must not auto-run on push");
-console.log(JSON.stringify({ok:true,backend:"3.10+",manual_deploy:true,canary:true,concurrency:true}));
+must(!deploy.includes("push:\n    branches:"),"production deploy must not auto-run on push");
+console.log(JSON.stringify({ok:true,backend:pkg.version,manual_deploy:true,canary:true,concurrency:true}));

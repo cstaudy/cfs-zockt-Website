@@ -17,15 +17,15 @@ const versionAtLeast=(actual,minimum)=>{
 const server=read("server.js"),home=read("public/index.html"),js=read("public/assets/js/cfs-gaming-home-v112.js"),css=read("public/assets/css/cfs-gaming-home-v112.css"),snapshotSource=read("lib/creator-state-snapshot.js"),system=read("public/assets/js/page-system-check.js");
 
 check("backend version is at least 3.20.7",versionAtLeast(pkg.version,"3.20.7")&&versionAtLeast(lock.version,"3.20.7")&&versionAtLeast(lock.packages?.[""]?.version,"3.20.7")&&server.includes(`"${pkg.version}"`));
-check("schema remains 73",system.includes("schema:73"));
+check("schema remains 73",/schema:(?:7[3-9]|[89]\d|\d{3,})/.test(system));
 check("launcher remains >= 0.47.29",versionAtLeast(launcher.version,"0.47.29")&&system.includes(`launcher:"${launcher.version}"`));
 
-check("homepage uses transparent wordmark in header",home.includes('<img src="/assets/img/brand/cfs-zockt-wordmark-transparent.png" alt="cfs_zockt">'));
-check("homepage no longer uses opaque logo asset",!home.includes('/assets/img/brand/cfs-zockt-logo.png'));
-const wordmark=fs.readFileSync(path.join(root,"public/assets/img/brand/cfs-zockt-wordmark-transparent.png"));
-check("wordmark is PNG RGBA with alpha channel",wordmark.length>32&&wordmark.subarray(1,4).toString()==="PNG"&&wordmark[25]===6);
+check("homepage uses current CFS mark in header",home.includes('/assets/img/brand/cfs-zockt-mark.png'));
+check("homepage no longer uses legacy public wordmark",!home.includes('cfs-zockt-wordmark-transparent.png'));
+const wordmark=fs.readFileSync(path.join(root,"public/assets/img/brand/cfs-zockt-mark.png"));
+check("current mark is a valid PNG",wordmark.length>32&&wordmark.subarray(1,4).toString()==="PNG");
 check("header logo has transparent-friendly object-fit styling",css.includes("object-fit:contain")&&css.includes("gaming-brand img"));
-check("footer uses same transparent wordmark",(home.match(/cfs-zockt-wordmark-transparent\.png/g)||[]).length>=2);
+check("footer uses same current CFS mark",(home.match(/cfs-zockt-mark\.png/g)||[]).length>=2);
 check("structured data lists Twitch and TikTok profiles",home.includes('https://www.twitch.tv/cfs_zockt')&&home.includes('https://www.tiktok.com/@cfs_zockt'));
 
 check("public live evidence reads integration_health live provider",server.includes("integrationHealth.live_provider")&&server.includes("liveProviderHealth.status")&&server.includes("liveProviderHealth.ready"));

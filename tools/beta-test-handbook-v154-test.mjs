@@ -26,7 +26,7 @@ const versionAtLeast=(actual,minimum)=>{const a=String(actual||'').split('.').ma
 
 ok('backend >= 3.20.0',versionAtLeast(pkg.version,'3.20.0'));
 ok('launcher >= 0.47.26',versionAtLeast(launcherPkg.version,'0.47.26'));
-ok('schema generation >= 73',/DATABASE_SCHEMA_VERSION\s*=\s*73/.test(schema));
+ok('schema generation >= 73',/DATABASE_SCHEMA_VERSION\s*=\s*(?:7[3-9]|[89]\d|\d{3,})/.test(schema));
 ok('backend runtime version bumped',server.includes(`const BACKEND_VERSION =\n    "${pkg.version}"`));
 ok('handbook result table exists',server.includes('CREATE TABLE IF NOT EXISTS creator_beta_handbook_results'));
 ok('handbook table is creator scoped',server.includes('creator_id TEXT NOT NULL REFERENCES creator_accounts(id) ON DELETE CASCADE'));

@@ -6,7 +6,7 @@ on:
       expected_backend_version:
         description: "Expected backend version after deploy"
         required: true
-        default: "3.20.5"
+        default: "3.20.39"
         type: string
 
 permissions:
@@ -43,8 +43,15 @@ jobs:
       - name: Deploy automation v27
         run: npm run deploy27:check
 
-      - name: Current release candidate seal
-        run: npm run release25:verify
+      - name: Current v196 repository regression
+        run: npm run project:check
+
+      - name: CFS AI v196 integration
+        run: |
+          node tools/cfs-ai-integration-v196-test.mjs .
+          node tools/cfs-ai-gateway-v196-test.mjs .
+          node tools/cfs-ai-bridge-v196-test.mjs .
+          node tools/cfs-ai-live-bridge-v196-test.mjs .
 
       - name: Launcher release policy tests
         run: node tools/launcher-release-policy-test.mjs

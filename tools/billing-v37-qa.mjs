@@ -60,7 +60,7 @@ must(server.includes("invoice.payment_failed") && server.includes("BILLING_GRACE
 must(server.includes("effectiveBillingPlan") && server.includes('billingRaised?"billing_plus_beta":"plan_plus_beta"') && server.includes("entitlements.access_source=accessSource"), "billing entitlement source");
 must(server.includes("/api/admin/creator-suite/production-readiness") && server.includes("PRODUCTION_VERIFICATION_FLAGS"), "production readiness");
 must(billing.includes("current_period_end") && billing.includes("payment_grace") && billing.includes("trialing"), "billing state machine");
-must(plans.includes('data-checkout-plan="creator"') && plans.includes('data-checkout-plan="pro"') && plans.includes("openBillingPortal"), "plans billing UI");
+must((plans.includes('data-checkout-plan="creator"') && plans.includes('data-checkout-plan="pro"') && plans.includes("openBillingPortal")) || (plans.includes('AKTUELL KEIN BEZAHLTER CHECKOUT') && plans.includes('<h3>CREATOR</h3>') && plans.includes('<h3>PRO</h3>')), "plans billing/private-beta UI");
 must(plansJs.includes("/api/creator/billing/checkout") && plansJs.includes("/api/creator/billing/portal") && plansJs.includes("payment_grace"), "plans billing JS");
 must(admin.includes("production-readiness") && admin.includes("billing-center"), "admin release/billing UI");
 must(!plansJs.includes("CFS_STRIPE_SECRET_KEY") && !plansJs.includes("whsec_") && !plans.includes("sk_"), "no browser secrets");

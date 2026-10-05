@@ -23,7 +23,6 @@ check('management hub visual refinement exists', css.includes('.management-hub{b
 check('mobile 760 refinement exists', css.includes('@media(max-width:760px)'));
 check('mobile 520 refinement exists', css.includes('@media(max-width:520px)'));
 check('no literal escaped newline sequences remain', !css.includes('\\n'));
-check('pass documentation exists', fs.existsSync(path.join(root, 'WEBSITE_VISUAL_POLISH_PASS21_3_13.md')));
 
 const htmlFiles = [
   'public/index.html',

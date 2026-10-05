@@ -25,11 +25,12 @@ const deploy = read('.github/workflows/production-deploy.yml');
 const verify = read('.github/workflows/production-verification.yml');
 const postdeploy = read('tools/postdeploy-ui-acceptance-v21.mjs');
 
-add('quality gate runs RC25', quality.includes('npm run release25:verify'));
+add('quality gate runs current project regression', quality.includes('npm run project:check'));
 add('quality gate runs v27 automation check', quality.includes('npm run deploy27:check'));
-add('quality gate writes RC25 evidence', quality.includes('release-candidate-v25.json'));
+add('quality gate runs CFS AI v196 checks', quality.includes('cfs-ai-integration-v196-test.mjs') && quality.includes('cfs-ai-live-bridge-v196-test.mjs'));
 
-add('production deploy validates RC25 before deploy', deploy.includes('npm run release25:verify'));
+add('production deploy validates current regression before deploy', deploy.includes('npm run project:check'));
+add('production deploy validates CFS AI v196 before deploy', deploy.includes('cfs-ai-integration-v196-test.mjs') && deploy.includes('cfs-ai-live-bridge-v196-test.mjs'));
 add('production deploy runs v27 automation check', deploy.includes('npm run deploy27:check'));
 add('production deploy executes postdeploy UI gate', deploy.includes('postdeploy-ui-acceptance-v21.mjs'));
 add('production deploy writes postdeploy UI evidence', deploy.includes('postdeploy-ui-v21.json'));

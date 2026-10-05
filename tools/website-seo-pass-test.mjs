@@ -8,10 +8,6 @@ const BASE = "https://cfs-zockt.de";
 
 const INDEXABLE = new Map([
   ["index.html", `${BASE}/`],
-  ["pages/creator-suite.html", `${BASE}/pages/creator-suite.html`],
-  ["pages/launcher-download.html", `${BASE}/pages/launcher-download.html`],
-  ["pages/merch.html", `${BASE}/pages/merch.html`],
-  ["pages/plans.html", `${BASE}/pages/plans.html`],
   ["pages/roadmap.html", `${BASE}/pages/roadmap.html`],
   ["pages/support.html", `${BASE}/pages/support.html`],
   ["pages/security.html", `${BASE}/pages/security.html`],
@@ -21,6 +17,7 @@ const PUBLIC_NOINDEX = new Map([
   ["pages/impressum.html", `${BASE}/pages/impressum.html`],
   ["pages/datenschutz.html", `${BASE}/pages/datenschutz.html`],
   ["pages/nutzungsbedingungen.html", `${BASE}/pages/nutzungsbedingungen.html`],
+  ["pages/merch.html", `${BASE}/pages/merch.html`],
 ]);
 
 const errors = [];
@@ -105,7 +102,7 @@ for (const file of walk(publicDir).filter(f => f.endsWith(".html"))) {
   }
 }
 
-// Homepage structured data: Organization + WebSite + Creator-Suite description as WebPage.
+// Homepage structured data: Organization + WebSite + public cfs_zockt brand page.
 const home = fs.readFileSync(path.join(publicDir,"index.html"),"utf8");
 const jsonLdMatches = [...home.matchAll(/<script\s+type=["']application\/ld\+json["'][^>]*data-cfs-seo[^>]*>([\s\S]*?)<\/script>/gi)];
 if (jsonLdMatches.length !== 1) {
@@ -160,7 +157,7 @@ const social = path.join(publicDir,"assets/img/social-preview.jpg");
 if (!fs.existsSync(social) || fs.statSync(social).size < 10000) errors.push("Social Preview fehlt oder ist unerwartet klein.");
 
 const server = fs.readFileSync(path.join(root,"server.js"),"utf8");
-for (const route of ["/index.html","/pages/creator-suite","/pages/launcher-download","/pages/merch","/pages/plans","/pages/roadmap","/pages/support","/pages/security","/pages/impressum","/pages/datenschutz","/pages/nutzungsbedingungen"]) {
+for (const route of ["/index.html","/pages/merch","/pages/roadmap","/pages/support","/pages/security","/pages/impressum","/pages/datenschutz","/pages/nutzungsbedingungen"]) {
   if (!server.includes(`[\"${route}\"`)) errors.push(`server.js: Canonical-Redirect für ${route} fehlt.`);
 }
 if (!server.includes('"X-Robots-Tag"')) errors.push("server.js: X-Robots-Tag für Runtime/API fehlt.");

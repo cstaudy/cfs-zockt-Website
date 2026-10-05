@@ -36,13 +36,13 @@ const scheduleIconCount=(home.match(/gaming-schedule-icon/g)||[]).length;
 check('stream info cards are either icon-only legacy trio or removed',scheduleIconCount===0||scheduleIconCount===3);
 check('stream info cards have no img elements',!/<div class="gaming-schedule-list"[\s\S]*?<img[\s\S]*?<\/div>\s*<\/div>\s*<\/div>\s*<\/section>/.test(home));
 check('hero first action leads to streams',home.includes('href="#streams"><span class="gaming-btn-icon">◉</span> STREAMS ANSEHEN'));
-check('hero second action leads to creator suite',home.includes('href="/pages/creator-suite.html"><span class="gaming-btn-icon">◇</span> CREATOR SUITE'));
+check('hero second action explains cfs_zockt instead of opening private products',home.includes('href="#warum"')&&home.includes('WARUM CFS_ZOCKT?')&&!home.includes('href="/pages/creator-suite.html"><span class="gaming-btn-icon">◇</span> CREATOR SUITE'));
 check('hero does not claim currently live',!home.includes('JETZT LIVE DABEI SEIN'));
 check('live button remains truth-neutral',home.includes('TIKTOK-KANAL ÖFFNEN'));
 check('stream section no longer claims schedule without dates',home.includes('STREAMS & CONTENT')&&!home.includes('STREAMS & STREAMPLAN'));
 check('offer section is user-oriented when present',!home.includes('id="angebot"')||home.includes('DAS FINDEST DU HIER'));
 check('stream studio offer card points to tools when present',!home.includes('id="angebot"')||home.includes('/pages/creator-suite.html#tools">TOOLS ENTDECKEN'));
-check('homepage explains closed beta',/kostenlose geschlossene Beta/i.test(home));
+check('homepage keeps beta/product copy out of public brand story',!/kostenlose geschlossene Beta/i.test(home)&&home.includes('Creator Bereich'));
 check('creator suite explains closed beta',suite.includes('kostenlose geschlossene Beta'));
 check('creator suite no longer advertises multistream as next block',!suite.includes('NÄCHSTER BLOCK')&&!suite.includes('<strong>Echte Multistream-Ziele</strong>'));
 check('creator suite identifies acceptance phase',suite.includes('TESTEN, STABILISIEREN, FREIGEBEN')&&suite.includes('Multistream &amp; Provider'));
@@ -50,7 +50,7 @@ check('creator suite plans are not currently purchasable',suite.includes('aktuel
 check('login explains private beta',login.includes('kostenlos in der privaten Beta'));
 check('plans metadata explains private beta',plans.includes('kostenlose private Beta'));
 check('plans CTA no longer says free plan',plans.includes('STARTE IN DER PRIVATEN BETA')&&!plans.includes('STARTE IM FREE PLAN'));
-check('current launcher version remains visible',home.includes(`Launcher ${launcherPkg.version}`)&&suite.includes(`LAUNCHER ${launcherPkg.version}`));
+check('current launcher version remains visible inside private Creator product',!home.includes(`Launcher ${launcherPkg.version}`)&&suite.includes(`LAUNCHER ${launcherPkg.version}`));
 check('v156 gate registered',pkg.scripts?.['homepage156:check']==='node tools/homepage-clarity-v156-test.mjs .');
 check('v156 release chains v155 and homepage gate',pkg.scripts?.['release:v156']==='npm run release:v155 && npm run homepage156:check');
 

@@ -3,12 +3,17 @@
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#020711"><title>Scene Studio | cfs_zockt</title><link rel="stylesheet" href="/assets/css/styles.css"><link rel="stylesheet" href="/assets/css/scene-studio.css">  <meta name="robots" content="noindex,nofollow,noarchive">
   <link rel="stylesheet" href="/assets/css/cfs-theme-v3.css">
   <script src="/assets/js/cfs-shell-v3.js" defer></script>
+  <link rel="stylesheet" href="/assets/css/cfs-creator-ux-v189.css">
+  <link rel="stylesheet" href="/assets/css/cfs-brand-unified-v192.css" data-cfs-brand-v192>
+  <link rel="icon" href="/assets/img/favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="600x600" href="/assets/img/app-icon.png">
+  <link rel="apple-touch-icon" href="/assets/img/apple-touch-icon.png">
 </head>
-<body class="creator-workspace">
+<body data-cfs-brand-v192="1" class="creator-workspace">
 <header class="site-header creator-site-header">
   <div class="container header-inner creator-header-inner">
     <a class="creator-brand" href="/pages/dashboard.html" aria-label="cfs_zockt Creator Suite Dashboard">
-      <img class="creator-brand-logo" src="/assets/img/brand/cfs-zockt-logo.png" alt="cfs_zockt">
+      <img class="creator-brand-logo" src="/assets/img/brand/cfs-zockt-mark.png" alt="cfs_zockt">
       <span>CREATOR SUITE</span>
     </a>
     <button class="mobile-toggle creator-mobile-toggle" data-mobile-toggle id="mobileNavToggle" type="button">MENÜ</button>
@@ -90,4 +95,5 @@
 <div class="scene-output-bar"><div><span>LIVE OUTPUT URL</span><input id="sceneOutputUrl" aria-label="Scene Output URL" readonly placeholder="Nach Publish verfügbar"></div><button class="btn" id="copySceneUrl">URL KOPIEREN</button><a class="btn" id="openSceneUrl" target="_blank" rel="noopener">ÖFFNEN</a></div>
 </div></section>
 <aside class="scene-library panel"><div class="scene-side-head"><div><span>WIDGET LIBRARY</span><strong id="widgetCount">0</strong></div></div><p class="scene-hint">Nur veröffentlichte Widgets können in einer Live-Scene verwendet werden.</p><div id="widgetLibrary" class="widget-library"></div><div class="scene-properties" id="sceneProperties" hidden><div class="scene-side-head"><div><span>AUSWAHL</span><strong id="selectedItemName">Widget</strong></div></div><div class="property-grid"><label><span>X</span><input id="itemX" type="number"></label><label><span>Y</span><input id="itemY" type="number"></label><label><span>SCALE</span><input id="itemScale" type="number" min=".1" max="5" step=".05"></label><label><span>ROTATION</span><input id="itemRotation" type="number"></label><label><span>OPACITY</span><input id="itemOpacity" type="number" min="0" max="1" step=".05"></label><label><span>EBENE</span><input id="itemZ" type="number"></label></div><div class="property-actions"><button class="btn" id="toggleItemVisible">AUSBLENDEN</button><button class="btn danger" id="removeItem">ENTFERNEN</button></div></div></aside>
-</section></main><div class="scene-toast" id="sceneToast" hidden></div><script src="/assets/js/app.js"></script><script src="/assets/js/cfs-widget-renderer.js"></script><script src="/assets/js/scene-studio.js"></script></body></html>
+</section></main><div class="scene-toast" id="sceneToast" hidden></div><script src="/assets/js/app.js"></script><script src="/assets/js/cfs-widget-renderer.js"></script><script src="/assets/js/scene-studio.js"></script><script src="/assets/js/cfs-creator-ux-v189.js"></script>
+</body></html>

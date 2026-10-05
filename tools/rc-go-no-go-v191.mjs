@@ -1,0 +1,15 @@
+import fs from "node:fs";
+import path from "node:path";
+import { createRequire } from "node:module";
+const require = createRequire(import.meta.url);
+const root = path.resolve(".");
+const lib = require(path.join(root,"lib/rc-tooling-v191.js"));
+const readJson = rel => JSON.parse(fs.readFileSync(path.join(root,rel),"utf8"));
+const acceptance = readJson("reports/rc-acceptance-v190.json");
+const evidence = fs.existsSync(path.join(root,"reports/rc-evidence-v191.json")) ? readJson("reports/rc-evidence-v191.json") : lib.createEvidenceManifest();
+const preflight = fs.existsSync(path.join(root,"reports/rc-preflight-v191.json")) ? readJson("reports/rc-preflight-v191.json") : lib.buildRepositoryPreflight(root);
+const result = lib.evaluateGoNoGo({acceptance,evidence,preflight});
+fs.writeFileSync(path.join(root,"reports/rc-go-no-go-v191.json"),JSON.stringify(result,null,2)+"\n","utf8");
+fs.writeFileSync(path.join(root,"reports/rc-go-no-go-v191.md"),lib.goNoGoMarkdown(result)+"\n","utf8");
+console.log(JSON.stringify({ok:result.status==="READY_FOR_MANUAL_GO_NO_GO",status:result.status,acceptance:result.acceptance,missing_evidence:result.missing_evidence.length}));
+if (process.argv.includes("--strict") && result.status!=="READY_FOR_MANUAL_GO_NO_GO") process.exitCode=2;

@@ -1,0 +1,17 @@
+CFS v196 CI FIX
+
+Zielordner:
+C:\Users\cstau\OneDrive\Desktop\CFS\cfs-zockt-Website
+
+1. Den INHALT dieses Ordners in den Zielordner kopieren.
+2. Windows: Dateien im Ziel ersetzen.
+3. Terminal im Repository öffnen.
+4. Ausführen:
+   git add -A
+   git commit -m "Fix v196 GitHub quality gates"
+   git push
+
+Danach GitHub Pull Request aktualisieren und Checks abwarten.
+
+Dieser Fix bringt die alten Quality-Gates auf den aktuellen v196-Stand,
+ohne die entfernten historischen Prüfberichte wieder einzuführen.
