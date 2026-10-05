@@ -1,5 +1,5 @@
 /* cfs_zockt · v165 public entry polish: concise Creator Suite, Launcher and Auth flow */
-body[data-brand-refinement="v165-public-entry"] .cfs-public-brand img{content:url('/assets/img/brand/cfs-zockt-mark.png');background:transparent!important}
+body[data-brand-refinement="v165-public-entry"] .cfs-public-brand img{content:url('/assets/img/brand/cfs-zockt-mark-clean.png');background:transparent!important}
 body[data-brand-refinement="v165-public-entry"] .cfs-public-brand small{display:none!important}
 body[data-brand-refinement="v165-public-entry"] .public-nav{gap:4px!important}
 body[data-brand-refinement="v165-public-entry"] .public-nav>a{font-size:9px!important}
@@ -18,7 +18,7 @@ body.public-suite-page .cfs-entry-hero-v165 .cfs-suite-hero-copy>p{max-width:560
 .cfs-status-grid-v165{grid-template-columns:repeat(3,minmax(0,1fr))!important;padding:14px!important}
 .cfs-final-v165{padding-top:32px!important}
 /* Launcher */
-body.launcher-download-page[data-brand-refinement="v165-public-entry"] .cfs-public-brand img{content:url('/assets/img/brand/cfs-zockt-mark.png');background:transparent!important}
+body.launcher-download-page[data-brand-refinement="v165-public-entry"] .cfs-public-brand img{content:url('/assets/img/brand/cfs-zockt-mark-clean.png');background:transparent!important}
 body.launcher-download-page .launcher-public-copy>p{max-width:590px;font-size:15px;line-height:1.6}
 body.launcher-download-page .launcher-public-section{padding:64px 0}
 .cfs-launcher-capabilities-v165 article{min-height:150px}

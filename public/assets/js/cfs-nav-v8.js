@@ -41,8 +41,8 @@
     "/pages/verify-email.html": "E-Mail bestätigen",
     "/pages/forgot-password.html": "Passwort wiederherstellen",
     "/pages/reset-password.html": "Neues Passwort",
-    "/pages/privacy.html": "Datenschutz",
-    "/pages/imprint.html": "Impressum"
+    "/pages/datenschutz.html": "Datenschutz",
+    "/pages/impressum.html": "Impressum"
   });
 
   function pathOf(anchor) {

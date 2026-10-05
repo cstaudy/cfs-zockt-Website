@@ -434,7 +434,8 @@
     "cfsai196:bridge-check": "node tools/cfs-ai-bridge-v196-test.mjs . && node tools/cfs-ai-live-bridge-v196-test.mjs .",
     "cfsai:check": "npm run cfsai196:integration-check && npm run cfsai196:gateway-check && npm run cfsai196:bridge-check",
     "release:v196": "npm run cfsai:check && npm run project:check",
-    "v197:check": "node tools/v197-ui-admin-desktop-test.mjs ."
+    "v197:check": "node tools/v197-ui-admin-desktop-test.mjs .",
+    "v198:check": "node tools/v198-professional-ui-technical-test.mjs . && npm run v197:check && npm run website21:check && npm run project:check"
   },
   "engines": {
     "node": ">=22"

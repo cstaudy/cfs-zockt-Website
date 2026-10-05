@@ -1,16 +1,25 @@
-# cfs-zockt v197 + CFS AI
+# cfs-zockt v198 Professional UI + CFS AI
 
 Bereinigter aktiver Website-Main.
 
 ## Aktueller Stand
-- Website: v197
+- Website: v198
 - Backend: 3.20.39
 - Database schema: 79
 - Launcher: 0.47.30
 - CFS AI Website Integration: v196
 - CFS Admin Desktop: 1.0.0 (Electron, Windows)
-- Unified Brand / UI Layer: v197
+- Unified Brand / UI Layer: v198 Professional
 - Lokaler AI-Service: separat als `CFS_AI_LOCAL_SERVICE_v20`
+
+
+## v198 Professional UI
+- einheitliche Typografie ohne gemischte Display-/Impact-Schriften
+- transparentes cfs_zockt Wordmark im Header statt quadratischem Logo-Kasten
+- bereinigte Abstände, Karten, Buttons, Formulare und responsive Navigation
+- ruhige Navy/Blue/Cyan-Palette; Grün/Gelb/Rot nur für echte Statuszustände
+- Checkbox-/Form-Overflow auf Login/Registrierung korrigiert
+- veraltete interne Routen `privacy.html` / `imprint.html` auf `datenschutz.html` / `impressum.html` korrigiert
 
 ## Wichtige Ordner
 - `public/` – Website/Creator-Oberfläche
@@ -44,6 +53,7 @@ Keine Tokens oder Secrets committen.
 - `npm run lockfiles:check`
 - `npm run deployment13:check`
 - `npm run v197:check`
+- `npm run v198:check`
 
 
 ## CFS Admin Desktop

@@ -1,7 +1,8 @@
 (() => {
   "use strict";
 
-  const BRAND_MARK = "/assets/img/brand/cfs-zockt-mark.png";
+  const BRAND_MARK = "/assets/img/brand/cfs-zockt-mark-clean.png";
+  const BRAND_WORDMARK = "/assets/img/brand/cfs-zockt-wordmark-transparent.png";
   const path = location.pathname.toLowerCase();
 
   const generalCreatorPages = new Set([
@@ -37,7 +38,7 @@
 
   function brandMarkup({ creator = false } = {}) {
     return `
-      <span class="cfs-brand-wordmark"><img src="${BRAND_MARK}" alt="" aria-hidden="true"></span>
+      <span class="cfs-brand-wordmark"><img src="${BRAND_WORDMARK}" alt="" aria-hidden="true"></span>
       <span class="cfs-brand-copy">
         <strong>CFS ZOCKT</strong>
         <small>${brandContextLabel(creator)}</small>
@@ -283,6 +284,19 @@
     }
   }
 
+  function ensureBrandV198() {
+    document.body.dataset.cfsBrandV198 = "1";
+    let link = document.querySelector('link[data-cfs-brand-v198]');
+    if (!link) {
+      link = document.createElement("link");
+      link.rel = "stylesheet";
+      link.href = "/assets/css/cfs-brand-v198.css";
+      link.dataset.cfsBrandV198 = "1";
+    }
+    // Keep the professional layer last so legacy page styles cannot overwrite it.
+    document.head.appendChild(link);
+  }
+
   function injectFallbackBrandHeader() {
     if (document.querySelector(".site-header, header.top")) return;
     const header = document.createElement("header");
@@ -348,6 +362,7 @@
     injectCreatorProductSignature();
     updateCopyrightYear();
     installUiBundleAssets();
+    ensureBrandV198();
   }
 
   if (document.readyState === "loading") {

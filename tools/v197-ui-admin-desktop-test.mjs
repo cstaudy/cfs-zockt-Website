@@ -32,7 +32,7 @@ check(shell.includes('/pages/admin.html'),"shell exposes admin hub to admins");
 check(shell.includes("gaming-footer-brand, .cfs-footer-v165-brand"),"footer brand normalization");
 
 const aiPage=read("public/pages/cfs-ai.html");
-check(aiPage.includes("cfs-zockt-mark.png"),"CFS AI uses standard mark");
+check(aiPage.includes("cfs-zockt-mark-clean.png"),"CFS AI uses cleaned standard mark");
 check(!aiPage.includes("cfs-zockt-wordmark-transparent.png"),"CFS AI no mismatched wordmark");
 check(aiPage.includes("data-cfs-brand-v197"),"CFS AI first-paint v197 brand");
 

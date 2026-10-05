@@ -1,0 +1,550 @@
+/* cfs_zockt · v198 professional website system
+   Goal: one typography, one brand lockup, one spacing rhythm, quieter surfaces. */
+:root{
+  --cfs198-bg:#06101b;
+  --cfs198-bg-deep:#030912;
+  --cfs198-surface:#0a1725;
+  --cfs198-surface-2:#0d1d2d;
+  --cfs198-surface-3:#102438;
+  --cfs198-line:#20394f;
+  --cfs198-line-strong:#2f5f7c;
+  --cfs198-text:#f3f7fb;
+  --cfs198-text-soft:#c8d4df;
+  --cfs198-muted:#91a6b8;
+  --cfs198-dim:#6f8799;
+  --cfs198-primary:#2b9df4;
+  --cfs198-primary-strong:#167ad1;
+  --cfs198-accent:#31d2df;
+  --cfs198-success:#45c98b;
+  --cfs198-warning:#e8b34f;
+  --cfs198-danger:#e96d82;
+  --cfs198-radius:14px;
+  --cfs198-radius-lg:20px;
+  --cfs198-shadow:0 18px 55px rgba(0,0,0,.22);
+  --cfs198-header-h:72px;
+  --cfs198-sidebar-w:214px;
+  --cfs198-content:1220px;
+  --cfs198-font:"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
+}
+
+html{background:var(--cfs198-bg-deep);scroll-padding-top:calc(var(--cfs198-header-h) + 16px)}
+body[data-cfs-brand-v198]{
+  min-width:0;
+  overflow-x:hidden;
+  color:var(--cfs198-text-soft)!important;
+  background:
+    radial-gradient(circle at 50% -18rem,rgba(43,157,244,.13),transparent 38rem),
+    linear-gradient(180deg,var(--cfs198-bg-deep) 0,var(--cfs198-bg) 38rem,var(--cfs198-bg-deep) 100%)!important;
+  font-family:var(--cfs198-font)!important;
+  font-size:15px;
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+}
+body[data-cfs-brand-v198] *,
+body[data-cfs-brand-v198] *::before,
+body[data-cfs-brand-v198] *::after{box-sizing:border-box}
+body[data-cfs-brand-v198] :is(h1,h2,h3,h4,h5,h6,p,button,input,select,textarea,a,summary,label,strong,small){font-family:var(--cfs198-font)!important}
+body[data-cfs-brand-v198] :is(h1,h2,h3,h4,h5,h6){
+  color:var(--cfs198-text)!important;
+  font-style:normal!important;
+  text-shadow:none!important;
+  text-wrap:balance;
+}
+body[data-cfs-brand-v198] h1{font-weight:800!important;letter-spacing:-.045em!important;line-height:1.02!important}
+body[data-cfs-brand-v198] h2{font-weight:760!important;letter-spacing:-.032em!important;line-height:1.12!important}
+body[data-cfs-brand-v198] h3{font-weight:730!important;letter-spacing:-.02em!important;line-height:1.2!important}
+body[data-cfs-brand-v198] p{color:var(--cfs198-muted);line-height:1.68}
+body[data-cfs-brand-v198] code,
+body[data-cfs-brand-v198] pre{font-family:"SFMono-Regular",Consolas,"Liberation Mono",monospace!important}
+body[data-cfs-brand-v198] img{max-width:100%}
+body[data-cfs-brand-v198] main,
+body[data-cfs-brand-v198] section,
+body[data-cfs-brand-v198] article,
+body[data-cfs-brand-v198] aside{min-width:0}
+body[data-cfs-brand-v198] a{transition:color .16s ease,border-color .16s ease,background-color .16s ease,opacity .16s ease,transform .16s ease}
+body[data-cfs-brand-v198] ::selection{background:rgba(49,210,223,.24);color:#fff}
+
+/* ---------- Brand: use the real transparent wordmark, never a square tile ---------- */
+body[data-cfs-brand-v198] .cfs-brand-lockup{
+  display:inline-flex!important;
+  align-items:center!important;
+  gap:13px!important;
+  min-width:0;
+  text-decoration:none!important;
+}
+body[data-cfs-brand-v198] .cfs-brand-wordmark{
+  width:146px!important;
+  height:46px!important;
+  flex:0 0 146px!important;
+  display:flex!important;
+  align-items:center!important;
+  overflow:visible!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+body[data-cfs-brand-v198] .cfs-brand-wordmark img{
+  display:block!important;
+  width:146px!important;
+  height:auto!important;
+  max-height:46px!important;
+  object-fit:contain!important;
+  object-position:left center!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  filter:drop-shadow(0 6px 16px rgba(14,115,203,.18));
+}
+body[data-cfs-brand-v198] .cfs-brand-copy{
+  display:flex!important;
+  align-items:center!important;
+  min-width:0!important;
+  padding-left:12px;
+  border-left:1px solid rgba(115,151,179,.28);
+}
+body[data-cfs-brand-v198] .cfs-brand-copy strong{display:none!important}
+body[data-cfs-brand-v198] .cfs-brand-copy small{
+  display:block!important;
+  margin:0!important;
+  color:#8ca7ba!important;
+  font-size:9px!important;
+  font-weight:700!important;
+  letter-spacing:.12em!important;
+  line-height:1.2!important;
+  white-space:nowrap;
+}
+body[data-cfs-brand-v198] :is(.creator-brand-logo,.gaming-brand>img,.brand-logo-link>img){
+  width:146px!important;
+  height:46px!important;
+  max-width:146px!important;
+  object-fit:contain!important;
+  object-position:left center!important;
+  border-radius:0!important;
+  background:transparent!important;
+}
+/* Non-shell lockups on login/marketing/legal pages. */
+body[data-cfs-brand-v198] :is(.cfs-suite-lockup img,.cfs-public-brand>img[data-logo-fallback]){
+  content:url('/assets/img/brand/cfs-zockt-wordmark-transparent.png')!important;
+  width:170px!important;
+  height:58px!important;
+  object-fit:contain!important;
+  object-position:left center!important;
+  border-radius:0!important;
+  background:transparent!important;
+}
+body[data-cfs-brand-v198] .cfs-suite-lockup{
+  display:flex!important;align-items:center!important;gap:12px!important;
+}
+body[data-cfs-brand-v198] .cfs-suite-lockup span{
+  padding-left:12px!important;border-left:1px solid var(--cfs198-line)!important;
+  color:var(--cfs198-muted)!important;font-size:9px!important;font-weight:750!important;letter-spacing:.12em!important;
+}
+body[data-cfs-brand-v198] :is(.gaming-footer-brand,.cfs-footer-v165-brand,.public-footer-brand){gap:12px!important}
+body[data-cfs-brand-v198] :is(.gaming-footer-brand,.cfs-footer-v165-brand,.public-footer-brand) img{
+  content:url('/assets/img/brand/cfs-zockt-wordmark-transparent.png')!important;
+  width:132px!important;height:42px!important;max-width:132px!important;object-fit:contain!important;border-radius:0!important;background:transparent!important;
+}
+
+/* ---------- Header / navigation ---------- */
+body[data-cfs-brand-v198] :is(.site-header,.gaming-header,.creator-site-header,header.top){
+  position:sticky!important;
+  top:0!important;
+  z-index:1000!important;
+  min-height:var(--cfs198-header-h)!important;
+  border-bottom:1px solid rgba(55,91,117,.56)!important;
+  background:rgba(3,9,18,.94)!important;
+  box-shadow:0 10px 32px rgba(0,0,0,.20)!important;
+  backdrop-filter:blur(18px) saturate(120%)!important;
+  -webkit-backdrop-filter:blur(18px) saturate(120%)!important;
+}
+body[data-cfs-brand-v198] :is(.header-inner,.gaming-header-inner,.creator-header-inner){
+  min-height:var(--cfs198-header-h)!important;
+  gap:18px!important;
+}
+body[data-cfs-brand-v198] :is(.nav,.public-nav,.gaming-nav,.creator-nav){gap:3px!important;align-items:center!important}
+body[data-cfs-brand-v198] :is(.nav,.public-nav,.gaming-nav,.creator-nav)>a,
+body[data-cfs-brand-v198] :is(.nav,.public-nav,.gaming-nav,.creator-nav)>button,
+body[data-cfs-brand-v198] .creator-nav-more>summary,
+body[data-cfs-brand-v198] .cfs-nav-v8-group>summary{
+  min-height:38px!important;
+  padding:0 10px!important;
+  border:1px solid transparent!important;
+  border-radius:9px!important;
+  color:#9eb1c2!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  font-size:10px!important;
+  font-weight:700!important;
+  letter-spacing:.055em!important;
+  text-decoration:none!important;
+}
+body[data-cfs-brand-v198] :is(.nav,.public-nav,.gaming-nav,.creator-nav)>a:hover,
+body[data-cfs-brand-v198] :is(.nav,.public-nav,.gaming-nav,.creator-nav)>button:hover,
+body[data-cfs-brand-v198] .creator-nav-more>summary:hover,
+body[data-cfs-brand-v198] .cfs-nav-v8-group>summary:hover{
+  color:#fff!important;
+  border-color:rgba(73,122,156,.36)!important;
+  background:rgba(16,35,51,.72)!important;
+  transform:none!important;
+}
+body[data-cfs-brand-v198] :is(.nav,.public-nav,.gaming-nav,.creator-nav)>a.active,
+body[data-cfs-brand-v198] :is(.nav,.public-nav,.gaming-nav,.creator-nav)>a[aria-current="page"],
+body[data-cfs-brand-v198] .cfs-nav-v8-group.active>summary{
+  color:#fff!important;
+  border-color:rgba(43,157,244,.48)!important;
+  background:rgba(43,157,244,.12)!important;
+  box-shadow:inset 0 -2px 0 rgba(49,210,223,.72)!important;
+}
+body[data-cfs-brand-v198] :is(.creator-nav-more-menu,.cfs-nav-v8-menu){
+  padding:8px!important;
+  border:1px solid var(--cfs198-line)!important;
+  border-radius:12px!important;
+  background:#07131f!important;
+  box-shadow:0 20px 50px rgba(0,0,0,.42)!important;
+}
+body[data-cfs-brand-v198] :is(.creator-nav-more-menu,.cfs-nav-v8-menu) a{
+  min-height:38px!important;
+  padding:0 11px!important;
+  display:flex!important;
+  align-items:center!important;
+  border-radius:8px!important;
+  color:#a9bccb!important;
+  font-size:10px!important;
+  font-weight:650!important;
+}
+body[data-cfs-brand-v198] :is(.creator-nav-more-menu,.cfs-nav-v8-menu) a:hover{color:#fff!important;background:#102337!important}
+body[data-cfs-brand-v198] .creator-logout,
+body[data-cfs-brand-v198] [data-logout]{border-color:#32485a!important;color:#b6c5d1!important;background:#0b1621!important}
+
+/* ---------- Sidebar: one clean hierarchy ---------- */
+body[data-cfs-brand-v198] .cfs-global-sidebar{
+  width:var(--cfs198-sidebar-w)!important;
+  padding:18px 12px!important;
+  border-right:1px solid var(--cfs198-line)!important;
+  background:#07111c!important;
+  box-shadow:none!important;
+}
+body[data-cfs-brand-v198] .cfs-sidebar-label,
+body[data-cfs-brand-v198] .cfs-sidebar-section-title{
+  margin:10px 11px 7px!important;
+  color:#607d91!important;
+  font-size:8px!important;
+  font-weight:750!important;
+  letter-spacing:.13em!important;
+}
+body[data-cfs-brand-v198] .cfs-sidebar-link{
+  position:relative!important;
+  min-height:42px!important;
+  margin:2px 0!important;
+  padding:0 11px!important;
+  gap:9px!important;
+  border:1px solid transparent!important;
+  border-radius:10px!important;
+  color:#a4b5c3!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  font-size:11px!important;
+  font-weight:650!important;
+}
+body[data-cfs-brand-v198] .cfs-sidebar-link:hover{color:#fff!important;border-color:#213d52!important;background:#0d1d2c!important}
+body[data-cfs-brand-v198] .cfs-sidebar-link.active{
+  color:#fff!important;
+  border-color:#2b5d7b!important;
+  background:#10273a!important;
+  box-shadow:none!important;
+}
+body[data-cfs-brand-v198] .cfs-sidebar-link.active::before{
+  content:""!important;position:absolute!important;left:-1px!important;top:9px!important;bottom:9px!important;width:3px!important;
+  border-radius:3px!important;background:var(--cfs198-accent)!important;box-shadow:none!important;
+}
+body[data-cfs-brand-v198] .cfs-sidebar-icon{
+  width:25px!important;height:25px!important;border:0!important;border-radius:7px!important;background:#0b2030!important;color:#6fc7eb!important;font-size:11px!important;
+}
+body[data-cfs-brand-v198] .cfs-sidebar-divider{margin:14px 10px!important;background:var(--cfs198-line)!important}
+
+/* ---------- Shared content width / vertical rhythm ---------- */
+body[data-cfs-brand-v198] .container{width:min(var(--cfs198-content),calc(100% - 40px))!important}
+@media(min-width:981px){
+  body[data-cfs-brand-v198].cfs-sidebar-ready:not(.cfs-specialized-workspace) main.container,
+  body[data-cfs-brand-v198].cfs-sidebar-ready:not(.cfs-specialized-workspace) main.account-shell{
+    width:min(var(--cfs198-content),calc(100% - var(--cfs198-sidebar-w) - 48px))!important;
+    margin-left:calc(var(--cfs198-sidebar-w) + 24px)!important;
+    margin-right:24px!important;
+  }
+  body[data-cfs-brand-v198].cfs-sidebar-ready:not(.cfs-specialized-workspace) .footer,
+  body[data-cfs-brand-v198].cfs-sidebar-ready:not(.cfs-specialized-workspace) .cfs-product-signature-v180{margin-left:var(--cfs198-sidebar-w)!important}
+}
+body[data-cfs-brand-v198] main.container,
+body[data-cfs-brand-v198] main.account-shell{padding-top:34px!important;padding-bottom:68px!important}
+body[data-cfs-brand-v198] .cfs-nav-v8-context,
+body[data-cfs-brand-v198] .breadcrumb,
+body[data-cfs-brand-v198] .breadcrumbs{border-color:var(--cfs198-line)!important;background:#07131f!important;border-radius:11px!important}
+
+/* ---------- Hero blocks: calmer, consistent sizing ---------- */
+body[data-cfs-brand-v198] :is(.beginner-hero,.page-hero,.internal-module-hero,.account-hero,.auth-entry-hero){
+  padding:38px 0 30px!important;
+  border-bottom:1px solid var(--cfs198-line)!important;
+  background:none!important;
+}
+body[data-cfs-brand-v198] :is(.beginner-hero,.page-hero,.internal-module-hero,.account-hero)::after{opacity:.35!important}
+body[data-cfs-brand-v198] :is(.beginner-hero,.page-hero,.internal-module-hero,.account-hero) h1{
+  margin:10px 0 14px!important;
+  max-width:900px;
+  font-size:clamp(38px,5vw,62px)!important;
+  line-height:1!important;
+  letter-spacing:-.045em!important;
+  font-style:normal!important;
+}
+body[data-cfs-brand-v198] :is(.beginner-hero,.page-hero,.internal-module-hero,.account-hero) h1 span{color:#59bfff!important}
+body[data-cfs-brand-v198] :is(.eyebrow,.page-kicker,.internal-module-kicker,.gaming-kicker,.marketing-kicker){
+  color:#6fc7eb!important;
+  font-size:9px!important;
+  font-weight:750!important;
+  letter-spacing:.14em!important;
+}
+
+/* ---------- Cards / panels ---------- */
+body[data-cfs-brand-v198] :is(.card,.panel,.notice,.source-context,.beginner-status-item,.beginner-system-summary,.creator-next-step,.creator-journey,.creator-workspace-map,.creator-tool-summary,.creator-tool-entry,.creator-operation-card,.management-hub,.management-summary-card,.management-overview-card,.internal-status-shell,.account-card,.account-status-card,.account-section-intro,.auth-entry-panel,.auth-entry-path,.auth-entry-trust article,.auth-after-grid article,.cfs-public-live-control,.cfs-public-live-status,.marketing-final-card){
+  border:1px solid var(--cfs198-line)!important;
+  border-radius:var(--cfs198-radius)!important;
+  background:var(--cfs198-surface)!important;
+  background-image:none!important;
+  box-shadow:none!important;
+}
+body[data-cfs-brand-v198] :is(.card,.panel,.creator-tool-entry,.account-card,.auth-entry-panel){transition:border-color .16s ease,background-color .16s ease,transform .16s ease}
+body[data-cfs-brand-v198] :is(a.card,a.panel,a.creator-tool-entry):hover{border-color:#315a74!important;background:var(--cfs198-surface-2)!important;transform:translateY(-1px)}
+body[data-cfs-brand-v198] details{border-color:var(--cfs198-line)!important;background:#081521!important}
+body[data-cfs-brand-v198] details>summary{color:#b9c8d4!important;font-weight:700!important}
+
+/* ---------- Buttons ---------- */
+body[data-cfs-brand-v198] :is(.btn,.gaming-btn,button:not(.mobile-toggle):not(.gaming-mobile-toggle):not(.creator-mobile-toggle)){
+  min-height:40px;
+  border:1px solid #31506a!important;
+  border-radius:9px!important;
+  background:#0b1b29!important;
+  color:#e8f1f8!important;
+  box-shadow:none!important;
+  font-size:10px!important;
+  font-weight:750!important;
+  letter-spacing:.045em!important;
+  transition:background-color .16s ease,border-color .16s ease,color .16s ease,transform .16s ease!important;
+}
+body[data-cfs-brand-v198] :is(.btn,.gaming-btn,button:not(.mobile-toggle):not(.gaming-mobile-toggle):not(.creator-mobile-toggle)):hover:not(:disabled){
+  border-color:#41789b!important;background:#10283b!important;color:#fff!important;transform:translateY(-1px)!important;
+}
+body[data-cfs-brand-v198] :is(.btn.primary,.gaming-btn-primary){
+  border-color:#319edc!important;
+  background:#187fc8!important;
+  color:#fff!important;
+  box-shadow:0 8px 22px rgba(24,127,200,.18)!important;
+}
+body[data-cfs-brand-v198] :is(.btn.primary,.gaming-btn-primary):hover{background:#2092dc!important;border-color:#55b9ea!important}
+body[data-cfs-brand-v198] :is(button:disabled,.btn[aria-disabled="true"]){opacity:.48!important;cursor:not-allowed!important;transform:none!important}
+
+/* ---------- Forms: fix checkbox/overflow bugs and normalize controls ---------- */
+body[data-cfs-brand-v198] :is(input:not([type="checkbox"]):not([type="radio"]),select,textarea){
+  width:100%;
+  min-width:0;
+  min-height:42px;
+  border:1px solid #2b465c!important;
+  border-radius:9px!important;
+  background:#07131f!important;
+  color:#eef5fa!important;
+  box-shadow:none!important;
+}
+body[data-cfs-brand-v198] :is(input:not([type="checkbox"]):not([type="radio"]),select,textarea):focus{
+  outline:0!important;
+  border-color:#3f93bd!important;
+  box-shadow:0 0 0 3px rgba(49,210,223,.08)!important;
+}
+body[data-cfs-brand-v198] input[type="checkbox"],
+body[data-cfs-brand-v198] input[type="radio"]{
+  width:18px!important;height:18px!important;min-width:18px!important;min-height:18px!important;max-width:18px!important;max-height:18px!important;
+  flex:0 0 18px!important;margin:1px 0 0!important;padding:0!important;accent-color:var(--cfs198-primary)!important;
+}
+body[data-cfs-brand-v198] .legal-consent{
+  display:grid!important;grid-template-columns:18px minmax(0,1fr)!important;align-items:start!important;gap:10px!important;
+  padding:12px 13px!important;border:1px solid var(--cfs198-line)!important;border-radius:10px!important;background:#081622!important;
+  color:#aebfcb!important;font-size:11px!important;line-height:1.55!important;
+}
+body[data-cfs-brand-v198] .legal-consent span{min-width:0!important;overflow-wrap:anywhere!important}
+body[data-cfs-brand-v198] .field label{color:#9fb2c1!important;font-size:9px!important;font-weight:750!important;letter-spacing:.07em!important}
+body[data-cfs-brand-v198] .password-rules{color:#8da2b3!important;font-size:11px!important}
+
+/* ---------- Login/account entry: clearer and no oversized square logo ---------- */
+body[data-cfs-brand-v198].public-auth-page .auth-entry-shell{padding-top:34px!important;padding-bottom:70px!important}
+body[data-cfs-brand-v198].public-auth-page .auth-entry-hero{
+  display:grid!important;grid-template-columns:minmax(0,1.25fr) minmax(280px,.55fr)!important;gap:30px!important;align-items:center!important;
+}
+body[data-cfs-brand-v198].public-auth-page .auth-entry-hero h1{
+  margin:16px 0 14px!important;font-size:clamp(40px,5vw,62px)!important;line-height:1!important;letter-spacing:-.045em!important;font-style:normal!important;
+}
+body[data-cfs-brand-v198].public-auth-page .auth-entry-hero h1 span{color:#58bfff!important}
+body[data-cfs-brand-v198].public-auth-page .auth-entry-grid{gap:18px!important;align-items:start!important}
+body[data-cfs-brand-v198].public-auth-page .auth-entry-panel{padding:24px!important;overflow:hidden!important}
+body[data-cfs-brand-v198].public-auth-page .auth-panel-head h2{font-size:26px!important;font-style:normal!important}
+body[data-cfs-brand-v198].public-auth-page .signup-facts{gap:8px!important}
+body[data-cfs-brand-v198].public-auth-page .signup-facts div{border-color:var(--cfs198-line)!important;background:#081622!important}
+
+/* ---------- Public homepage: keep personality, remove typography/color noise ---------- */
+body[data-cfs-brand-v198].public-home .gaming-hero{
+  background:
+    radial-gradient(circle at 75% 25%,rgba(43,157,244,.13),transparent 32rem),
+    var(--cfs198-bg-deep)!important;
+}
+body[data-cfs-brand-v198].public-home :is(.gaming-hero-copy h1,.gaming-section-head h2,.gaming-stats-title h2,.gaming-access-copy h3,.gaming-final-cta h2,.gaming-why-copy-v180 h2){
+  font-family:var(--cfs198-font)!important;font-style:normal!important;text-shadow:none!important;letter-spacing:-.04em!important;
+}
+body[data-cfs-brand-v198].public-home .gaming-hero-copy h1{font-size:clamp(54px,7vw,86px)!important;line-height:.95!important}
+body[data-cfs-brand-v198].public-home .gaming-brand-mark{
+  color:#eef7ff!important;
+  background:linear-gradient(90deg,#f5f9fc 0,#7ed6ff 46%,#319fea 100%);
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+  font-weight:850!important;font-style:normal!important;text-shadow:none!important;
+}
+body[data-cfs-brand-v198].public-home :is(.gaming-game-card,.gaming-community-card,.gaming-stat-card,.gaming-live-card,.gaming-access-card){
+  border-color:var(--cfs198-line)!important;background:var(--cfs198-surface)!important;background-image:none!important;box-shadow:none!important;border-radius:var(--cfs198-radius)!important;
+}
+
+/* ---------- Creator dashboard/general pages ---------- */
+body[data-cfs-brand-v198].creator-workspace:not(.cfs-specialized-workspace) .creator-dashboard-hero,
+body[data-cfs-brand-v198].creator-workspace:not(.cfs-specialized-workspace) .beginner-hero{padding-top:32px!important}
+body[data-cfs-brand-v198].creator-workspace:not(.cfs-specialized-workspace) .creator-dashboard-hero h1,
+body[data-cfs-brand-v198].creator-workspace:not(.cfs-specialized-workspace) .beginner-hero h1{font-size:clamp(38px,4.6vw,58px)!important}
+body[data-cfs-brand-v198] .creator-dashboard-actions-grid-v166,
+body[data-cfs-brand-v198] .beginner-actions,
+body[data-cfs-brand-v198] .creator-workspace-map-grid{gap:12px!important}
+body[data-cfs-brand-v198] .creator-dashboard-actions-grid-v166>a,
+body[data-cfs-brand-v198] .beginner-actions>a{
+  border-color:var(--cfs198-line)!important;background:var(--cfs198-surface)!important;border-radius:12px!important;box-shadow:none!important;
+}
+body[data-cfs-brand-v198] .creator-dashboard-actions-grid-v166>a:hover,
+body[data-cfs-brand-v198] .beginner-actions>a:hover{border-color:#315a74!important;background:var(--cfs198-surface-2)!important;transform:translateY(-1px)!important}
+
+/* ---------- Specialized studios: retain functionality, reduce visual density/noise ---------- */
+body[data-cfs-brand-v198].cfs-specialized-workspace main,
+body[data-cfs-brand-v198] :is(.ws-page,.stream-studio-shell,.scene-studio-shell,.cut-studio-shell){
+  width:min(1500px,calc(100% - 32px))!important;
+  max-width:1500px!important;
+  margin-left:auto!important;margin-right:auto!important;
+}
+body[data-cfs-brand-v198] :is(.ws-panel,.ws-dashboard-card,.stream-panel,.stream-monitor,.stream-workspace-toolbar,.cfs-studio-hub,.scene-panel,.cut-panel){
+  border:1px solid var(--cfs198-line)!important;
+  border-radius:12px!important;
+  background:#081520!important;
+  background-image:none!important;
+  box-shadow:none!important;
+}
+body[data-cfs-brand-v198] :is(.ws-panel,.stream-panel,.scene-panel,.cut-panel) h2,
+body[data-cfs-brand-v198] :is(.ws-panel,.stream-panel,.scene-panel,.cut-panel) h3{font-size:clamp(16px,1.5vw,22px)!important}
+body[data-cfs-brand-v198] :is(.ws-panel,.stream-panel,.scene-panel,.cut-panel) small{color:#7f96a8!important}
+
+/* ---------- Help/guide UI: useful but less intrusive ---------- */
+body[data-cfs-brand-v198] .cfs-guide-launcher,
+body[data-cfs-brand-v198] [data-cfs-guide-launcher]{
+  border:1px solid #2b4b61!important;border-radius:12px!important;background:rgba(7,19,31,.94)!important;box-shadow:0 12px 34px rgba(0,0,0,.28)!important;
+}
+body[data-cfs-brand-v198] .cfs-guide-launcher img,
+body[data-cfs-brand-v198] [data-cfs-guide-launcher] img{border-radius:50%!important}
+
+/* ---------- Footer ---------- */
+body[data-cfs-brand-v198] :is(.footer,.brand-footer,.public-footer,.cfs-product-signature-v180){
+  border-top:1px solid var(--cfs198-line)!important;
+  background:#040b13!important;
+  box-shadow:none!important;
+}
+body[data-cfs-brand-v198] :is(.footer,.public-footer) a{color:#8fa6b8!important}
+body[data-cfs-brand-v198] :is(.footer,.public-footer) a:hover{color:#fff!important}
+body[data-cfs-brand-v198] .cfs-product-signature-v180{padding:20px 24px!important}
+body[data-cfs-brand-v198] .cfs-product-signature-v180 .cfs-brand-wordmark{width:118px!important;height:38px!important;flex-basis:118px!important}
+body[data-cfs-brand-v198] .cfs-product-signature-v180 .cfs-brand-wordmark img{width:118px!important;max-height:38px!important}
+body[data-cfs-brand-v198] .cfs-product-signature-v180 .cfs-brand-copy small{font-size:7px!important}
+
+/* ---------- Status colors are semantic only ---------- */
+body[data-cfs-brand-v198] :is(.success,.is-success,.status-ok,[data-status="ok"]){--cfs-status:var(--cfs198-success)}
+body[data-cfs-brand-v198] :is(.warning,.is-warning,[data-status="warning"]){--cfs-status:var(--cfs198-warning)}
+body[data-cfs-brand-v198] :is(.danger,.error,.is-error,[data-status="error"]){--cfs-status:var(--cfs198-danger)}
+
+/* ---------- Technical hardening for visual layout ---------- */
+body[data-cfs-brand-v198] :is(.form-grid,.grid,.auth-entry-grid,.creator-dashboard-actions-grid-v166,.management-hub-grid,.marketing-tool-grid,.gaming-games-grid)>*{min-width:0}
+body[data-cfs-brand-v198] :is(p,small,label,span,a,strong){overflow-wrap:break-word}
+body[data-cfs-brand-v198] :is(input,textarea,select,button){max-width:100%}
+body[data-cfs-brand-v198] table{max-width:100%}
+body[data-cfs-brand-v198] .table-wrap{overflow-x:auto}
+
+/* ---------- Responsive ---------- */
+@media(max-width:1120px){
+  body[data-cfs-brand-v198] .cfs-brand-wordmark{width:126px!important;flex-basis:126px!important}
+  body[data-cfs-brand-v198] .cfs-brand-wordmark img{width:126px!important}
+  body[data-cfs-brand-v198] .cfs-brand-copy{display:none!important}
+  body[data-cfs-brand-v198] :is(.nav,.creator-nav,.gaming-nav)>a,
+  body[data-cfs-brand-v198] :is(.nav,.creator-nav,.gaming-nav)>button,
+  body[data-cfs-brand-v198] .cfs-nav-v8-group>summary{padding:0 8px!important;font-size:9px!important}
+}
+@media(max-width:980px){
+  :root{--cfs198-header-h:66px}
+  body[data-cfs-brand-v198] .cfs-global-sidebar{
+    position:sticky!important;top:var(--cfs198-header-h)!important;z-index:900!important;
+    width:100%!important;height:auto!important;display:flex!important;gap:5px!important;padding:8px 14px!important;
+    overflow-x:auto!important;border-right:0!important;border-bottom:1px solid var(--cfs198-line)!important;background:#07111c!important;
+  }
+  body[data-cfs-brand-v198] .cfs-sidebar-label,
+  body[data-cfs-brand-v198] .cfs-sidebar-section-title,
+  body[data-cfs-brand-v198] .cfs-sidebar-divider{display:none!important}
+  body[data-cfs-brand-v198] .cfs-sidebar-link{min-width:max-content!important;margin:0!important;padding:0 12px!important}
+  body[data-cfs-brand-v198] .cfs-sidebar-link.active::before{left:10px!important;right:10px!important;top:auto!important;bottom:-8px!important;width:auto!important;height:2px!important}
+  body[data-cfs-brand-v198] .cfs-sidebar-icon{display:none!important}
+  body[data-cfs-brand-v198].cfs-sidebar-ready main.container,
+  body[data-cfs-brand-v198].cfs-sidebar-ready main.account-shell{width:min(var(--cfs198-content),calc(100% - 32px))!important;margin-left:auto!important;margin-right:auto!important}
+  body[data-cfs-brand-v198].cfs-sidebar-ready :is(.footer,.cfs-product-signature-v180){margin-left:0!important}
+  body[data-cfs-brand-v198].public-auth-page .auth-entry-hero,
+  body[data-cfs-brand-v198].public-auth-page .auth-entry-grid{grid-template-columns:1fr!important}
+}
+@media(max-width:760px){
+  :root{--cfs198-header-h:64px}
+  body[data-cfs-brand-v198] .container{width:min(100% - 28px,var(--cfs198-content))!important}
+  body[data-cfs-brand-v198] .cfs-brand-wordmark{width:118px!important;height:40px!important;flex-basis:118px!important}
+  body[data-cfs-brand-v198] .cfs-brand-wordmark img{width:118px!important;max-height:40px!important}
+  body[data-cfs-brand-v198] :is(.public-nav.open,.gaming-nav.open,.creator-nav.open){
+    position:absolute!important;left:14px!important;right:14px!important;top:calc(var(--cfs198-header-h) - 2px)!important;
+    max-height:calc(100dvh - var(--cfs198-header-h) - 18px)!important;overflow-y:auto!important;
+    padding:9px!important;border:1px solid var(--cfs198-line)!important;border-radius:12px!important;background:#07131f!important;box-shadow:0 22px 55px rgba(0,0,0,.45)!important;
+  }
+  body[data-cfs-brand-v198] :is(.public-nav.open,.gaming-nav.open,.creator-nav.open)>a,
+  body[data-cfs-brand-v198] :is(.public-nav.open,.gaming-nav.open,.creator-nav.open)>button,
+  body[data-cfs-brand-v198] :is(.public-nav.open,.gaming-nav.open,.creator-nav.open)>.cfs-nav-v8-group>summary{width:100%!important;min-height:44px!important;justify-content:flex-start!important}
+  body[data-cfs-brand-v198] :is(.beginner-hero,.page-hero,.internal-module-hero,.account-hero) h1,
+  body[data-cfs-brand-v198].public-auth-page .auth-entry-hero h1{font-size:clamp(34px,11vw,48px)!important}
+  body[data-cfs-brand-v198].public-home .gaming-hero-copy h1{font-size:clamp(48px,15vw,68px)!important}
+  body[data-cfs-brand-v198].public-auth-page .auth-entry-panel{padding:19px!important}
+  body[data-cfs-brand-v198] .legal-consent{font-size:10.5px!important}
+}
+@media(max-width:520px){
+  body[data-cfs-brand-v198] .cfs-brand-wordmark{width:108px!important;flex-basis:108px!important}
+  body[data-cfs-brand-v198] .cfs-brand-wordmark img{width:108px!important}
+  body[data-cfs-brand-v198] .cfs-brand-copy{display:none!important}
+  body[data-cfs-brand-v198] :is(.btn,.gaming-btn){width:auto}
+}
+@media(prefers-reduced-motion:reduce){
+  body[data-cfs-brand-v198] *,body[data-cfs-brand-v198] *::before,body[data-cfs-brand-v198] *::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important}
+}
+
+/* ---------- Public marketing/legal pages: same scale as the creator product ---------- */
+body[data-cfs-brand-v198].public-marketing main :is(h1,.marketing-heading h2,.marketing-split h2,.marketing-final-card h2),
+body[data-cfs-brand-v198] :is(.support-hero h1,.roadmap-hero h1,.security-hero h1,.launcher-download-hero h1,.merch-hero h1){
+  font-family:var(--cfs198-font)!important;
+  font-style:normal!important;
+  text-shadow:none!important;
+  letter-spacing:-.045em!important;
+}
+body[data-cfs-brand-v198].public-marketing main h1,
+body[data-cfs-brand-v198] :is(.support-hero h1,.roadmap-hero h1,.security-hero h1,.launcher-download-hero h1,.merch-hero h1){
+  font-size:clamp(40px,5.2vw,64px)!important;
+  line-height:1!important;
+}
+body[data-cfs-brand-v198].public-marketing :is(.marketing-section,.marketing-final-cta){padding-top:56px!important;padding-bottom:56px!important}
+body[data-cfs-brand-v198].public-marketing :is(.suite-entry-grid>a,.marketing-tool-grid article,.marketing-mode-card,.marketing-version-card,.marketing-security-grid>article,.marketing-plan-grid>article,.marketing-roadmap-grid>article){
+  border-color:var(--cfs198-line)!important;background:var(--cfs198-surface)!important;background-image:none!important;box-shadow:none!important;border-radius:var(--cfs198-radius)!important;
+}
