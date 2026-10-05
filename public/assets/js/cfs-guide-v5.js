@@ -10,8 +10,8 @@
   const path = location.pathname.toLowerCase();
 
   const pageContext = {
-    "/": ["Willkommen bei cfs_zockt", "Ich zeige dir, was die Creator Suite kann und wie du kostenlos startest."],
-    "/index.html": ["Willkommen bei cfs_zockt", "Ich zeige dir, was die Creator Suite kann und wie du kostenlos startest."],
+    "/": ["Willkommen bei cfs_zockt", "Hier findest du Gaming, LIVE-Streams, aktuelle Games und meine Community. Der Creator-Bereich ist ein separates Produkt nach Login."],
+    "/index.html": ["Willkommen bei cfs_zockt", "Hier findest du Gaming, LIVE-Streams, aktuelle Games und meine Community. Der Creator-Bereich ist ein separates Produkt nach Login."],
     "/pages/login.html": ["Account starten", "Ich helfe bei Registrierung, Login und E-Mail-Bestätigung."],
     "/pages/verify-email.html": ["E-Mail bestätigen", "Ich helfe dir, den Bestätigungslink anzufordern und danach weiterzumachen."],
     "/pages/forgot-password.html": ["Passwort wiederherstellen", "Ich führe dich durch den sicheren Recovery-Ablauf."],
@@ -320,7 +320,7 @@
     if (!query || ["hilfe","help","was nun","was jetzt","weiter","nachster schritt","nächster schritt"].includes(query)) {
       return (await accountAdvice()) || pageSpecificReply() || {
         text:"Sag mir, was du erreichen möchtest. Ich kann dich z. B. bei Account-Start, Sicherheit, Widgets, TikTok, Launcher oder Stream unterstützen.",
-        actions:[["Kostenlos starten","/pages/login.html#regForm","primary"],["Creator Suite","/pages/creator-suite.html",""]]
+        actions:[["Streams ansehen","/#streams","primary"],["Creator Bereich","/pages/login.html",""]]
       };
     }
 

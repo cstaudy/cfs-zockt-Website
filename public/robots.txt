@@ -4,5 +4,21 @@ Disallow: /api/
 Disallow: /auth/
 Disallow: /widgets/
 Disallow: /games/runtime.html
+Disallow: /pages/creator-suite.html
+Disallow: /pages/dashboard.html
+Disallow: /pages/shop.html
+Disallow: /pages/shop-product.html
+Disallow: /pages/launcher.html
+Disallow: /pages/launcher-download.html
+Disallow: /pages/widget-studio.html
+Disallow: /pages/stream-studio.html
+Disallow: /pages/scene-studio.html
+Disallow: /pages/cut-studio.html
+Disallow: /pages/audio-studio.html
+Disallow: /pages/account.html
+Disallow: /pages/settings.html
+Disallow: /pages/setup.html
+Disallow: /pages/integrations.html
+Disallow: /pages/admin-creators.html
 
 Sitemap: https://cfs-zockt.de/sitemap.xml

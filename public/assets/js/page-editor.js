@@ -1994,7 +1994,7 @@
       "cfs"
     ) {
 
-      return "/assets/img/logo-header.png";
+      return "/assets/img/brand/cfs-zockt-logo.png";
 
     }
 

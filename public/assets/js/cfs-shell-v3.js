@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  const MARK = "/assets/img/brand/cfs-zockt-mark-original.png";
+  const BRAND_MARK = "/assets/img/brand/cfs-zockt-mark.png";
   const path = location.pathname.toLowerCase();
 
   const generalCreatorPages = new Set([
@@ -15,7 +15,9 @@
     "/pages/launcher-connect.html",
     "/pages/audio-studio.html",
     "/pages/nexus.html",
-    "/pages/games.html"
+    "/pages/games.html",
+    "/pages/shop.html",
+    "/pages/cfs-ai.html"
   ]);
 
   const specializedCreatorPages = new Set([
@@ -26,19 +28,20 @@
     "/pages/cut-studio.html"
   ]);
 
-  function brandMarkup({ creator = false, compact = false } = {}) {
+  function brandMarkup({ creator = false } = {}) {
     return `
-      <span class="cfs-brand-mark" aria-hidden="true"><img src="${MARK}" alt=""></span>
+      <span class="cfs-brand-wordmark"><img src="${BRAND_MARK}" alt="" aria-hidden="true"></span>
       <span class="cfs-brand-copy">
-        <strong><span class="cfs-brand-prefix">cfs_</span><span class="cfs-brand-name">zockt</span></strong>
-        <small>${creator ? "CREATOR SUITE" : "GAMING · CREATOR SUITE"}</small>
+        <strong>CFS ZOCKT</strong>
+        <small>${creator ? "CREATOR SUITE" : "GAMING · STREAMS · COMMUNITY"}</small>
       </span>`;
   }
 
   function upgradeHeaderBrands() {
-    document.querySelectorAll(".brand-logo-link").forEach(anchor => {
+    document.querySelectorAll(".brand-logo-link, .gaming-brand, .site-header a.brand, header.top a.brand").forEach(anchor => {
+      const creatorBrand = document.body.classList.contains("creator-workspace") && !anchor.classList.contains("gaming-brand");
       anchor.classList.add("cfs-brand-lockup");
-      anchor.innerHTML = brandMarkup({ creator: false });
+      anchor.innerHTML = brandMarkup({ creator: creatorBrand });
     });
 
     document.querySelectorAll(".creator-brand").forEach(anchor => {
@@ -55,13 +58,8 @@
     }
 
     document.querySelectorAll(".public-footer-brand").forEach(footerBrand => {
-      const existingImg = footerBrand.querySelector("img");
-      if (existingImg) {
-        const lockup = document.createElement("div");
-        lockup.className = "cfs-footer-lockup";
-        lockup.innerHTML = brandMarkup({ creator: false, compact: true });
-        existingImg.replaceWith(lockup);
-      }
+      footerBrand.classList.add("cfs-brand-lockup", "cfs-footer-lockup");
+      footerBrand.innerHTML = brandMarkup({ creator: false });
     });
   }
 
@@ -78,9 +76,9 @@
 
   function icon(name) {
     const icons = {
-      dashboard:"⌂", account:"◎", widgets:"▦", stream:"◫", tiktok:"♪",
+      dashboard:"⌂", account:"◎", widgets:"▦", stream:"◫", tiktok:"♪", shop:"$",
       integrations:"◇", launcher:"▣", settings:"⚙", support:"?",
-      overview:"⌂", security:"◇", sessions:"▣", advanced:"⚙"
+      overview:"⌂", security:"◇", sessions:"▣", advanced:"⚙", ai:"✦"
     };
     return icons[name] || "•";
   }
@@ -168,10 +166,12 @@
         ["Dashboard","/pages/dashboard.html","dashboard"],
         ["Account","/pages/account.html","account"],
         ["Widgets","/pages/widget-studio.html","widgets"],
+        ["Shop","/pages/shop.html","shop"],
         ["Stream Studio","/pages/stream-studio.html","stream"],
         ["TikTok","/pages/tiktok.html","tiktok"],
         ["Integrationen","/pages/integrations.html","integrations"],
         ["Launcher","/pages/launcher.html","launcher"],
+        ...(path === "/pages/cfs-ai.html" ? [["CFS AI","/pages/cfs-ai.html","ai"]] : []),
         ["Einstellungen","/pages/settings.html","settings"]
       ];
       items.forEach(([labelText, href, key]) => {
@@ -195,6 +195,77 @@
   }
 
 
+  async function injectCfsAiAdminNavigation() {
+    if (!document.body.classList.contains("creator-workspace")) return;
+    try {
+      const response = await fetch("/api/account/me", { credentials:"same-origin", headers:{"Accept":"application/json"} });
+      if (!response.ok) return;
+      const data = await response.json();
+      if (!data?.admin) return;
+
+      const moreMenu = document.querySelector(".creator-nav-more-menu");
+      if (moreMenu && !moreMenu.querySelector('a[href="/pages/cfs-ai.html"]')) {
+        const link = document.createElement("a");
+        link.dataset.creatorLink = "";
+        link.href = "/pages/cfs-ai.html";
+        link.textContent = "CFS AI";
+        moreMenu.prepend(link);
+      }
+
+      const sidebar = document.querySelector(".cfs-global-sidebar");
+      if (sidebar && !sidebar.querySelector('a[href="/pages/cfs-ai.html"]')) {
+        const divider = sidebar.querySelector(".cfs-sidebar-divider");
+        const link = makeLink({ label:"CFS AI", href:"/pages/cfs-ai.html", key:"ai", active:path === "/pages/cfs-ai.html" });
+        if (divider) sidebar.insertBefore(link, divider);
+        else sidebar.appendChild(link);
+      }
+    } catch {}
+  }
+
+
+  function injectCreatorShopNavigation() {
+    document.querySelectorAll(".creator-nav").forEach(nav => {
+      if (nav.querySelector('a[href="/pages/shop.html"]')) return;
+      const more = nav.querySelector(".creator-nav-more");
+      const link = document.createElement("a");
+      link.href = "/pages/shop.html";
+      link.dataset.creatorLink = "";
+      link.className = "cfs172-shop-link";
+      link.textContent = "SHOP";
+      if (path === "/pages/shop.html") { link.classList.add("active"); link.setAttribute("aria-current","page"); }
+      nav.insertBefore(link, more || nav.querySelector(".creator-logout") || null);
+    });
+  }
+
+  function ensureBrandV192() {
+    document.body.dataset.cfsBrandV192 = "1";
+    if (!document.querySelector('link[data-cfs-brand-v192]')) {
+      const link = document.createElement("link");
+      link.rel = "stylesheet";
+      link.href = "/assets/css/cfs-brand-unified-v192.css";
+      link.dataset.cfsBrandV192 = "1";
+      document.head.appendChild(link);
+    }
+  }
+
+  function injectFallbackBrandHeader() {
+    if (document.querySelector(".site-header, header.top")) return;
+    const header = document.createElement("header");
+    const creator = document.body.classList.contains("creator-workspace");
+    header.className = `site-header ${creator ? "creator-site-header" : "brand-header public-site-header"} cfs-shell-generated-header`;
+    header.innerHTML = `<div class="container header-inner"><a class="brand cfs-brand-lockup" href="${creator ? "/pages/dashboard.html" : "/"}" aria-label="cfs_zockt ${creator ? "Creator Suite Dashboard" : "Startseite"}">${brandMarkup({ creator })}</a></div>`;
+    document.body.prepend(header);
+  }
+
+  function installUnifiedV172() {
+    if (document.querySelector('link[data-cfs-unified-v172]')) return;
+    const link=document.createElement("link");
+    link.rel="stylesheet";
+    link.href="/assets/css/cfs-unified-v172.css";
+    link.dataset.cfsUnifiedV172="1";
+    document.head.appendChild(link);
+  }
+
   function installUiBundleAssets() {
     if (!document.querySelector('link[data-cfs-ui-v18]')) {
       const link = document.createElement("link");
@@ -213,12 +284,33 @@
     }
   }
 
+  function updateCopyrightYear() {
+    const year = String(new Date().getFullYear());
+    document.querySelectorAll("[data-cfs-current-year]").forEach(node => { node.textContent = year; });
+  }
+
+  function injectCreatorProductSignature() {
+    if (!document.body.classList.contains("creator-workspace")) return;
+    if (document.querySelector(".cfs-product-signature-v180")) return;
+    const footer = document.createElement("footer");
+    footer.className = "cfs-product-signature-v180";
+    footer.innerHTML = `<div class="cfs-brand-lockup">${brandMarkup({ creator: true })}</div><small>© <span data-cfs-current-year>${new Date().getFullYear()}</span> cfs_zockt · Alle Rechte vorbehalten.</small>`;
+    document.body.appendChild(footer);
+  }
+
   function init() {
     document.documentElement.classList.add("cfs-ui-v3", "cfs-os-v24");
     document.body.classList.add("cfs-ui-v3", "cfs-os-v24");
+    ensureBrandV192();
+    injectFallbackBrandHeader();
+    installUnifiedV172();
     upgradeHeaderBrands();
+    injectCreatorShopNavigation();
     markActiveTopNavigation();
     injectCreatorSidebar();
+    injectCfsAiAdminNavigation();
+    injectCreatorProductSignature();
+    updateCopyrightYear();
     installUiBundleAssets();
   }
 

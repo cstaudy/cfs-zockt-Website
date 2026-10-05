@@ -4,7 +4,7 @@ const root=path.resolve(process.argv[2]||'.');
 const read=f=>fs.readFileSync(path.join(root,f),'utf8');
 const server=read('server.js'),js=read('public/assets/js/stream-studio.js'),html=read('public/pages/stream-studio.html'),pkg=JSON.parse(read('package.json')),sys=read('public/assets/js/page-system-check.js');
 let n=0,ok=0;const check=(name,cond)=>{n++;if(cond){ok++;console.log(`PASS ${name}`)}else{console.error(`FAIL ${name}`);process.exitCode=1}};
-check('Backend 3.20.29',pkg.version==='3.20.29'&&server.includes('3.20.29')&&sys.includes('3.20.29'));
+const ver=String(pkg.version).split('.').map(Number);check('Backend v184+',ver[0]>3||ver[0]===3&&(ver[1]>20||ver[1]===20&&ver[2]>=29));check('Backend synchronized',server.includes(`Version ${pkg.version}`)&&sys.includes(`backend:"${pkg.version}"`));
 check('Schema remains 78',sys.includes('schema:78'));
 for(const status of ['starting','live','brb','ending','offline']) check(`Lifecycle UI ${status}`,html.includes(`data-lifecycle-scene="${status}"`)&&html.includes(`data-lifecycle-go="${status}"`));
 check('Lifecycle enabled toggle',html.includes('id="streamLifecycleEnabled"'));

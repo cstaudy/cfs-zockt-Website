@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#020812">
+<title>Creator Shop | cfs_zockt</title>
+<meta name="robots" content="noindex,nofollow,noarchive">
+<link rel="stylesheet" href="/assets/css/styles.css">
+<link rel="stylesheet" href="/assets/css/cfs-theme-v3.css">
+<link rel="stylesheet" href="/assets/css/cfs-unified-v172.css" data-cfs-unified-v172>
+<link rel="stylesheet" href="/assets/css/cfs-shop-v172.css">
+<script src="/assets/js/cfs-shell-v3.js" defer></script>
+  <link rel="stylesheet" href="/assets/css/cfs-brand-unified-v192.css" data-cfs-brand-v192>
+  <link rel="icon" href="/assets/img/favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="600x600" href="/assets/img/app-icon.png">
+  <link rel="apple-touch-icon" href="/assets/img/apple-touch-icon.png">
+</head>
+<body data-cfs-brand-v192="1" class="creator-workspace cfs-shop-v172">
+<header class="site-header creator-site-header">
+  <div class="container header-inner creator-header-inner">
+    <a class="creator-brand" href="/pages/dashboard.html" aria-label="cfs_zockt Creator Suite Dashboard"><img class="creator-brand-logo" src="/assets/img/brand/cfs-zockt-mark.png" alt="cfs_zockt"><span>CREATOR SUITE</span></a>
+    <button class="mobile-toggle creator-mobile-toggle" data-mobile-toggle type="button">MENÜ</button>
+    <nav class="nav creator-nav" data-nav data-creator-nav aria-label="Creator Suite Navigation">
+      <a data-creator-link href="/pages/dashboard.html">DASHBOARD</a>
+      <a data-creator-link href="/pages/widget-studio.html">WIDGETS</a>
+      <a data-creator-link href="/pages/stream-studio.html">STREAM</a>
+      <a class="active" data-creator-link href="/pages/shop.html" aria-current="page">SHOP</a>
+      <a data-creator-link href="/pages/integrations.html">INTEGRATIONEN</a>
+      <a data-creator-link href="/pages/launcher.html">LAUNCHER</a>
+      <a data-creator-link href="/pages/account.html">ACCOUNT</a>
+      <details class="creator-nav-more" data-creator-more><summary>MEHR</summary><div class="creator-nav-more-menu"><a href="/pages/scene-studio.html">SCENE STUDIO</a><a href="/pages/games.html">GAMES</a><a href="/pages/settings.html">EINSTELLUNGEN</a><a href="/">ÖFFENTLICHE WEBSITE</a></div></details>
+      <button class="creator-logout" data-logout type="button">LOGOUT</button>
+    </nav>
+  </div>
+</header>
+<main class="container">
+  <section class="shop-hero">
+    <div class="shop-hero-copy"><span>CFS CREATOR SHOP</span><h1>BUNDLES ODER EINZELSTÜCKE.<br><span>DIREKT IN CFS.</span></h1><p>Widgets, Panels, Overlays, Scenes, Bundles und einzelne Bestandteile als geprüfte CFS-Produkte. Free/Beta-Inhalte können direkt übernommen werden; geplante kostenpflichtige Angebote bleiben sichtbar, solange Commerce deaktiviert ist aber ohne Checkout gesperrt.</p></div>
+    <aside class="shop-library-summary"><span>MEINE PRODUKTE</span><strong id="shopLibraryCount">–</strong><small id="shopLibraryText">Bibliothek wird geladen …</small><a class="btn" href="#catalog">KATALOG ANSEHEN</a></aside>
+  </section>
+  <div class="shop-notice" id="shopNotice" role="status" aria-live="polite" hidden></div>
+  <section id="catalog" aria-labelledby="shopCatalogTitle">
+    <div class="shop-controls" id="shopFilters" aria-label="Shop filtern">
+      <button class="active" type="button" data-shop-filter="all">ALLE</button><button type="button" data-shop-filter="widgets">WIDGETS</button><button type="button" data-shop-filter="panels">PANELS</button><button type="button" data-shop-filter="overlays">OVERLAYS</button><button type="button" data-shop-filter="scenes">SCENES</button><button type="button" data-shop-filter="tools">TOOLS</button><button type="button" data-shop-filter="bundles">BUNDLES</button>
+      <input id="shopSearch" type="search" maxlength="80" placeholder="Produkte durchsuchen …" aria-label="Produkte durchsuchen">
+    </div>
+    <div class="shop-grid" id="shopGrid" aria-live="polite"><div class="shop-empty">Shop wird geladen …</div></div>
+  </section>
+  <div class="shop-status-banner"><div><strong>Creator Shop · sicherer Beta-Betrieb</strong><p>Pakete werden serverseitig gegen eine Allowlist validiert. Bundles und Einzelangebote werden als editierbare CFS-Entwürfe/Assets materialisiert; Provider-Grenzen, Plan-Limits und Scopes bleiben aktiv. Preisgeplante Produkte sind nur Vorschau, solange Live-Commerce deaktiviert ist.</p></div><span id="shopCommercialState">COMMERCE AUS</span></div>
+</main>
+<script src="/assets/js/app.js"></script>
+<script src="/assets/js/cfs-shop-preview-v174.js"></script>
+<script src="/assets/js/page-shop-v172.js"></script>
+</body>
+</html>

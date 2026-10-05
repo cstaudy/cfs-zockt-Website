@@ -2,7 +2,7 @@
  * ============================================================
  * cfs_zockt Creator Suite
  * Website Backend
- * Version 3.20.38
+ * Version 3.20.39
  * ============================================================
  */
 
@@ -53,6 +53,8 @@ const { fetchPublicPlayStationRecentGames } = require("./lib/playstation-public-
 const { buildPublicCreatorState, buildCreatorTechnicalState } = require("./lib/creator-state-snapshot");
 const { DEFAULT_HEARTBEAT_INTERVAL_MS, DEFAULT_ONLINE_WINDOW_MS, DEFAULT_GRACE_WINDOW_MS, launcherBridgeHealth } = require("./lib/launcher-bridge-health");
 const { publicProviderOAuthContracts } = require("./lib/provider-oauth-contract");
+const { publicConfig: cfsAiPublicConfig, requestJson: cfsAiRequestJson, requestHtml: cfsAiRequestHtml } = require("./lib/cfs-ai-gateway");
+const { isAllowedBridgeRequest, bridgeTransport, bridgeWorkerConfig } = require("./lib/cfs-ai-bridge-policy");
 
 const app = express();
 
@@ -75,7 +77,7 @@ const APP_NAME =
     "CFS_Zockt Creator Suite";
 
 const BACKEND_VERSION =
-    "3.20.38";
+    "3.20.39";
 
 // ============================================================
 // PRIVATE BETA / LEGAL BASELINE
@@ -1270,6 +1272,7 @@ const SENSITIVE_RESPONSE_PREFIXES = [
     "/api/billing/",
     "/api/launcher/",
     "/api/bridge/",
+    "/api/internal/cfs-ai-bridge/",
     "/auth/"
 ];
 
@@ -4690,6 +4693,48 @@ async function initDatabase() {
     // kann so eine Instanz mit nicht passendem DB-Stand fail-closed
     // aus dem Traffic nehmen.
     // --------------------------------------------------------
+
+// --------------------------------------------------------
+// CFS AI OUTBOUND BRIDGE · v196
+// Cloud legt Jobs ab; ein autorisierter lokaler Worker holt
+// sie ausgehend ab. Keine eingehende Verbindung zum Heim-PC.
+// --------------------------------------------------------
+await pool.query(`
+    CREATE TABLE IF NOT EXISTS cfs_ai_bridge_jobs (
+        id UUID PRIMARY KEY,
+        action VARCHAR(80) NOT NULL DEFAULT 'rpc',
+        request JSONB NOT NULL DEFAULT '{}'::jsonb,
+        response_type VARCHAR(12) NOT NULL DEFAULT 'json',
+        status VARCHAR(20) NOT NULL DEFAULT 'pending',
+        priority SMALLINT NOT NULL DEFAULT 50,
+        attempts INTEGER NOT NULL DEFAULT 0,
+        worker_id VARCHAR(120),
+        lease_until TIMESTAMPTZ,
+        result_json JSONB,
+        result_text TEXT,
+        error_text TEXT NOT NULL DEFAULT '',
+        created_by TEXT,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        started_at TIMESTAMPTZ,
+        completed_at TIMESTAMPTZ,
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        CONSTRAINT cfs_ai_bridge_jobs_status_check CHECK (status IN ('pending','claimed','succeeded','failed','cancelled')),
+        CONSTRAINT cfs_ai_bridge_jobs_response_check CHECK (response_type IN ('json','html'))
+    )
+`);
+await pool.query(`CREATE INDEX IF NOT EXISTS idx_cfs_ai_bridge_jobs_queue ON cfs_ai_bridge_jobs (status, priority DESC, created_at ASC)`);
+await pool.query(`CREATE INDEX IF NOT EXISTS idx_cfs_ai_bridge_jobs_lease ON cfs_ai_bridge_jobs (lease_until) WHERE status='claimed'`);
+
+await pool.query(`
+    CREATE TABLE IF NOT EXISTS cfs_ai_bridge_workers (
+        worker_id VARCHAR(120) PRIMARY KEY,
+        label VARCHAR(160) NOT NULL DEFAULT 'CFS AI Worker',
+        status JSONB NOT NULL DEFAULT '{}'::jsonb,
+        first_seen_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        last_seen_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+`);
 
     await pool.query(`
         CREATE TABLE IF NOT EXISTS creator_database_schema_state (
@@ -8657,6 +8702,254 @@ async function requireCreatorAdmin(req,res,next) {
         return res.status(500).json({ok:false,error:"Admin-Berechtigung konnte nicht geprüft werden."});
     }
 }
+
+
+// ============================================================
+// CFS AI · OUTBOUND LAPTOP BRIDGE · v196
+// ============================================================
+
+function cfsAiBridgeTokenValid(req) {
+    const expected=String(process.env.CFS_AI_BRIDGE_TOKEN||"").trim();
+    const supplied=String(req.get("X-CFS-AI-Bridge-Token")||"").trim();
+    return expected.length>=24&&supplied.length>0&&safeEqualText(supplied,expected);
+}
+
+function requireCfsAiBridgeWorker(req,res,next) {
+    if(!cfsAiBridgeTokenValid(req)) return res.status(401).json({ok:false,error:"CFS-AI-Bridge-Token fehlt oder ist ungültig."});
+    next();
+}
+
+function cfsAiBridgeWorkerId(value) {
+    const text=String(value||"").trim();
+    return /^[A-Za-z0-9._-]{3,120}$/.test(text)?text:"";
+}
+
+function cfsAiBridgePayloadSize(value) {
+    try{return Buffer.byteLength(JSON.stringify(value||{}),"utf8");}catch{return Number.MAX_SAFE_INTEGER;}
+}
+
+async function cfsAiBridgeLatestWorker() {
+    const result=await pool.query(`SELECT worker_id,label,status,last_seen_at FROM cfs_ai_bridge_workers ORDER BY last_seen_at DESC LIMIT 1`);
+    const row=result.rows[0]||null;
+    if(!row)return null;
+    return {...row,online:(Date.now()-new Date(row.last_seen_at).getTime())<45000};
+}
+
+async function cfsAiBridgeEnqueue(apiPath,{method="GET",body=undefined,query=null,responseType="json",createdBy=null,priority=50}={}) {
+    const cleanMethod=String(method||"GET").toUpperCase();
+    if(!isAllowedBridgeRequest(cleanMethod,apiPath)){
+        const error=new Error("Dieser CFS-AI-Aufruf ist für die Bridge nicht freigegeben.");error.code="cfs_ai_bridge_path";error.statusCode=400;throw error;
+    }
+    const request={api_path:String(apiPath),method:cleanMethod,body:body===undefined?null:body,query:query&&typeof query==="object"?query:{}};
+    if(cfsAiBridgePayloadSize(request)>256*1024){const error=new Error("CFS-AI-Bridge-Auftrag ist zu groß.");error.statusCode=413;throw error;}
+    const id=crypto.randomUUID();
+    await pool.query(`INSERT INTO cfs_ai_bridge_jobs (id,action,request,response_type,status,priority,created_by) VALUES ($1,'rpc',$2::jsonb,$3,'pending',$4,$5)`,[id,JSON.stringify(request),responseType==="html"?"html":"json",Math.max(1,Math.min(100,Number(priority)||50)),createdBy||null]);
+    return id;
+}
+
+async function cfsAiBridgeWait(jobId,timeoutMs=110000) {
+    const deadline=Date.now()+Math.max(3000,Math.min(115000,Number(timeoutMs)||110000));
+    while(Date.now()<deadline){
+        const result=await pool.query(`SELECT status,result_json,result_text,error_text FROM cfs_ai_bridge_jobs WHERE id=$1 LIMIT 1`,[jobId]);
+        const row=result.rows[0];
+        if(!row){const error=new Error("CFS-AI-Bridge-Job wurde nicht gefunden.");error.statusCode=404;throw error;}
+        if(row.status==="succeeded")return row.result_text!=null?{kind:"html",value:String(row.result_text)}:{kind:"json",value:row.result_json||{}};
+        if(row.status==="failed"||row.status==="cancelled"){const error=new Error(String(row.error_text||"CFS-AI-Bridge-Job fehlgeschlagen."));error.statusCode=502;error.code="cfs_ai_bridge_job_failed";throw error;}
+        await new Promise(resolve=>setTimeout(resolve,450));
+    }
+    const error=new Error("CFS AI arbeitet weiter, aber die Website hat das Antwort-Zeitlimit erreicht.");error.statusCode=504;error.code="cfs_ai_bridge_timeout";error.jobId=jobId;throw error;
+}
+
+async function cfsAiRequestJsonFlexible(apiPath,options={}) {
+    if(bridgeTransport()!=="bridge")return cfsAiRequestJson(apiPath,options);
+    const id=await cfsAiBridgeEnqueue(apiPath,{...options,responseType:"json",createdBy:options.createdBy||null});
+    const result=await cfsAiBridgeWait(id,options.timeoutMs||110000);
+    return result.value;
+}
+
+async function cfsAiRequestHtmlFlexible(apiPath,options={}) {
+    if(bridgeTransport()!=="bridge")return cfsAiRequestHtml(apiPath,options);
+    const id=await cfsAiBridgeEnqueue(apiPath,{method:"GET",responseType:"html",createdBy:options.createdBy||null});
+    const result=await cfsAiBridgeWait(id,options.timeoutMs||30000);
+    return String(result.value||"");
+}
+
+app.post("/api/internal/cfs-ai-bridge/heartbeat",requireCfsAiBridgeWorker,async(req,res)=>{
+    const workerId=cfsAiBridgeWorkerId(req.body?.worker_id);if(!workerId)return res.status(400).json({ok:false,error:"worker_id ungültig."});
+    const label=studioText(req.body?.label,160,"CFS AI Worker");
+    const status=(req.body?.status&&typeof req.body.status==="object")?req.body.status:{};
+    if(cfsAiBridgePayloadSize(status)>64*1024)return res.status(413).json({ok:false,error:"Status zu groß."});
+    await pool.query(`INSERT INTO cfs_ai_bridge_workers (worker_id,label,status,first_seen_at,last_seen_at,updated_at) VALUES ($1,$2,$3::jsonb,NOW(),NOW(),NOW()) ON CONFLICT (worker_id) DO UPDATE SET label=EXCLUDED.label,status=EXCLUDED.status,last_seen_at=NOW(),updated_at=NOW()`,[workerId,label,JSON.stringify(status)]);
+    return res.json({ok:true,server_time:new Date().toISOString(),transport:bridgeTransport()});
+});
+
+app.post("/api/internal/cfs-ai-bridge/claim",requireCfsAiBridgeWorker,async(req,res)=>{
+    const workerId=cfsAiBridgeWorkerId(req.body?.worker_id);if(!workerId)return res.status(400).json({ok:false,error:"worker_id ungültig."});
+    const cfg=bridgeWorkerConfig();
+    await pool.query(`UPDATE cfs_ai_bridge_jobs SET status='pending',worker_id=NULL,lease_until=NULL,updated_at=NOW() WHERE status='claimed' AND lease_until<NOW() AND attempts<3`);
+    await pool.query(`UPDATE cfs_ai_bridge_jobs SET status='failed',error_text='Bridge-Job nach mehreren abgelaufenen Leases abgebrochen.',completed_at=NOW(),updated_at=NOW() WHERE status='claimed' AND lease_until<NOW() AND attempts>=3`);
+    const result=await pool.query(`WITH candidate AS (SELECT id FROM cfs_ai_bridge_jobs WHERE status='pending' ORDER BY priority DESC,created_at ASC FOR UPDATE SKIP LOCKED LIMIT 1) UPDATE cfs_ai_bridge_jobs j SET status='claimed',worker_id=$1,attempts=j.attempts+1,started_at=COALESCE(j.started_at,NOW()),lease_until=NOW()+($2::text||' seconds')::interval,updated_at=NOW() FROM candidate WHERE j.id=candidate.id RETURNING j.id,j.request,j.response_type,j.attempts,j.created_at,j.lease_until`,[workerId,String(cfg.leaseSeconds)]);
+    return res.json({ok:true,job:result.rows[0]||null});
+});
+
+app.post("/api/internal/cfs-ai-bridge/jobs/:id/complete",requireCfsAiBridgeWorker,async(req,res)=>{
+    const id=cleanAiProposalId(req.params.id)||(/^[0-9a-f-]{36}$/i.test(String(req.params.id||""))?String(req.params.id):"");
+    const workerId=cfsAiBridgeWorkerId(req.body?.worker_id);if(!id||!workerId)return res.status(400).json({ok:false,error:"Job/Worker ungültig."});
+    const ok=req.body?.ok===true;const resultJson=req.body?.result_json??null;const resultText=req.body?.result_text==null?null:String(req.body.result_text).slice(0,2*1024*1024);const errorText=studioText(req.body?.error,4000,"");
+    if(resultJson!=null&&cfsAiBridgePayloadSize(resultJson)>4*1024*1024)return res.status(413).json({ok:false,error:"Bridge-Ergebnis zu groß."});
+    const result=await pool.query(`UPDATE cfs_ai_bridge_jobs SET status=$1,result_json=$2::jsonb,result_text=$3,error_text=$4,completed_at=NOW(),lease_until=NULL,updated_at=NOW() WHERE id=$5 AND status='claimed' AND worker_id=$6 RETURNING id,status`,[ok?"succeeded":"failed",resultJson==null?null:JSON.stringify(resultJson),resultText,ok?"":(errorText||"Lokaler CFS-AI-Worker meldete einen Fehler."),id,workerId]);
+    if(!result.rowCount)return res.status(409).json({ok:false,error:"Job ist nicht mehr von diesem Worker reserviert."});
+    return res.json({ok:true,job:result.rows[0]});
+});
+
+app.get("/api/creator/cfs-ai/bridge",requireCreatorAccount,requireCreatorAdmin,async(req,res)=>{
+    res.set("Cache-Control","no-store");
+    const worker=await cfsAiBridgeLatestWorker();
+    const jobs=await pool.query(`SELECT id,status,attempts,created_at,started_at,completed_at,error_text FROM cfs_ai_bridge_jobs ORDER BY created_at DESC LIMIT 30`);
+    return res.json({ok:true,transport:bridgeTransport(),worker,jobs:jobs.rows});
+});
+
+// ============================================================
+// CFS AI · ADMIN INTEGRATION GATEWAY · v196
+//
+// Der Browser spricht niemals direkt mit Ollama oder dem lokalen AI-Dateisystem.
+// Alle CFS-AI-Zugriffe laufen durch Creator-Session + Admin-Gate + CSRF.
+// Die AI bleibt standardmaessig deaktiviert, bis CFS_AI_ENABLED=true gesetzt ist.
+// ============================================================
+
+function cfsAiGatewayFailure(res,error,defaultMessage="CFS AI ist aktuell nicht erreichbar.") {
+    const status=Math.max(400,Math.min(599,Number(error?.statusCode||503)));
+    return res.status(status).json({ok:false,code:String(error?.code||"cfs_ai_unavailable"),error:String(error?.message||defaultMessage)});
+}
+
+function cleanAiTemplateId(value) {
+    const text=String(value||"");
+    return /^[a-z0-9][a-z0-9_-]{1,79}$/i.test(text)?text:"";
+}
+
+function cleanAiProposalId(value) {
+    const text=String(value||"");
+    return /^[A-Za-z0-9_-]{4,100}$/.test(text)?text:"";
+}
+
+app.get("/api/creator/cfs-ai/status",requireCreatorAccount,requireCreatorAdmin,async(req,res)=>{
+    res.set("Cache-Control","no-store");
+    const gateway={...cfsAiPublicConfig(),transport:bridgeTransport()};
+    if(!gateway.enabled)return res.json({ok:true,gateway,service:null,worker:null});
+    if(bridgeTransport()==="bridge"){
+        try{
+            const worker=await cfsAiBridgeLatestWorker();
+            return res.json({ok:true,gateway:{...gateway,configured:Boolean(String(process.env.CFS_AI_BRIDGE_TOKEN||"").trim())},service:worker?.status?.service||null,worker});
+        }catch(error){return res.status(503).json({ok:false,gateway,service:null,worker:null,error:String(error?.message||"Bridge-Status nicht erreichbar.")});}
+    }
+    if(!gateway.configured)return res.json({ok:true,gateway,service:null});
+    try{
+        const service=await cfsAiRequestJsonFlexible("/api/status",{timeoutMs:12000});
+        return res.json({ok:true,gateway,service});
+    }catch(error){return res.status(503).json({ok:false,gateway,service:null,error:String(error?.message||"CFS AI ist nicht erreichbar.")});}
+});
+
+app.post("/api/creator/cfs-ai/chat",requireCreatorAccount,requireCreatorAdmin,async(req,res)=>{
+    res.set("Cache-Control","no-store");
+    try{
+        const message=studioText(req.body?.message,12000,"");
+        if(!message)return res.status(400).json({ok:false,error:"Nachricht fehlt."});
+        const mode=["assistant","developer","review"].includes(String(req.body?.mode||""))?String(req.body.mode):"assistant";
+        const history=Array.isArray(req.body?.history)?req.body.history.slice(-12).map(row=>({role:["user","assistant"].includes(String(row?.role||""))?String(row.role):"user",content:studioText(row?.content,12000,"")})).filter(row=>row.content):[];
+        const data=await cfsAiRequestJsonFlexible("/api/chat",{method:"POST",body:{message,mode,history}});
+        return res.json(data);
+    }catch(error){return cfsAiGatewayFailure(res,error,"CFS-AI-Chat ist nicht erreichbar.");}
+});
+
+app.get("/api/creator/cfs-ai/templates",requireCreatorAccount,requireCreatorAdmin,async(req,res)=>{
+    res.set("Cache-Control","no-store");
+    try{
+        const allowedSort=new Set(["title","category","quality","status"]);
+        const query={
+            category:studioText(req.query?.category,40,""),platform:studioText(req.query?.platform,40,""),status:studioText(req.query?.status,40,""),
+            query:studioText(req.query?.query,120,""),tag:studioText(req.query?.tag,60,""),sort:allowedSort.has(String(req.query?.sort||""))?String(req.query.sort):"status"
+        };
+        return res.json(await cfsAiRequestJsonFlexible("/api/template-vault",{query}));
+    }catch(error){return cfsAiGatewayFailure(res,error,"Template Vault ist nicht erreichbar.");}
+});
+
+app.get("/api/creator/cfs-ai/template-catalog",requireCreatorAccount,requireCreatorAdmin,async(req,res)=>{
+    res.set("Cache-Control","no-store");
+    try{return res.json(await cfsAiRequestJsonFlexible("/api/template-factory/catalog"));}
+    catch(error){return cfsAiGatewayFailure(res,error,"Template-Katalog ist nicht erreichbar.");}
+});
+
+app.post("/api/creator/cfs-ai/templates/harvest",requireCreatorAccount,requireCreatorAdmin,async(req,res)=>{
+    res.set("Cache-Control","no-store");
+    try{
+        const allowed=new Set(["widgets","overlays","tools","games","bundles","website-sections"]);
+        const categories=(Array.isArray(req.body?.categories)?req.body.categories:[]).map(x=>String(x)).filter(x=>allowed.has(x)).slice(0,6);
+        if(!categories.length)return res.status(400).json({ok:false,error:"Mindestens eine gueltige Kategorie auswaehlen."});
+        const perCategory=Math.max(1,Math.min(6,Number(req.body?.per_category||3)||3));
+        const previewFormat=["wide","portrait","square","compact"].includes(String(req.body?.preview_format||""))?String(req.body.preview_format):"wide";
+        return res.json(await cfsAiRequestJsonFlexible("/api/template-factory/harvest",{method:"POST",body:{categories,per_category:perCategory,preview_format:previewFormat}}));
+    }catch(error){return cfsAiGatewayFailure(res,error,"Vorlagen konnten nicht gesammelt werden.");}
+});
+
+app.post("/api/creator/cfs-ai/templates/:id/status",requireCreatorAccount,requireCreatorAdmin,async(req,res)=>{
+    res.set("Cache-Control","no-store");
+    const id=cleanAiTemplateId(req.params.id);if(!id)return res.status(400).json({ok:false,error:"Ungueltige Template-ID."});
+    const allowed=new Set(["new","saved","favorite","build_later","proposal_ready","rejected"]),status=String(req.body?.status||"");
+    if(!allowed.has(status))return res.status(400).json({ok:false,error:"Ungueltiger Template-Status."});
+    try{return res.json(await cfsAiRequestJsonFlexible(`/api/template-vault/${encodeURIComponent(id)}/status`,{method:"POST",body:{status}}));}
+    catch(error){return cfsAiGatewayFailure(res,error,"Template-Status konnte nicht gespeichert werden.");}
+});
+
+app.post("/api/creator/cfs-ai/templates/:id/propose",requireCreatorAccount,requireCreatorAdmin,async(req,res)=>{
+    res.set("Cache-Control","no-store");
+    const id=cleanAiTemplateId(req.params.id);if(!id)return res.status(400).json({ok:false,error:"Ungueltige Template-ID."});
+    try{
+        const notes=studioText(req.body?.notes,4000,"");
+        const prepared=await cfsAiRequestJsonFlexible(`/api/template-vault/${encodeURIComponent(id)}/proposal-request`,{method:"POST",body:{notes}});
+        const request=studioText(prepared?.request,12000,"");
+        if(!request)return res.status(502).json({ok:false,error:"CFS AI hat keinen Proposal-Auftrag erzeugt."});
+        const proposal=await cfsAiRequestJsonFlexible("/api/agent/propose",{method:"POST",body:{request},timeoutMs:115000});
+        return res.json({ok:true,template_id:id,proposal});
+    }catch(error){return cfsAiGatewayFailure(res,error,"Coding-Proposal konnte nicht erstellt werden.");}
+});
+
+app.get("/api/creator/cfs-ai/proposals",requireCreatorAccount,requireCreatorAdmin,async(req,res)=>{
+    res.set("Cache-Control","no-store");
+    try{return res.json(await cfsAiRequestJsonFlexible("/api/agent/proposals"));}
+    catch(error){return cfsAiGatewayFailure(res,error,"CFS-AI-Proposals konnten nicht geladen werden.");}
+});
+
+app.get("/api/creator/cfs-ai/proposals/:id",requireCreatorAccount,requireCreatorAdmin,async(req,res)=>{
+    res.set("Cache-Control","no-store");const id=cleanAiProposalId(req.params.id);if(!id)return res.status(400).json({ok:false,error:"Ungueltige Proposal-ID."});
+    try{return res.json(await cfsAiRequestJsonFlexible(`/api/agent/proposals/${encodeURIComponent(id)}`));}
+    catch(error){return cfsAiGatewayFailure(res,error,"Proposal konnte nicht geladen werden.");}
+});
+
+app.get("/api/creator/cfs-ai/proposals/:id/preview",requireCreatorAccount,requireCreatorAdmin,async(req,res)=>{
+    res.set("Cache-Control","no-store");const id=cleanAiProposalId(req.params.id);if(!id)return res.status(400).send("Ungueltige Proposal-ID.");
+    try{const html=await cfsAiRequestHtmlFlexible(`/api/agent/proposals/${encodeURIComponent(id)}/preview`);res.type("html");return res.send(html);}
+    catch(error){return res.status(Math.max(400,Math.min(599,Number(error?.statusCode||503)))).send("CFS-AI-Vorschau ist nicht erreichbar.");}
+});
+
+for(const action of ["approve","reject","rollback"]){
+    app.post(`/api/creator/cfs-ai/proposals/:id/${action}`,requireCreatorAccount,requireCreatorAdmin,async(req,res)=>{
+        res.set("Cache-Control","no-store");const id=cleanAiProposalId(req.params.id);if(!id)return res.status(400).json({ok:false,error:"Ungueltige Proposal-ID."});
+        try{return res.json(await cfsAiRequestJsonFlexible(`/api/agent/proposals/${encodeURIComponent(id)}/${action}`,{method:"POST",body:{}}));}
+        catch(error){return cfsAiGatewayFailure(res,error,`Proposal konnte nicht ${action} werden.`);}
+    });
+}
+
+app.get("/api/creator/cfs-ai/roadmap",requireCreatorAccount,requireCreatorAdmin,async(req,res)=>{
+    res.set("Cache-Control","no-store");
+    try{return res.json(await cfsAiRequestJsonFlexible("/api/roadmap"));}
+    catch(error){return cfsAiGatewayFailure(res,error,"CFS-AI-Roadmap konnte nicht geladen werden.");}
+});
+
+app.get("/api/creator/cfs-ai/knowledge",requireCreatorAccount,requireCreatorAdmin,async(req,res)=>{
+    res.set("Cache-Control","no-store");
+    try{return res.json(await cfsAiRequestJsonFlexible("/api/knowledge-engine/dashboard"));}
+    catch(error){return cfsAiGatewayFailure(res,error,"CFS-AI-Wissensstatus konnte nicht geladen werden.");}
+});
 
 
 function accountElevationCookieOptions({includeMaxAge=true,pending=false} = {}) {
@@ -30391,7 +30684,7 @@ app.use(async (req, res, next) => {
             return res.redirect(302, `/pages/login.html?returnTo=${returnTo}`);
         }
         req.creatorAccount = account;
-        if (pagePath === "/pages/admin-creators.html" && !(await isCreatorSuiteAdmin(account))) {
+        if ((pagePath === "/pages/admin-creators.html" || pagePath === "/pages/cfs-ai.html") && !(await isCreatorSuiteAdmin(account))) {
             return res.status(404).sendFile(path.join(PUBLIC_DIR, "pages", "not-found.html"));
         }
         ensureCreatorCsrfCookie(req, res);

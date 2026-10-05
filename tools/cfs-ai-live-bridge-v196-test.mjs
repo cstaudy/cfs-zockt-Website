@@ -1,0 +1,17 @@
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+const read=p=>fs.readFileSync(p,'utf8');
+const server=read('server.js');
+const page=read('public/pages/cfs-ai.html');
+const js=read('public/assets/js/page-cfs-ai.js');
+const schema=await import('../lib/database-schema-contract.js');
+const pkg=JSON.parse(read('package.json'));
+assert.equal(pkg.version,'3.20.39');
+assert.equal(schema.default?.DATABASE_SCHEMA_VERSION ?? schema.DATABASE_SCHEMA_VERSION,79);
+assert.match(server,/cfs_ai_bridge_jobs/);
+assert.match(server,/cfs_ai_bridge_workers/);
+assert.match(server,/\/api\/internal\/cfs-ai-bridge\/claim/);
+assert.match(server,/cfsAiRequestJsonFlexible/);
+assert.match(page,/data-ai-tab="bridge"/);
+assert.match(js,/loadBridge/);
+console.log('cfs-ai-live-bridge-v196-test: ok');

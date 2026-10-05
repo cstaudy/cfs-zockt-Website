@@ -1,0 +1,14 @@
+import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
+const require=createRequire(import.meta.url);
+const policy=require('../lib/cfs-ai-bridge-policy.js');
+assert.equal(policy.isAllowedBridgeRequest('GET','/api/status'),true);
+assert.equal(policy.isAllowedBridgeRequest('POST','/api/chat'),true);
+assert.equal(policy.isAllowedBridgeRequest('POST','/api/template-vault/widget_goal_pro/proposal-request'),true);
+assert.equal(policy.isAllowedBridgeRequest('POST','/api/agent/proposals/abcd1234/approve'),true);
+assert.equal(policy.isAllowedBridgeRequest('POST','/api/agent/project'),false);
+assert.equal(policy.isAllowedBridgeRequest('POST','/api/knowledge/ingest'),false);
+assert.equal(policy.isAllowedBridgeRequest('GET','/api/../secret'),false);
+process.env.CFS_AI_TRANSPORT='bridge';
+assert.equal(policy.bridgeTransport(),'bridge');
+console.log('cfs-ai-bridge-v196-test: ok');

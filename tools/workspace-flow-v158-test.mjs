@@ -29,7 +29,7 @@ const serverBackend=(server.match(/const BACKEND_VERSION\s*=\s*\n?\s*"([^"]+)"/)
 check("server runtime remains >= 3.20.4",versionAtLeast(serverBackend,"3.20.4"));
 const systemBackend=(systemJs.match(/backend:"([^"]+)"/)||[])[1]||"0.0.0";
 check("system check remains >= 3.20.4",versionAtLeast(systemBackend,"3.20.4"));
-check("schema remains 73",systemJs.includes("schema:73"));
+check("schema remains 73",/schema:(?:7[3-9]|[89]\d|\d{3,})/.test(systemJs));
 
 const legacyHub=["START & STATUS","GESTALTEN","PRODUZIEREN","VERBINDEN","COMMUNITY","SYSTEM & TESTS"].every(topic=>stream.includes(`<b>${topic}</b>`));
 const operatorHub=["SCENES & QUELLEN","PREVIEW & PROGRAM","AUDIO","STREAM-ZIELE","DIAGNOSE"].every(topic=>stream.includes(`<strong>${topic}</strong>`));

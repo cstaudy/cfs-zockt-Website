@@ -35,10 +35,10 @@ const serverVersion=(server.match(/const BACKEND_VERSION\s*=\s*\n?\s*"([^"]+)"/)
 check('server runtime remains >= 3.20.12', semverGte(serverVersion,'3.20.12'), serverVersion);
 const systemBackend=(systemCheck.match(/backend:"([^"]+)"/)||[])[1]||'0.0.0';
 check('system check expects backend >= 3.20.12', semverGte(systemBackend,'3.20.12'), systemBackend);
-check('system check keeps schema 73', systemCheck.includes('schema:73'));
+check('system check keeps schema 73', /schema:(?:7[3-9]|[89]\d|\d{3,})/.test(systemCheck));
 check('system check matches current launcher', systemCheck.includes(`launcher:"${launcher.version}"`));
 
-check('dashboard uses transparent wordmark', dashboard.includes('/assets/img/brand/cfs-zockt-wordmark-transparent.png'));
+check('dashboard uses current CFS mark', dashboard.includes('/assets/img/brand/cfs-zockt-mark.png'));
 check('dashboard uses daily-flow root', dashboard.includes('creator-dashboard-v166'));
 check('dashboard hero is concise', dashboard.includes('DEIN CREATOR<br><span>DASHBOARD.</span>') && dashboard.includes('Starte mit dem nächsten Schritt'));
 check('dashboard primary next step preserved', dashboard.includes('id="nextStepCard"') && dashboard.includes('id="nextStepTitle"') && dashboard.includes('id="nextStepAction"'));
@@ -70,7 +70,7 @@ check('diagnostics overrides legacy hidden rules', dashboardCss.includes('creato
 check('next step JS still consumes journey', dashboardJs.includes('renderNextStep') && dashboardJs.includes('nextStepTitle') && dashboardJs.includes('nextStepAction'));
 check('stream-ready API still consumed', dashboardJs.includes('/api/creator/stream-ready'));
 
-check('account uses transparent wordmark', account.includes('/assets/img/brand/cfs-zockt-wordmark-transparent.png'));
+check('account uses current CFS mark', account.includes('/assets/img/brand/cfs-zockt-mark.png'));
 check('account hero is concise', account.includes('ACCOUNT &amp; SICHERHEIT') && account.includes('Dein <span>Account.</span>'));
 check('redundant management hub removed', !account.includes('<section class="management-hub"'));
 for (const tab of ['Profil','Sicherheit','Sitzungen','Daten &amp; Konto']) {

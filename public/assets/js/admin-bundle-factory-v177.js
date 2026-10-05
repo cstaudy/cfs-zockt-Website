@@ -1,0 +1,68 @@
+document.addEventListener("DOMContentLoaded",()=>{
+  const q=id=>document.getElementById(id);if(!q("adminBundleFactoryPanel"))return;
+  const state={assets:[],products:[],collections:[],selectedAssets:new Set(),compare:new Set()};
+  const toast=msg=>{const el=q("adminToast");if(el){el.hidden=false;el.textContent=msg;setTimeout(()=>el.hidden=true,3600)}};
+  const activeAsset=()=>state.assets.find(x=>x.id===q("bundleFactoryAsset")?.value)||null;
+  const selectedIds=()=>[...state.selectedAssets].filter(id=>state.assets.some(a=>a.id===id)).slice(0,6);
+  const contentSummary=p=>Object.entries(p.bundle_config?.content||{}).filter(([,v])=>v).map(([k])=>k.toUpperCase()).join(" · ");
+  const statusLabel=status=>({published:"IM SHOP",draft:"ENTWURF",archived:"ARCHIVIERT",mixed:"GEMISCHT"})[status]||String(status||"ENTWURF").toUpperCase();
+
+  function renderAssets(){
+    const sel=q("bundleFactoryAsset"),keep=sel?.value;
+    if(sel){sel.innerHTML=state.assets.map(a=>`<option value="${CFS.escape(a.id)}">${CFS.escape(a.name)} · ${CFS.escape(a.rights_status)}</option>`).join("");if(state.assets.some(a=>a.id===keep))sel.value=keep;}
+    q("bundleFactoryAssets").innerHTML=state.assets.length?state.assets.map(a=>`<label class="bundle-asset-row ${state.selectedAssets.has(a.id)?"selected":""}"><input type="checkbox" data-asset-pick="${CFS.escape(a.id)}" ${state.selectedAssets.has(a.id)?"checked":""} ${a.shop_use_allowed?"":"disabled"}><img src="${CFS.escape(a.preview_url)}" alt=""><div><strong>${CFS.escape(a.name)}</strong><small class="${a.shop_use_allowed?"bundle-rights-ok":"bundle-rights-pending"}">${a.shop_use_allowed?"✓ SHOP-NUTZUNG FREIGEGEBEN":"RECHTE OFFEN"}</small></div></label>`).join(""):'<div class="admin-empty">Noch kein Bild hochgeladen.</div>';
+    q("bundleFactoryAssets").querySelectorAll("[data-asset-pick]").forEach(el=>el.onchange=()=>{if(el.checked){if(state.selectedAssets.size>=6){el.checked=false;return toast("Maximal 6 Quellbilder pro Collection.")}state.selectedAssets.add(el.dataset.assetPick)}else state.selectedAssets.delete(el.dataset.assetPick);renderAssets()});
+    const a=activeAsset();if(a){q("bundleFactoryRights").value=a.rights_status;q("bundleFactoryRightsSource").value=a.rights_source||"";q("bundleFactoryRightsNote").value=a.rights_note||""}
+  }
+
+  function versionHistory(p){
+    const rows=Array.isArray(p.versions)?p.versions:[];
+    if(!rows.length)return '<small class="bundle-version-empty">Noch keine Versionshistorie.</small>';
+    return `<details class="bundle-version-history"><summary>${rows.length} VERSION${rows.length===1?"":"EN"}</summary>${rows.map(v=>`<div><b>v${CFS.escape(v.version)}</b><span>${CFS.escape(v.release_notes||"")}</span><small>${v.published_at?"VERÖFFENTLICHT":"ENTWURF"}</small></div>`).join("")}</details>`;
+  }
+
+  function productCard(p,compare=false){
+    const cover=p.admin_cover_url||p.preview?.cover_url||p.preview?.asset_url||"";
+    const badge=`<span class="bundle-status ${CFS.escape(p.status||"draft")}">${CFS.escape(statusLabel(p.status))} · v${CFS.escape(p.version)}</span>`;
+    return `<article class="bundle-product-card ${p.platform==="tiktok"?"tiktok":""} ${p.status==="archived"?"archived":""}">${cover?`<div class="bundle-rendered-cover"><img src="${CFS.escape(cover)}" alt="${CFS.escape(p.title)} Cover"></div>`:""}<div class="bundle-product-copy"><small>${CFS.escape(p.collection_title||"COLLECTION")} · ${CFS.escape(String(p.design_variant||"").toUpperCase())}</small><strong>${CFS.escape(p.title)}</strong>${badge}<small>${CFS.escape(contentSummary(p)||"BRANDING")}</small>${compare?`<p>${CFS.escape(p.description||"")}</p><small>Release: ${CFS.escape(p.release_notes||"Initial release.")}</small>`:`<input data-product-title="${CFS.escape(p.id)}" maxlength="140" value="${CFS.escape(p.title)}"><textarea data-product-description="${CFS.escape(p.id)}" maxlength="1000" rows="3">${CFS.escape(p.description)}</textarea><select data-product-pricing="${CFS.escape(p.id)}"><option value="free" ${p.pricing_mode==="free"?"selected":""}>FREE</option><option value="beta" ${p.pricing_mode==="beta"?"selected":""}>BETA</option></select><div class="bundle-version-box"><label>RELEASE NOTES<textarea data-release-notes="${CFS.escape(p.id)}" maxlength="1200" rows="2" placeholder="Was ändert sich in dieser Version?"></textarea></label><div class="bundle-version-actions"><button class="btn" data-version-bump="patch" data-id="${CFS.escape(p.id)}">PATCH +1</button><button class="btn" data-version-bump="minor" data-id="${CFS.escape(p.id)}">MINOR +1</button></div>${versionHistory(p)}</div><div class="bundle-product-actions"><button class="btn" data-product-compare="${CFS.escape(p.id)}">${state.compare.has(p.id)?"AUS VERGLEICH":"VERGLEICHEN"}</button><button class="btn" data-product-save="${CFS.escape(p.id)}">SPEICHERN</button><a class="btn" href="${CFS.escape(p.detail_url)}" target="_blank" rel="noopener">SHOP-VORSCHAU</a>${p.status==="archived"?'':`<button class="btn ${p.status==="published"?"":"primary"}" data-product-action="${p.status==="published"?"unpublish":"publish"}" data-id="${CFS.escape(p.id)}">${p.status==="published"?"AUS SHOP NEHMEN":"IM SHOP VERÖFFENTLICHEN"}</button>`}</div>`}</div></article>`;
+  }
+
+  function collectionCard(c){
+    const action=c.status==="archived"?"restore":c.status==="published"?"unpublish":"publish";
+    const label=action==="restore"?"REAKTIVIEREN":action==="unpublish"?"GANZE COLLECTION AUS SHOP":"GANZE COLLECTION VERÖFFENTLICHEN";
+    return `<article class="bundle-collection-card ${CFS.escape(c.status)}"><div><small>COLLECTION</small><strong>${CFS.escape(c.title)}</strong><span>${c.products} Produkte · ${c.published} live · ${c.draft} Entwürfe · ${c.archived} archiviert</span></div><div class="bundle-collection-actions"><span class="bundle-status ${CFS.escape(c.status)}">${CFS.escape(statusLabel(c.status))}</span><button class="btn ${action==="publish"?"primary":""}" data-collection-action="${action}" data-key="${CFS.escape(c.key)}">${label}</button>${c.status!=="archived"?`<button class="btn" data-collection-action="archive" data-key="${CFS.escape(c.key)}">COLLECTION ARCHIVIEREN</button>`:""}</div></article>`;
+  }
+
+  function renderCollections(){
+    const wrap=q("bundleFactoryCollectionCards");if(!wrap)return;
+    wrap.innerHTML=state.collections.length?state.collections.map(collectionCard).join(""):'<div class="admin-empty">Noch keine Collection.</div>';
+    wrap.querySelectorAll("[data-collection-action]").forEach(btn=>btn.onclick=()=>collectionAction(btn.dataset.key,btn.dataset.collectionAction));
+    q("bundleFactoryCollections").textContent=state.collections.length?`${state.collections.length} Collections · ${state.products.length} Produktentwürfe`:"Noch keine Collection";
+  }
+
+  function renderProducts(){
+    q("bundleFactoryProducts").innerHTML=state.products.length?state.products.map(p=>productCard(p)).join(""):'<div class="admin-empty">Noch keine Produktentwürfe.</div>';
+    q("bundleFactoryProducts").querySelectorAll("[data-product-action]").forEach(btn=>btn.onclick=()=>productAction(btn.dataset.id,btn.dataset.productAction));
+    q("bundleFactoryProducts").querySelectorAll("[data-product-save]").forEach(btn=>btn.onclick=()=>saveProduct(btn.dataset.productSave));
+    q("bundleFactoryProducts").querySelectorAll("[data-product-compare]").forEach(btn=>btn.onclick=()=>toggleCompare(btn.dataset.productCompare));
+    q("bundleFactoryProducts").querySelectorAll("[data-version-bump]").forEach(btn=>btn.onclick=()=>createVersion(btn.dataset.id,btn.dataset.versionBump));
+    renderCompare();
+  }
+  function renderCompare(){const chosen=state.products.filter(p=>state.compare.has(p.id)).slice(0,3),wrap=q("bundleFactoryCompare");wrap.hidden=!chosen.length;q("bundleFactoryCompareGrid").innerHTML=chosen.map(p=>productCard(p,true)).join("")}
+  function render(){renderAssets();renderCollections();renderProducts()}
+  async function load(){try{const data=await CFS.json("/api/admin/store/bundle-factory");state.assets=data.assets||[];state.products=data.products||[];state.collections=data.collections||[];for(const id of [...state.selectedAssets])if(!state.assets.some(a=>a.id===id&&a.shop_use_allowed))state.selectedAssets.delete(id);render()}catch(e){toast(e.message)}}
+
+  q("bundleFactoryAsset")?.addEventListener("change",renderAssets);
+  q("bundleFactoryPlatform")?.addEventListener("change",()=>{const neutral=q("bundleFactoryPlatform").value==="neutral";q("bundleFactoryContent").querySelectorAll('input[value="panels"],input[value="widgets"]').forEach(el=>{el.disabled=neutral;if(neutral)el.checked=false})});
+  q("bundleFactoryUpload")?.addEventListener("click",async()=>{const file=q("bundleFactoryFile")?.files?.[0];if(!file)return toast("Bitte zuerst ein PNG, JPG oder WebP auswählen.");try{const data=await CFS.json("/api/admin/store/bundle-assets",{method:"POST",headers:{"Content-Type":file.type||"application/octet-stream","X-CFS-File-Name":encodeURIComponent(file.name)},body:file});q("bundleFactoryFile").value="";if(data.asset?.shop_use_allowed)state.selectedAssets.add(data.asset.id);toast("Bild gespeichert. Rechte prüfen und freigeben.");await load()}catch(e){toast(e.message)}});
+  q("bundleFactorySaveRights")?.addEventListener("click",async()=>{const a=activeAsset();if(!a)return toast("Bitte ein Bild auswählen.");const status=q("bundleFactoryRights").value;try{await CFS.json(`/api/admin/store/bundle-assets/${encodeURIComponent(a.id)}/rights`,{method:"PATCH",body:JSON.stringify({rights_status:status,shop_use_allowed:status==="approved",rights_source:q("bundleFactoryRightsSource").value,rights_note:q("bundleFactoryRightsNote").value})});if(status==="approved")state.selectedAssets.add(a.id);else state.selectedAssets.delete(a.id);toast(status==="approved"?"Shop-Nutzungsrechte freigegeben.":"Rechtestatus gespeichert.");await load()}catch(e){toast(e.message)}});
+  q("bundleFactoryGenerate")?.addEventListener("click",async()=>{const ids=selectedIds();if(!ids.length){const a=activeAsset();if(a?.shop_use_allowed)ids.push(a.id)}if(!ids.length)return toast("Markiere mindestens ein freigegebenes Quellbild.");const content={};q("bundleFactoryContent").querySelectorAll("input[type=checkbox]").forEach(el=>content[el.value]=el.checked);try{const data=await CFS.json("/api/admin/store/bundle-products/generate",{method:"POST",body:JSON.stringify({asset_ids:ids,title:q("bundleFactoryTitle").value||"CFS Bundle",collection_title:q("bundleFactoryCollectionTitle").value||q("bundleFactoryTitle").value||"CFS Collection",preset:q("bundleFactoryPreset").value,platform:q("bundleFactoryPlatform").value,content})});state.compare=new Set((data.products||[]).slice(0,3).map(p=>p.id));toast(`${data.products?.length||0} Varianten für ${data.collection?.title||"Collection"} erzeugt.`);await load()}catch(e){toast(e.message)}});
+
+  async function saveProduct(id){const root=q("bundleFactoryProducts"),title=root.querySelector(`[data-product-title="${CSS.escape(id)}"]`)?.value||"",description=root.querySelector(`[data-product-description="${CSS.escape(id)}"]`)?.value||"",pricing_mode=root.querySelector(`[data-product-pricing="${CSS.escape(id)}"]`)?.value||"free";try{await CFS.json(`/api/admin/store/bundle-products/${encodeURIComponent(id)}`,{method:"PATCH",body:JSON.stringify({title,description,pricing_mode})});toast("Produktentwurf gespeichert.");await load()}catch(e){toast(e.message)}}
+  async function createVersion(id,bump){const notes=q("bundleFactoryProducts").querySelector(`[data-release-notes="${CSS.escape(id)}"]`)?.value?.trim()||"";if(!notes)return toast("Release Notes für die neue Version eintragen.");try{const data=await CFS.json(`/api/admin/store/bundle-products/${encodeURIComponent(id)}/version`,{method:"POST",body:JSON.stringify({bump,release_notes:notes})});toast(`Neue Produktversion v${data.product?.version||""} erstellt.`);await load()}catch(e){toast(e.message)}}
+  function toggleCompare(id){if(state.compare.has(id))state.compare.delete(id);else{if(state.compare.size>=3)return toast("Maximal 3 Varianten gleichzeitig vergleichen.");state.compare.add(id)}renderProducts()}
+  async function productAction(id,action){try{await CFS.json(`/api/admin/store/bundle-products/${encodeURIComponent(id)}/${action}`,{method:"POST",body:"{}"});toast(action==="publish"?"Produkt ist jetzt im Creator Shop.":"Produkt wurde aus dem Shop genommen.");await load()}catch(e){toast(e.message)}}
+  async function collectionAction(key,action){try{const data=await CFS.json(`/api/admin/store/collections/${encodeURIComponent(key)}/${action}`,{method:"POST",body:"{}"});state.assets=data.assets||state.assets;state.products=data.products||[];state.collections=data.collections||[];toast(({publish:"Collection vollständig veröffentlicht.",unpublish:"Collection vollständig aus dem Shop genommen.",archive:"Collection archiviert.",restore:"Collection als Entwurf reaktiviert."})[action]||"Collection aktualisiert.");render()}catch(e){toast(e.message)}}
+
+  q("bundleFactoryClearCompare")?.addEventListener("click",()=>{state.compare.clear();renderProducts()});q("bundleFactoryRefresh")?.addEventListener("click",load);load();
+});

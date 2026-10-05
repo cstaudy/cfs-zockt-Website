@@ -24,7 +24,7 @@ expect(!/res\.redirect\([^\n]*req\.(query|body|params)/.test(server), "Funnel da
 
 // Source-aware public landing experience.
 expect(home.includes("data-source-entry hidden"), "Source Entry Banner muss standardmäßig verborgen sein.");
-expect(home.includes('data-funnel-cta="tiktok-tools"'), "TikTok Tools CTA fehlt.");
+expect(home.includes('data-funnel-cta="tiktok-streams"'), "TikTok Streams CTA fehlt.");
 expect(home.includes('data-funnel-cta="tiktok-community"'), "TikTok Community CTA fehlt.");
 expect(home.includes('data-funnel-cta="tiktok-register"'), "TikTok Registration CTA fehlt.");
 expect(app.includes('source === "tiktok"'), "Frontend erkennt TikTok-Traffic nicht.");

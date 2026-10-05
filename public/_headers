@@ -1,6 +1,6 @@
 /*
   Reporting-Endpoints: cfs-csp="https://cfs-zockt.de/api/public/security/csp-report"
-  Content-Security-Policy: default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'self'; frame-src 'self'; form-action 'self'; script-src 'self' 'sha256-ED1mubiXpyMozAI/g79d/nbnX4u1UTwecpxPHS2u3f0='; script-src-attr 'none'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; media-src 'self' blob: https:; font-src 'self' data:; connect-src 'self'; manifest-src 'self'; worker-src 'self' blob:; report-uri /api/public/security/csp-report; report-to cfs-csp; upgrade-insecure-requests
+  Content-Security-Policy: default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'self'; frame-src 'self'; form-action 'self'; script-src 'self' 'sha256-Mw8xHQ4R6/r8t+qztNwisQSgjqyT2z96xY/ERwT2kOU='; script-src-attr 'none'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; media-src 'self' blob: https:; font-src 'self' data:; connect-src 'self'; manifest-src 'self'; worker-src 'self' blob:; report-uri /api/public/security/csp-report; report-to cfs-csp; upgrade-insecure-requests
   X-Content-Type-Options: nosniff
   X-XSS-Protection: 0
   X-DNS-Prefetch-Control: off

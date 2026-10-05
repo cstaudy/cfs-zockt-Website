@@ -28,8 +28,8 @@ for (const [, canonical] of legalPages) {
   check(`sitemap enthält ${canonical} nicht`, !sitemap.includes(canonical));
 }
 check("sitemap behält Homepage", sitemap.includes("https://cfs-zockt.de/</loc>"));
-check("sitemap behält Creator Suite", sitemap.includes("https://cfs-zockt.de/pages/creator-suite.html"));
-check("sitemap behält Launcher Download", sitemap.includes("https://cfs-zockt.de/pages/launcher-download.html"));
+check("sitemap schließt private Creator Suite aus", !sitemap.includes("https://cfs-zockt.de/pages/creator-suite.html"));
+check("sitemap schließt privaten Launcher Download aus", !sitemap.includes("https://cfs-zockt.de/pages/launcher-download.html"));
 
 const robotsTxt = read("public/robots.txt");
 for (const route of ["/pages/impressum.html", "/pages/datenschutz.html", "/pages/nutzungsbedingungen.html"]) {

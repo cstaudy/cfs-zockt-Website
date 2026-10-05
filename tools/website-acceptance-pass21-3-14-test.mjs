@@ -116,8 +116,6 @@ check('HTML pages have no duplicate IDs', duplicates.length === 0, duplicates.sl
 // 3) Primary public pages are present.
 const publicPages = [
   'public/index.html',
-  'public/pages/creator-suite.html',
-  'public/pages/plans.html',
   'public/pages/roadmap.html',
   'public/pages/security.html',
   'public/pages/support.html',
@@ -127,17 +125,17 @@ const publicPages = [
 ];
 check('all primary public pages exist', publicPages.every(exists));
 
-// 4) Public navigation keeps the intended website journey.
+// 4) Public navigation keeps the v180 brand-first journey.
 const home = read('public/index.html');
-for (const route of [
-  '/pages/creator-suite.html', '/pages/creator-suite.html#widget-studio', '/pages/creator-suite.html#games',
-  '/pages/launcher-download.html', '/pages/plans.html', '/pages/roadmap.html', '/pages/security.html',
-  '/pages/support.html', '/pages/login.html', '/pages/login.html#regForm'
-]) {
-  check(`homepage exposes ${route}`, home.includes(`href="${route}"`));
+for (const marker of ['id="warum"','id="streams"','id="games"','id="community"']) {
+  check(`homepage exposes public brand section ${marker}`, home.includes(marker));
 }
-check('homepage keeps clear primary free-start CTA', home.includes('KOSTENLOS STARTEN') && home.includes('data-auth-cta'));
-check('homepage keeps TikTok source-aware CTA journey', home.includes('data-source-entry hidden') && home.includes('data-funnel-cta="tiktok-tools"') && home.includes('data-funnel-cta="tiktok-community"') && home.includes('data-funnel-cta="tiktok-register"'));
+for (const route of ['/pages/roadmap.html','/pages/security.html','/pages/support.html','/pages/login.html','/pages/login.html#regForm']) {
+  check(`homepage exposes public route ${route}`, home.includes(`href="${route}"`));
+}
+check('homepage keeps Creator area as the single product entry', home.includes('Creator Bereich') && home.includes('/pages/login.html'));
+check('homepage does not expose private product pages in main navigation', !/<nav class="gaming-nav"[\s\S]*?href="\/pages\/(?:creator-suite|shop|launcher-download|launcher|dashboard|widget-studio|scene-studio)\.html"/i.test(home));
+check('homepage keeps TikTok source-aware public journey', home.includes('data-source-entry hidden') && home.includes('data-funnel-cta="tiktok-streams"') && home.includes('data-funnel-cta="tiktok-community"') && home.includes('data-funnel-cta="tiktok-register"'));
 check('partner surface remains hidden by default', home.includes('data-partner-section hidden'));
 
 // 5) Auth transition / recovery routes exist and registration anchor is real.
@@ -177,8 +175,8 @@ for (const sitePath of sitemapLocs) {
   const local = sitePath === '/' ? path.join(publicDir, 'index.html') : path.join(publicDir, sitePath.replace(/^\//, ''));
   if (!fs.existsSync(local)) sitemapBroken.push(sitePath);
 }
-check('sitemap URLs resolve to public files', sitemapLocs.length >= 8 && sitemapBroken.length === 0, sitemapBroken.join(', '));
-check('sitemap includes all primary indexable pages', ['/','/pages/creator-suite.html','/pages/launcher-download.html','/pages/merch.html','/pages/plans.html','/pages/roadmap.html','/pages/support.html','/pages/security.html'].every(route => sitemapLocs.includes(route)) && !['/pages/impressum.html','/pages/datenschutz.html','/pages/nutzungsbedingungen.html'].some(route => sitemapLocs.includes(route)));
+check('sitemap URLs resolve to public files', sitemapLocs.length === 4 && sitemapBroken.length === 0, sitemapBroken.join(', '));
+check('sitemap contains only the v180 public indexable surface', ['/','/pages/roadmap.html','/pages/support.html','/pages/security.html'].every(route => sitemapLocs.includes(route)) && !['/pages/creator-suite.html','/pages/launcher-download.html','/pages/shop.html','/pages/plans.html','/pages/dashboard.html','/pages/impressum.html','/pages/datenschutz.html','/pages/nutzungsbedingungen.html'].some(route => sitemapLocs.includes(route)));
 
 // 10) No stale deleted repository reference is reintroduced in the website/deploy entrypoint.
 const deploySurface = [home, read('server.js'), read('public/pages/creator-suite.html')].join('\n');
