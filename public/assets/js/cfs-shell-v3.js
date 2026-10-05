@@ -174,6 +174,7 @@
         ["Dashboard","/pages/dashboard.html","dashboard"],
         ["Account","/pages/account.html","account"],
         ["Widgets","/pages/widget-studio.html","widgets"],
+        ["Builder","/pages/universal-builder.html","widgets"],
         ["Shop","/pages/shop.html","shop"],
         ["Stream Studio","/pages/stream-studio.html","stream"],
         ["TikTok","/pages/tiktok.html","tiktok"],
@@ -262,6 +263,20 @@
     });
   }
 
+  function injectCreatorBuilderNavigation() {
+    document.querySelectorAll(".creator-nav").forEach(nav => {
+      if (nav.querySelector('a[href="/pages/universal-builder.html"]')) return;
+      const more = nav.querySelector(".creator-nav-more");
+      const link = document.createElement("a");
+      link.href = "/pages/universal-builder.html";
+      link.dataset.creatorLink = "";
+      link.className = "cfs204-builder-link";
+      link.textContent = "BUILDER";
+      if (path === "/pages/universal-builder.html") { link.classList.add("active"); link.setAttribute("aria-current","page"); }
+      nav.insertBefore(link, more || nav.querySelector(".creator-logout") || null);
+    });
+  }
+
   function ensureBrandV192() {
     document.body.dataset.cfsBrandV192 = "1";
     if (!document.querySelector('link[data-cfs-brand-v192]')) {
@@ -294,6 +309,17 @@
       link.dataset.cfsBrandV198 = "1";
     }
     // Keep the professional layer last so legacy page styles cannot overwrite it.
+    document.head.appendChild(link);
+  }
+
+  function ensureSuiteV203() {
+    if (!document.body.classList.contains("creator-workspace")) return;
+    document.body.dataset.cfsSuiteV203 = "1";
+    if (document.querySelector('link[data-cfs-suite-v203]')) return;
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = "/assets/css/cfs-suite-v203.css";
+    link.dataset.cfsSuiteV203 = "1";
     document.head.appendChild(link);
   }
 
@@ -356,6 +382,7 @@
     installUnifiedV172();
     upgradeHeaderBrands();
     injectCreatorShopNavigation();
+    injectCreatorBuilderNavigation();
     markActiveTopNavigation();
     injectCreatorSidebar();
     injectCfsAiAdminNavigation();
@@ -363,6 +390,7 @@
     updateCopyrightYear();
     installUiBundleAssets();
     ensureBrandV198();
+    ensureSuiteV203();
   }
 
   if (document.readyState === "loading") {

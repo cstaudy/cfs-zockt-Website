@@ -11323,18 +11323,29 @@ const UNIVERSAL_BUILDER_PLATFORMS = Object.freeze([
 ]);
 
 const UNIVERSAL_BUILDER_DESIGNS = Object.freeze([
-    {key:"blitze",label:"Blitze",description:"Klar, elektrisch und direkt.",accent:"#20c7ff",second:"#8be9ff",surface:"#071827"},
-    {key:"mecha",label:"Mecha",description:"Technisch, präzise und kraftvoll.",accent:"#ff7a45",second:"#20c7ff",surface:"#17131d"},
-    {key:"futuristisch",label:"Futuristisch",description:"Ruhige Sci-Fi-Flächen mit klaren Linien.",accent:"#7b8cff",second:"#20d4e6",surface:"#0c1024"},
-    {key:"nachtgarten",label:"Nachtgarten",description:"Dunkle Naturtöne mit frischem Akzent.",accent:"#60d394",second:"#b9f3a7",surface:"#081b19"},
-    {key:"sternenatlas",label:"Sternenatlas",description:"Tiefes Blau und leuchtende Orientierung.",accent:"#a6b9ff",second:"#f1d38a",surface:"#0a1028"},
-    {key:"pixelhafen",label:"Pixelhafen",description:"Spielerisch, kompakt und kontrastreich.",accent:"#ffcf5a",second:"#ff78c8",surface:"#181327"},
-    {key:"tuschefluss",label:"Tuschefluss",description:"Reduziert, grafisch und lesbar.",accent:"#f4f8ff",second:"#8da2b8",surface:"#10151b"},
-    {key:"eiskristall",label:"Eiskristall",description:"Helle Cyan-Akzente auf kühlem Grund.",accent:"#8be9ff",second:"#d9fbff",surface:"#081a27"},
-    {key:"abendstudio",label:"Abendstudio",description:"Warm, ruhig und kameratauglich.",accent:"#ffb86b",second:"#ff7aa8",surface:"#21131a"},
-    {key:"flutlichtliga",label:"Flutlichtliga",description:"Sportlich, hell und schnell erfassbar.",accent:"#f6f06d",second:"#5ee7a1",surface:"#111b18"},
-    {key:"nebelrevier",label:"Nebelrevier",description:"Gedämpfte Flächen mit starkem Fokus.",accent:"#b9c2d0",second:"#7a9cff",surface:"#121722"}
+    {key:"cfs",label:"CFS Blau",description:"Der klare Standard-Look für CFS-Widgets.",accent:"#148cff",second:"#20d4e6",surface:"#071827"},
+    {key:"cyan",label:"Cyan",description:"Leuchtend, frisch und auf dunklen Streams gut lesbar.",accent:"#20d4e6",second:"#54f0ff",surface:"#061a24"},
+    {key:"electric",label:"Electric Blue",description:"Starker Blau-Akzent für Energie und Fokus.",accent:"#006cff",second:"#2fe0ff",surface:"#061329"},
+    {key:"sky",label:"Sky",description:"Ruhiges Himmelblau mit klarer Oberfläche.",accent:"#55aaff",second:"#8bc7ff",surface:"#08192c"},
+    {key:"teal",label:"Teal",description:"Türkis für moderne, ruhige Creator-Flächen.",accent:"#16d8b1",second:"#67f2d5",surface:"#061e20"},
+    {key:"green",label:"Grün",description:"Frischer Stream-Look für Status, Ziele und Fortschritt.",accent:"#39e69d",second:"#8af3c7",surface:"#071c17"},
+    {key:"gold",label:"Gold",description:"Warmer Premium-Akzent mit hoher Wiedererkennbarkeit.",accent:"#f5c451",second:"#ffe29a",surface:"#21190b"},
+    {key:"orange",label:"Orange",description:"Direkt, warm und aufmerksamkeitsstark.",accent:"#ff7a45",second:"#ffb36f",surface:"#24130c"},
+    {key:"red",label:"Rot",description:"Kräftiger Look für Alerts, Events und Highlights.",accent:"#ff4f66",second:"#ff8a99",surface:"#260d16"},
+    {key:"white",label:"Weiß",description:"Reduziert, kontrastreich und besonders neutral.",accent:"#f4f8ff",second:"#b9cce0",surface:"#111722"},
+    {key:"foghunt",label:"Fog Hunt",description:"Dunkler Horror-Look mit rotem Fokus.",accent:"#d44747",second:"#69707d",surface:"#201116"},
+    {key:"commandgrid",label:"Command Grid",description:"Taktisch, technisch und präzise.",accent:"#27d0ff",second:"#6fffb0",surface:"#071c25"},
+    {key:"arcaneorder",label:"Arcane Order",description:"Mystisch, leuchtend und fantasy-inspiriert.",accent:"#8a63ff",second:"#67d2ff",surface:"#150e2c"},
+    {key:"orbitalcore",label:"Orbital Core",description:"Sci-Fi mit kühlem Blau und violettem Kontrast.",accent:"#29b4ff",second:"#9d5bff",surface:"#0c102a"},
+    {key:"trackrush",label:"Track Rush",description:"Schnell, sportlich und für Racing-Streams gebaut.",accent:"#ff6136",second:"#ffd04f",surface:"#24140e"},
+    {key:"cozycabin",label:"Cozy Cabin",description:"Warmer, ruhiger Look für Casual- und Community-Streams.",accent:"#d6a86a",second:"#8f6f52",surface:"#22170f"}
 ]);
+
+const UNIVERSAL_BUILDER_DESIGN_ALIASES = Object.freeze({
+    blitze:"cfs",mecha:"orange",futuristisch:"orbitalcore",nachtgarten:"green",sternenatlas:"sky",
+    pixelhafen:"electric",tuschefluss:"white",eiskristall:"cyan",abendstudio:"cozycabin",
+    flutlichtliga:"trackrush",nebelrevier:"foghunt"
+});
 
 const UNIVERSAL_BUILDER_PLATFORM_KEYS = new Set(UNIVERSAL_BUILDER_PLATFORMS.map(item=>item.key));
 const UNIVERSAL_BUILDER_DESIGN_KEYS = new Set(UNIVERSAL_BUILDER_DESIGNS.map(item=>item.key));
@@ -11412,7 +11423,7 @@ function sanitizeUniversalBuilderConfig(input={}) {
     }
     const platforms=[...new Set((Array.isArray(source.platforms)?source.platforms:["obs"]).map(value=>String(value)).filter(value=>UNIVERSAL_BUILDER_PLATFORM_KEYS.has(value)))].slice(0,3);
     return {
-        design_key:UNIVERSAL_BUILDER_DESIGN_KEYS.has(String(source.design_key||source.designKey||""))?String(source.design_key||source.designKey):"blitze",
+        design_key:(()=>{const raw=String(source.design_key||source.designKey||"");const key=UNIVERSAL_BUILDER_DESIGN_ALIASES[raw]||raw;return UNIVERSAL_BUILDER_DESIGN_KEYS.has(key)?key:"cfs"})(),
         platforms:platforms.length?platforms:["obs"],
         elements,
         settings:sanitizeUniversalBuilderSettings(source.settings||source)

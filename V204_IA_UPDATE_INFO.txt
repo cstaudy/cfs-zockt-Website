@@ -1,0 +1,29 @@
+CFS ZOCKT · v204 Creator Suite IA Update
+
+Ziel
+----
+Ein Creator-Standardablauf ohne sichtbare Anfänger-/Profi-Auswahl. Dashboard,
+Widget Studio, Shop und Universal Builder führen jetzt zu denselben klaren
+Arbeitsbereichen.
+
+Änderungen
+----------
+- Dashboard: sechs sichtbare Hauptwege für Widgets, Umwandler & Dateien, Shop,
+  Universal Builder, Stream & Szenen sowie Integrationen.
+- Widget Studio: ein Standard-Ablauf „Auswählen → Gestalten → Testen →
+  Veröffentlichen“; Anfänger-/Profi-Schalter aus der normalen Oberfläche
+  entfernt.
+- Umwandler: Widget- und Panel-Umwandler sind direkt im Widget Studio sichtbar.
+  Dashboard und Shop öffnen den Umwandler per Deep-Link.
+- Shop: größere Arbeitsfläche mit sichtbaren Bereichen für Bundles, Widgets,
+  Panels & Overlays sowie Werkzeuge.
+- Universal Builder: 16 empfohlene Farbwelten, synchron mit dem Widget Studio.
+  Ältere Design-Schlüssel werden beim Laden auf die neuen Farbwelten abgebildet.
+- Creator-Shell: der lesbare Suite-Layer wird auf weiteren Creator-Seiten
+  automatisch nachgeladen.
+
+Prüfungen
+---------
+- Universal Builder v204: 20/20 PASS
+- Creator Suite UI v204: 20/20 PASS
+- Server- und Browser-JavaScript-Syntax: PASS
