@@ -459,6 +459,16 @@ const CFS_ADMIN_EMAILS = new Set(
         .filter(Boolean)
 );
 
+// v199 · feste Beta-Tester per E-Mail
+// Diese Liste ist bewusst serverseitig. Sie kann in Render gepflegt werden,
+// ohne E-Mail-Adressen oder Freigabelogik ins Frontend zu schreiben.
+const CFS_BETA_TESTER_EMAILS = new Set(
+    String(process.env.CFS_BETA_TESTER_EMAILS || "")
+        .split(",")
+        .map(value => value.trim().toLowerCase())
+        .filter(Boolean)
+);
+
 // v151 · geschlossene Provider-Beta
 // Während der internen/Beta-Phase dürfen TikTok und Twitch nur vom per E-Mail
 // autorisierten Admin oder von explizit freigeschalteten Beta-Creatorn genutzt werden.
@@ -6184,6 +6194,27 @@ async function ensureCreatorBetaCandidate(creatorId) {
     `,[creatorId]);
 }
 
+function isConfiguredBetaTester(account){
+    const email=String(account?.email||"").trim().toLowerCase();
+    return Boolean(email&&CFS_BETA_TESTER_EMAILS.has(email));
+}
+
+async function ensureConfiguredBetaTester(account){
+    if(!account?.id||!isConfiguredBetaTester(account))return false;
+    await pool.query(`
+        INSERT INTO creator_beta_testers(creator_id,status,notes,created_at,updated_at)
+        VALUES($1,'active','Automatische Beta-Freigabe über CFS_BETA_TESTER_EMAILS',NOW(),NOW())
+        ON CONFLICT(creator_id) DO UPDATE SET
+            status='active',
+            notes=CASE
+                WHEN creator_beta_testers.notes='' THEN EXCLUDED.notes
+                ELSE creator_beta_testers.notes
+            END,
+            updated_at=NOW()
+    `,[account.id]);
+    return true;
+}
+
 function providerBetaPolicy(access,provider) {
     const key=String(provider||"").trim().toLowerCase();
     const required=CFS_PROVIDER_BETA_REQUIRED&&CFS_PROVIDER_BETA_PROVIDERS.has(key);
@@ -6222,7 +6253,9 @@ async function creatorAccessProfile(accountOrId) {
     if(!account){const result=await pool.query(`SELECT id,plan,status,display_name,email,email_verified_at,created_at FROM creator_accounts WHERE id=$1 LIMIT 1`,[String(accountOrId||"")]);account=result.rows[0]||null;}
     if(!account)return null;
     const admin=await isCreatorSuiteAdmin(account);
-    if(CFS_PROVIDER_BETA_REQUIRED&&!admin)await ensureCreatorBetaCandidate(account.id);
+    const configuredBetaTester=isConfiguredBetaTester(account);
+    if(configuredBetaTester)await ensureConfiguredBetaTester(account);
+    else if(CFS_PROVIDER_BETA_REQUIRED&&!admin)await ensureCreatorBetaCandidate(account.id);
     const [beta,subscription]=await Promise.all([
         getCreatorBetaState(account.id),
         getCreatorSubscriptionState(account.id)
@@ -6244,8 +6277,8 @@ async function creatorAccessProfile(accountOrId) {
     const access={
         plan,effective_plan:effectivePlan,
         base_entitlements:basePlanEntitlements(effectivePlan),entitlements,
-        beta,subscription,admin:Boolean(admin),email_verified:emailVerified,
-        access_source:accessSource
+        beta:{...beta,configured_email:Boolean(configuredBetaTester)},subscription,admin:Boolean(admin),email_verified:emailVerified,
+        access_source:configuredBetaTester&&!admin?"beta_email_allowlist":accessSource
     };
     access.provider_beta={
         enabled:CFS_PROVIDER_BETA_REQUIRED,

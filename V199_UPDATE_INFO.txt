@@ -1,0 +1,5 @@
+CFS v199 Beta & Compact Studio
+
+Diesen Inhalt über den aktuellen v198 Projektordner kopieren und vorhandene Dateien ersetzen.
+Keine echten Secrets oder Beta-Tester-E-Mail-Adressen sind in diesem Update enthalten.
+Render zusätzlich: CFS_BETA_TESTER_EMAILS=<deine Beta-Tester E-Mail(s), kommasepariert>

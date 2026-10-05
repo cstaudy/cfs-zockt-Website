@@ -63,3 +63,15 @@ Windows-Build:
 1. `BUILD-CFS-ADMIN-WINDOWS.cmd` starten.
 2. Der Installer wird unter `admin-desktop/dist/` erzeugt.
 3. Die App öffnet `/pages/admin.html` und kann den lokalen CFS-AI-Bridge-Service starten bzw. dessen Status prüfen.
+
+## v199 · Beta & Compact Studio
+
+- serverseitige Beta-Tester-Allowlist über `CFS_BETA_TESTER_EMAILS`
+- kompaktere Registrierung ohne große Pflicht-Karten; rechtliche Bestätigungen bleiben explizit
+- Creator-Navigation auf die wichtigsten Bereiche reduziert
+- Dashboard zeigt Beta-Status kompakt
+- CFS Studio erhält Ansichten für Übersicht, Szenen & Quellen, Audio, Live und Erweitert
+- bestehende Studio-IDs, Backend-Routen und Launcher-Verträge bleiben unverändert
+- `npm run v199:check` prüft die neuen Produktverträge
+
+Echte E-Mail-Adressen für die Beta-Allowlist gehören in Render/Production-Environment, nicht in `.env.example`.
