@@ -1,13 +1,15 @@
-# cfs-zockt v196 + CFS AI
+# cfs-zockt v197 + CFS AI
 
 Bereinigter aktiver Website-Main.
 
 ## Aktueller Stand
-- Website: v196
+- Website: v197
 - Backend: 3.20.39
 - Database schema: 79
 - Launcher: 0.47.30
 - CFS AI Website Integration: v196
+- CFS Admin Desktop: 1.0.0 (Electron, Windows)
+- Unified Brand / UI Layer: v197
 - Lokaler AI-Service: separat als `CFS_AI_LOCAL_SERVICE_v20`
 
 ## Wichtige Ordner
@@ -41,3 +43,13 @@ Keine Tokens oder Secrets committen.
 - `npm run seo:check`
 - `npm run lockfiles:check`
 - `npm run deployment13:check`
+- `npm run v197:check`
+
+
+## CFS Admin Desktop
+Die neue Windows-Admin-App liegt unter `admin-desktop/`. Sie verwendet denselben serverseitigen Login wie die Website und enthält keine Produktions-Secrets.
+
+Windows-Build:
+1. `BUILD-CFS-ADMIN-WINDOWS.cmd` starten.
+2. Der Installer wird unter `admin-desktop/dist/` erzeugt.
+3. Die App öffnet `/pages/admin.html` und kann den lokalen CFS-AI-Bridge-Service starten bzw. dessen Status prüfen.

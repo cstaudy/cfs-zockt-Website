@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#020812">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <title>CFS Admin | cfs_zockt</title>
+  <link rel="icon" href="/assets/img/favicon.ico" sizes="any">
+  <link rel="stylesheet" href="/assets/css/styles.css">
+  <link rel="stylesheet" href="/assets/css/cfs-theme-v3.css">
+  <link rel="stylesheet" href="/assets/css/cfs-unified-v172.css" data-cfs-unified-v172>
+  <link rel="stylesheet" href="/assets/css/cfs-brand-unified-v192.css" data-cfs-brand-v192>
+  <link rel="stylesheet" href="/assets/css/cfs-brand-v197.css" data-cfs-brand-v197>
+  <link rel="stylesheet" href="/assets/css/admin-hub-v197.css">
+  <script src="/assets/js/cfs-shell-v3.js" defer></script>
+</head>
+<body class="creator-workspace cfs-admin-hub-page" data-cfs-brand-v192="1" data-cfs-brand-v197="1">
+<header class="site-header creator-site-header">
+  <div class="container header-inner creator-header-inner">
+    <a class="creator-brand" href="/pages/admin.html" aria-label="CFS Admin Startseite">
+      <img class="creator-brand-logo" src="/assets/img/brand/cfs-zockt-mark.png" alt="cfs_zockt">
+      <span>ADMIN CONTROL</span>
+    </a>
+    <button class="mobile-toggle creator-mobile-toggle" data-mobile-toggle type="button" aria-label="Navigation öffnen" aria-expanded="false">MENÜ</button>
+    <nav class="nav creator-nav" data-nav data-creator-nav aria-label="Admin Navigation">
+      <a class="active" href="/pages/admin.html" aria-current="page">ADMIN</a>
+      <a href="/pages/cfs-ai.html">CFS AI</a>
+      <a href="/pages/admin-creators.html">CREATOR CONTROL</a>
+      <a href="/pages/dashboard.html">CREATOR SUITE</a>
+      <button class="creator-logout" data-logout type="button">LOGOUT</button>
+    </nav>
+  </div>
+</header>
+
+<main class="container cfs-admin-hub">
+  <section class="cfs-admin-hero">
+    <div class="cfs-admin-hero-copy">
+      <span class="cfs-admin-eyebrow">ROOT / ADMIN WORKSPACE</span>
+      <h1>CFS <span>ADMIN</span></h1>
+      <p>Ein zentraler Einstieg für Administration, CFS AI, Creator Control und den technischen Zustand der Creator Suite.</p>
+      <div class="cfs-admin-hero-actions">
+        <a class="btn primary" href="/pages/cfs-ai.html">CFS AI ÖFFNEN</a>
+        <a class="btn" href="/pages/admin-creators.html">CREATOR CONTROL</a>
+      </div>
+    </div>
+    <aside class="cfs-admin-identity" aria-live="polite">
+      <small>ANGEMELDETER ADMIN</small>
+      <strong id="adminDisplayName">wird geprüft …</strong>
+      <span id="adminEmail">–</span>
+    </aside>
+  </section>
+
+  <section class="cfs-admin-status-grid" aria-label="Systemstatus">
+    <article class="cfs-admin-status-card" id="adminWebsiteStatus"><span>WEBSITE</span><strong>ONLINE</strong><small>cfs-zockt.de ist erreichbar.</small></article>
+    <article class="cfs-admin-status-card" id="adminAiStatus"><span>CFS AI</span><strong>PRÜFEN …</strong><small>Gateway-Status wird geladen.</small></article>
+    <article class="cfs-admin-status-card" id="adminBridgeStatus"><span>BRIDGE</span><strong>PRÜFEN …</strong><small>Worker-Heartbeat wird geladen.</small></article>
+    <article class="cfs-admin-status-card" id="adminTransportStatus"><span>TRANSPORT</span><strong>–</strong><small>Cloud ↔ Laptop.</small></article>
+  </section>
+  <div class="cfs-admin-error" id="adminHubError" hidden role="status"></div>
+
+  <section class="cfs-admin-section">
+    <div class="cfs-admin-section-head"><div><span>WERKZEUGE</span><h2>Alles Wichtige an einem Ort.</h2></div><p>Die eigentlichen Berechtigungen bleiben serverseitig geschützt. Diese Oberfläche ist nur der zentrale Einstieg.</p></div>
+    <div class="cfs-admin-action-grid">
+      <a class="cfs-admin-action" href="/pages/cfs-ai.html"><span>AI</span><strong>CFS AI</strong><p>Chat, Preview Vault, Proposals, Roadmap und Bridge-Status.</p><em>ÖFFNEN →</em></a>
+      <a class="cfs-admin-action" href="/pages/admin-creators.html"><span>ADMIN</span><strong>Creator Control</strong><p>Creator-Verwaltung, Release- und Operations-Funktionen.</p><em>ÖFFNEN →</em></a>
+      <a class="cfs-admin-action" href="/pages/dashboard.html"><span>SUITE</span><strong>Creator Dashboard</strong><p>Zur normalen Creator Suite und den Produktionswerkzeugen.</p><em>ÖFFNEN →</em></a>
+      <a class="cfs-admin-action" href="/pages/technical-status.html"><span>STATUS</span><strong>Technischer Status</strong><p>Website-, Launcher- und Integrationsstatus prüfen.</p><em>ÖFFNEN →</em></a>
+      <a class="cfs-admin-action" href="/pages/account.html#account-security"><span>SECURITY</span><strong>Account & Sicherheit</strong><p>Passkeys, MFA, Sessions und Account-Sicherheit verwalten.</p><em>ÖFFNEN →</em></a>
+      <a class="cfs-admin-action" href="/pages/settings.html"><span>SETTINGS</span><strong>Einstellungen</strong><p>Creator- und Projektoptionen zentral öffnen.</p><em>ÖFFNEN →</em></a>
+    </div>
+  </section>
+</main>
+
+<script src="/assets/js/app.js"></script>
+<script src="/assets/js/page-admin-v197.js"></script>
+</body>
+</html>

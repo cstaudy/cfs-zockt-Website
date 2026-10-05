@@ -28,12 +28,19 @@
     "/pages/cut-studio.html"
   ]);
 
+  function brandContextLabel(creator = false) {
+    if (!creator) return "GAMING · STREAMS · COMMUNITY";
+    if (path === "/pages/admin.html" || path === "/pages/admin-creators.html") return "ADMIN CONTROL";
+    if (path === "/pages/cfs-ai.html") return "CFS AI";
+    return "CREATOR SUITE";
+  }
+
   function brandMarkup({ creator = false } = {}) {
     return `
       <span class="cfs-brand-wordmark"><img src="${BRAND_MARK}" alt="" aria-hidden="true"></span>
       <span class="cfs-brand-copy">
         <strong>CFS ZOCKT</strong>
-        <small>${creator ? "CREATOR SUITE" : "GAMING · STREAMS · COMMUNITY"}</small>
+        <small>${brandContextLabel(creator)}</small>
       </span>`;
   }
 
@@ -57,7 +64,7 @@
       heroLogo.replaceWith(brand);
     }
 
-    document.querySelectorAll(".public-footer-brand").forEach(footerBrand => {
+    document.querySelectorAll(".public-footer-brand, .gaming-footer-brand, .cfs-footer-v165-brand").forEach(footerBrand => {
       footerBrand.classList.add("cfs-brand-lockup", "cfs-footer-lockup");
       footerBrand.innerHTML = brandMarkup({ creator: false });
     });
@@ -171,6 +178,7 @@
         ["TikTok","/pages/tiktok.html","tiktok"],
         ["Integrationen","/pages/integrations.html","integrations"],
         ["Launcher","/pages/launcher.html","launcher"],
+        ...(path === "/pages/admin.html" ? [["Admin","/pages/admin.html","security"]] : []),
         ...(path === "/pages/cfs-ai.html" ? [["CFS AI","/pages/cfs-ai.html","ai"]] : []),
         ["Einstellungen","/pages/settings.html","settings"]
       ];
@@ -204,20 +212,36 @@
       if (!data?.admin) return;
 
       const moreMenu = document.querySelector(".creator-nav-more-menu");
-      if (moreMenu && !moreMenu.querySelector('a[href="/pages/cfs-ai.html"]')) {
-        const link = document.createElement("a");
-        link.dataset.creatorLink = "";
-        link.href = "/pages/cfs-ai.html";
-        link.textContent = "CFS AI";
-        moreMenu.prepend(link);
+      if (moreMenu) {
+        if (!moreMenu.querySelector('a[href="/pages/admin.html"]')) {
+          const adminLink = document.createElement("a");
+          adminLink.dataset.creatorLink = "";
+          adminLink.href = "/pages/admin.html";
+          adminLink.textContent = "ADMIN";
+          moreMenu.prepend(adminLink);
+        }
+        if (!moreMenu.querySelector('a[href="/pages/cfs-ai.html"]')) {
+          const aiLink = document.createElement("a");
+          aiLink.dataset.creatorLink = "";
+          aiLink.href = "/pages/cfs-ai.html";
+          aiLink.textContent = "CFS AI";
+          moreMenu.prepend(aiLink);
+        }
       }
 
       const sidebar = document.querySelector(".cfs-global-sidebar");
-      if (sidebar && !sidebar.querySelector('a[href="/pages/cfs-ai.html"]')) {
+      if (sidebar) {
         const divider = sidebar.querySelector(".cfs-sidebar-divider");
-        const link = makeLink({ label:"CFS AI", href:"/pages/cfs-ai.html", key:"ai", active:path === "/pages/cfs-ai.html" });
-        if (divider) sidebar.insertBefore(link, divider);
-        else sidebar.appendChild(link);
+        if (!sidebar.querySelector('a[href="/pages/admin.html"]')) {
+          const adminLink = makeLink({ label:"Admin", href:"/pages/admin.html", key:"security", active:path === "/pages/admin.html" });
+          if (divider) sidebar.insertBefore(adminLink, divider);
+          else sidebar.appendChild(adminLink);
+        }
+        if (!sidebar.querySelector('a[href="/pages/cfs-ai.html"]')) {
+          const aiLink = makeLink({ label:"CFS AI", href:"/pages/cfs-ai.html", key:"ai", active:path === "/pages/cfs-ai.html" });
+          if (divider) sidebar.insertBefore(aiLink, divider);
+          else sidebar.appendChild(aiLink);
+        }
       }
     } catch {}
   }
@@ -244,6 +268,17 @@
       link.rel = "stylesheet";
       link.href = "/assets/css/cfs-brand-unified-v192.css";
       link.dataset.cfsBrandV192 = "1";
+      document.head.appendChild(link);
+    }
+  }
+
+  function ensureBrandV197() {
+    document.body.dataset.cfsBrandV197 = "1";
+    if (!document.querySelector('link[data-cfs-brand-v197]')) {
+      const link = document.createElement("link");
+      link.rel = "stylesheet";
+      link.href = "/assets/css/cfs-brand-v197.css";
+      link.dataset.cfsBrandV197 = "1";
       document.head.appendChild(link);
     }
   }
@@ -302,6 +337,7 @@
     document.documentElement.classList.add("cfs-ui-v3", "cfs-os-v24");
     document.body.classList.add("cfs-ui-v3", "cfs-os-v24");
     ensureBrandV192();
+    ensureBrandV197();
     injectFallbackBrandHeader();
     installUnifiedV172();
     upgradeHeaderBrands();

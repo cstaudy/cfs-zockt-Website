@@ -7,10 +7,19 @@
     return CFS.json(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
   };
   const normalizeEmail = value => String(value||"").trim().toLowerCase();
-  const safeReturnTo = () => {
+  const explicitReturnTo = () => {
     const raw = String(new URLSearchParams(location.search).get("returnTo") || "").trim();
-    if (!raw.startsWith("/pages/") || raw.startsWith("//") || raw.length > 700 || /[\r\n]/.test(raw)) return "/pages/dashboard.html";
+    if (!raw.startsWith("/pages/") || raw.startsWith("//") || raw.length > 700 || /[\r\n]/.test(raw)) return "";
     return raw;
+  };
+  const postLoginDestination = async () => {
+    const explicit = explicitReturnTo();
+    if (explicit) return explicit;
+    try {
+      const me = await CFS.me();
+      if (me?.admin) return "/pages/admin.html";
+    } catch {}
+    return "/pages/dashboard.html";
   };
   const updateRules = () => {
     const p = $("regPassword").value;
@@ -46,7 +55,7 @@
       const context = document.querySelector("[data-login-source-context]");
       if (context) context.hidden = false;
     }
-    try { const me = await CFS.me(); if (me?.authenticated) return location.replace(safeReturnTo()); } catch {}
+    try { const me = await CFS.me(); if (me?.authenticated) return location.replace(await postLoginDestination()); } catch {}
     $("regPassword").addEventListener("input",updateRules); $("regPasswordConfirm").addEventListener("input",updateRules);
     $("loginForm").addEventListener("submit", async e => {
       e.preventDefault(); const form=e.currentTarget; if(!form.reportValidity()) return;
@@ -67,7 +76,7 @@
             ? "Passwort korrekt. Bestätige den zweiten Faktor mit Passkey, Authenticator oder Recovery-Code."
             : "Passwort korrekt. Bitte bestätige jetzt den zweiten Faktor.");
         } else {
-          location.replace(safeReturnTo());
+          location.replace(await postLoginDestination());
         }
       }
       catch (error) {
@@ -89,7 +98,7 @@
       try {
         const result=await CFS.json("/api/account/mfa/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({code,recovery_code:recovery})});
         if(result?.recovery_code_used) message($("loginMsg"),"Recovery-Code akzeptiert. Dieser Code ist jetzt verbraucht.");
-        location.replace(safeReturnTo());
+        location.replace(await postLoginDestination());
       } catch(error){message($("loginMsg"),error?.message||"Zweiter Faktor konnte nicht bestätigt werden.",true);}
       finally{$("mfaLoginButton").disabled=false;$("mfaBusy").textContent="";}
     });
@@ -100,7 +109,7 @@
         const start=await CFS.json("/api/account/mfa/passkey/options",{method:"POST",headers:{"Content-Type":"application/json"},body:"{}"});
         const response=await CFSWebAuthn.get(start.options);
         await CFS.json("/api/account/mfa/passkey/verify",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({challenge_id:start.challenge_id,response})});
-        location.replace(safeReturnTo());
+        location.replace(await postLoginDestination());
       } catch(error) {
         const aborted=error?.name==="NotAllowedError" || /abgebrochen/i.test(String(error?.message||""));
         message($("loginMsg"),aborted?"Passkey-Anmeldung wurde abgebrochen.":(error?.message||"Passkey konnte nicht bestätigt werden."),true);
@@ -133,7 +142,7 @@
           message($("regMsg"),"Konto angelegt. Wir öffnen jetzt die E-Mail-Bestätigung.");
           location.replace("/pages/verify-email.html?source=register");
         } else {
-          location.replace(safeReturnTo());
+          location.replace(await postLoginDestination());
         }
       } catch (x) {
         const known=x?.data?.code==="legal_acceptance_required"||x?.data?.code==="minimum_age_required";
