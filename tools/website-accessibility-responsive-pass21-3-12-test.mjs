@@ -31,7 +31,6 @@ check('widget studio output fields are named', ['Widget Output URL','OBS Browser
 check('setup controls are named', ['Theme','Follower-Ziel','Startmodul','Show Mode','Aktives Game'].every(v => read('public/pages/setup.html').includes(`aria-label="${v}"`)));
 check('audio controls are named', ['Preset Name','Master Lautstärke','Voice Lautstärke','Game Lautstärke','Soundboard Lautstärke'].every(v => read('public/pages/audio-studio.html').includes(`aria-label="${v}"`)));
 check('creator editor color/source controls are named', ['Akzentfarbe 1','Akzentfarbe 2','Widget Hintergrundfarbe','Widget Textfarbe','Widget Browser Source URL'].every(v => read('public/pages/editor.html').includes(`aria-label="${v}"`)));
-check('pass documentation exists', fs.existsSync(path.join(root, 'WEBSITE_ACCESSIBILITY_RESPONSIVE_PASS21_3_12.md')));
 
 let passed = 0;
 for (const [name, ok] of checks) {

@@ -11,7 +11,7 @@ const appJs=read('public/assets/js/app.js');
 const supportJs=read('public/assets/js/support.js');
 const doctor=read('lib/config-doctor.js');
 const env=read('.env.example');
-const renderSetup=read('RENDER_SETUP_V40.md');
+const renderSetup=read('render.blueprint.example.yaml');
 const securityTxt=read('public/.well-known/security.txt');
 const pkg=JSON.parse(read('package.json'));
 
@@ -43,7 +43,7 @@ check('Production requires separate support HMAC key',server.includes('"CFS_PUBL
 check('Config doctor blocks missing CSRF signing secret',doctor.includes('{name:"CFS_CSRF_SIGNING_SECRET",required:true,secret:true'));
 check('Config doctor blocks missing public HMAC keys',doctor.includes('{name:"CFS_PUBLIC_REVIEW_HASH_SALT",required:true,secret:true')&&doctor.includes('{name:"CFS_PUBLIC_SUPPORT_HASH_SALT",required:true,secret:true'));
 check('Env example documents required separated secrets',env.includes('CFS_CSRF_SIGNING_SECRET=')&&env.includes('CFS_PUBLIC_REVIEW_HASH_SALT=')&&env.includes('CFS_PUBLIC_SUPPORT_HASH_SALT='));
-check('Render setup documents new separated secrets',renderSetup.includes('CFS_CSRF_SIGNING_SECRET')&&renderSetup.includes('CFS_PUBLIC_REVIEW_HASH_SALT')&&renderSetup.includes('CFS_PUBLIC_SUPPORT_HASH_SALT'));
+check('Render blueprint wires separated secrets',renderSetup.includes('CFS_CSRF_SIGNING_SECRET')&&renderSetup.includes('CFS_PUBLIC_REVIEW_HASH_SALT')&&renderSetup.includes('CFS_PUBLIC_SUPPORT_HASH_SALT'));
 check('Server rejects likely secrets in support report',server.includes('publicSupportContainsSecret')&&server.includes('private Schlüssel oder andere Secrets'));
 check('Client rejects likely secrets before upload',supportJs.includes('containsSecret')&&supportJs.includes('PRIVATE KEY')&&supportJs.includes('discord'));
 check('Support receipt includes short reference',supportJs.includes('Referenz: ${reference.slice(0,8).toUpperCase()}'));

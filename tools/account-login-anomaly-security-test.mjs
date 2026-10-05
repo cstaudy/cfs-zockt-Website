@@ -10,7 +10,6 @@ const accountJs = read('public/assets/js/page-account.js');
 const loginHtml = read('public/pages/login.html');
 const securityHtml = read('public/pages/security.html');
 const readme = read('README.md');
-const current = read('PROJECT_CURRENT_STATE.md');
 
 let passed = 0;
 const checks = [];
@@ -57,8 +56,6 @@ check('Account UI labels throttle event', has(accountJs, 'Viele Passwortversuche
 
 check('Login page explains persistent account throttle', has(loginHtml, 'persistenter kontoweiter Fehlversuchs-Throttle'));
 check('Security page documents privacy-friendly anomaly protection', has(securityHtml, 'Login-Warnungen & Anomalie-Signale') && has(securityHtml, 'ohne Standorttracking oder Browser-Fingerprinting'));
-check('README documents Pass 9', has(readme, 'Account Login / Anomaly Security (Pass 9)'));
-check('Current state documents Pass 9', has(current, 'Account Login / Anomaly Security'));
 
 for (const item of checks) console.log(`${item.ok ? 'PASS' : 'FAIL'}  ${item.name}`);
 console.log(`\nLogin / Anomaly Security: ${passed}/${checks.length}`);

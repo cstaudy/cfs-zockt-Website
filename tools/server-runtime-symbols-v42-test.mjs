@@ -10,8 +10,9 @@ const syntax = spawnSync(process.execPath, ["--check", serverPath], { encoding: 
 if (syntax.status !== 0) throw new Error(syntax.stderr || syntax.stdout || "server.js syntax failed");
 
 const source = fs.readFileSync(serverPath, "utf8");
+const pkg = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 const mustContain = [
-  '"3.12.0"',
+  `"${pkg.version}"`,
   "async function startServer()",
   "startServer();",
   'app.get("/.well-known/security.txt"',
@@ -35,4 +36,4 @@ const mustContain = [
 const missing = mustContain.filter((needle) => !source.includes(needle));
 if (missing.length) throw new Error(`server runtime symbols missing: ${missing.join(", ")}`);
 
-console.log(JSON.stringify({ ok: true, syntax: true, symbols: mustContain.length, backend: "3.12.0" }));
+console.log(JSON.stringify({ ok: true, syntax: true, symbols: mustContain.length, backend: pkg.version }));

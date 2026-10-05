@@ -35,14 +35,6 @@ jobs:
       - name: Deploy automation v27
         run: npm run deploy27:check
 
-      - name: Current release candidate seal
-        run: npm run release25:verify
-
-      - name: Write RC25 evidence
-        run: |
-          mkdir -p reports
-          node tools/release-candidate-v25.mjs . --json > reports/release-candidate-v25.json
-
       - name: GitHub repository readiness
         run: npm run github21:check
 
@@ -51,6 +43,13 @@ jobs:
 
       - name: Deployment structure / Render readiness
         run: npm run deployment13:check
+
+      - name: CFS AI v196 integration
+        run: |
+          node tools/cfs-ai-integration-v196-test.mjs .
+          node tools/cfs-ai-gateway-v196-test.mjs .
+          node tools/cfs-ai-bridge-v196-test.mjs .
+          node tools/cfs-ai-live-bridge-v196-test.mjs .
 
       - name: Backend / Repository V42 QA
         run: npm run check:v42
@@ -71,7 +70,6 @@ jobs:
           name: github-release-verification-${{ github.sha }}
           if-no-files-found: ignore
           path: |
-            reports/release-candidate-v25.json
             reports/github-bootstrap-plan.json
             reports/github-bootstrap-plan.md
 

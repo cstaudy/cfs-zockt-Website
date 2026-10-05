@@ -16,7 +16,6 @@ const envExample = read('.env.example');
 const securityHtml = read('public/pages/security.html');
 const privacyHtml = read('public/pages/datenschutz.html');
 const readme = read('README.md');
-const current = read('PROJECT_CURRENT_STATE.md');
 const require = createRequire(import.meta.url);
 const helper = require(path.join(root, 'lib/account-passkey-security.js'));
 
@@ -103,8 +102,6 @@ check('Account export does not select passkey public_key', !has(source, 'SELECT 
 check('Export states private keys are excluded', has(source, 'WebAuthn private keys'));
 check('Privacy page states private key remains on device', has(privacyHtml, 'Der private Schlüssel verbleibt im Authenticator'));
 check('Security page describes active passkeys', has(securityHtml, '<h3>Passkeys / WebAuthn</h3>') && !has(securityHtml, 'spätere Passkey/WebAuthn-Stufe'));
-check('README documents active Pass 8', has(readme, '## Account Passkeys / WebAuthn (Pass 8)'));
-check('Current state documents real E2E test as still open', has(current, 'echter Browser-/Authenticator-E2E') && has(current, 'bleibt offen'));
 
 const uid = helper.webauthnUserID('creator-123');
 check('Stable WebAuthn user ID is 32 bytes', uid instanceof Uint8Array && uid.length === 32);

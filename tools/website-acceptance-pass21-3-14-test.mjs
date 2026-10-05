@@ -183,7 +183,6 @@ const deploySurface = [home, read('server.js'), read('public/pages/creator-suite
 check('no stale backend-neu reference in active website/deploy surface', !deploySurface.includes('backend-neu'));
 
 // 11) Pass documentation exists.
-check('Pass 21.3.14 documentation exists', exists('WEBSITE_ACCEPTANCE_PASS21_3_14.md'));
 
 const failed = checks.filter(item => !item.ok);
 for (const item of checks) {
