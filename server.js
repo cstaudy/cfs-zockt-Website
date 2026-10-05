@@ -11388,6 +11388,8 @@ function sanitizeUniversalBuilderElement(input={},index=0) {
         platform,
         source_key:universalBuilderText(source.source_key||source.sourceKey,100,""),
         widget_type:universalBuilderText(source.widget_type||source.widgetType,100,""),
+        asset_id:universalBuilderText(source.asset_id||source.assetId,100,""),
+        source_url:studioAssetSource(source.source_url||source.sourceUrl||""),
         label:universalBuilderText(source.label,120,type.replaceAll("_"," ").toUpperCase()),
         text:universalBuilderText(source.text,180,""),
         subtitle:universalBuilderText(source.subtitle,180,""),
