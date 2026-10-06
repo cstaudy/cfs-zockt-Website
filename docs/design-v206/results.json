@@ -1,0 +1,992 @@
+[
+  {
+    "name": "index",
+    "width": 1440,
+    "overflow": false,
+    "scrollWidth": 1440,
+    "header": 164.4375,
+    "logoVisible": true,
+    "small": 0,
+    "css": [
+      "/assets/css/cfs-brand-v197.css",
+      "/assets/css/cfs-ui-v18.css",
+      "/assets/css/cfs-brand-v198.css"
+    ],
+    "errors": []
+  },
+  {
+    "name": "dashboard",
+    "width": 1440,
+    "overflow": false,
+    "scrollWidth": 1440,
+    "header": 73,
+    "logoVisible": true,
+    "small": 0,
+    "css": [
+      "/assets/css/cfs-ui-v18.css",
+      "/assets/css/cfs-brand-v198.css",
+      "/assets/css/cfs-suite-v203.css"
+    ],
+    "errors": []
+  },
+  {
+    "name": "widget-studio",
+    "width": 1440,
+    "overflow": false,
+    "scrollWidth": 1440,
+    "header": 73,
+    "logoVisible": true,
+    "small": 0,
+    "css": [
+      "/assets/css/cfs-ui-v18.css",
+      "/assets/css/cfs-brand-v198.css",
+      "/assets/css/cfs-suite-v203.css"
+    ],
+    "errors": []
+  },
+  {
+    "name": "shop",
+    "width": 1440,
+    "overflow": false,
+    "scrollWidth": 1440,
+    "header": 73,
+    "logoVisible": true,
+    "small": 0,
+    "css": [
+      "/assets/css/cfs-ui-v18.css",
+      "/assets/css/cfs-brand-v198.css",
+      "/assets/css/cfs-suite-v203.css"
+    ],
+    "errors": []
+  },
+  {
+    "name": "admin",
+    "width": 1440,
+    "overflow": false,
+    "scrollWidth": 1440,
+    "header": 73,
+    "logoVisible": true,
+    "small": 0,
+    "css": [
+      "/assets/css/cfs-ui-v18.css",
+      "/assets/css/cfs-brand-v198.css",
+      "/assets/css/cfs-suite-v203.css"
+    ],
+    "errors": []
+  },
+  {
+    "name": "login",
+    "width": 1440,
+    "overflow": false,
+    "scrollWidth": 1440,
+    "header": 185.4375,
+    "logoVisible": true,
+    "small": 0,
+    "css": [
+      "/assets/css/cfs-unified-v172.css",
+      "/assets/css/cfs-ui-v18.css",
+      "/assets/css/cfs-brand-v198.css"
+    ],
+    "errors": []
+  },
+  {
+    "name": "stream-studio",
+    "width": 1440,
+    "overflow": false,
+    "scrollWidth": 1440,
+    "header": 73,
+    "logoVisible": true,
+    "small": 0,
+    "css": [
+      "/assets/css/cfs-ui-v18.css",
+      "/assets/css/cfs-brand-v198.css",
+      "/assets/css/cfs-suite-v203.css"
+    ],
+    "errors": []
+  },
+  {
+    "name": "universal-builder",
+    "width": 1440,
+    "overflow": false,
+    "scrollWidth": 1440,
+    "header": 73,
+    "logoVisible": true,
+    "small": 0,
+    "css": [
+      "/assets/css/cfs-ui-v18.css",
+      "/assets/css/cfs-brand-v198.css",
+      "/assets/css/cfs-suite-v203.css"
+    ],
+    "errors": []
+  },
+  {
+    "name": "integrations",
+    "width": 1440,
+    "overflow": false,
+    "scrollWidth": 1440,
+    "header": 73,
+    "logoVisible": true,
+    "small": 0,
+    "css": [
+      "/assets/css/cfs-ui-v18.css",
+      "/assets/css/cfs-brand-v198.css",
+      "/assets/css/cfs-suite-v203.css"
+    ],
+    "errors": []
+  },
+  {
+    "name": "audio-studio",
+    "width": 1440,
+    "overflow": false,
+    "scrollWidth": 1440,
+    "header": 73,
+    "logoVisible": true,
+    "small": 0,
+    "css": [
+      "/assets/css/cfs-ui-v18.css",
+      "/assets/css/cfs-brand-v198.css",
+      "/assets/css/cfs-suite-v203.css"
+    ],
+    "errors": []
+  },
+  {
+    "name": "cut-studio",
+    "width": 1440,
+    "overflow": false,
+    "scrollWidth": 1440,
+    "header": 73,
+    "logoVisible": true,
+    "small": 0,
+    "css": [
+      "/assets/css/cfs-ui-v18.css",
+      "/assets/css/cfs-brand-v198.css",
+      "/assets/css/cfs-suite-v203.css"
+    ],
+    "errors": []
+  },
+  {
+    "name": "scene-studio",
+    "width": 1440,
+    "overflow": false,
+    "scrollWidth": 1440,
+    "header": 73,
+    "logoVisible": true,
+    "small": 0,
+    "css": [
+      "/assets/css/cfs-ui-v18.css",
+      "/assets/css/cfs-brand-v198.css",
+      "/assets/css/cfs-suite-v203.css"
+    ],
+    "errors": []
+  },
+  {
+    "name": "cfs-ai",
+    "width": 1440,
+    "overflow": false,
+    "scrollWidth": 1440,
+    "header": 73,
+    "logoVisible": true,
+    "small": 0,
+    "css": [
+      "/assets/css/cfs-ui-v18.css",
+      "/assets/css/cfs-brand-v198.css",
+      "/assets/css/cfs-suite-v203.css"
+    ],
+    "errors": []
+  },
+  {
+    "name": "account",
+    "width": 1440,
+    "overflow": false,
+    "scrollWidth": 1440,
+    "header": 73,
+    "logoVisible": true,
+    "small": 0,
+    "css": [
+      "/assets/css/cfs-ui-v18.css",
+      "/assets/css/cfs-brand-v198.css",
+      "/assets/css/cfs-suite-v203.css"
+    ],
+    "errors": []
+  },
+  {
+    "name": "settings",
+    "width": 1440,
+    "overflow": false,
+    "scrollWidth": 1440,
+    "header": 73,
+    "logoVisible": true,
+    "small": 0,
+    "css": [
+      "/assets/css/cfs-ui-v18.css",
+      "/assets/css/cfs-brand-v198.css",
+      "/assets/css/cfs-suite-v203.css"
+    ],
+    "errors": []
+  },
+  {
+    "name": "setup",
+    "width": 1440,
+    "overflow": false,
+    "scrollWidth": 1440,
+    "header": 73,
+    "logoVisible": true,
+    "small": 0,
+    "css": [
+      "/assets/css/cfs-ui-v18.css",
+      "/assets/css/cfs-brand-v198.css",
+      "/assets/css/cfs-suite-v203.css"
+    ],
+    "errors": []
+  },
+  {
+    "name": "nexus",
+    "width": 1440,
+    "overflow": false,
+    "scrollWidth": 1440,
+    "header": 73,
+    "logoVisible": true,
+    "small": 0,
+    "css": [
+      "/assets/css/cfs-ui-v18.css",
+      "/assets/css/cfs-brand-v198.css",
+      "/assets/css/cfs-suite-v203.css"
+    ],
+    "errors": []
+  },
+  {
+    "name": "merch",
+    "width": 1440,
+    "overflow": false,
+    "scrollWidth": 1440,
+    "header": 164.4375,
+    "logoVisible": true,
+    "small": 0,
+    "css": [
+      "/assets/css/cfs-unified-v172.css",
+      "/assets/css/cfs-ui-v18.css",
+      "/assets/css/cfs-brand-v198.css"
+    ],
+    "errors": []
+  },
+  {
+    "name": "creator-suite",
+    "width": 1440,
+    "overflow": false,
+    "scrollWidth": 1440,
+    "header": 185.4375,
+    "logoVisible": true,
+    "small": 0,
+    "css": [
+      "/assets/css/cfs-ui-v18.css",
+      "/assets/css/cfs-brand-v198.css",
+      "/assets/css/cfs-suite-v203.css"
+    ],
+    "errors": []
+  },
+  {
+    "name": "support",
+    "width": 1440,
+    "overflow": false,
+    "scrollWidth": 1440,
+    "header": 73,
+    "logoVisible": true,
+    "small": 0,
+    "css": [
+      "/assets/css/cfs-unified-v172.css",
+      "/assets/css/cfs-ui-v18.css",
+      "/assets/css/cfs-brand-v198.css"
+    ],
+    "errors": []
+  },
+  {
+    "name": "roadmap",
+    "width": 1440,
+    "overflow": false,
+    "scrollWidth": 1440,
+    "header": 73,
+    "logoVisible": true,
+    "small": 0,
+    "css": [
+      "/assets/css/cfs-brand-v197.css",
+      "/assets/css/cfs-ui-v18.css",
+      "/assets/css/cfs-brand-v198.css"
+    ],
+    "errors": []
+  },
+  {
+    "name": "datenschutz",
+    "width": 1440,
+    "overflow": false,
+    "scrollWidth": 1440,
+    "header": 73,
+    "logoVisible": true,
+    "small": 0,
+    "css": [
+      "/assets/css/cfs-unified-v172.css",
+      "/assets/css/cfs-ui-v18.css",
+      "/assets/css/cfs-brand-v198.css"
+    ],
+    "errors": []
+  },
+  {
+    "name": "index",
+    "width": 768,
+    "overflow": false,
+    "scrollWidth": 768,
+    "header": 125,
+    "logoVisible": true,
+    "small": 0,
+    "css": [
+      "/assets/css/cfs-brand-v197.css",
+      "/assets/css/cfs-ui-v18.css",
+      "/assets/css/cfs-brand-v198.css"
+    ],
+    "errors": []
+  },
+  {
+    "name": "dashboard",
+    "width": 768,
+    "overflow": false,
+    "scrollWidth": 768,
+    "header": 174,
+    "logoVisible": true,
+    "small": 0,
+    "css": [
+      "/assets/css/cfs-ui-v18.css",
+      "/assets/css/cfs-brand-v198.css",
+      "/assets/css/cfs-suite-v203.css"
+    ],
+    "errors": []
+  },
+  {
+    "name": "widget-studio",
+    "width": 768,
+    "overflow": false,
+    "scrollWidth": 768,
+    "header": 174,
+    "logoVisible": true,
+    "small": 0,
+    "css": [
+      "/assets/css/cfs-ui-v18.css",
+      "/assets/css/cfs-brand-v198.css",
+      "/assets/css/cfs-suite-v203.css"
+    ],
+    "errors": []
+  },
+  {
+    "name": "shop",
+    "width": 768,
+    "overflow": false,
+    "scrollWidth": 768,
+    "header": 174,
+    "logoVisible": true,
+    "small": 0,
+    "css": [
+      "/assets/css/cfs-ui-v18.css",
+      "/assets/css/cfs-brand-v198.css",
+      "/assets/css/cfs-suite-v203.css"
+    ],
+    "errors": []
+  },
+  {
+    "name": "admin",
+    "width": 768,
+    "overflow": false,
+    "scrollWidth": 768,
+    "header": 67,
+    "logoVisible": true,
+    "small": 0,
+    "css": [
+      "/assets/css/cfs-ui-v18.css",
+      "/assets/css/cfs-brand-v198.css",
+      "/assets/css/cfs-suite-v203.css"
+    ],
+    "errors": []
+  },
+  {
+    "name": "login",
+    "width": 768,
+    "overflow": false,
+    "scrollWidth": 768,
+    "header": 143,
+    "logoVisible": true,
+    "small": 0,
+    "css": [
+      "/assets/css/cfs-unified-v172.css",
+      "/assets/css/cfs-ui-v18.css",
+      "/assets/css/cfs-brand-v198.css"
+    ],
+    "errors": []
+  },
+  {
+    "name": "stream-studio",
+    "width": 768,
+    "overflow": false,
+    "scrollWidth": 768,
+    "header": 174,
+    "logoVisible": true,
+    "small": 0,
+    "css": [
+      "/assets/css/cfs-ui-v18.css",
+      "/assets/css/cfs-brand-v198.css",
+      "/assets/css/cfs-suite-v203.css"
+    ],
+    "errors": []
+  },
+  {
+    "name": "universal-builder",
+    "width": 768,
+    "overflow": false,
+    "scrollWidth": 768,
+    "header": 174,
+    "logoVisible": true,
+    "small": 0,
+    "css": [
+      "/assets/css/cfs-ui-v18.css",
+      "/assets/css/cfs-brand-v198.css",
+      "/assets/css/cfs-suite-v203.css"
+    ],
+    "errors": []
+  },
+  {
+    "name": "integrations",
+    "width": 768,
+    "overflow": false,
+    "scrollWidth": 768,
+    "header": 174,
+    "logoVisible": true,
+    "small": 0,
+    "css": [
+      "/assets/css/cfs-ui-v18.css",
+      "/assets/css/cfs-brand-v198.css",
+      "/assets/css/cfs-suite-v203.css"
+    ],
+    "errors": []
+  },
+  {
+    "name": "audio-studio",
+    "width": 768,
+    "overflow": false,
+    "scrollWidth": 768,
+    "header": 174,
+    "logoVisible": true,
+    "small": 0,
+    "css": [
+      "/assets/css/cfs-ui-v18.css",
+      "/assets/css/cfs-brand-v198.css",
+      "/assets/css/cfs-suite-v203.css"
+    ],
+    "errors": []
+  },
+  {
+    "name": "cut-studio",
+    "width": 768,
+    "overflow": false,
+    "scrollWidth": 768,
+    "header": 174,
+    "logoVisible": true,
+    "small": 0,
+    "css": [
+      "/assets/css/cfs-ui-v18.css",
+      "/assets/css/cfs-brand-v198.css",
+      "/assets/css/cfs-suite-v203.css"
+    ],
+    "errors": []
+  },
+  {
+    "name": "scene-studio",
+    "width": 768,
+    "overflow": false,
+    "scrollWidth": 768,
+    "header": 174,
+    "logoVisible": true,
+    "small": 0,
+    "css": [
+      "/assets/css/cfs-ui-v18.css",
+      "/assets/css/cfs-brand-v198.css",
+      "/assets/css/cfs-suite-v203.css"
+    ],
+    "errors": []
+  },
+  {
+    "name": "cfs-ai",
+    "width": 768,
+    "overflow": false,
+    "scrollWidth": 768,
+    "header": 174,
+    "logoVisible": true,
+    "small": 0,
+    "css": [
+      "/assets/css/cfs-ui-v18.css",
+      "/assets/css/cfs-brand-v198.css",
+      "/assets/css/cfs-suite-v203.css"
+    ],
+    "errors": []
+  },
+  {
+    "name": "account",
+    "width": 768,
+    "overflow": false,
+    "scrollWidth": 768,
+    "header": 174,
+    "logoVisible": true,
+    "small": 0,
+    "css": [
+      "/assets/css/cfs-ui-v18.css",
+      "/assets/css/cfs-brand-v198.css",
+      "/assets/css/cfs-suite-v203.css"
+    ],
+    "errors": []
+  },
+  {
+    "name": "settings",
+    "width": 768,
+    "overflow": false,
+    "scrollWidth": 768,
+    "header": 174,
+    "logoVisible": true,
+    "small": 0,
+    "css": [
+      "/assets/css/cfs-ui-v18.css",
+      "/assets/css/cfs-brand-v198.css",
+      "/assets/css/cfs-suite-v203.css"
+    ],
+    "errors": []
+  },
+  {
+    "name": "setup",
+    "width": 768,
+    "overflow": false,
+    "scrollWidth": 768,
+    "header": 174,
+    "logoVisible": true,
+    "small": 0,
+    "css": [
+      "/assets/css/cfs-ui-v18.css",
+      "/assets/css/cfs-brand-v198.css",
+      "/assets/css/cfs-suite-v203.css"
+    ],
+    "errors": []
+  },
+  {
+    "name": "nexus",
+    "width": 768,
+    "overflow": false,
+    "scrollWidth": 768,
+    "header": 174,
+    "logoVisible": true,
+    "small": 0,
+    "css": [
+      "/assets/css/cfs-ui-v18.css",
+      "/assets/css/cfs-brand-v198.css",
+      "/assets/css/cfs-suite-v203.css"
+    ],
+    "errors": []
+  },
+  {
+    "name": "merch",
+    "width": 768,
+    "overflow": false,
+    "scrollWidth": 768,
+    "header": 125,
+    "logoVisible": true,
+    "small": 0,
+    "css": [
+      "/assets/css/cfs-unified-v172.css",
+      "/assets/css/cfs-ui-v18.css",
+      "/assets/css/cfs-brand-v198.css"
+    ],
+    "errors": []
+  },
+  {
+    "name": "creator-suite",
+    "width": 768,
+    "overflow": false,
+    "scrollWidth": 768,
+    "header": 143,
+    "logoVisible": true,
+    "small": 0,
+    "css": [
+      "/assets/css/cfs-ui-v18.css",
+      "/assets/css/cfs-brand-v198.css",
+      "/assets/css/cfs-suite-v203.css"
+    ],
+    "errors": []
+  },
+  {
+    "name": "support",
+    "width": 768,
+    "overflow": false,
+    "scrollWidth": 768,
+    "header": 67,
+    "logoVisible": true,
+    "small": 0,
+    "css": [
+      "/assets/css/cfs-unified-v172.css",
+      "/assets/css/cfs-ui-v18.css",
+      "/assets/css/cfs-brand-v198.css"
+    ],
+    "errors": []
+  },
+  {
+    "name": "roadmap",
+    "width": 768,
+    "overflow": false,
+    "scrollWidth": 768,
+    "header": 67,
+    "logoVisible": true,
+    "small": 0,
+    "css": [
+      "/assets/css/cfs-brand-v197.css",
+      "/assets/css/cfs-ui-v18.css",
+      "/assets/css/cfs-brand-v198.css"
+    ],
+    "errors": []
+  },
+  {
+    "name": "datenschutz",
+    "width": 768,
+    "overflow": false,
+    "scrollWidth": 768,
+    "header": 67,
+    "logoVisible": true,
+    "small": 0,
+    "css": [
+      "/assets/css/cfs-unified-v172.css",
+      "/assets/css/cfs-ui-v18.css",
+      "/assets/css/cfs-brand-v198.css"
+    ],
+    "errors": []
+  },
+  {
+    "name": "index",
+    "width": 390,
+    "overflow": false,
+    "scrollWidth": 390,
+    "header": 107,
+    "logoVisible": true,
+    "small": 0,
+    "css": [
+      "/assets/css/cfs-brand-v197.css",
+      "/assets/css/cfs-ui-v18.css",
+      "/assets/css/cfs-brand-v198.css"
+    ],
+    "errors": []
+  },
+  {
+    "name": "dashboard",
+    "width": 390,
+    "overflow": false,
+    "scrollWidth": 390,
+    "header": 65,
+    "logoVisible": true,
+    "small": 0,
+    "css": [
+      "/assets/css/cfs-ui-v18.css",
+      "/assets/css/cfs-brand-v198.css",
+      "/assets/css/cfs-suite-v203.css"
+    ],
+    "errors": []
+  },
+  {
+    "name": "widget-studio",
+    "width": 390,
+    "overflow": false,
+    "scrollWidth": 390,
+    "header": 65,
+    "logoVisible": true,
+    "small": 0,
+    "css": [
+      "/assets/css/cfs-ui-v18.css",
+      "/assets/css/cfs-brand-v198.css",
+      "/assets/css/cfs-suite-v203.css"
+    ],
+    "errors": []
+  },
+  {
+    "name": "shop",
+    "width": 390,
+    "overflow": false,
+    "scrollWidth": 390,
+    "header": 65,
+    "logoVisible": true,
+    "small": 0,
+    "css": [
+      "/assets/css/cfs-ui-v18.css",
+      "/assets/css/cfs-brand-v198.css",
+      "/assets/css/cfs-suite-v203.css"
+    ],
+    "errors": []
+  },
+  {
+    "name": "admin",
+    "width": 390,
+    "overflow": false,
+    "scrollWidth": 390,
+    "header": 65,
+    "logoVisible": true,
+    "small": 0,
+    "css": [
+      "/assets/css/cfs-ui-v18.css",
+      "/assets/css/cfs-brand-v198.css",
+      "/assets/css/cfs-suite-v203.css"
+    ],
+    "errors": []
+  },
+  {
+    "name": "login",
+    "width": 390,
+    "overflow": false,
+    "scrollWidth": 390,
+    "header": 125,
+    "logoVisible": true,
+    "small": 0,
+    "css": [
+      "/assets/css/cfs-unified-v172.css",
+      "/assets/css/cfs-ui-v18.css",
+      "/assets/css/cfs-brand-v198.css"
+    ],
+    "errors": []
+  },
+  {
+    "name": "stream-studio",
+    "width": 390,
+    "overflow": false,
+    "scrollWidth": 390,
+    "header": 65,
+    "logoVisible": true,
+    "small": 0,
+    "css": [
+      "/assets/css/cfs-ui-v18.css",
+      "/assets/css/cfs-brand-v198.css",
+      "/assets/css/cfs-suite-v203.css"
+    ],
+    "errors": []
+  },
+  {
+    "name": "universal-builder",
+    "width": 390,
+    "overflow": false,
+    "scrollWidth": 390,
+    "header": 65,
+    "logoVisible": true,
+    "small": 0,
+    "css": [
+      "/assets/css/cfs-ui-v18.css",
+      "/assets/css/cfs-brand-v198.css",
+      "/assets/css/cfs-suite-v203.css"
+    ],
+    "errors": []
+  },
+  {
+    "name": "integrations",
+    "width": 390,
+    "overflow": true,
+    "scrollWidth": 394,
+    "header": 65,
+    "logoVisible": true,
+    "small": 0,
+    "css": [
+      "/assets/css/cfs-ui-v18.css",
+      "/assets/css/cfs-brand-v198.css",
+      "/assets/css/cfs-suite-v203.css"
+    ],
+    "errors": []
+  },
+  {
+    "name": "audio-studio",
+    "width": 390,
+    "overflow": false,
+    "scrollWidth": 390,
+    "header": 65,
+    "logoVisible": true,
+    "small": 0,
+    "css": [
+      "/assets/css/cfs-ui-v18.css",
+      "/assets/css/cfs-brand-v198.css",
+      "/assets/css/cfs-suite-v203.css"
+    ],
+    "errors": []
+  },
+  {
+    "name": "cut-studio",
+    "width": 390,
+    "overflow": false,
+    "scrollWidth": 390,
+    "header": 65,
+    "logoVisible": true,
+    "small": 0,
+    "css": [
+      "/assets/css/cfs-ui-v18.css",
+      "/assets/css/cfs-brand-v198.css",
+      "/assets/css/cfs-suite-v203.css"
+    ],
+    "errors": []
+  },
+  {
+    "name": "scene-studio",
+    "width": 390,
+    "overflow": false,
+    "scrollWidth": 390,
+    "header": 65,
+    "logoVisible": true,
+    "small": 0,
+    "css": [
+      "/assets/css/cfs-ui-v18.css",
+      "/assets/css/cfs-brand-v198.css",
+      "/assets/css/cfs-suite-v203.css"
+    ],
+    "errors": []
+  },
+  {
+    "name": "cfs-ai",
+    "width": 390,
+    "overflow": false,
+    "scrollWidth": 390,
+    "header": 65,
+    "logoVisible": true,
+    "small": 0,
+    "css": [
+      "/assets/css/cfs-ui-v18.css",
+      "/assets/css/cfs-brand-v198.css",
+      "/assets/css/cfs-suite-v203.css"
+    ],
+    "errors": []
+  },
+  {
+    "name": "account",
+    "width": 390,
+    "overflow": false,
+    "scrollWidth": 390,
+    "header": 65,
+    "logoVisible": true,
+    "small": 0,
+    "css": [
+      "/assets/css/cfs-ui-v18.css",
+      "/assets/css/cfs-brand-v198.css",
+      "/assets/css/cfs-suite-v203.css"
+    ],
+    "errors": []
+  },
+  {
+    "name": "settings",
+    "width": 390,
+    "overflow": false,
+    "scrollWidth": 390,
+    "header": 65,
+    "logoVisible": true,
+    "small": 0,
+    "css": [
+      "/assets/css/cfs-ui-v18.css",
+      "/assets/css/cfs-brand-v198.css",
+      "/assets/css/cfs-suite-v203.css"
+    ],
+    "errors": []
+  },
+  {
+    "name": "setup",
+    "width": 390,
+    "overflow": false,
+    "scrollWidth": 390,
+    "header": 65,
+    "logoVisible": true,
+    "small": 0,
+    "css": [
+      "/assets/css/cfs-ui-v18.css",
+      "/assets/css/cfs-brand-v198.css",
+      "/assets/css/cfs-suite-v203.css"
+    ],
+    "errors": []
+  },
+  {
+    "name": "nexus",
+    "width": 390,
+    "overflow": false,
+    "scrollWidth": 390,
+    "header": 65,
+    "logoVisible": true,
+    "small": 0,
+    "css": [
+      "/assets/css/cfs-ui-v18.css",
+      "/assets/css/cfs-brand-v198.css",
+      "/assets/css/cfs-suite-v203.css"
+    ],
+    "errors": []
+  },
+  {
+    "name": "merch",
+    "width": 390,
+    "overflow": false,
+    "scrollWidth": 390,
+    "header": 107,
+    "logoVisible": true,
+    "small": 0,
+    "css": [
+      "/assets/css/cfs-unified-v172.css",
+      "/assets/css/cfs-ui-v18.css",
+      "/assets/css/cfs-brand-v198.css"
+    ],
+    "errors": []
+  },
+  {
+    "name": "creator-suite",
+    "width": 390,
+    "overflow": false,
+    "scrollWidth": 390,
+    "header": 125,
+    "logoVisible": true,
+    "small": 0,
+    "css": [
+      "/assets/css/cfs-ui-v18.css",
+      "/assets/css/cfs-brand-v198.css",
+      "/assets/css/cfs-suite-v203.css"
+    ],
+    "errors": []
+  },
+  {
+    "name": "support",
+    "width": 390,
+    "overflow": false,
+    "scrollWidth": 390,
+    "header": 65,
+    "logoVisible": true,
+    "small": 0,
+    "css": [
+      "/assets/css/cfs-unified-v172.css",
+      "/assets/css/cfs-ui-v18.css",
+      "/assets/css/cfs-brand-v198.css"
+    ],
+    "errors": []
+  },
+  {
+    "name": "roadmap",
+    "width": 390,
+    "overflow": false,
+    "scrollWidth": 390,
+    "header": 65,
+    "logoVisible": true,
+    "small": 0,
+    "css": [
+      "/assets/css/cfs-brand-v197.css",
+      "/assets/css/cfs-ui-v18.css",
+      "/assets/css/cfs-brand-v198.css"
+    ],
+    "errors": []
+  },
+  {
+    "name": "datenschutz",
+    "width": 390,
+    "overflow": false,
+    "scrollWidth": 390,
+    "header": 65,
+    "logoVisible": true,
+    "small": 0,
+    "css": [
+      "/assets/css/cfs-unified-v172.css",
+      "/assets/css/cfs-ui-v18.css",
+      "/assets/css/cfs-brand-v198.css"
+    ],
+    "errors": []
+  }
+]

@@ -3,21 +3,21 @@
    status colors only for status. */
 
 :root{
-  --cfs-v199-bg:#050a12;
-  --cfs-v199-surface:#091421;
-  --cfs-v199-surface-2:#0d1b2a;
-  --cfs-v199-line:#1b3953;
-  --cfs-v199-line-soft:#132b40;
-  --cfs-v199-text:#f4f7fb;
-  --cfs-v199-muted:#9db0c3;
-  --cfs-v199-blue:#2b9cff;
-  --cfs-v199-cyan:#29d6f6;
-  --cfs-v199-good:#43d39e;
-  --cfs-v199-warn:#f4bf58;
-  --cfs-v199-bad:#ff6f7d;
+  --cfs-v199-bg:var(--cfs198-bg);
+  --cfs-v199-surface:var(--cfs198-surface-2);
+  --cfs-v199-surface-2:var(--cfs198-surface-3);
+  --cfs-v199-line:var(--cfs198-line);
+  --cfs-v199-line-soft:var(--cfs198-line);
+  --cfs-v199-text:var(--cfs198-text);
+  --cfs-v199-muted:var(--cfs198-muted);
+  --cfs-v199-blue:var(--cfs198-primary);
+  --cfs-v199-cyan:var(--cfs198-accent);
+  --cfs-v199-good:var(--cfs198-success);
+  --cfs-v199-warn:var(--cfs198-warning);
+  --cfs-v199-bad:var(--cfs198-danger);
   --cfs-v199-radius:14px;
   --cfs-v199-shadow:0 18px 50px rgba(0,0,0,.22);
-  --cfs-v199-font:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  --cfs-v199-font:var(--cfs198-font);
 }
 
 body[data-cfs-product-v199="1"]{
@@ -47,7 +47,7 @@ body[data-cfs-product-v199="1"] .creator-dashboard-hero{min-height:0;padding:32p
 body[data-cfs-product-v199="1"] .creator-dashboard-hero h1{font-size:clamp(2.25rem,5vw,4.7rem);line-height:.92;margin:.35rem 0 .75rem}
 body[data-cfs-product-v199="1"] .creator-dashboard-hero p{max-width:720px}
 body[data-cfs-product-v199="1"] .creator-dashboard-actions-grid-v166{grid-template-columns:repeat(3,minmax(0,1fr))}
-body[data-cfs-product-v199="1"] .creator-dashboard-actions-grid-v166>a:nth-child(n+4){display:none}
+body[data-cfs-product-v199="1"] .creator-dashboard-actions-grid-v166>a:nth-child(n+4){display:grid}
 body[data-cfs-product-v199="1"] .cfs-v199-account-status{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
 body[data-cfs-product-v199="1"] .cfs-v199-status-chip{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--cfs-v199-line);background:rgba(6,17,29,.72);border-radius:999px;padding:7px 11px;color:var(--cfs-v199-muted);font-size:.78rem;font-weight:750}
 body[data-cfs-product-v199="1"] .cfs-v199-status-chip strong{color:var(--cfs-v199-text)}

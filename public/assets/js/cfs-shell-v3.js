@@ -78,6 +78,7 @@
         const active = url.pathname.toLowerCase() === path;
         link.classList.toggle("active", active);
         if (active) link.setAttribute("aria-current", "page");
+        else link.removeAttribute("aria-current");
       } catch {}
     });
   }
@@ -95,6 +96,7 @@
     const a = document.createElement("a");
     a.className = `cfs-sidebar-link${active ? " active" : ""}`;
     a.href = href;
+    if (active) a.setAttribute("aria-current", "page");
     a.innerHTML = `<span class="cfs-sidebar-icon">${icon(key)}</span><span>${label}</span>`;
     return a;
   }
@@ -172,9 +174,8 @@
     } else {
       const items = [
         ["Dashboard","/pages/dashboard.html","dashboard"],
-        ["Account","/pages/account.html","account"],
-        ["Widgets","/pages/widget-studio.html","widgets"],
-        ["Builder","/pages/universal-builder.html","widgets"],
+                ["Widgets","/pages/widget-studio.html","widgets"],
+        ["Bundle-Umwandler","/pages/universal-builder.html","widgets"],
         ["Shop","/pages/shop.html","shop"],
         ["Stream Studio","/pages/stream-studio.html","stream"],
         ["TikTok","/pages/tiktok.html","tiktok"],
@@ -182,9 +183,12 @@
         ["Launcher","/pages/launcher.html","launcher"],
         ...(path === "/pages/admin.html" ? [["Admin","/pages/admin.html","security"]] : []),
         ...(path === "/pages/cfs-ai.html" ? [["CFS AI","/pages/cfs-ai.html","ai"]] : []),
+        ["Account","/pages/account.html","account"],
         ["Einstellungen","/pages/settings.html","settings"]
       ];
       items.forEach(([labelText, href, key]) => {
+        const group = {"Widgets":"GESTALTEN", "TikTok":"VERBINDEN", "Account":"VERWALTEN"}[labelText];
+        if (group) { const heading = document.createElement("div"); heading.className = "cfs-sidebar-section-title"; heading.textContent = group; aside.appendChild(heading); }
         aside.appendChild(makeLink({
           label:labelText,
           href,
@@ -315,8 +319,8 @@
   function ensureSuiteV203() {
     if (!document.body.classList.contains("creator-workspace")) return;
     document.body.dataset.cfsSuiteV203 = "1";
-    if (document.querySelector('link[data-cfs-suite-v203]')) return;
-    const link = document.createElement("link");
+    let link = document.querySelector('link[data-cfs-suite-v203]');
+    if (!link) link = document.createElement("link");
     link.rel = "stylesheet";
     link.href = "/assets/css/cfs-suite-v203.css";
     link.dataset.cfsSuiteV203 = "1";
@@ -391,6 +395,24 @@
     installUiBundleAssets();
     ensureBrandV198();
     ensureSuiteV203();
+    const main = document.querySelector("main");
+    if (main && !document.querySelector(".cfs-skip-link")) {
+      if (!main.id) main.id = "cfs-main-content";
+      main.tabIndex = -1;
+      const skip = document.createElement("a");
+      skip.className = "cfs-skip-link";
+      skip.href = `#${main.id}`;
+      skip.textContent = "Zum Inhalt springen";
+      skip.addEventListener("click", () => main.focus({preventScroll:true}));
+      document.body.prepend(skip);
+    }
+    // Wrapped desktop navigation changes the actual sticky header height.
+    const header = document.querySelector(".site-header, .gaming-header, header.top");
+    if (header && typeof ResizeObserver !== "undefined") {
+      new ResizeObserver(() => {
+        document.documentElement.style.setProperty("--cfs-shell-header-height", `${Math.ceil(header.getBoundingClientRect().height)}px`);
+      }).observe(header);
+    }
   }
 
   if (document.readyState === "loading") {

@@ -22,12 +22,13 @@
     return me;
   }
 
-  function setStatus(online, headline, subline = "") {
+  function setStatus(online, headline, subline = "", setup = "") {
     state.online = Boolean(online);
     $("aiStatusDot")?.classList.toggle("online", state.online);
     $("aiStatusDot")?.classList.toggle("offline", !state.online);
     if ($("aiStatusText")) $("aiStatusText").textContent = headline;
     if ($("aiModelText")) $("aiModelText").textContent = subline;
+    if ($("aiSetupHint")) $("aiSetupHint").textContent = setup || "CFS AI wird über den konfigurierten lokalen Service oder die sichere Outbound-Bridge betrieben.";
   }
 
   async function loadStatus() {
@@ -35,25 +36,25 @@
     try {
       const data = await CFS.json("/api/creator/cfs-ai/status");
       if (!data.gateway?.enabled) {
-        setStatus(false, "noch deaktiviert", "CFS_AI_ENABLED=false");
+        setStatus(false, "noch deaktiviert", "CFS_AI_ENABLED=false", "Server-Konfiguration benötigt: CFS_AI_ENABLED=true. Danach den separaten CFS-AI-Service starten oder CFS_AI_TRANSPORT=bridge mit Worker verwenden.");
         return data;
       }
       if (!data.gateway?.configured) {
-        setStatus(false, "Konfiguration fehlt", data.gateway?.error || "AI Service URL prüfen");
+        setStatus(false, "Konfiguration fehlt", data.gateway?.error || "AI Service URL prüfen", "Prüfe CFS_AI_BASE_URL und – bei bridge/Remote – den CFS_AI_BRIDGE_TOKEN. Keine Tokens im Repository hinterlegen.");
         return data;
       }
       if (!data.service) {
         const bridgeHint = data.gateway?.transport === "bridge" ? (data.worker ? "Bridge verbunden · lokaler AI-Service nicht bereit" : "Bridge wartet auf deinen CFS-AI-Laptop") : (data.gateway?.target || "nicht erreichbar");
-        setStatus(false, "Service offline", data.error || bridgeHint);
+        setStatus(false, "Service offline", data.error || bridgeHint, data.gateway?.transport === "bridge" ? "Starte den lokalen CFS-AI-Worker auf dem Admin-PC; er holt die Jobs ausgehend über HTTPS ab." : "Starte den separaten CFS-AI-Service und prüfe danach diesen Status erneut.");
         return data;
       }
       const model = data.service.chat_model || "lokales Modell";
       const version = data.service.version ? `v${data.service.version}` : "";
       const transport = data.gateway?.transport === "bridge" ? " · Outbound Bridge" : "";
-      setStatus(Boolean(data.service.ollama?.online), data.service.ollama?.online ? "online" : "Service online · Modell offline", `${model}${version ? ` · ${version}` : ""}${transport}`);
+      setStatus(Boolean(data.service.ollama?.online), data.service.ollama?.online ? "online" : "Service online · Modell offline", `${model}${version ? ` · ${version}` : ""}${transport}`, data.service.ollama?.online ? "CFS AI ist bereit. Der Chat und die Admin-Funktionen können jetzt verwendet werden." : "Der Service antwortet, aber das konfigurierte lokale Modell ist noch nicht online.");
       return data;
     } catch (error) {
-      setStatus(false, "nicht erreichbar", error.message);
+      setStatus(false, "nicht erreichbar", error.message, "Admin-Gate funktioniert, aber der AI-Dienst antwortet noch nicht. Prüfe Service/Worker und starte die Statusprüfung erneut.");
       return null;
     }
   }
@@ -357,6 +358,8 @@ async function loadBridge() {
     const me = await ensureAdmin();
     if (!me) return;
     installEvents();
+    const requestedTab = new URLSearchParams(location.search).get("tab");
+    if (["templates","chat","proposals","roadmap","bridge"].includes(requestedTab)) activateTab(requestedTab);
     await loadStatus();
     await Promise.allSettled([loadTemplates(), loadProposals(), loadRoadmap(), loadKnowledge(), loadBridge()]);
   });

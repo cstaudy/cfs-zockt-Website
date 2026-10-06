@@ -1,0 +1,15 @@
+PASS server catalog reads creator bundles
+PASS server hides standard products
+PASS server converter route exists
+PASS server converter is creator-owned
+PASS server converter keeps resource limits
+PASS shop page explains own bundles
+PASS shop page removes legacy visible filters
+PASS shop browser uses bundle catalog
+PASS studio exposes bundle converter
+PASS AI browser stays gateway-only
+PASS admin access remains explicit
+PASS admin overview is categorized
+PASS admin terminal is safe and usable
+PASS admin embeds CFS AI logic
+Creator bundle shop v205: 14/14 PASS

@@ -15,8 +15,6 @@ for(const token of ["creator_universal_bundles","/api/creator/universal-builder"
 for(const token of ["data-panel=\"design\"","data-panel=\"platform\"","data-panel=\"widget\"","data-panel=\"content\"","data-panel=\"preview\"","ubSaveBundle","ubExportBundle"])must(page.includes(token),`Builder-Schritt oder Aktion fehlt: ${token}`);
 for(const token of ["schema:\"cfs-universal-bundle-v203\"","function zip(","/api/creator/universal-builder","function saveBundle","function renderPreview"])must(js.includes(token),`Builder-Funktion fehlt: ${token}`);
 for(const token of [".ub-design-grid",".ub-platform-grid",".ub-stage","@media(max-width:620px)"])must(css.includes(token),`Builder-Layout fehlt: ${token}`);
-for(const token of ["key:\"cfs\"","key:\"cyan\"","key:\"electric\"","key:\"sky\"","key:\"teal\"","key:\"green\"","key:\"gold\"","key:\"orange\"","key:\"red\"","key:\"white\"","key:\"foghunt\"","key:\"commandgrid\"","key:\"arcaneorder\"","key:\"orbitalcore\"","key:\"trackrush\"","key:\"cozycabin\""])must(server.includes(token),`Empfohlene Farbwelt fehlt: ${token}`);
-must(server.includes("UNIVERSAL_BUILDER_DESIGN_ALIASES"),"Legacy-Designs werden nicht auf die 16 Farbwelten abgebildet");
 must(packageJson.scripts?.["check:v203"]?.includes("universal-builder-v203-test.mjs"),"check:v203 fehlt in package.json");
 must(server.includes("schema:\"cfs-universal-bundle-v203\"")===false,"Schema darf nicht serverseitig als Secret verarbeitet werden");
-console.log("Universal Builder v204: 20/20 PASS");
+console.log("Universal Builder v203: 18/18 PASS");

@@ -1,0 +1,21 @@
+PASS Dashboard: gemeinsamer UI-Layer geladen
+PASS Dashboard: Suite-Datenattribut gesetzt
+PASS Widget Studio: gemeinsamer UI-Layer geladen
+PASS Widget Studio: Suite-Datenattribut gesetzt
+PASS Universal Builder: gemeinsamer UI-Layer geladen
+PASS Universal Builder: Suite-Datenattribut gesetzt
+PASS Dashboard: Builder-Schnellzugriff vorhanden
+PASS Dashboard: sechs Schnellzugriffe sichtbar
+PASS Dashboard: kleine Legacy-Kacheln werden überschrieben
+PASS Widget Studio: geführte Bereiche lesbarer
+PASS Widget Studio: Editor-Schritte lesbarer
+PASS Widget Studio: Umwandler sichtbar im Ablauf
+PASS Widget Studio: Standardroute ohne Anfänger-/Profi-Auswahl
+PASS Dashboard: Umwandler direkt erreichbar
+FAIL Shop: Bereiche nach Aufgabe sichtbar
+FAIL Shop: Filterkarten funktionieren
+PASS Creator-Shell: Suite-Layer auf weiteren Seiten
+PASS Deep-Link: Umwandler öffnet sich direkt
+PASS Universal Builder: lesbare Arbeitsfläche
+PASS Responsive Suite-Breakpoints vorhanden
+PASS CSS-Klammern ausgeglichen

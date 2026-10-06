@@ -54,22 +54,47 @@
   </section>
 
   <section class="cfs-admin-status-grid" aria-label="Systemstatus">
-    <article class="cfs-admin-status-card" id="adminWebsiteStatus"><span>WEBSITE</span><strong>ONLINE</strong><small>cfs-zockt.de ist erreichbar.</small></article>
+    <article class="cfs-admin-status-card" id="adminWebsiteStatus"><span>WEBSITE</span><strong>WIRD GEPRÜFT</strong><small>API-Verbindung wird geprüft …</small></article>
     <article class="cfs-admin-status-card" id="adminAiStatus"><span>CFS AI</span><strong>PRÜFEN …</strong><small>Gateway-Status wird geladen.</small></article>
     <article class="cfs-admin-status-card" id="adminBridgeStatus"><span>BRIDGE</span><strong>PRÜFEN …</strong><small>Worker-Heartbeat wird geladen.</small></article>
     <article class="cfs-admin-status-card" id="adminTransportStatus"><span>TRANSPORT</span><strong>–</strong><small>Cloud ↔ Laptop.</small></article>
   </section>
   <div class="cfs-admin-error" id="adminHubError" hidden role="status"></div>
 
-  <section class="cfs-admin-section">
-    <div class="cfs-admin-section-head"><div><span>WERKZEUGE</span><h2>Alles Wichtige an einem Ort.</h2></div><p>Die eigentlichen Berechtigungen bleiben serverseitig geschützt. Diese Oberfläche ist nur der zentrale Einstieg.</p></div>
-    <div class="cfs-admin-action-grid">
-      <a class="cfs-admin-action" href="/pages/cfs-ai.html"><span>AI</span><strong>CFS AI</strong><p>Chat, Preview Vault, Proposals, Roadmap und Bridge-Status.</p><em>ÖFFNEN →</em></a>
-      <a class="cfs-admin-action" href="/pages/admin-creators.html"><span>ADMIN</span><strong>Creator Control</strong><p>Creator-Verwaltung, Release- und Operations-Funktionen.</p><em>ÖFFNEN →</em></a>
-      <a class="cfs-admin-action" href="/pages/dashboard.html"><span>SUITE</span><strong>Creator Dashboard</strong><p>Zur normalen Creator Suite und den Produktionswerkzeugen.</p><em>ÖFFNEN →</em></a>
-      <a class="cfs-admin-action" href="/pages/technical-status.html"><span>STATUS</span><strong>Technischer Status</strong><p>Website-, Launcher- und Integrationsstatus prüfen.</p><em>ÖFFNEN →</em></a>
-      <a class="cfs-admin-action" href="/pages/account.html#account-security"><span>SECURITY</span><strong>Account & Sicherheit</strong><p>Passkeys, MFA, Sessions und Account-Sicherheit verwalten.</p><em>ÖFFNEN →</em></a>
-      <a class="cfs-admin-action" href="/pages/settings.html"><span>SETTINGS</span><strong>Einstellungen</strong><p>Creator- und Projektoptionen zentral öffnen.</p><em>ÖFFNEN →</em></a>
+  <section class="cfs-admin-section cfs-admin-categories">
+    <div class="cfs-admin-section-head"><div><span>ADMIN-BEREICHE</span><h2>Nach Aufgabe sortiert.</h2></div><p>Jede Kategorie führt direkt zu den passenden Werkzeugen. Die Berechtigungen bleiben serverseitig geschützt.</p></div>
+    <div class="cfs-admin-category-grid">
+      <article class="cfs-admin-category"><div class="cfs-admin-category-head"><span>01</span><div><strong>Übersicht & Diagnose</strong><small>Status zuerst verstehen</small></div></div><a href="/pages/technical-status.html">Technischer Status</a><a href="/pages/dashboard.html">Creator Dashboard</a><a href="/pages/system-check.html">Systemcheck</a></article>
+      <article class="cfs-admin-category"><div class="cfs-admin-category-head"><span>02</span><div><strong>Creator & Nutzer</strong><small>Accounts und Zugriffe</small></div></div><a href="/pages/admin-creators.html#adminCreatorsPanel">Creator Control</a><a href="/pages/admin-creators.html#adminBetaPanel">Beta-Zentrale</a><a href="/pages/admin-creators.html#adminSupportPanel">Support & Sicherheit</a></article>
+      <article class="cfs-admin-category"><div class="cfs-admin-category-head"><span>03</span><div><strong>Website & Shop</strong><small>Inhalte und Produkte</small></div></div><a href="/pages/admin-creators.html#adminControlCenterPanel">Website bearbeiten</a><a href="/pages/admin-creators.html#adminBundleFactoryPanel">Bundle Factory</a><a href="/pages/shop.html">Creator Shop prüfen</a></article>
+      <article class="cfs-admin-category"><div class="cfs-admin-category-head"><span>04</span><div><strong>AI & Automationen</strong><small>Agent, Bridge und Vorschläge</small></div></div><a href="/pages/cfs-ai.html">CFS AI</a><a href="/pages/cfs-ai.html?tab=bridge">Bridge-Status</a><a href="/pages/cfs-ai.html?tab=proposals">Proposals</a></article>
+      <article class="cfs-admin-category"><div class="cfs-admin-category-head"><span>05</span><div><strong>Betrieb & Releases</strong><small>Production und Freigaben</small></div></div><a href="/pages/admin-creators.html#adminProductionPanel">Production prüfen</a><a href="/pages/admin-creators.html#adminReleasePanel">Release entscheiden</a><a href="/pages/admin-creators.html#adminIncidentPanel">Incident-Modus</a></article>
+    </div>
+  </section>
+
+  <section class="cfs-admin-section cfs-admin-terminal" aria-labelledby="adminTerminalTitle">
+    <div class="cfs-admin-section-head"><div><span>ADMIN TERMINAL</span><h2 id="adminTerminalTitle">Schnell prüfen, ohne zu suchen.</h2></div><p>Nur freigegebene Statusbefehle. Keine beliebigen Server-Kommandos und keine Änderung ohne die bestehenden Admin-Schutzmechanismen.</p></div>
+    <div class="cfs-terminal-window">
+      <div class="cfs-terminal-top"><span><i></i><i></i><i></i></span><strong>cfs-admin / secure-console</strong><small>READ-ONLY STATUS</small></div>
+      <div class="cfs-terminal-output" id="adminTerminalOutput" role="log" aria-live="polite"><div><b>cfs-admin</b> Terminal bereit. <span>help</span> zeigt die verfügbaren Befehle.</div></div>
+      <form class="cfs-terminal-form" id="adminTerminalForm"><label class="cfs-terminal-prompt" for="adminTerminalInput">admin@cfs:~$</label><input id="adminTerminalInput" type="text" maxlength="80" autocomplete="off" spellcheck="false" placeholder="help"><button class="btn primary" type="submit">AUSFÜHREN</button></form>
+      <div class="cfs-terminal-shortcuts" aria-label="Terminal Schnellbefehle"><button type="button" data-admin-command="help">help</button><button type="button" data-admin-command="status">status</button><button type="button" data-admin-command="ai">ai</button><button type="button" data-admin-command="bridge">bridge</button><button type="button" data-admin-command="summary">summary</button><button type="button" data-admin-command="clear">clear</button></div>
+    </div>
+  </section>
+
+  <section class="cfs-admin-section cfs-admin-ai-console" aria-labelledby="adminAiConsoleTitle">
+    <div class="cfs-admin-section-head"><div><span>AI CONTROL CENTER</span><h2 id="adminAiConsoleTitle">CFS AI direkt in der Admin.</h2></div><p>Der gleiche sichere AI-Gateway-Pfad wie im CFS-AI-Bereich – hier für den täglichen Admin-Überblick und kurze Aufgaben.</p></div>
+    <div class="cfs-admin-ai-grid">
+      <article class="cfs-admin-ai-chat">
+        <div class="cfs-admin-ai-card-head"><div><span>ASSISTENT</span><strong>Mit CFS AI arbeiten</strong></div><button class="btn" id="adminAiRefresh" type="button">STATUS PRÜFEN</button></div>
+        <div class="cfs-admin-ai-log" id="adminAiLog" role="log" aria-live="polite"><div class="is-system"><small>CFS AI</small><span>Admin-AI-Konsole bereit. Stelle eine Frage oder öffne den vollständigen AI-Arbeitsbereich.</span></div></div>
+        <form class="cfs-admin-ai-form" id="adminAiForm"><select id="adminAiMode" aria-label="AI-Modus"><option value="assistant">ASSISTENT</option><option value="developer">DEVELOPMENT</option><option value="review">REVIEW</option></select><input id="adminAiInput" aria-label="Nachricht an CFS AI" type="text" maxlength="2000" placeholder="Frage an CFS AI …" autocomplete="off"><button class="btn primary" type="submit">SENDEN</button></form>
+      </article>
+      <aside class="cfs-admin-ai-side">
+        <div class="cfs-admin-ai-metrics"><article><span>AI</span><strong id="adminAiConsoleState">PRÜFEN …</strong><small id="adminAiConsoleModel">Gateway wird geladen</small></article><article><span>BRIDGE</span><strong id="adminAiConsoleBridge">PRÜFEN …</strong><small id="adminAiConsoleHeartbeat">Worker wird geladen</small></article><article><span>PROPOSALS</span><strong id="adminAiConsoleProposals">–</strong><small>offene Vorschläge</small></article></div>
+        <div class="cfs-admin-ai-actions"><a class="btn" href="/pages/cfs-ai.html?tab=proposals">PROPOSALS ÖFFNEN</a><a class="btn" href="/pages/cfs-ai.html?tab=bridge">BRIDGE ÖFFNEN</a><a class="btn primary" href="/pages/cfs-ai.html">VOLLSTÄNDIGE CFS AI</a></div>
+        <p class="cfs-admin-ai-note" id="adminAiConsoleNote">CFS AI wird über den konfigurierten Service oder die sichere Outbound-Bridge betrieben.</p>
+      </aside>
     </div>
   </section>
 </main>

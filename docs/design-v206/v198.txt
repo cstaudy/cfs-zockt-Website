@@ -1,0 +1,107 @@
+PASS v198 stylesheet exists
+PASS clean transparent mark exists
+PASS v198 uses one UI font stack
+PASS v198 avoids Impact in its own layer
+PASS v198 fixes checkbox dimensions
+PASS v198 constrains content width
+PASS v198 keeps header at top
+PASS v198 uses restrained semantic palette
+PASS shell uses transparent wordmark
+PASS shell ensures v198
+PASS public/index.html loads v198
+PASS public/index.html marks v198 body
+PASS public/pages/account.html loads v198
+PASS public/pages/account.html marks v198 body
+PASS public/pages/admin-creators.html loads v198
+PASS public/pages/admin-creators.html marks v198 body
+PASS public/pages/admin.html loads v198
+PASS public/pages/admin.html marks v198 body
+PASS public/pages/audio-studio.html loads v198
+PASS public/pages/audio-studio.html marks v198 body
+PASS public/pages/cfs-ai.html loads v198
+PASS public/pages/cfs-ai.html marks v198 body
+PASS public/pages/creator-suite.html loads v198
+PASS public/pages/creator-suite.html marks v198 body
+PASS public/pages/cut-studio.html loads v198
+PASS public/pages/cut-studio.html marks v198 body
+PASS public/pages/dashboard.html loads v198
+PASS public/pages/dashboard.html marks v198 body
+PASS public/pages/datenschutz.html loads v198
+PASS public/pages/datenschutz.html marks v198 body
+PASS public/pages/editor.html loads v198
+PASS public/pages/editor.html marks v198 body
+PASS public/pages/error.html loads v198
+PASS public/pages/error.html marks v198 body
+PASS public/pages/forgot-password.html loads v198
+PASS public/pages/forgot-password.html marks v198 body
+PASS public/pages/games.html loads v198
+PASS public/pages/games.html marks v198 body
+PASS public/pages/impressum.html loads v198
+PASS public/pages/impressum.html marks v198 body
+PASS public/pages/integrations.html loads v198
+PASS public/pages/integrations.html marks v198 body
+PASS public/pages/launcher-connect.html loads v198
+PASS public/pages/launcher-connect.html marks v198 body
+PASS public/pages/launcher-download.html loads v198
+PASS public/pages/launcher-download.html marks v198 body
+PASS public/pages/launcher-provider-connect.html loads v198
+PASS public/pages/launcher-provider-connect.html marks v198 body
+PASS public/pages/launcher.html loads v198
+PASS public/pages/launcher.html marks v198 body
+PASS public/pages/login.html loads v198
+PASS public/pages/login.html marks v198 body
+PASS public/pages/merch.html loads v198
+PASS public/pages/merch.html marks v198 body
+PASS public/pages/nexus.html loads v198
+PASS public/pages/nexus.html marks v198 body
+PASS public/pages/not-found.html loads v198
+PASS public/pages/not-found.html marks v198 body
+PASS public/pages/nutzungsbedingungen.html loads v198
+PASS public/pages/nutzungsbedingungen.html marks v198 body
+PASS public/pages/plans.html loads v198
+PASS public/pages/plans.html marks v198 body
+PASS public/pages/reset-password.html loads v198
+PASS public/pages/reset-password.html marks v198 body
+PASS public/pages/roadmap.html loads v198
+PASS public/pages/roadmap.html marks v198 body
+PASS public/pages/scene-studio.html loads v198
+PASS public/pages/scene-studio.html marks v198 body
+PASS public/pages/security.html loads v198
+PASS public/pages/security.html marks v198 body
+PASS public/pages/settings.html loads v198
+PASS public/pages/settings.html marks v198 body
+PASS public/pages/setup.html loads v198
+PASS public/pages/setup.html marks v198 body
+PASS public/pages/shop-product.html loads v198
+PASS public/pages/shop-product.html marks v198 body
+PASS public/pages/shop.html loads v198
+PASS public/pages/shop.html marks v198 body
+PASS public/pages/stream-studio.html loads v198
+PASS public/pages/stream-studio.html marks v198 body
+PASS public/pages/support.html loads v198
+PASS public/pages/support.html marks v198 body
+PASS public/pages/system-check.html loads v198
+PASS public/pages/system-check.html marks v198 body
+PASS public/pages/technical-status.html loads v198
+PASS public/pages/technical-status.html marks v198 body
+PASS public/pages/tiktok.html loads v198
+PASS public/pages/tiktok.html marks v198 body
+PASS public/pages/universal-builder.html loads v198
+PASS public/pages/universal-builder.html marks v198 body
+PASS public/pages/verify-email.html loads v198
+PASS public/pages/verify-email.html marks v198 body
+PASS public/pages/widget-studio.html loads v198
+PASS public/pages/widget-studio.html marks v198 body
+PASS v198 applies across website shell
+PASS public/assets/js/cfs-nav-v8.js uses real Datenschutz route
+PASS public/assets/js/cfs-nav-v8.js uses real Impressum route
+PASS public/assets/js/cfs-nav-v8.js has no stale privacy route
+PASS public/assets/js/cfs-nav-v8.js has no stale imprint route
+PASS public/assets/js/cfs-ui-v18.js uses real Datenschutz route
+PASS public/assets/js/cfs-ui-v18.js uses real Impressum route
+PASS public/assets/js/cfs-ui-v18.js has no stale privacy route
+PASS public/assets/js/cfs-ui-v18.js has no stale imprint route
+PASS no static references to missing /pages/*.html routes
+PASS GitHub example bridge token stays empty
+
+CFS v198 Professional UI/Technical: 105/105 PASS

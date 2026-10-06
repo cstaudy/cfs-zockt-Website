@@ -1,0 +1,34 @@
+[
+  {
+    "test": "Skip link is keyboard reachable",
+    "pass": true
+  },
+  {
+    "test": "Skip link moves focus to main",
+    "pass": true
+  },
+  {
+    "test": "Widget guide opens with keyboard",
+    "pass": true
+  },
+  {
+    "test": "Mobile navigation opens",
+    "pass": true
+  },
+  {
+    "test": "Account failure is visible",
+    "pass": true
+  },
+  {
+    "test": "Non-admin redirected from admin UI (fixture)",
+    "pass": true
+  },
+  {
+    "test": "AI unavailable is not shown online (503 fixture)",
+    "pass": true
+  },
+  {
+    "test": "Admin terminal help works without AI",
+    "pass": true
+  }
+]

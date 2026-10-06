@@ -1774,6 +1774,7 @@
     const primary = [
       byPath("/pages/dashboard.html"),
       byPath("/pages/widget-studio.html"),
+      byPath("/pages/universal-builder.html"),
       byPath("/pages/stream-studio.html"),
       byPath("/pages/shop.html"),
       byPath("/pages/account.html")
@@ -1866,6 +1867,7 @@
     [
       byPath("/pages/dashboard.html"),
       byPath("/pages/widget-studio.html"),
+      byPath("/pages/universal-builder.html"),
       byPath("/pages/stream-studio.html"),
       byPath("/pages/shop.html"),
       byPath("/pages/account.html")
@@ -1896,7 +1898,7 @@
     const settings = byPath("/pages/settings.html");
     const support = byPath("/pages/support.html");
 
-    [setup,settings,support].filter(Boolean).forEach(link => {
+    [setup,settings,byPath("/pages/cfs-ai.html"),byPath("/pages/admin.html"),support].filter(Boolean).forEach(link => {
       link.classList.add("cfs-sidebar-secondary");
       aside.appendChild(link);
     });
@@ -3234,14 +3236,14 @@
       if (!dialog.hasAttribute("tabindex")) dialog.setAttribute("tabindex","-1");
       if (modal) dialog.setAttribute("aria-modal","true");
 
-      if (!dialog.hidden) activateTrap(dialog);
+      if (!dialog.closest("[hidden], [aria-hidden=\"true\"]") && dialog.getClientRects().length > 0 && getComputedStyle(dialog).visibility !== "hidden") activateTrap(dialog);
       else deactivateTrap(dialog);
     };
 
     sync();
 
     const rootObserver = new MutationObserver(sync);
-    rootObserver.observe(document.body,{subtree:true,childList:true});
+    rootObserver.observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:["hidden","aria-hidden"]});
 
     const attachObserver = () => {
       const dialog = document.querySelector(selector);

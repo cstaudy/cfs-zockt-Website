@@ -1,3 +1,5 @@
+> Aktuelles Designupdate: [DESIGN_V206.md](DESIGN_V206.md) enthält Übernahmehinweise, Prüfungen und offene Punkte. Frühere v205-Funktionsbeschreibungen sind kein Live-Testnachweis.
+
 # cfs-zockt v198 Professional UI + CFS AI
 
 Bereinigter aktiver Website-Main.
@@ -63,6 +65,14 @@ Windows-Build:
 1. `BUILD-CFS-ADMIN-WINDOWS.cmd` starten.
 2. Der Installer wird unter `admin-desktop/dist/` erzeugt.
 3. Die App öffnet `/pages/admin.html` und kann den lokalen CFS-AI-Bridge-Service starten bzw. dessen Status prüfen.
+
+## v205 · Creator-Bundle-Shop
+
+- Der öffentliche Creator Shop zeigt nur noch eigene Universal-Builder-Bundles.
+- Der Bundle-Umwandler erzeugt daraus editierbare Widgets/Overlays und verknüpft die passenden Creator-Tools.
+- Standard-/Demo-Produkte bleiben nur für alte interne Installationsrouten kompatibel; sie werden nicht mehr im Shop-Katalog angezeigt.
+- Admin-Zugriff wird ausschließlich über `CFS_ADMIN_EMAILS` und den verifizierten Website-Login vergeben. Dafür die exakte Login-E-Mail kommasepariert in der Server-Konfiguration eintragen.
+- CFS AI bleibt ein separater Dienst: `CFS_AI_ENABLED=true` plus konfigurierter Direct-/Bridge-Service und Secret sind für den Live-Betrieb erforderlich.
 
 ## v199 · Beta & Compact Studio
 

@@ -1,18 +1,18 @@
 /* cfs_zockt · v197 unified design system */
 :root{
-  --cfs197-bg:#020812;
+  --cfs197-bg:var(--cfs198-bg);
   --cfs197-bg-soft:#05101c;
-  --cfs197-panel:#071522;
-  --cfs197-panel-2:#0a1b2b;
-  --cfs197-line:rgba(76,162,221,.24);
-  --cfs197-line-strong:rgba(39,208,255,.42);
-  --cfs197-text:#f6faff;
-  --cfs197-muted:#91a9bd;
-  --cfs197-blue:#1595ff;
-  --cfs197-cyan:#28d6ff;
-  --cfs197-ok:#4bdfa0;
-  --cfs197-warn:#ffd071;
-  --cfs197-danger:#ff7d93;
+  --cfs197-panel:var(--cfs198-surface-2);
+  --cfs197-panel-2:var(--cfs198-surface-3);
+  --cfs197-line:var(--cfs198-line);
+  --cfs197-line-strong:var(--cfs198-line-strong);
+  --cfs197-text:var(--cfs198-text);
+  --cfs197-muted:var(--cfs198-muted);
+  --cfs197-blue:var(--cfs198-primary);
+  --cfs197-cyan:var(--cfs198-accent);
+  --cfs197-ok:var(--cfs198-success);
+  --cfs197-warn:var(--cfs198-warning);
+  --cfs197-danger:var(--cfs198-danger);
   --cfs197-radius-sm:10px;
   --cfs197-radius:14px;
   --cfs197-radius-lg:20px;
@@ -168,7 +168,7 @@ body[data-cfs-brand-v197].cfs-ai-page .cfs-ai-panel{
 }
 
 /* Admin route gets a distinct but related accent. */
-body[data-cfs-brand-v197].cfs-admin-hub-page{--cfs197-blue:#19a1ff;--cfs197-cyan:#53e1ff}
+body[data-cfs-brand-v197].cfs-admin-hub-page{--cfs197-blue:var(--cfs198-primary);--cfs197-cyan:var(--cfs198-accent)}
 
 @media(max-width:820px){
   body[data-cfs-brand-v197] .cfs-brand-wordmark{width:38px!important;height:38px!important;flex-basis:38px!important}

@@ -2,13 +2,6 @@
   "use strict";
   if (location.pathname.toLowerCase() !== "/pages/dashboard.html") return;
 
-  function ensureStyleLast() {
-    const link = document.querySelector('link[data-cfs-dashboard-neon]');
-    if (link && link.parentNode === document.head && document.head.lastElementChild !== link) {
-      document.head.appendChild(link);
-    }
-  }
-
   function cookieValue(name) {
     const prefix = `${name}=`;
     return document.cookie.split(";").map(part => part.trim()).find(part => part.startsWith(prefix))?.slice(prefix.length) || "";
@@ -98,7 +91,7 @@
 
   function apply() {
     document.body.classList.add("cfs-dashboard-neon-v128", "cfs-dashboard-v166-ready");
-    ensureStyleLast();
+    // Shared brand and suite styles own the cascade; retain live-status behavior.
     initPublicLiveControl();
     initDiagnosticsLabel();
   }

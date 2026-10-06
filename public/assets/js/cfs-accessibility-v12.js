@@ -171,14 +171,14 @@
       if (!dialog.hasAttribute("tabindex")) dialog.setAttribute("tabindex","-1");
       if (modal) dialog.setAttribute("aria-modal","true");
 
-      if (!dialog.hidden) activateTrap(dialog);
+      if (!dialog.closest("[hidden], [aria-hidden=\"true\"]") && dialog.getClientRects().length > 0 && getComputedStyle(dialog).visibility !== "hidden") activateTrap(dialog);
       else deactivateTrap(dialog);
     };
 
     sync();
 
     const rootObserver = new MutationObserver(sync);
-    rootObserver.observe(document.body,{subtree:true,childList:true});
+    rootObserver.observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:["hidden","aria-hidden"]});
 
     const attachObserver = () => {
       const dialog = document.querySelector(selector);

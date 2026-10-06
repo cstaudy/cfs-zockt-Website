@@ -43,7 +43,30 @@ const CFS = {
   },
 
   async requireAuth() {
-    const data = await this.me();
+    let data;
+    try { data = await this.me(); }
+    catch (error) {
+      // A failed account check must not look like an empty, connected workspace.
+      const main = document.querySelector("main");
+      if (main && !document.getElementById("cfsAccountLoadError")) {
+        const notice = document.createElement("section");
+        notice.id = "cfsAccountLoadError";
+        notice.className = "notice cfs-account-load-error";
+        notice.setAttribute("role", "alert");
+        const title = document.createElement("strong");
+        title.textContent = "Workspace konnte nicht geladen werden";
+        const message = document.createElement("p");
+        message.textContent = "Die Kontoprüfung ist derzeit nicht erreichbar. Verbindungen und gespeicherte Inhalte konnten nicht geprüft werden.";
+        const retry = document.createElement("button");
+        retry.type = "button";
+        retry.className = "btn";
+        retry.textContent = "Erneut versuchen";
+        retry.addEventListener("click", () => location.reload());
+        notice.append(title, message, retry);
+        main.prepend(notice);
+      }
+      return null;
+    }
     if (!data?.authenticated || !data?.account) {
       location.replace("/pages/login.html");
       return null;
@@ -357,9 +380,9 @@ function initAccessibilityBaseline() {
   const main = document.querySelector("main");
   if (main) {
     if (!main.id) main.id = "main-content";
-    if (!document.querySelector(".skip-link")) {
+    if (!document.querySelector(".skip-link, .cfs-skip-link")) {
       const skip = document.createElement("a");
-      skip.className = "skip-link";
+      skip.className = "skip-link cfs-skip-link";
       skip.href = `#${main.id}`;
       skip.textContent = "Zum Hauptinhalt springen";
       document.body.prepend(skip);

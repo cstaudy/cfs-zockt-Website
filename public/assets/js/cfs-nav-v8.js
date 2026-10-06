@@ -198,6 +198,7 @@
     const primary = [
       byPath("/pages/dashboard.html"),
       byPath("/pages/widget-studio.html"),
+      byPath("/pages/universal-builder.html"),
       byPath("/pages/stream-studio.html"),
       byPath("/pages/shop.html"),
       byPath("/pages/account.html")
@@ -290,6 +291,7 @@
     [
       byPath("/pages/dashboard.html"),
       byPath("/pages/widget-studio.html"),
+      byPath("/pages/universal-builder.html"),
       byPath("/pages/stream-studio.html"),
       byPath("/pages/shop.html"),
       byPath("/pages/account.html")
@@ -320,7 +322,7 @@
     const settings = byPath("/pages/settings.html");
     const support = byPath("/pages/support.html");
 
-    [setup,settings,support].filter(Boolean).forEach(link => {
+    [setup,settings,byPath("/pages/cfs-ai.html"),byPath("/pages/admin.html"),support].filter(Boolean).forEach(link => {
       link.classList.add("cfs-sidebar-secondary");
       aside.appendChild(link);
     });

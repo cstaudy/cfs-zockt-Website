@@ -1,0 +1,19 @@
+CFS ZOCKT · V205 BUNDLE SHOP UPDATE
+
+Umgesetzt
+- Öffentlicher Creator Shop zeigt ausschließlich eigene Universal-Builder-Bundles.
+- Standard-/Demo-Produkte werden nicht gelöscht, aber aus dem öffentlichen Katalog entfernt.
+- Bundles sind nach Bundles, Widgets, Overlays und Tools filterbar.
+- Der Bundle-Umwandler ist im Shop und im Widget Studio erreichbar.
+- POST /api/creator/shop/bundles/:id/convert erzeugt editierbare Entwürfe, bleibt idempotent und prüft Provider, Plan, Scopes und Widget-Limits.
+- AI-Status zeigt die echte Gateway-/Service-Situation. Der externe AI-Service muss separat aktiviert und erreichbar sein.
+- Admin bleibt E-Mail-allowlisted. CFS_ADMIN_EMAILS benötigt die exakte Login-E-Mail; bei aktivierter Verifikation muss sie bestätigt sein.
+- Admin-Übersicht ist in fünf Arbeitskategorien gegliedert und enthält ein sicheres Status-Terminal mit help, status, ai, bridge, summary und clear.
+
+Geprüft
+- npm run check:v203: 18/18 PASS
+- npm run check:bundle-shop-v205: 11/11 PASS
+- npm run check:bundle-shop-v205 nach Admin-Terminal-Erweiterung: 13/13 PASS
+- CFS AI gateway/integration/bridge/live-bridge v196: PASS
+- v198 UI/Technical: 105/105 PASS
+- JavaScript- und Server-Syntax: PASS

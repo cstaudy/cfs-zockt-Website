@@ -117,7 +117,7 @@ body.cfs-ui-v3 .site-header{
 body.cfs-ui-v3 .header-inner{min-height:72px;gap:20px}
 body.cfs-ui-v3 .brand-logo-link,
 body.cfs-ui-v3 .creator-brand{width:auto;min-width:0}
-body.cfs-ui-v3 .creator-brand>span:not(.cfs-brand-copy){display:none!important}
+body.cfs-ui-v3 .creator-brand>span:not(.cfs-brand-copy):not(.cfs-brand-wordmark){display:none!important}
 
 body.cfs-ui-v3 .nav{gap:3px}
 body.cfs-ui-v3 .nav a,
