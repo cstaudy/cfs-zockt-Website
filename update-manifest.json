@@ -1,0 +1,545 @@
+{
+  "release": "3.20.43",
+  "name": "Cut Studio: Vorschau und Exportablauf",
+  "base_version": "3.20.39 / 3.20.40 / 3.20.41 / 3.20.42",
+  "database_schema": 80,
+  "files": [
+    {
+      "path": "STREAM-MAKER-CHANGES.txt",
+      "sha256": "c3318440db8fb69bc9a158829a36705be2e1aec936d5cea2ca5082e8bc9934cc",
+      "accepted_previous_sha256": [
+        "c3318440db8fb69bc9a158829a36705be2e1aec936d5cea2ca5082e8bc9934cc"
+      ],
+      "may_be_absent": true
+    },
+    {
+      "path": "STREAM-MAKER-START.md",
+      "sha256": "0df7128774ca5b043dc93127be74bbe6328a65c17932c937201447163d3096cd",
+      "accepted_previous_sha256": [
+        "0df7128774ca5b043dc93127be74bbe6328a65c17932c937201447163d3096cd"
+      ],
+      "may_be_absent": true
+    },
+    {
+      "path": "STREAM-MAKER-VORSCHAU.html",
+      "sha256": "49355e2abd70b8bc506bafa632897bc91bd34931bab8099d1930dfe162fc418d",
+      "accepted_previous_sha256": [
+        "49355e2abd70b8bc506bafa632897bc91bd34931bab8099d1930dfe162fc418d"
+      ],
+      "may_be_absent": true
+    },
+    {
+      "path": "UPDATE-3.20.41.md",
+      "sha256": "fe31b86900cb86901fe13ee7017119a56197e5043cde05a8e48f3fa1838aafbc",
+      "accepted_previous_sha256": [
+        "fe31b86900cb86901fe13ee7017119a56197e5043cde05a8e48f3fa1838aafbc"
+      ],
+      "may_be_absent": true
+    },
+    {
+      "path": "UPDATE-3.20.42.md",
+      "sha256": "804a6ad4697b798049cec98496a12e0d9f57dacbbccde628cf06479df1462e51",
+      "accepted_previous_sha256": [
+        "804a6ad4697b798049cec98496a12e0d9f57dacbbccde628cf06479df1462e51"
+      ],
+      "may_be_absent": true
+    },
+    {
+      "path": "UPDATE-3.20.43.md",
+      "sha256": "c7c2767e28f82262869752581fa0837709ccccf2cc03d1201f396854bf6bf1f9",
+      "accepted_previous_sha256": [],
+      "may_be_absent": true
+    },
+    {
+      "path": "launcher/main.js",
+      "sha256": "1e1606e75f8c2022a045fbd9028f99a648046df7512025b1f771081ad512d3b0",
+      "accepted_previous_sha256": [
+        "3015fb4848ef70a8c5ad48327dd057c650107565348b8e78bb8bb035a035dc55"
+      ],
+      "may_be_absent": false
+    },
+    {
+      "path": "launcher/package-lock.json",
+      "sha256": "eabf9333df466b445a4dbc44f5a5622472fa11fd620ffc80fdf3f96bd8ba552d",
+      "accepted_previous_sha256": [
+        "f737de07e47f4b05170b66e57e752218249835be83a8219080ec6e012d6cfecc"
+      ],
+      "may_be_absent": false
+    },
+    {
+      "path": "launcher/package.json",
+      "sha256": "4f03b0a539ec04352fbcb43e246010059d4f05bbbc0416eaab01622a62cb9412",
+      "accepted_previous_sha256": [
+        "5330bf175755b444fb288fb01a9ecf909690380a85df31c6a9c702d6f7c9a6ad"
+      ],
+      "may_be_absent": false
+    },
+    {
+      "path": "launcher/preload.js",
+      "sha256": "6dc17ede72d1a424c53c465f401d53779b448079c0cd71d1e1126d3c7c3d9b3a",
+      "accepted_previous_sha256": [
+        "0ac15c1780ff520e8d97558b6741da569b7daf64cac6cc6a6a6834cc960c453c"
+      ],
+      "may_be_absent": false
+    },
+    {
+      "path": "launcher/renderer/app.js",
+      "sha256": "8d31b847b29ab8f2e5c3baf1234a5b75426c361f6f1108ab1c1d75b2d2836f73",
+      "accepted_previous_sha256": [
+        "8d5fc9a8548239e597f1b49ff5118fbfc5be59b34af0be15ed91e94f581f7a84"
+      ],
+      "may_be_absent": false
+    },
+    {
+      "path": "launcher/src/cut-media-engine.js",
+      "sha256": "f93e00bb95958e697ab3ef0af2b8ccf7cdeb54850067e9f09cf06b5823f8cd54",
+      "accepted_previous_sha256": [
+        "113bb8e2d34d5e51f3f82bff5f8e54a345f04c1dd15d05ec6a6bbdb2ebacd844"
+      ],
+      "may_be_absent": false
+    },
+    {
+      "path": "launcher/tools/cut-real-export-test.cjs",
+      "sha256": "f4b071c3ad23b416c6808d42a32c3d9a9e23be34d53851c71b5d03eff3cf8cdb",
+      "accepted_previous_sha256": [
+        "c29348545b3ed5b53726f877cf9c88b4da2ca04fcca99b6c0f31257f0ce2caac"
+      ],
+      "may_be_absent": true
+    },
+    {
+      "path": "lib/database-schema-contract.js",
+      "sha256": "8667cd06c78d28b820d402ee983249fc61889f8d0d172966d408b273d413bbc7",
+      "accepted_previous_sha256": [
+        "8667cd06c78d28b820d402ee983249fc61889f8d0d172966d408b273d413bbc7",
+        "f127e4e09f5401a2c9853809a24de027323962cdba86f9b89011c65864ae84fe"
+      ],
+      "may_be_absent": false
+    },
+    {
+      "path": "lib/stream-maker.js",
+      "sha256": "8e7077622b5270eab79c4f5e5bbdacaa265c3bc75caa73828f51d2232d398722",
+      "accepted_previous_sha256": [
+        "5d49ccff9f851216a35c7691a039a59eb914d01fd65d4e39bd0d158c3018c200",
+        "8e7077622b5270eab79c4f5e5bbdacaa265c3bc75caa73828f51d2232d398722"
+      ],
+      "may_be_absent": true
+    },
+    {
+      "path": "package-lock.json",
+      "sha256": "91c5d01ffcf6dc4a04f4a0b7940f6089a0586987b28c3039e17207d7bc478a6d",
+      "accepted_previous_sha256": [
+        "5caf5d724f689369b7f7f6119e043710f6aa9b6b7f3081f6991ce2abb970ae1f",
+        "b9719efd56af510cdc2f276a0c4960f2bf29344d1c8e186deb31b52e774ab11c",
+        "c00ba2dfa14d5e3d4d0d8cf1cd05676c558db2e4134cf2f14efeb1c4527bff27",
+        "d6ff235fc0c8e87224dd26bb3485cbd75bef38df5e1903ceb3d559eb4caf7c5d"
+      ],
+      "may_be_absent": false
+    },
+    {
+      "path": "package.json",
+      "sha256": "479203df0ebf0fe4723cff1e1e0cb8c3033804a0f2cb021cff713a1d05d697dd",
+      "accepted_previous_sha256": [
+        "053319f4b42610e8416ca1761db525402499995c30bab36e7cdbc0b198b70840",
+        "2e74902213e5dc005635d21f55035d0e645c3481041b47ad4c26b79a1685abd7",
+        "9988e74aa0e58e741e86bdd1eacb263647ae2a38947d0f366b4c5d15ac65683e",
+        "ad08679a1f4c21df48e337f66cf7ce9d083d099bf073386d6f83fe44edced53f",
+        "bb6a6a866f9150206bc3f0da12b127daaf697a6c1ac494c0edd947fa73cbf826"
+      ],
+      "may_be_absent": false
+    },
+    {
+      "path": "public/assets/css/cfs-workspace-v205.css",
+      "sha256": "42f9359c3ebc0d160e27f1ba126967170d6edd3b2cd6cdb1ae3b7d6cb98a396c",
+      "accepted_previous_sha256": [
+        "42f9359c3ebc0d160e27f1ba126967170d6edd3b2cd6cdb1ae3b7d6cb98a396c"
+      ],
+      "may_be_absent": true
+    },
+    {
+      "path": "public/assets/css/cut-local-preview.css",
+      "sha256": "bafd3c9e56d9201fd763f1a23a0104f5f62e34123d3bda2c880841b1f431bd36",
+      "accepted_previous_sha256": [],
+      "may_be_absent": true
+    },
+    {
+      "path": "public/assets/css/stream-maker-output.css",
+      "sha256": "e26a07896e0e09c1de2ff99903fd06b76a79bfe31c1e4892a1aa448145d7b4e2",
+      "accepted_previous_sha256": [
+        "e26a07896e0e09c1de2ff99903fd06b76a79bfe31c1e4892a1aa448145d7b4e2"
+      ],
+      "may_be_absent": true
+    },
+    {
+      "path": "public/assets/css/stream-maker.css",
+      "sha256": "de35dda1ce42634f93a32bc472a6c320f4aa59cfdb2d864657516cc25e9c0478",
+      "accepted_previous_sha256": [
+        "de35dda1ce42634f93a32bc472a6c320f4aa59cfdb2d864657516cc25e9c0478"
+      ],
+      "may_be_absent": true
+    },
+    {
+      "path": "public/assets/js/cfs-guide-journeys.js",
+      "sha256": "e68637080a33b84f4708cb1c471e9e671352d02e58d72bd1b0a41428d69c5842",
+      "accepted_previous_sha256": [
+        "e68637080a33b84f4708cb1c471e9e671352d02e58d72bd1b0a41428d69c5842"
+      ],
+      "may_be_absent": true
+    },
+    {
+      "path": "public/assets/js/cfs-guide-v5.js",
+      "sha256": "7129a7fa7df0c6f82513f551ef0471072cc726465c66a95ae8a8b9a39e6ecc6e",
+      "accepted_previous_sha256": [
+        "07ad90d479ada5a5560a4e1eb610bc21e0c05567cd89b5b8d922cbeb5f523007",
+        "7129a7fa7df0c6f82513f551ef0471072cc726465c66a95ae8a8b9a39e6ecc6e"
+      ],
+      "may_be_absent": false
+    },
+    {
+      "path": "public/assets/js/cfs-workspace-v205.js",
+      "sha256": "bd5447c16e99b28900f4c8e53a8a8b09cfa8966c0f8faf03b43f4e95f0607c3b",
+      "accepted_previous_sha256": [
+        "bd5447c16e99b28900f4c8e53a8a8b09cfa8966c0f8faf03b43f4e95f0607c3b"
+      ],
+      "may_be_absent": true
+    },
+    {
+      "path": "public/assets/js/cut-local-preview.js",
+      "sha256": "302abbc9139eefb24757a7c0359772888deefb5177e4e9632613a4b64d12d43f",
+      "accepted_previous_sha256": [],
+      "may_be_absent": true
+    },
+    {
+      "path": "public/assets/js/cut-studio.js",
+      "sha256": "5e54ab4ea77a33e68d7e2b5d468c79ac04c33c9283a1fda14d663bd8ec85eba0",
+      "accepted_previous_sha256": [
+        "d1bdf9fca65b1feb03ad47b44d4c26c1172727d1a1595cebdaf9ef32d2f8655c"
+      ],
+      "may_be_absent": false
+    },
+    {
+      "path": "public/assets/js/page-system-check.js",
+      "sha256": "faa3d95ee8e2432403bb9e1d981c0af1c5b8ff4096bbbf1a471200e2a2deb510",
+      "accepted_previous_sha256": [
+        "6dc4745c7ae5ee8cfb8a18da4de3e384d9c7bd4437a4fab68df3a16ddc2d7c45",
+        "85011d4f1bacd96a1b526d605699c8a016b775bea4493e345f5d4e4e403179fe",
+        "8af6a664174c962f5472e2ccf72a1677485c74c76eb2a327d34f416042a54b2e",
+        "c74e40004cacbd5685564d9ca3f7fe4a1d8e527c561e14135ee2312b8a826593",
+        "db48c5b1d14052cc613f1cc06b1147c758cd5d223b104bbb429ca9a4719e4b7d"
+      ],
+      "may_be_absent": false
+    },
+    {
+      "path": "public/assets/js/stream-maker-core.js",
+      "sha256": "6c5f1b413c56665e931d5e734b4a1700dfd1006e8b1bef12c35f61c05d22ec36",
+      "accepted_previous_sha256": [
+        "177a40da4c5504a0fda09e37c89956c3f6536da2cb7e17fc069411797b68faa0",
+        "6c5f1b413c56665e931d5e734b4a1700dfd1006e8b1bef12c35f61c05d22ec36"
+      ],
+      "may_be_absent": true
+    },
+    {
+      "path": "public/assets/js/stream-maker-drop.js",
+      "sha256": "8212d1717ce0f279e508bb80c76f745ee2ace9e55a0a5984c9d247b70479d1b4",
+      "accepted_previous_sha256": [
+        "8212d1717ce0f279e508bb80c76f745ee2ace9e55a0a5984c9d247b70479d1b4"
+      ],
+      "may_be_absent": true
+    },
+    {
+      "path": "public/assets/js/stream-maker-output.js",
+      "sha256": "5a6bce1f068fbaa7d673c8ea03f0e0747fa36a20794c1cdc5b8510ea756bb1f2",
+      "accepted_previous_sha256": [
+        "59071101dcd5902ba81b3397c43b0724d6a6717050f2476bf96e36d0a2a33566",
+        "5a6bce1f068fbaa7d673c8ea03f0e0747fa36a20794c1cdc5b8510ea756bb1f2"
+      ],
+      "may_be_absent": true
+    },
+    {
+      "path": "public/assets/js/stream-maker-shop.js",
+      "sha256": "93b6fb328374bb68dc90163ba34f9f95bffd834bc2b6d9a8eec435b474eb7157",
+      "accepted_previous_sha256": [
+        "93b6fb328374bb68dc90163ba34f9f95bffd834bc2b6d9a8eec435b474eb7157"
+      ],
+      "may_be_absent": true
+    },
+    {
+      "path": "public/assets/js/stream-maker.js",
+      "sha256": "7f1510ff0eabe43c0f590101bedb3e818f9fc0d204fe2269bc5d7976f5b6a00a",
+      "accepted_previous_sha256": [
+        "7f1510ff0eabe43c0f590101bedb3e818f9fc0d204fe2269bc5d7976f5b6a00a",
+        "b75f0bd95b1ed0cf18a5a370351d33871469053c990aabdb4c6e6e7208a5227d"
+      ],
+      "may_be_absent": true
+    },
+    {
+      "path": "public/pages/account.html",
+      "sha256": "2c6b487da3bf320a4e58a4fa235572af97d5b39c519545c4c79ead5b1ea4c15e",
+      "accepted_previous_sha256": [
+        "2c6b487da3bf320a4e58a4fa235572af97d5b39c519545c4c79ead5b1ea4c15e",
+        "4d27a1b1b9982933bfcff8922e63be802a85a669fcb8b04f026e4a1d5624628e"
+      ],
+      "may_be_absent": false
+    },
+    {
+      "path": "public/pages/admin.html",
+      "sha256": "4b6221abd675e3ea443e9f44fe51c89513917ee3480b6288d4eb51b71eba96a6",
+      "accepted_previous_sha256": [
+        "4b6221abd675e3ea443e9f44fe51c89513917ee3480b6288d4eb51b71eba96a6",
+        "e8872573e6b3221aa5f780c285ce055b4288dee55187bc79cb58855d15b8f8d1"
+      ],
+      "may_be_absent": false
+    },
+    {
+      "path": "public/pages/audio-studio.html",
+      "sha256": "a028b8b9b46b5d9f181dfea60e3a95f937cde551a1c7ac666e29ccabf8862090",
+      "accepted_previous_sha256": [
+        "30e17b6d49cf7d5c21cacbb6463d2834572d91a6b9d6a2d35d5ada97f6496c7d",
+        "a028b8b9b46b5d9f181dfea60e3a95f937cde551a1c7ac666e29ccabf8862090"
+      ],
+      "may_be_absent": false
+    },
+    {
+      "path": "public/pages/cfs-ai.html",
+      "sha256": "5cafb61960a1032d54cefb47d10b847ec49c977b4f303d3e3c924ca200056fc9",
+      "accepted_previous_sha256": [
+        "5cafb61960a1032d54cefb47d10b847ec49c977b4f303d3e3c924ca200056fc9",
+        "e012d72b05e5b02f888af77451b81c0fe7215442b968ac89a2b7bde753fa9469"
+      ],
+      "may_be_absent": false
+    },
+    {
+      "path": "public/pages/cut-studio.html",
+      "sha256": "a5fcdb8b9f10693018ea5dc67cfbbe5f75af42391fb748a7272ce0b25f2395fe",
+      "accepted_previous_sha256": [
+        "e017601fbe7f20d394c0d87dc5c3adffdc87f8b03b451a3462969a2f0a601ff5",
+        "f5ffea0c5019838b31ecf09b3fe6e26b09e86cde619e5171bd7b080ea0b4f2f9"
+      ],
+      "may_be_absent": false
+    },
+    {
+      "path": "public/pages/dashboard.html",
+      "sha256": "d4f733c1795f74a5d53c4e51b9dab2fc78749fdaf69a185ec1c16eec045c3c39",
+      "accepted_previous_sha256": [
+        "c436c734199716a66ee837ada0028b87a5d8d1be515a32df15f44c1c247955f3",
+        "d4f733c1795f74a5d53c4e51b9dab2fc78749fdaf69a185ec1c16eec045c3c39",
+        "e439a3d4a22e68a8e79c481b327636fdac385e06ed200f92ff3af7995594996e"
+      ],
+      "may_be_absent": false
+    },
+    {
+      "path": "public/pages/editor.html",
+      "sha256": "67f130f93bbdf435547b570cb17dd22cee6736aa4bbadfa41ece9282229d26f2",
+      "accepted_previous_sha256": [
+        "230b3f0d8eaaea3a21f3180b1bbd523234cee14e68f2543502ba3ececd855284",
+        "67f130f93bbdf435547b570cb17dd22cee6736aa4bbadfa41ece9282229d26f2"
+      ],
+      "may_be_absent": false
+    },
+    {
+      "path": "public/pages/games.html",
+      "sha256": "16d62c066fda40ba8a5a58f76035eed2b8aaaac7c5e3474c1d4dc42800bd9e32",
+      "accepted_previous_sha256": [
+        "16d62c066fda40ba8a5a58f76035eed2b8aaaac7c5e3474c1d4dc42800bd9e32",
+        "ee804f17ed16bada0f865f9cd0042d77600f9cf1bd350ad8fa7591560eb010f8"
+      ],
+      "may_be_absent": false
+    },
+    {
+      "path": "public/pages/integrations.html",
+      "sha256": "faadb01607b590d7daef55dbb0417fef66a33e47cf8a441697d9112141a4bf21",
+      "accepted_previous_sha256": [
+        "458bfe281e6d7d859e9f9aa18ec8f8c71b77fe808dcbc44cb047e8db72b8a85b",
+        "faadb01607b590d7daef55dbb0417fef66a33e47cf8a441697d9112141a4bf21"
+      ],
+      "may_be_absent": false
+    },
+    {
+      "path": "public/pages/launcher-connect.html",
+      "sha256": "5367bbd72c028031696c63059f0f6ab56de7b4144d034d405d74c538cf8ca651",
+      "accepted_previous_sha256": [
+        "5367bbd72c028031696c63059f0f6ab56de7b4144d034d405d74c538cf8ca651",
+        "b688130f020575d311e7183976e684fbcd49abf1614e95eace14bc172b1424bd"
+      ],
+      "may_be_absent": false
+    },
+    {
+      "path": "public/pages/launcher.html",
+      "sha256": "225f27f5daf0599ec23fa4dbcd20b95f8d892bb0638ddf92f1098fe4f6d4dd6e",
+      "accepted_previous_sha256": [
+        "225f27f5daf0599ec23fa4dbcd20b95f8d892bb0638ddf92f1098fe4f6d4dd6e",
+        "e16381c6d337d781fce5e32cb352e6176b80879bb0330ab48ac3d4e4c401db2a"
+      ],
+      "may_be_absent": false
+    },
+    {
+      "path": "public/pages/nexus.html",
+      "sha256": "7ddfa3fdd6f7c43c6fc9aa1cd649d069b94121ae6395bdba54e9970e193417d9",
+      "accepted_previous_sha256": [
+        "6a536faf47449427ab976c007a9b4503e2451e2095bbcafbfd102e3ca0a00ea9",
+        "7ddfa3fdd6f7c43c6fc9aa1cd649d069b94121ae6395bdba54e9970e193417d9"
+      ],
+      "may_be_absent": false
+    },
+    {
+      "path": "public/pages/scene-studio.html",
+      "sha256": "d6905f73b81bef24831fc6fe50cf0372e46a304c4b169a9479ec1c33b95b1b71",
+      "accepted_previous_sha256": [
+        "c49f08b7d146d169c8bcda84c080f97908c9f8fb098fb5f8bfde9230cd30b2a7",
+        "d6905f73b81bef24831fc6fe50cf0372e46a304c4b169a9479ec1c33b95b1b71"
+      ],
+      "may_be_absent": false
+    },
+    {
+      "path": "public/pages/settings.html",
+      "sha256": "9f0a02ff04816ac772e00f18738549d9399bbbb7631c74944e6e075e48e48229",
+      "accepted_previous_sha256": [
+        "454c4763c6bda8ae0eff135f955fa3f76bf2fc76d9c7df3a4fb860fa1ce50c4f",
+        "9f0a02ff04816ac772e00f18738549d9399bbbb7631c74944e6e075e48e48229"
+      ],
+      "may_be_absent": false
+    },
+    {
+      "path": "public/pages/setup.html",
+      "sha256": "bee2ee4bfcbc14947f8cf420e6761308cb9eb741c65dec011a202fd5894c6fb5",
+      "accepted_previous_sha256": [
+        "52fa58b17d545e494e009591db299f2d1bd67afcb4a55544a3f5a297b9019560",
+        "bee2ee4bfcbc14947f8cf420e6761308cb9eb741c65dec011a202fd5894c6fb5"
+      ],
+      "may_be_absent": false
+    },
+    {
+      "path": "public/pages/shop-product.html",
+      "sha256": "957c5e17c59b8454bb8518d25badade6e7d5025676854e263cfcc00ff74c8c7d",
+      "accepted_previous_sha256": [
+        "7e30c418444e0b4cc0b56997a6d004058abe4d18659d14c1f86edade2371e7cf",
+        "957c5e17c59b8454bb8518d25badade6e7d5025676854e263cfcc00ff74c8c7d"
+      ],
+      "may_be_absent": false
+    },
+    {
+      "path": "public/pages/shop.html",
+      "sha256": "9bcd9b868f975e67ab616689b9b0d4f0f8ec587c1eb7998d2b774d83bd509293",
+      "accepted_previous_sha256": [
+        "6af4207e4e894c4bbced393bf07297ac0bb4246f7fbdac5b9b4633b2e9c7b3c2",
+        "7c8b8ec34c0f3a0320ed30168074a0b74c7353b85a85b75c6f535b943d835683",
+        "9bcd9b868f975e67ab616689b9b0d4f0f8ec587c1eb7998d2b774d83bd509293"
+      ],
+      "may_be_absent": false
+    },
+    {
+      "path": "public/pages/stream-maker.html",
+      "sha256": "1487bc66df7360390e840b5ae195dccd8bea0322379b13ace8e93454d5718f65",
+      "accepted_previous_sha256": [
+        "0d828bf948ae565b4f26dc2a89ea1de4afa8fda14585716177d4a48fa3bfa00a",
+        "1487bc66df7360390e840b5ae195dccd8bea0322379b13ace8e93454d5718f65"
+      ],
+      "may_be_absent": true
+    },
+    {
+      "path": "public/pages/stream-studio.html",
+      "sha256": "c03981960774a8c802738038a881d0b8ccbe80b5cf55f153659ef63db6aff8ac",
+      "accepted_previous_sha256": [
+        "142e09b61f71efcea4cc6fe97559e81035a61d20fc998d82c00d3793fe7aa423",
+        "c03981960774a8c802738038a881d0b8ccbe80b5cf55f153659ef63db6aff8ac"
+      ],
+      "may_be_absent": false
+    },
+    {
+      "path": "public/pages/technical-status.html",
+      "sha256": "0274d90d4995e55a1b725e28f46e63a723283791d74b0834591071faa26f0d37",
+      "accepted_previous_sha256": [
+        "0274d90d4995e55a1b725e28f46e63a723283791d74b0834591071faa26f0d37",
+        "a252b3d5b5b4dbe16882311b38e8d802787860ba76f9acdb2d7b8d2eb3104454"
+      ],
+      "may_be_absent": false
+    },
+    {
+      "path": "public/pages/tiktok.html",
+      "sha256": "36806a75948a35e61a9eca0640da89eadefafeaa32a0614f7837b53e98d15400",
+      "accepted_previous_sha256": [
+        "36806a75948a35e61a9eca0640da89eadefafeaa32a0614f7837b53e98d15400",
+        "45e13bb755977974c3f59918331f6f8fde1e71dfdae6af1bb7390dd28f764dac"
+      ],
+      "may_be_absent": false
+    },
+    {
+      "path": "public/pages/universal-builder.html",
+      "sha256": "88bc6af124f18e65d8d11cbf9a3c8e4c27cc49a16aa00e11d5536a035c99e864",
+      "accepted_previous_sha256": [
+        "32383c9a1e9c316ecb8953bb03cc604dc9d7f33d9acd063497cc74843d1a7779",
+        "88bc6af124f18e65d8d11cbf9a3c8e4c27cc49a16aa00e11d5536a035c99e864",
+        "abda6f43c4078c6747350e806da62e5f8cfcdf778e6320c9846f9a887dab03a3"
+      ],
+      "may_be_absent": false
+    },
+    {
+      "path": "public/pages/widget-studio.html",
+      "sha256": "7c08196177c788d65ea20d6444b7c91c3d7d6bdb5e01c42402c1a2a807c7f0fd",
+      "accepted_previous_sha256": [
+        "134de7b7877d1701fa58d1e8cc202061ed4b3c6e97d52e3b4090eefe0de44e20",
+        "7c08196177c788d65ea20d6444b7c91c3d7d6bdb5e01c42402c1a2a807c7f0fd",
+        "c16f66580731de7c1f32f83f1182f23b8b00d3c3e132255557e7ff974be36b2d"
+      ],
+      "may_be_absent": false
+    },
+    {
+      "path": "public/widgets/stream-maker.html",
+      "sha256": "b9cb74626c236d757e6f0f6e3bb3266699e107801f88a64ae0cfaa0708e1d495",
+      "accepted_previous_sha256": [
+        "b9cb74626c236d757e6f0f6e3bb3266699e107801f88a64ae0cfaa0708e1d495"
+      ],
+      "may_be_absent": true
+    },
+    {
+      "path": "server.js",
+      "sha256": "90448dd1842f5fbade614c77304df65d2826f1688a243630ec2cce65b8fb4b36",
+      "accepted_previous_sha256": [
+        "0c207bf2a1e54a2d1575c46760f6024b330b2515bc36592984fba71c7fe7c4b7",
+        "4003825a5c41d0bfb7f5512fff84370a9a74c707885e7cf97868790591660cba",
+        "87a34ea5f8e20bbe4a4338e73ee68c293f909501b129d30be28286bb6c6d5af0",
+        "bb120a86875c7ac54be6e12bd5fc767808a5d4fc94fc36777ea23b87d5120f4b",
+        "d04fd30e7e142ec220119517ffe58dfb0a6893a1c81ade01fefe2d3cc1ade1e8"
+      ],
+      "may_be_absent": false
+    },
+    {
+      "path": "tools/cut-export-workflow-test.cjs",
+      "sha256": "5f86af283dff485bef5f6b4e48cadaac3135924e8f1f732441272b0c0cf3c87d",
+      "accepted_previous_sha256": [],
+      "may_be_absent": true
+    },
+    {
+      "path": "tools/stream-maker-drop-test.cjs",
+      "sha256": "a013b87567e23bcc8f9e2b93163dd6d27f656c8fa88da97c4400e86e7fce8877",
+      "accepted_previous_sha256": [
+        "a013b87567e23bcc8f9e2b93163dd6d27f656c8fa88da97c4400e86e7fce8877"
+      ],
+      "may_be_absent": true
+    },
+    {
+      "path": "tools/stream-maker-lifecycle-test.cjs",
+      "sha256": "0394fe0a50a12020eafa6d86f9f0de370af7c5c380f2cb6a933bf4b628cc1974",
+      "accepted_previous_sha256": [
+        "0394fe0a50a12020eafa6d86f9f0de370af7c5c380f2cb6a933bf4b628cc1974"
+      ],
+      "may_be_absent": true
+    },
+    {
+      "path": "tools/stream-maker-test.cjs",
+      "sha256": "310beeca0cd261b2bdd18039351f5d465027a58ade4903535fd18f1b400f86ae",
+      "accepted_previous_sha256": [
+        "310beeca0cd261b2bdd18039351f5d465027a58ade4903535fd18f1b400f86ae",
+        "6bc1618b0dfe5809c624b7106e0bb5a96c45787acf6eec146744d2583554dae7"
+      ],
+      "may_be_absent": true
+    },
+    {
+      "path": "tools/workspace-guide-test.cjs",
+      "sha256": "725be643bf70a5c300455595f4c17f5d683d14424440340926ad7674fe8b68e7",
+      "accepted_previous_sha256": [
+        "725be643bf70a5c300455595f4c17f5d683d14424440340926ad7674fe8b68e7"
+      ],
+      "may_be_absent": true
+    }
+  ]
+}
