@@ -18,9 +18,12 @@
   <link rel="apple-touch-icon" href="/assets/img/apple-touch-icon.png">
   <link rel="stylesheet" href="/assets/css/cfs-brand-v198.css" data-cfs-brand-v198>
   <link rel="stylesheet" href="/assets/css/cfs-product-v199.css" data-cfs-product-v199>
-<link rel="stylesheet" href="/assets/css/cfs-suite-v203.css" data-cfs-suite-v203>
+  <link rel="stylesheet" href="/assets/css/cfs-suite-v203.css" data-cfs-suite-v203>
+<link rel="stylesheet" href="/assets/css/cfs-workspace-v205.css">
+<link rel="stylesheet" href="/assets/css/cfs-guide-v5.css">
+<link rel="stylesheet" href="/assets/css/cfs-help-v6.css">
 </head>
-<body data-cfs-suite-v203="1" data-cfs-product-v199="1" data-cfs-brand-v192="1" class="creator-workspace" data-cfs-brand-v198="1">
+<body data-cfs-product-v199="1" data-cfs-brand-v192="1" data-cfs-suite-v203="1" class="creator-workspace" data-cfs-brand-v198="1">
 <header class="site-header creator-site-header">
   <div class="container header-inner creator-header-inner">
     <a class="creator-brand" href="/pages/dashboard.html" aria-label="cfs_zockt Creator Suite Dashboard">
@@ -31,6 +34,9 @@
     <nav class="nav creator-nav" data-nav data-creator-nav id="mainNav" aria-label="Creator Suite Navigation">
       <a data-creator-link href="/pages/dashboard.html">DASHBOARD</a>
       <a data-creator-link href="/pages/widget-studio.html">WIDGETS</a>
+      <a data-creator-link href="/pages/stream-maker.html">MAKER</a>
+    <a data-creator-link href="/pages/universal-builder.html">BUILDER</a>
+      <a data-creator-link href="/pages/shop.html">SHOP</a>
       <a data-creator-link href="/pages/stream-studio.html">STREAM</a>
       <a data-creator-link href="/pages/tiktok.html">TIKTOK</a>
       <a data-creator-link href="/pages/integrations.html">INTEGRATIONEN</a>
@@ -61,12 +67,13 @@
 <main class="container creator-dashboard-v166">
   <section class="beginner-hero creator-dashboard-hero">
     <div class="eyebrow">CREATOR SUITE</div>
-    <h1>Dein Creator <span>Dashboard</span></h1>
+    <h1>DEIN CREATOR<br><span>DASHBOARD.</span></h1>
     <p id="dashboardGreeting" class="creator-dashboard-greeting">Willkommen zurück. Dein Workspace wird geladen.</p>
     <p>Starte mit dem nächsten Schritt oder öffne direkt dein wichtigstes Tool.</p>
     <div class="access-badges" id="accessBadges"></div>
   </section>
 
+  <aside class="cfs-workspace-note"><strong>Was möchtest du heute erreichen?</strong> Wähle unten eine Aufgabe. Der <button type="button" class="btn" data-open-cfs-guide>CFS Guide</button> führt dich durch die Schritte. Weitere Werkzeuge bleiben im Menü erreichbar.</aside>
   <section class="creator-next-step creator-next-step-v166" id="nextStepCard" aria-live="polite">
     <div class="creator-next-step-copy">
       <span>ALS NÄCHSTES</span>
@@ -78,18 +85,15 @@
 
   <section class="creator-dashboard-actions-v166" id="creatorTodayActions" aria-label="Schnellzugriff">
     <div class="creator-dashboard-actions-head-v166">
-      <div><span>HEUTE</span><strong>Direkt weitermachen</strong></div>
+      <div><span>CREATOR WORKSPACE</span><strong>Was möchtest du tun?</strong></div>
       <a href="/pages/account.html">Account &amp; Sicherheit →</a>
     </div>
     <div class="creator-dashboard-actions-grid-v166">
-      <a href="/pages/universal-builder.html"><b>✦</b><div><strong>Bundle-Umwandler</strong><small>Eigene Bundles gestalten und umwandeln</small></div></a>
-      <a href="/pages/stream-studio.html"><b>◉</b><div><strong>Stream Studio</strong><small>Stream vorbereiten oder starten</small></div></a>
-      <a href="/pages/widget-studio.html"><b>▦</b><div><strong>Widget Studio</strong><small>Widgets bauen und veröffentlichen</small></div></a>
-      <a href="/pages/shop.html"><b>◇</b><div><strong>Creator Shop</strong><small>Eigene Bundles umwandeln</small></div></a>
-      <a href="/pages/launcher.html"><b>▣</b><div><strong>Launcher</strong><small>Creator-PC und lokale Tools</small></div></a>
-      <a href="/pages/integrations.html"><b>↗</b><div><strong>Integrationen</strong><small>Twitch, TikTok, YouTube und OBS</small></div></a>
+      <a href="/pages/stream-maker.html?guide=maker"><b>＋</b><div><strong>Eigenes Design erstellen</strong><small>Bild hochladen, Widget gestalten und testen</small></div></a>
+      <a href="/pages/shop.html?guide=shop"><b>◇</b><div><strong>Mit einer Vorlage starten</strong><small>Passendes Design auswählen und anpassen</small></div></a>
+      <a href="/pages/stream-studio.html"><b>◉</b><div><strong>Stream vorbereiten</strong><small>Szenen, Quellen und Ausgabe zusammenstellen</small></div></a>
+      <a href="/pages/cut-studio.html?guide=cut"><b>✂</b><div><strong>Aufnahme zum Clip machen</strong><small>Projekt planen und lokal im Launcher exportieren</small></div></a>
     </div>
-  <p><a href="/pages/widget-studio.html?open=converter">Bild- und Widget-Umwandler öffnen →</a></p>
   </section>
 
   <section class="cfs-public-live-control" id="cfsPublicLiveControl" aria-live="polite">
@@ -176,7 +180,7 @@
         </div>
       </section>
 
-      <section class="section creator-tool-section-v166">
+      <section class="section creator-tool-section-v166"><details class="cfs-workspace-module-list"><summary>Alle Werkzeuge &amp; Berechtigungen anzeigen</summary>
         <div class="section-head">
           <div><div class="eyebrow">MODULE</div><h2>TOOLS &amp; BERECHTIGUNGEN.</h2></div>
           <p>Hier findest du den vollständigen Modulstatus.</p>
@@ -191,7 +195,7 @@
           <summary>ALLE MODULE &amp; BERECHTIGUNGEN</summary>
           <div class="beginner-advanced-body"><div id="moduleGrid" class="tool-grid"></div></div>
         </details>
-      </section>
+      </details></section>
     </div>
   </details>
 
@@ -215,5 +219,6 @@
 <script src="/assets/js/cfs-dashboard-neon-v128.js"></script>
 <script src="/assets/js/cfs-creator-ux-v189.js"></script>
 <script src="/assets/js/cfs-product-v199.js" defer></script>
+<script src="/assets/js/cfs-help-v6.js" defer></script><script src="/assets/js/cfs-guide-v5.js" defer></script><script src="/assets/js/cfs-guide-journeys.js" defer></script><script src="/assets/js/cfs-workspace-v205.js" defer></script>
 </body>
 </html>

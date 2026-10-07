@@ -66,6 +66,7 @@ contextBridge.exposeInMainWorld("CFSLauncher", {
   clearCutVoiceTrack: input => ipcRenderer.invoke("launcher:cut-voice-track-clear", input),
   selectCutSfx: input => ipcRenderer.invoke("launcher:cut-sfx-select", input),
   clearCutSfx: input => ipcRenderer.invoke("launcher:cut-sfx-clear", input),
+  cancelLocalCutJob: () => ipcRenderer.invoke("launcher:cut-job-cancel-local"),
   processCutJob: jobId => ipcRenderer.invoke("launcher:cut-job-process", jobId),
   openCutExportFolder: () => ipcRenderer.invoke("launcher:cut-export-folder"),
   refreshBetaCenter: () => ipcRenderer.invoke("launcher:beta-refresh"),

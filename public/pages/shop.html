@@ -16,8 +16,13 @@
   <link rel="apple-touch-icon" href="/assets/img/apple-touch-icon.png">
   <link rel="stylesheet" href="/assets/css/cfs-brand-v198.css" data-cfs-brand-v198>
   <link rel="stylesheet" href="/assets/css/cfs-product-v199.css" data-cfs-product-v199>
+  <link rel="stylesheet" href="/assets/css/cfs-suite-v203.css" data-cfs-suite-v203>
+<link rel="stylesheet" href="/assets/css/stream-maker.css">
+<link rel="stylesheet" href="/assets/css/cfs-workspace-v205.css">
+<link rel="stylesheet" href="/assets/css/cfs-guide-v5.css">
+<link rel="stylesheet" href="/assets/css/cfs-help-v6.css">
 </head>
-<body data-cfs-product-v199="1" data-cfs-brand-v192="1" class="creator-workspace cfs-shop-v172" data-cfs-brand-v198="1">
+<body data-cfs-product-v199="1" data-cfs-brand-v192="1" data-cfs-suite-v203="1" class="creator-workspace cfs-shop-v172" data-cfs-brand-v198="1">
 <header class="site-header creator-site-header">
   <div class="container header-inner creator-header-inner">
     <a class="creator-brand" href="/pages/dashboard.html" aria-label="cfs_zockt Creator Suite Dashboard"><img class="creator-brand-logo" src="/assets/img/brand/cfs-zockt-mark-clean.png" alt="cfs_zockt"><span>CREATOR SUITE</span></a>
@@ -25,6 +30,8 @@
     <nav class="nav creator-nav" data-nav data-creator-nav aria-label="Creator Suite Navigation">
       <a data-creator-link href="/pages/dashboard.html">DASHBOARD</a>
       <a data-creator-link href="/pages/widget-studio.html">WIDGETS</a>
+      <a data-creator-link href="/pages/stream-maker.html">MAKER</a>
+    <a data-creator-link href="/pages/universal-builder.html">BUILDER</a>
       <a data-creator-link href="/pages/stream-studio.html">STREAM</a>
       <a class="active" data-creator-link href="/pages/shop.html" aria-current="page">SHOP</a>
       <a data-creator-link href="/pages/integrations.html">INTEGRATIONEN</a>
@@ -37,23 +44,31 @@
 </header>
 <main class="container">
   <section class="shop-hero">
-    <div class="shop-hero-copy"><span>CFS CREATOR SHOP · MEINE BUNDLES</span><h1>Deine Bundles. <span>Dein Design.</span></h1><p>Hier liegen nur deine selbst erstellten Universal-Builder-Bundles. Öffne ein Bundle im Umwandler, um vorlagenbasierte Widget- und Overlay-Entwürfe zu erstellen.</p><a class="btn primary" href="/pages/universal-builder.html">Bundle-Umwandler öffnen</a></div>
-    <aside class="shop-library-summary"><span>MEINE BUNDLES</span><strong id="shopLibraryCount">–</strong><small id="shopLibraryText">Eigene Bundles werden geladen …</small><a class="btn" href="#catalog">BUNDLES ANSEHEN</a></aside>
+    <div class="shop-hero-copy"><span>CFS CREATOR SHOP</span><h1>FERTIGE INHALTE.<br><span>DIREKT IN DEINEN WORKFLOW.</span></h1><p>Hier findest du fertige Widgets, Panels, Overlays, Scenes, Bundles und Tools. Wähle etwas aus, übernimm es in deine Bibliothek und öffne es danach direkt im passenden Studio.</p></div>
+    <aside class="shop-library-summary"><span>MEINE PRODUKTE</span><strong id="shopLibraryCount">–</strong><small id="shopLibraryText">Bibliothek wird geladen …</small><a class="btn" href="#catalog">KATALOG ANSEHEN</a></aside>
+  </section>
+  <section class="sm-shop-section" aria-labelledby="makerShopTitle"><div class="sm-section-heading"><div><p class="sm-eyebrow">DESIGN-VORLAGEN · STREAM MAKER</p><h2 id="makerShopTitle">Dein Design. Dein ganzes Stream-Set.</h2><p>Vorlage wählen, im Maker anpassen und als eigenes Bundle verwenden.</p></div><a class="sm-btn sm-primary" href="/pages/stream-maker.html">Eigenes Design hochladen ↗</a></div><div class="sm-template-grid" id="makerShopTemplates"></div></section>
+  <section class="shop-route-grid" aria-label="Creator Shop Bereiche">
+    <a class="shop-route-card" href="#catalog" data-shop-quick-filter="bundles"><span>01 · BUNDLES</span><strong>Komplettpakete</strong><small>Mehrere Inhalte gemeinsam übernehmen.</small></a>
+    <a class="shop-route-card" href="#catalog" data-shop-quick-filter="widgets"><span>02 · WIDGETS</span><strong>Stream-Elemente</strong><small>Goals, Counter, Alerts, Chat und Overlays.</small></a>
+    <a class="shop-route-card" href="#catalog" data-shop-quick-filter="panels"><span>03 · BRANDING</span><strong>Panels &amp; Overlays</strong><small>Für Twitch, TikTok und deine Creator-Marke.</small></a>
+    <a class="shop-route-card" href="/pages/stream-maker.html"><span>04 · WERKZEUGE</span><strong>Umwandler öffnen</strong><small>Bild, Logo oder Panel direkt in CFS weiterverarbeiten.</small></a>
   </section>
   <div class="shop-notice" id="shopNotice" role="status" aria-live="polite" hidden></div>
   <section id="catalog" aria-labelledby="shopCatalogTitle">
-    <h2 id="shopCatalogTitle">Meine Bundle-Bibliothek</h2>
     <div class="shop-controls" id="shopFilters" aria-label="Shop filtern">
-      <button class="active" type="button" data-shop-filter="all" aria-pressed="true">ALLE</button><button type="button" data-shop-filter="bundles" aria-pressed="false">BUNDLES</button><button type="button" data-shop-filter="widgets" aria-pressed="false">WIDGETS</button><button type="button" data-shop-filter="overlays" aria-pressed="false">OVERLAYS</button><button type="button" data-shop-filter="tools" aria-pressed="false">TOOLS</button>
-      <input id="shopSearch" type="search" maxlength="80" placeholder="Meine Bundles durchsuchen …" aria-label="Meine Bundles durchsuchen">
+      <button class="active" type="button" data-shop-filter="all">ALLE</button><button type="button" data-shop-filter="widgets">WIDGETS</button><button type="button" data-shop-filter="panels">PANELS</button><button type="button" data-shop-filter="overlays">OVERLAYS</button><button type="button" data-shop-filter="scenes">SCENES</button><button type="button" data-shop-filter="tools">TOOLS</button><button type="button" data-shop-filter="bundles">BUNDLES</button>
+      <input id="shopSearch" type="search" maxlength="80" placeholder="Produkte durchsuchen …" aria-label="Produkte durchsuchen">
     </div>
     <div class="shop-grid" id="shopGrid" aria-live="polite"><div class="shop-empty">Shop wird geladen …</div></div>
   </section>
-  <div class="shop-status-banner"><div><strong>Creator Shop · nur eigene Bundles</strong><p>Die früheren Standard- und Demo-Designs werden nicht mehr im Shop angezeigt. Deine Bundles bleiben deine Quelle; Provider-Grenzen, Plan-Limits und Scopes gelten auch beim Umwandeln.</p></div><span id="shopCommercialState">NUR EIGENE BUNDLES</span></div>
+  <div class="shop-status-banner"><div><strong>Creator Shop · sicherer Beta-Betrieb</strong><p>Pakete werden serverseitig gegen eine Allowlist validiert. Bundles und Einzelangebote werden als editierbare CFS-Entwürfe/Assets materialisiert; Provider-Grenzen, Plan-Limits und Scopes bleiben aktiv. Preisgeplante Produkte sind nur Vorschau, solange Live-Commerce deaktiviert ist.</p></div><span id="shopCommercialState">COMMERCE AUS</span></div>
 </main>
 <script src="/assets/js/app.js"></script>
 <script src="/assets/js/cfs-shop-preview-v174.js"></script>
 <script src="/assets/js/page-shop-v172.js"></script>
 <script src="/assets/js/cfs-product-v199.js" defer></script>
+<script src="/assets/js/stream-maker-core.js"></script><script src="/assets/js/stream-maker-shop.js"></script>
+<script src="/assets/js/cfs-help-v6.js" defer></script><script src="/assets/js/cfs-guide-v5.js" defer></script><script src="/assets/js/cfs-guide-journeys.js" defer></script><script src="/assets/js/cfs-workspace-v205.js" defer></script>
 </body>
 </html>

@@ -43,6 +43,7 @@ class CutMediaEngine extends EventEmitter{
     this.resourcesPath=resourcesPath||"";
     this.execPath=execPath||"";
     this.ffmpegPath=null;
+    this.exportActive=false;this.cancelRequested=false;this.exportChildren=new Set();
     this.state={
       status:"idle",available:false,ffmpegPath:"",ffmpegSource:"",version:"",
       capabilities:{
@@ -78,16 +79,36 @@ class CutMediaEngine extends EventEmitter{
     list.push({path:exe,source:"path"});
     return uniqueCandidates(list);
   }
-  runProcess(command,args,{timeoutMs=0,onStderr=null,cwd=null}={}){
+  cancelCurrentJob(){
+    if(!this.exportActive)return false;
+    this.cancelRequested=true;
+    for(const child of this.exportChildren){try{child.kill("SIGKILL")}catch{}}
+    return true;
+  }
+  async preflightJob({job,sourcePath}={}){
+    if(!sourcePath||!fs.existsSync(sourcePath)||!fs.statSync(sourcePath).isFile())throw new Error("Bitte eine vorhandene lokale Videodatei zuordnen.");
+    const info=await this.probeMediaInfo(sourcePath);
+    if(!info.duration_ms||!info.has_video)throw new Error("Videolänge konnte nicht gelesen werden. Datei und FFmpeg prüfen.");
+    const clips=job?.manifest?.clips||[];
+    if(!clips.length)throw new Error("Der Cut-Job enthält keine Clips.");
+    for(const clip of clips){
+      const start=Number(clip.in_ms),end=Number(clip.out_ms);
+      if(!Number.isFinite(start)||!Number.isFinite(end)||start<0||end<=start||end>info.duration_ms+50)throw new Error(`Ungültiger Schnittbereich: ${clip.label||clip.clip_id||"Clip"}. Start und Ende müssen innerhalb des Videos liegen.`);
+    }
+    return {ok:true,duration_ms:info.duration_ms,clips:clips.length};
+  }
+  runProcess(command,args,{timeoutMs=0,onStderr=null,cwd=null,exportProcess=false}={}){
     return new Promise((resolve,reject)=>{
+      if(exportProcess&&this.cancelRequested){reject(Object.assign(new Error("Export abgebrochen. Du kannst den Auftrag erneut starten."),{code:"cut_cancelled"}));return}
       let settled=false,stderr="",stdout="";
       const child=this.spawnImpl(command,args,{windowsHide:true,stdio:["ignore","pipe","pipe"],...(cwd?{cwd}:{})});
+      if(exportProcess){this.exportChildren.add(child);child.once("close",()=>this.exportChildren.delete(child));child.once("error",()=>this.exportChildren.delete(child));}
       let timer=null;
       if(timeoutMs>0)timer=setTimeout(()=>{if(!settled){try{child.kill("SIGKILL")}catch{};settled=true;reject(new Error("Prozess-Timeout."))}},timeoutMs);
       child.stdout?.on?.("data",chunk=>{stdout+=String(chunk);if(stdout.length>60000)stdout=stdout.slice(-60000)});
       child.stderr?.on?.("data",chunk=>{const text=String(chunk);stderr+=text;if(stderr.length>60000)stderr=stderr.slice(-60000);onStderr?.(text)});
       child.once("error",error=>{if(settled)return;settled=true;if(timer)clearTimeout(timer);reject(error)});
-      child.once("close",code=>{if(settled)return;settled=true;if(timer)clearTimeout(timer);if(code===0)resolve({code,stdout,stderr});else reject(Object.assign(new Error(`FFmpeg wurde mit Code ${code} beendet.`),{code,stderr,stdout}))});
+      child.once("close",code=>{if(settled)return;settled=true;if(timer)clearTimeout(timer);if(exportProcess&&this.cancelRequested)reject(Object.assign(new Error("Export abgebrochen. Du kannst den Auftrag erneut starten."),{code:"cut_cancelled"}));else if(code===0)resolve({code,stdout,stderr});else reject(Object.assign(new Error(`FFmpeg wurde mit Code ${code} beendet.`),{code,stderr,stdout}))});
     });
   }
   runBinaryProcess(command,args,{timeoutMs=0,maxBytes=1024*1024}={}){
@@ -165,7 +186,7 @@ class CutMediaEngine extends EventEmitter{
     let log="";
     try{const result=await this.runProcess(this.ffmpegPath,["-hide_banner","-i",sourcePath,"-t","0.02","-map","0:v:0","-f","null","-"],{timeoutMs:15000});log=String(result.stderr||"")}catch(error){log=String(error?.stderr||error?.message||"")}
     const match=log.match(/Duration:\s*(\d+):(\d+):([\d.]+)/i),duration=match?Math.round((Number(match[1])*3600+Number(match[2])*60+Number(match[3]))*1000):0;
-    return{duration_ms:duration,has_audio:/Stream\s+#0:\d+(?:\([^)]*\))?:\s+Audio:/i.test(log)};
+    return{duration_ms:duration,has_video:/Stream\s+#0:\d+(?:\([^)]*\))?(?:\[[^\]]*\])?:\s+Video:/i.test(log),has_audio:/Stream\s+#0:\d+(?:\([^)]*\))?:\s+Audio:/i.test(log)};
   }
   async embeddedWaveformBins(sourcePath,streamIndex=0,{bins=64,height=32}={}){
     if(!sourcePath||!fs.existsSync(sourcePath))return[];
@@ -682,12 +703,12 @@ class CutMediaEngine extends EventEmitter{
     const wantsKeyframes=clips.some(clip=>clip?.keyframe_enabled===true);
     const wantsRotation=clips.some(clip=>clip?.keyframe_enabled===true&&(Array.isArray(clip.visual_keyframes)?clip.visual_keyframes:[]).some(point=>Math.abs(Number(point?.rotation||0))>.01));
     const wantsOpacity=clips.some(clip=>clip?.keyframe_enabled===true&&(Array.isArray(clip.visual_keyframes)?clip.visual_keyframes:[]).some(point=>Number(point?.opacity??1)<.999));
-    const wantsMusic=preset.music_enabled===true&&["reel","both"].includes(String(preset.mode||"clips"));
-    const wantsVoice=preset.voiceover_enabled===true&&["reel","both"].includes(String(preset.mode||"clips"));
+    const wantsMusic=preset.music_enabled===true&&preset.music_mute!==true&&["reel","both"].includes(String(preset.mode||"clips"));
+    const wantsVoice=preset.voiceover_enabled===true&&preset.voiceover_mute!==true&&["reel","both"].includes(String(preset.mode||"clips"));
     const reelMode=["reel","both"].includes(String(preset.mode||"clips"));
-    const wantedMusicTracks=(Array.isArray(preset.music_tracks)?preset.music_tracks:[]).filter(track=>track?.enabled!==false&&reelMode);
-    const wantedVoiceTracks=(Array.isArray(preset.voice_tracks)?preset.voice_tracks:[]).filter(track=>track?.enabled!==false&&reelMode);
-    const wantedSfx=(Array.isArray(preset.sfx_tracks)?preset.sfx_tracks:[]).filter(track=>track?.enabled!==false&&reelMode);
+    const wantedMusicTracks=(Array.isArray(preset.music_tracks)?preset.music_tracks:[]).filter(track=>track?.enabled!==false&&track?.mute!==true&&reelMode);
+    const wantedVoiceTracks=(Array.isArray(preset.voice_tracks)?preset.voice_tracks:[]).filter(track=>track?.enabled!==false&&track?.mute!==true&&reelMode);
+    const wantedSfx=(Array.isArray(preset.sfx_tracks)?preset.sfx_tracks:[]).filter(track=>track?.enabled!==false&&track?.mute!==true&&reelMode);
     const wantsSfx=wantedSfx.length>0;
     const wantsExtraAudio=wantsMusic||wantsVoice||wantedMusicTracks.length>0||wantedVoiceTracks.length>0||wantsSfx;
     if(wantsCaptions&&!this.state.capabilities?.drawtext)throw new Error("Dieser FFmpeg-Build unterstützt den benötigten drawtext-Filter für Caption Burn-in nicht.");
@@ -724,6 +745,7 @@ class CutMediaEngine extends EventEmitter{
     fs.mkdirSync(segmentDir,{recursive:true});
 
     const segments=[],finalOutputs=[];
+    this.exportActive=true;this.cancelRequested=false;
     this.emitState({
       status:"processing",phase:"clips",mode,encoder:encoder.key,transition,
       jobId:String(job.id),clipIndex:0,clipCount:clips.length,progress:0,lastOutputDir:jobDir,error:""
@@ -735,7 +757,7 @@ class CutMediaEngine extends EventEmitter{
         const outputPath=path.join(segmentDir,outputName);
         this.emitState({phase:"clips",clipIndex:i+1,progress:Math.round((i/clips.length)*80)});
         const args=this.buildArgs({sourcePath,clip,manifest,outputPath,hasAudio});
-        await this.runProcess(this.ffmpegPath,args,{timeoutMs:30*60*1000});
+        await this.runProcess(this.ffmpegPath,args,{exportProcess:true,timeoutMs:30*60*1000});
         const stat=fs.statSync(outputPath);
         const item={kind:"clip",filePath:outputPath,fileName:outputName,bytes:stat.size,durationMs:Math.max(100,Number(clip.out_ms||0)-Number(clip.in_ms||0))};
         segments.push(item);
@@ -756,19 +778,19 @@ class CutMediaEngine extends EventEmitter{
         }else if(transition==="cut"){
           const listName="_cfs_concat.txt",listPath=path.join(segmentDir,listName);
           fs.writeFileSync(listPath,segments.map(item=>`file '${item.fileName}'`).join("\n")+"\n","utf8");
-          await this.runProcess(this.ffmpegPath,this.buildConcatArgs(listName,baseReelPath),{timeoutMs:30*60*1000,cwd:segmentDir});
+          await this.runProcess(this.ffmpegPath,this.buildConcatArgs(listName,baseReelPath),{exportProcess:true,timeoutMs:30*60*1000,cwd:segmentDir});
           reelDuration=segments.reduce((sum,o)=>sum+o.durationMs,0);
           try{fs.unlinkSync(listPath)}catch{}
         }else{
           const built=this.buildTransitionReelArgs(segments,baseReelName,preset);
           usedTransitionMs=built.transitionMs;
-          await this.runProcess(this.ffmpegPath,built.args,{timeoutMs:30*60*1000,cwd:segmentDir});
+          await this.runProcess(this.ffmpegPath,built.args,{exportProcess:true,timeoutMs:30*60*1000,cwd:segmentDir});
           reelDuration=built.durationMs;
         }
 
         if(wantsExtraAudio){
           this.emitState({phase:"mix",progress:94});
-          await this.runProcess(this.ffmpegPath,this.buildMultitrackMixArgs(baseReelPath,{musicPath:wantsMusic?musicPath:null,voicePath:wantsVoice?voicePath:null,musicTrackSources:wantedMusicTracks.length?musicTrackSources:[],voiceTrackSources:wantedVoiceTracks.length?voiceTrackSources:[],sfxSources:wantsSfx?sfxSources:[]},reelPath,preset,reelDuration),{timeoutMs:30*60*1000});
+          await this.runProcess(this.ffmpegPath,this.buildMultitrackMixArgs(baseReelPath,{musicPath:wantsMusic?musicPath:null,voicePath:wantsVoice?voicePath:null,musicTrackSources:wantedMusicTracks.length?musicTrackSources:[],voiceTrackSources:wantedVoiceTracks.length?voiceTrackSources:[],sfxSources:wantsSfx?sfxSources:[]},reelPath,preset,reelDuration),{exportProcess:true,timeoutMs:30*60*1000});
           try{fs.unlinkSync(baseReelPath)}catch{}
         }
 
@@ -794,7 +816,7 @@ class CutMediaEngine extends EventEmitter{
       this.logger?.error?.("Cut Media Engine Fehler",{jobId:job.id,error:String(error?.message||error)});
       this.emitState({status:"failed",phase:"failed",error:String(error?.message||error)});
       throw error;
-    }
+    }finally{this.exportActive=false;this.exportChildren.clear();}
   }
 }
 

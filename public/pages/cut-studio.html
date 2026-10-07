@@ -17,7 +17,10 @@
   <link rel="apple-touch-icon" href="/assets/img/apple-touch-icon.png">
   <link rel="stylesheet" href="/assets/css/cfs-brand-v198.css" data-cfs-brand-v198>
   <link rel="stylesheet" href="/assets/css/cfs-product-v199.css" data-cfs-product-v199>
-</head>
+<link rel="stylesheet" href="/assets/css/cfs-workspace-v205.css">
+<link rel="stylesheet" href="/assets/css/cfs-guide-v5.css">
+<link rel="stylesheet" href="/assets/css/cfs-help-v6.css">
+<link rel="stylesheet" href="/assets/css/cut-local-preview.css"></head>
 <body data-cfs-product-v199="1" data-cfs-brand-v192="1" data-cut-mode="quick" class="creator-workspace" data-cfs-brand-v198="1">
 <header class="site-header creator-site-header">
   <div class="container header-inner creator-header-inner">
@@ -158,7 +161,7 @@
           <div class="cut-reference-status" id="cutReferenceStatus"><strong>0 ANALYSIERT</strong><span>Keine Referenzwerte aktiv.</span></div>
         </section>
 
-        <section class="cut-section cut-section-clips">
+<section class="cut-local-preview" aria-label="Lokale Schnittvorschau"><h3>Am echten Video schneiden</h3><p>Die Vorschau bleibt lokal in deinem Browser. Ordne dieselbe Quelldatei anschließend im Launcher zu. Musik, Effekte und Captions werden erst beim Export zusammengesetzt.</p><div class="cut-preview-drop" id="cutPreviewDrop"><button class="btn" type="button" id="cutPreviewChoose">Videodatei auswählen</button> oder eine Datei hier ablegen<input type="file" id="cutPreviewFile" accept="video/*,.mkv,.mov" hidden></div><video id="cutLocalVideo" controls playsinline preload="metadata" aria-label="Lokale Videovorschau"></video><label for="cutPreviewSeek">Position <output id="cutPreviewTime">0.00 s</output></label><input type="range" id="cutPreviewSeek" min="0" max="0" step="0.01" value="0"><div class="cut-preview-controls"><label>Clip <select id="cutPreviewClip"></select></label><button type="button" class="btn" id="cutPreviewIn">Start hier setzen</button><button type="button" class="btn" id="cutPreviewOut">Ende hier setzen</button><button type="button" class="btn" id="cutPreviewPlay">Ausschnitt abspielen</button><button type="button" class="btn" id="cutPreviewClear">Datei schließen</button></div><p id="cutPreviewStatus" role="status" aria-live="polite">Wähle eine lokale Videodatei für die Schnittvorschau.</p></section>        <section class="cut-section cut-section-clips">
           <div class="cut-section-head"><div><span>SCHRITT 2</span><h3>Clips schneiden</h3><p>Lege Start und Ende fest. Text ist optional. Alles Weitere findest du im Profi-Modus.</p></div><button class="btn primary" id="addCutClip">+ CLIP</button></div>
           <div class="cut-timeline-head"><span>TIMELINE</span><strong id="cutClipLimit">0 / 0</strong></div>
           <div id="cutTimeline" class="cut-timeline"></div>
@@ -280,5 +283,6 @@
 <script src="/assets/js/cut-studio.js"></script>
 <script src="/assets/js/cfs-creator-ux-v189.js"></script>
 <script src="/assets/js/cfs-product-v199.js" defer></script>
-</body>
+<script src="/assets/js/cfs-help-v6.js" defer></script><script src="/assets/js/cfs-guide-v5.js" defer></script><script src="/assets/js/cfs-guide-journeys.js" defer></script><script src="/assets/js/cfs-workspace-v205.js" defer></script>
+<script src="/assets/js/cut-local-preview.js" defer></script></body>
 </html>

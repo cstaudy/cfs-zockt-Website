@@ -1232,7 +1232,13 @@ function updateCutJobInLibrary(job){
   creatorLibrary={...creatorLibrary,cutJobs:jobs};
 }
 
+let cutExportInFlight=false;
 async function processCutJob(jobId){
+  if(cutExportInFlight)throw new Error("Ein lokaler Cut-Export läuft bereits.");
+  cutExportInFlight=true;
+  try{return await processCutJobInternal(jobId)}finally{cutExportInFlight=false;}
+}
+async function processCutJobInternal(jobId){
   assertFeature(creatorFeatures(),"cut_studio","Cut Studio");
   if(!bridge?.snapshot?.().connected)throw new Error("Creator Bridge ist nicht verbunden.");
   if(!creatorLibrary.loadedAt)await refreshCreatorLibrary({notify:false});
@@ -1268,6 +1274,8 @@ async function processCutJob(jobId){
   const engine=configureCutMediaEngine();
   const media=await engine.probe();
   if(!media.available)throw new Error(media.error||"FFmpeg ist nicht verfügbar.");
+
+  await engine.preflightJob({job:effectiveJob,sourcePath:source.filePath});
 
   try{
     if(job.status==="failed"){
@@ -2327,6 +2335,7 @@ function registerIpc() {
     return clearCutSfx(input?.projectId,input?.trackId);
   });
 
+  ipcMain.handle("launcher:cut-job-cancel-local", async () => ({cancelled:cutMediaEngine?.cancelCurrentJob()===true}));
   ipcMain.handle("launcher:cut-job-process", async (_event,jobId) => processCutJob(jobId));
 
   ipcMain.handle("launcher:cut-export-folder", async () => {

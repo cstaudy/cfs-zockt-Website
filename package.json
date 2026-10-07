@@ -1,6 +1,6 @@
 {
   "name": "cfs-zockt-creator-suite-web",
-  "version": "3.20.39",
+  "version": "3.20.43",
   "private": true,
   "description": "cfs_zockt Website mit TikTok Login Kit, Profil-Sync und geschützter Launcher-API.",
   "main": "server.js",
@@ -13,7 +13,7 @@
     "check:v9": "node tools/widget-studio-v9-qa.mjs .",
     "check:v10": "node tools/widget-studio-v10-qa.mjs .",
     "check:v203": "node tools/universal-builder-v203-test.mjs .",
-    "check:bundle-shop-v205": "node tools/creator-bundle-shop-v205-test.mjs .",
+    "check:ui-v203": "node tools/creator-suite-ui-v203-test.mjs .",
     "check:v37": "node tools/billing-policy-v37-test.mjs && node tools/production-readiness-v37-test.mjs && node tools/billing-v37-qa.mjs .",
     "check:v38": "node tools/production-evidence-v38-test.mjs && node tools/stripe-testmode-e2e-v38-test.mjs && node tools/production-canary-v38-test.mjs && node tools/production-v38-qa.mjs .",
     "check:v39": "node tools/release-acceptance-v39-test.mjs && node tools/beta-cohort-v39-test.mjs && node tools/release-go-no-go-v39-test.mjs && node tools/release-ops-admin-v39-qa.mjs . && node tools/release-ops-v39-qa.mjs .",
@@ -438,7 +438,11 @@
     "release:v196": "npm run cfsai:check && npm run project:check",
     "v197:check": "node tools/v197-ui-admin-desktop-test.mjs .",
     "v198:check": "node tools/v198-professional-ui-technical-test.mjs . && npm run v197:check && npm run website21:check && npm run project:check",
-    "v199:check": "node tools/v199-beta-compact-product-test.mjs ."
+    "v199:check": "node tools/v199-beta-compact-product-test.mjs .",
+    "check:stream-maker": "node tools/stream-maker-test.cjs && node tools/stream-maker-drop-test.cjs && node tools/stream-maker-lifecycle-test.cjs",
+    "check:workspace": "node tools/workspace-guide-test.cjs",
+    "check:cut-real": "node launcher/tools/cut-real-export-test.cjs",
+    "check:cut-workflow": "node tools/cut-export-workflow-test.cjs"
   },
   "engines": {
     "node": ">=22"

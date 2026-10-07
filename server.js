@@ -2,7 +2,7 @@
  * ============================================================
  * cfs_zockt Creator Suite
  * Website Backend
- * Version 3.20.39
+ * Version 3.20.43
  * ============================================================
  */
 
@@ -56,6 +56,7 @@ const { publicProviderOAuthContracts } = require("./lib/provider-oauth-contract"
 const { publicConfig: cfsAiPublicConfig, requestJson: cfsAiRequestJson, requestHtml: cfsAiRequestHtml } = require("./lib/cfs-ai-gateway");
 const { isAllowedBridgeRequest, bridgeTransport, bridgeWorkerConfig } = require("./lib/cfs-ai-bridge-policy");
 
+const streamMaker = require("./lib/stream-maker");
 const app = express();
 
 
@@ -77,7 +78,7 @@ const APP_NAME =
     "CFS_Zockt Creator Suite";
 
 const BACKEND_VERSION =
-    "3.20.39";
+    "3.20.43";
 
 // ============================================================
 // PRIVATE BETA / LEGAL BASELINE
@@ -2698,98 +2699,6 @@ function decryptSecret(
 // ============================================================
 // DATENBANK INITIALISIEREN
 // ============================================================
-// V205 CREATOR-BUNDLE SHOP / CONVERTER
-// The public shop exposes only creator-owned Universal Builder bundles.
-// The original store catalog remains available to legacy install routes,
-// but is intentionally not returned by the public shop catalog anymore.
-// ============================================================
-const CFS_CREATOR_BUNDLE_SHOP_CATEGORIES=Object.freeze(["bundles","widgets","overlays","tools"]);
-const CFS_CREATOR_BUNDLE_OVERLAY_TYPES=new Set(["starting","pause","ending","offline","countdown","schedule","social_bar","ticker","sponsor","camera_frame","panels","text","image"]);
-function creatorBundleWidgetKey(item={}){
-    const widget=String(item.widget_type||"");
-    if(WIDGET_STUDIO_WIDGET_TYPE_KEYS.has(widget))return widget;
-    const source=String(item.source_key||"");
-    return WIDGET_STUDIO_WIDGET_TYPE_KEYS.has(source)?source:"";
-}
-function creatorBundleElementCategory(item={}){
-    const key=creatorBundleWidgetKey(item);
-    if(key){
-        const definition=studioWidgetDefinition(key);
-        return studioWidgetProvider(definition)==="obs"||definition.category==="overlay"||definition.mode==="static"?"overlays":"widgets";
-    }
-    return CFS_CREATOR_BUNDLE_OVERLAY_TYPES.has(String(item.type||item.source_key||""))?"overlays":"tools";
-}
-function creatorBundleShopCategories(bundle){
-    const categories=new Set(["bundles","tools"]);
-    for(const item of Array.isArray(bundle?.elements)?bundle.elements:[])categories.add(creatorBundleElementCategory(item));
-    return CFS_CREATOR_BUNDLE_SHOP_CATEGORIES.filter(key=>categories.has(key));
-}
-function publicCreatorShopBundle(row){
-    const bundle=publicUniversalBuilderBundle(row);
-    if(!bundle)return null;
-    return {...bundle,categories:creatorBundleShopCategories(bundle),element_count:bundle.elements.length,shop_source:"creator_universal_bundle",converter_url:`/pages/widget-studio.html?open=converter&bundle=${encodeURIComponent(bundle.id)}`};
-}
-function creatorBundleToolLinks(bundleId){
-    const query=`bundle=${encodeURIComponent(String(bundleId||""))}&source=creator-shop`;
-    return [
-        {key:"widget_studio",label:"Widget Studio öffnen",url:`/pages/widget-studio.html?${query}`},
-        {key:"overlay_studio",label:"Overlays im Widget Studio",url:`/pages/widget-studio.html?${query}&output=overlays`},
-        {key:"scene_studio",label:"Scene Studio öffnen",url:`/pages/scene-studio.html?${query}`},
-        {key:"stream_studio",label:"Stream Studio öffnen",url:`/pages/stream-studio.html?${query}`}
-    ];
-}
-function creatorBundleDraftConfig(bundle,item,widgetType){
-    const config=studioWidgetTemplateConfig(widgetType,"cfs-standard");
-    const settings=bundle?.settings||{};
-    if(settings.channel_name)config.settings.channelName=settings.channel_name;
-    if(settings.goal)config.settings.goal=Math.max(0,Math.round(Number(item.goal||settings.goal||config.settings.goal||1000)));
-    if(item.metric)config.data={...(config.data||{}),metric:item.metric};
-    return sanitizeStudioWidgetConfig(config,widgetType);
-}
-
-app.post("/api/creator/shop/bundles/:id/convert",requireCreatorAccount,async(req,res)=>{
-    res.set("Cache-Control","no-store");
-    try{
-        const row=(await pool.query(`SELECT * FROM creator_universal_bundles WHERE creator_id=$1 AND id=$2 LIMIT 1`,[req.creatorAccount.id,req.params.id])).rows[0];
-        if(!row)return res.status(404).json({ok:false,error:"Eigenes Bundle nicht gefunden."});
-        const bundle=publicUniversalBuilderBundle(row),requested=new Set((Array.isArray(req.body?.output_types)?req.body.output_types:["widgets","overlays","tools"]).map(String).filter(key=>["widgets","overlays","tools"].includes(key)));
-        if(!requested.size)return res.status(400).json({ok:false,error:"Mindestens eine Ausgabe auswählen."});
-        const access=await creatorAccessProfile(req.creatorAccount),providerAccess=await creatorWidgetProviderAccess(req.creatorAccount.id);
-        const result=await withCreatorResourceLock(req.creatorAccount.id,async client=>{
-            let widgetCount=Number((await client.query(`SELECT COUNT(*)::int AS count FROM creator_widgets WHERE creator_id=$1`,[req.creatorAccount.id])).rows[0]?.count||0);
-            const created=[],existing=[],skipped=[],toolElements=[];
-            for(const item of bundle.elements){
-                const category=creatorBundleElementCategory(item);
-                if(!requested.has(category))continue;
-                const key=creatorBundleWidgetKey(item);
-                if(category==="tools"){
-                    toolElements.push({id:item.id,label:item.label,type:item.type});
-                    continue;
-                }
-                if(!key){skipped.push({id:item.id,label:item.label,reason:"element_not_convertible",message:"Dieses freie Bundle-Element braucht zuerst eine konkrete Widget-Vorlage."});continue;}
-                const eligibility=storeWidgetEligibility(req.creatorAccount,access,providerAccess,key);
-                if(!eligibility.ok){skipped.push({id:item.id,label:item.label,reason:eligibility.reason,message:eligibility.message});continue;}
-                const marker=`[BUNDLE:${String(bundle.id).slice(0,8)}:${String(item.id).slice(0,80)}]`;
-                const old=(await client.query(`SELECT * FROM creator_widgets WHERE creator_id=$1 AND name LIKE $2 ORDER BY updated_at DESC LIMIT 1`,[req.creatorAccount.id,`%${marker}%`])).rows[0];
-                if(old){existing.push(publicStudioWidgetRow(old));continue;}
-                if(widgetCount>=Number(access.entitlements?.max_widgets||0)){skipped.push({id:item.id,label:item.label,reason:"widget_limit",message:`Dein Plan erlaubt maximal ${access.entitlements?.max_widgets||0} Widgets.`});continue;}
-                const id=crypto.randomUUID(),name=studioWidgetName(`${bundle.name} · ${item.label||eligibility.definition.label} ${marker}`),draftConfig=creatorBundleDraftConfig(bundle,item,key),publicToken=createStudioWidgetToken();
-                const inserted=(await client.query(`INSERT INTO creator_widgets (id,creator_id,widget_type,name,template_key,status,draft_config,public_token,version,created_at,updated_at) VALUES($1,$2,$3,$4,'cfs-standard','draft',$5::jsonb,$6,1,NOW(),NOW()) RETURNING *`,[id,req.creatorAccount.id,key,name,JSON.stringify(draftConfig),publicToken])).rows[0];
-                widgetCount+=1;created.push(publicStudioWidgetRow(inserted));
-            }
-            return {created,existing,skipped,toolElements};
-        });
-        const tools=creatorBundleToolLinks(bundle.id),converted=result.created.length+result.existing.length+result.toolElements.length;
-        return res.json({ok:true,bundle,created_widgets:result.created,existing_widgets:result.existing,skipped:result.skipped,tools,summary:{created:result.created.length,existing:result.existing.length,tools:result.toolElements.length,skipped:result.skipped.length,converted},converted,message:result.created.length?`${result.created.length} editierbare Entwürfe aus deinem Bundle erstellt.`:"Bundle geprüft. Es waren keine neuen Entwürfe nötig."});
-    }catch(error){
-        if(error?.code==="widget_limit")return res.status(403).json({ok:false,code:error.code,error:error.message});
-        safeLogError("Creator Bundle Umwandler Fehler:",error);
-        return res.status(500).json({ok:false,error:"Bundle konnte nicht umgewandelt werden."});
-    }
-});
-
-
-// ============================================================
 
 async function initDatabase() {
 
@@ -4065,6 +3974,8 @@ async function initDatabase() {
         CREATE INDEX IF NOT EXISTS idx_creator_widget_scenes_creator
         ON creator_widget_scenes (creator_id, updated_at DESC)
     `);
+
+    await streamMaker.initialize(pool);
 
     // V203 Universal Widget & Bundle Builder.  The builder stores only
     // sanitized creator configuration. Provider credentials and live event
@@ -18724,6 +18635,8 @@ app.get(
 // V203 UNIVERSAL BUILDER API
 // ============================================================
 
+streamMaker.register(app,{pool,requireCreatorAccount,requireCreatorAdmin,isCreatorSuiteAdmin,creatorAccessProfile,publicRuntimeIpLimiter,widgetReadLimiter});
+
 app.get("/api/creator/universal-builder",requireCreatorAccount,async(req,res)=>{
     res.set("Cache-Control","no-store");
     try{
@@ -19101,7 +19014,7 @@ function storeInstallMessage(result){
   if(result.mode==="update")return result.complete?`Paket ist auf dem aktuellen Stand. Bestehende editierte Inhalte wurden beibehalten; neue Bestandteile wurden ergänzt.${repair}${retired}`:`Update teilweise abgeschlossen: ${result.installed_count} verfügbar · ${result.pending_count} Voraussetzung(en) offen.${repair}${retired}`;
   return result.complete?`${result.installed_count} Paketbestandteile wurden als editierbare CFS-Inhalte importiert.${repair}${retired}`:`${result.installed_count} Paketbestandteile importiert · ${result.pending_count} ausstehend. Offene Provider-/Plan-Voraussetzungen werden nicht umgangen.${repair}${retired}`;
 }
-app.get("/api/creator/shop/catalog",requireCreatorAccount,async(req,res)=>{res.set("Cache-Control","no-store");try{const stored=normalizeStoreState((await getModuleState(req.creatorAccount.id,"shop")).state);const bundles=(await pool.query(`SELECT * FROM creator_universal_bundles WHERE creator_id=$1 ORDER BY updated_at DESC`,[req.creatorAccount.id])).rows.map(publicCreatorShopBundle);const categories=[...new Set(bundles.flatMap(bundle=>bundle.categories||[]))];return res.json({ok:true,commercial_mode:false,mode:"creator_bundles_only",standard_products_hidden:true,products:[],bundles,categories:categories.length?categories:["bundles"],library:[],converter:{method:"POST",path:"/api/creator/shop/bundles/:id/convert",outputs:["widgets","overlays","tools"]},legacy_library_count:stored.library.length});}catch(error){safeLogError("Creator Shop Katalog Fehler:",error);return res.status(500).json({ok:false,error:"Shop konnte nicht geladen werden."});}});
+app.get("/api/creator/shop/catalog",requireCreatorAccount,async(req,res)=>{res.set("Cache-Control","no-store");try{await refreshDynamicStoreProducts();const stored=normalizeStoreState((await getModuleState(req.creatorAccount.id,"shop")).state);return res.json({ok:true,commercial_mode:COMMERCIAL_MODE,products:allStoreProducts().map(publicStoreProduct),library:stored.library.map(publicStoreLibraryItem),categories:["widgets","panels","overlays","scenes","tools","bundles"]});}catch(error){safeLogError("Creator Shop Katalog Fehler:",error);return res.status(500).json({ok:false,error:"Shop konnte nicht geladen werden."});}});
 app.get("/api/creator/shop/products/:id",requireCreatorAccount,async(req,res)=>{
   res.set("Cache-Control","no-store");await refreshDynamicStoreProducts();const product=cfsStoreProduct(req.params.id);if(!product)return res.status(404).json({ok:false,error:"Produkt nicht gefunden."});
   try{
@@ -19610,6 +19523,12 @@ app.post("/api/creator/widget-studio/assets/:id/rotate-token",requireCreatorAcco
                 migratedWidgets+=1;
                 if(publishedChanged)publishedWidgets+=1;
             }
+            await client.query(`UPDATE creator_stream_maker
+                SET config=replace(config::text,$2,$3)::jsonb,
+                    published_config=CASE WHEN published_config IS NULL THEN NULL ELSE replace(published_config::text,$2,$3)::jsonb END,
+                    version=version+1,updated_at=NOW()
+                WHERE creator_id=$1 AND (config::text LIKE $4 OR COALESCE(published_config::text,'') LIKE $4)`,
+                [req.creatorAccount.id,oldUrl,newUrl,`%${oldUrl}%`]);
             const updated=await client.query(
                 `UPDATE creator_widget_assets SET public_token=$3,updated_at=NOW() WHERE creator_id=$1 AND id=$2 RETURNING *`,
                 [req.creatorAccount.id,current.id,nextToken]
@@ -19639,6 +19558,8 @@ app.delete("/api/creator/widget-studio/assets/:id",requireCreatorAccount,async(r
     try{
         const current=await getStudioAsset(req.creatorAccount.id,req.params.id);
         if(!current)return res.status(404).json({ok:false,error:"Datei nicht gefunden."});
+        const makerReferences=Number((await pool.query(`SELECT COUNT(*)::int AS count FROM creator_stream_maker WHERE creator_id=$1 AND (config::text LIKE $2 OR COALESCE(published_config::text,'') LIKE $2)`,[req.creatorAccount.id,`%/widget-assets/${current.public_token}%`])).rows[0]?.count||0);
+        if(makerReferences>0)return res.status(409).json({ok:false,code:"asset_in_use",references:makerReferences,error:"Die Datei wird noch in einem Maker-Bundle oder einer Shop-Vorlage verwendet. Entferne sie dort zuerst."});
         const references=await studioAssetUsageCount(req.creatorAccount.id,current.public_token);
         if(references>0)return res.status(409).json({ok:false,code:"asset_in_use",references,error:`Die Datei wird noch in ${references} Widget${references===1?"":"s"} verwendet.`});
         await pool.query(`DELETE FROM creator_widget_assets WHERE creator_id=$1 AND id=$2`,[req.creatorAccount.id,current.id]);

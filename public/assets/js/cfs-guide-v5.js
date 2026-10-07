@@ -10,6 +10,10 @@
   const path = location.pathname.toLowerCase();
 
   const pageContext = {
+    "/pages/stream-maker.html": ["Stream Maker", "Lade eigene Bilder hoch, gestalte Stream-Elemente und speichere dein Bundle. Oben im Guide findest du geführte Aufgaben."],
+    "/pages/shop.html": ["Vorlagen & Shop", "Maker-Vorlagen kannst du als eigene Kopie öffnen und bearbeiten. Bestehende Shop-Produkte verwenden ihren jeweiligen Import-Ablauf."],
+    "/pages/universal-builder.html": ["Erweiterter Builder", "Der bisherige Builder bleibt für bestehende Projekte erhalten. Neue Bild-Widgets erstellst du im Maker."],
+    "/pages/cfs-ai.html": ["CFS AI", "Dieser Admin-Bereich verbindet einen separat konfigurierten AI-Dienst. Der lokale Guide funktioniert unabhängig davon."],
     "/": ["Willkommen bei cfs_zockt", "Hier findest du Gaming, LIVE-Streams, aktuelle Games und meine Community. Der Creator-Bereich ist ein separates Produkt nach Login."],
     "/index.html": ["Willkommen bei cfs_zockt", "Hier findest du Gaming, LIVE-Streams, aktuelle Games und meine Community. Der Creator-Bereich ist ein separates Produkt nach Login."],
     "/pages/login.html": ["Account starten", "Ich helfe bei Registrierung, Login und E-Mail-Bestätigung."],
@@ -39,6 +43,14 @@
   };
 
   const faq = [
+    {keys:["funktioniert nicht","nicht sichtbar","kein bild","fehler","problem"],answer:"Prüfe zuerst Speicherung und Vorschau, dann die Browser-Quelle in OBS. Im Aufgabenmenü des Guides findest du „Mein Widget erscheint nicht“. Gib beim Support die Fehlermeldung an, aber keine privaten Ausgabe-URLs.",actions:[["Maker prüfen","/pages/stream-maker.html?guide=help","primary"],["Support","/pages/support.html",""]]},
+    {keys:["cut","clip","schneiden","video export"],answer:"Cut verwaltet Projekte und Schnittzeiten auf der Website. Die tatsächliche Videodatei und FFmpeg-Verarbeitung laufen lokal im verbundenen Launcher. Der geführte Clip-Ablauf erklärt die einzelnen Schritte.",actions:[["Clip-Ablauf","/pages/cut-studio.html?guide=cut","primary"],["Launcher","/pages/launcher.html",""]]},
+    {keys:["audio","soundboard","voice chain"],answer:"Die separate Audio-Seite speichert derzeit Presets. Soundboard und Voice Chain sind dort als geplant gekennzeichnet. Weitergehende Audiofunktionen findest du im Stream-/Cut-Workflow und Launcher.",actions:[["Audio-Einstellungen","/pages/audio-studio.html",""],["Cut öffnen","/pages/cut-studio.html","primary"]]},
+    {keys:["games","spiel","boss","quiz"],answer:"Games bietet lokale Module und eine Event-Anbindung über den Launcher. Ein Katalogeintrag allein bestätigt noch kein vollständig ausgearbeitetes Spiel. Prüfe das gewählte Modul in der Vorschau.",actions:[["Games öffnen","/pages/games.html","primary"]]},
+    {keys:["cfs ai","ki","ollama"],answer:"CFS AI ist eine Admin-Anbindung an einen separaten Dienst. Verfügbarkeit hängt von dessen Konfiguration und Verbindung ab. Dieser Guide arbeitet mit lokalen Hilfethemen und benötigt keinen AI-Dienst.",actions:[["CFS AI · Admin","/pages/cfs-ai.html",""],["Support","/pages/support.html",""]]},
+    {keys:["maker","bild","datei","drag","timer","zahler"],answer:"Ziehe PNG, JPG oder WebP in den Maker. Bis zu 16 Bilder werden zu Varianten. Wähle dein Element, positioniere Text oder Zahlen und speichere das Bundle. Timer, Zähler und Alerts werden hier manuell gesteuert.",actions:[["Bild-zu-Widget-Ablauf","/pages/stream-maker.html?guide=maker","primary"]]},
+    {keys:["shop","vorlage","bundle"],answer:"Wähle eine Maker-Vorlage im Shop und öffne sie als eigene Kopie. Deine Anpassungen verändern das Original nicht. Eigene Vorlagen veröffentlichen können Admins.",actions:[["Vorlage auswählen","/pages/shop.html?guide=shop","primary"]]},
+    {keys:["obs","browser-quelle"],answer:"Speichere dein Maker-Bundle und kopiere die OBS-Quelle des gewünschten Elements. Füge sie in OBS als Browser-Quelle mit den angezeigten Pixelmaßen hinzu. Ein Alert erscheint erst nach dem Auslösen.",actions:[["OBS-Ausgabe prüfen","/pages/stream-maker.html?guide=help","primary"]]},
     {
       keys:["start","anfang","beginnen","loslegen","erste schritte","neu"],
       answer:"Für einen sauberen Start reichen vier Dinge: E-Mail bestätigen, Account mit Passkey oder 2FA absichern, Grundsetup speichern und ein erstes Widget anlegen.",
@@ -253,6 +265,7 @@
     const emailVerified = Boolean(me.account.email_verified);
     const passkeyCount = Array.isArray(passkeys?.passkeys) ? passkeys.passkeys.length : 0;
     const mfaEnabled = Boolean(mfa?.enabled);
+    if (!passkeys || !mfa) return null;
 
     if (!emailVerified) {
       return {
@@ -275,6 +288,7 @@
   }
 
   function pageSpecificReply() {
+    if (["/pages/stream-maker.html","/pages/shop.html","/pages/cut-studio.html"].includes(path)) return {text:currentContext()[1]+" Wähle oben die passende Aufgabe und folge einem Schritt nach dem anderen.",actions:[]};
     if (path === "/pages/dashboard.html") {
       return {
         text:"Im Dashboard solltest du zuerst den Bereich „Erste Schritte“ abarbeiten. Dort siehst du genau einen offenen nächsten Schritt.",
@@ -318,7 +332,7 @@
     const query = normalize(raw);
 
     if (!query || ["hilfe","help","was nun","was jetzt","weiter","nachster schritt","nächster schritt"].includes(query)) {
-      return (await accountAdvice()) || pageSpecificReply() || {
+      return pageSpecificReply() || (await accountAdvice()) || {
         text:"Sag mir, was du erreichen möchtest. Ich kann dich z. B. bei Account-Start, Sicherheit, Widgets, TikTok, Launcher oder Stream unterstützen.",
         actions:[["Streams ansehen","/#streams","primary"],["Creator Bereich","/pages/login.html",""]]
       };
@@ -360,7 +374,7 @@
       addMessage(`Willkommen beim CFS Guide. ${copy}`, "guide");
     }
 
-    const suggestions = path.includes("account")
+    const suggestions = path.includes("stream-maker") ? ["Bild hochladen","OBS-Quelle","Vorlage nutzen","Problem beheben"] : path.includes("cut-studio") ? ["Clip schneiden","Audio","Launcher","Problem beheben"] : path.includes("shop") ? ["Vorlage nutzen","Bundle","Maker","Support"] : path.includes("account")
       ? ["Nächster Schritt","Passkey einrichten","2FA erklären","Hilfe-Center"]
       : path.includes("widget")
         ? ["Erstes Widget","Nächster Schritt","TikTok nötig?","Hilfe-Center"]
@@ -388,8 +402,9 @@
 
   function init() {
     // Avoid admin-only surfaces and embedded utility pages.
-    if (path.includes("/admin-") || document.body.dataset.cfsGuide === "off") return;
+    if (path === "/pages/admin.html" || path.includes("/admin-") || document.body.dataset.cfsGuide === "off") return;
 
+    if (document.getElementById("cfsGuideRoot")) return;
     root();
 
     document.getElementById("cfsGuideLauncher")?.addEventListener("click", () => {

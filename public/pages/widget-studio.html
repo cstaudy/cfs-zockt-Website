@@ -17,9 +17,12 @@
   <link rel="apple-touch-icon" href="/assets/img/apple-touch-icon.png">
   <link rel="stylesheet" href="/assets/css/cfs-brand-v198.css" data-cfs-brand-v198>
   <link rel="stylesheet" href="/assets/css/cfs-product-v199.css" data-cfs-product-v199>
-<link rel="stylesheet" href="/assets/css/cfs-suite-v203.css" data-cfs-suite-v203>
+  <link rel="stylesheet" href="/assets/css/cfs-suite-v203.css" data-cfs-suite-v203>
+<link rel="stylesheet" href="/assets/css/cfs-workspace-v205.css">
+<link rel="stylesheet" href="/assets/css/cfs-guide-v5.css">
+<link rel="stylesheet" href="/assets/css/cfs-help-v6.css">
 </head>
-<body data-cfs-suite-v203="1" data-cfs-product-v199="1" data-cfs-brand-v192="1" class="creator-workspace" data-cfs-brand-v198="1">
+<body data-cfs-product-v199="1" data-cfs-brand-v192="1" data-cfs-suite-v203="1" class="creator-workspace" data-cfs-brand-v198="1">
 <header class="site-header creator-site-header">
   <div class="container header-inner creator-header-inner">
     <a class="creator-brand" href="/pages/dashboard.html" aria-label="cfs_zockt Creator Suite Dashboard">
@@ -28,8 +31,11 @@
     </a>
     <button class="mobile-toggle creator-mobile-toggle" data-mobile-toggle id="mobileNavToggle" type="button">MENÜ</button>
     <nav class="nav creator-nav" data-nav data-creator-nav id="mainNav" aria-label="Creator Suite Navigation">
-      <a data-creator-link href="/pages/dashboard.html">DASHBOARD</a>
+<a data-creator-link href="/pages/dashboard.html">DASHBOARD</a>
 <a data-creator-link href="/pages/widget-studio.html">WIDGETS</a>
+<a data-creator-link href="/pages/stream-maker.html">MAKER</a>
+    <a data-creator-link href="/pages/universal-builder.html">BUILDER</a>
+<a data-creator-link href="/pages/shop.html">SHOP</a>
 <a data-creator-link href="/pages/stream-studio.html">STREAM</a>
 <a data-creator-link href="/pages/tiktok.html">TIKTOK</a>
 <a data-creator-link href="/pages/integrations.html">INTEGRATIONEN</a>
@@ -59,13 +65,14 @@
 <section class="ws-topbar container">
   <div>
     <div class="eyebrow">cfs_zockt CREATOR SUITE</div>
-    <h1>Widget Studio</h1><span class="ws-standard-route">STANDARD-ABLAUF · AUSWÄHLEN → GESTALTEN → TESTEN → VERÖFFENTLICHEN</span>
+    <h1>WIDGET STUDIO</h1>
     <p>Wähle zuerst deinen Stream-Bereich: TikTok LIVE, Twitch oder OBS / Allgemein. Provider-Daten und Widgets bleiben strikt getrennt.</p>
+    <span class="ws-standard-route">STANDARD-ABLAUF · AUSWÄHLEN → GESTALTEN → TESTEN → VERÖFFENTLICHEN</span>
   </div>
   <div class="ws-topbar-side">
     <div class="ws-experience-switch ws-experience-switch-top" role="group" aria-label="Widget Studio Modus">
-      <button class="active" type="button" data-experience-mode="simple"><span>🌱</span><strong>STANDARD</strong><small>geführt</small></button>
-      <button type="button" data-experience-mode="pro"><span>⚙</span><strong>WEITERE OPTIONEN</strong><small>alle Optionen</small></button>
+      <button class="active" type="button" data-experience-mode="simple"><span>✓</span><strong>STANDARD</strong><small>geführt</small></button>
+      <button type="button" data-experience-mode="pro"><span>＋</span><strong>WEITERE OPTIONEN</strong><small>bei Bedarf</small></button>
     </div>
     <div class="ws-account-card">
       <span id="wsPlanBadge" class="badge">LÄDT…</span>
@@ -76,18 +83,18 @@
   </div>
 </section>
 
-<section class="creator-tool-entry" data-tool-entry="widget-studio" aria-label="Widget Studio Einstieg"><details class="ws-workflow-guide" aria-label="Widget Studio Anleitung"><summary>So erstellst du dein Widget</summary>
+<section class="creator-tool-entry" data-tool-entry="widget-studio" aria-label="Widget Studio Einstieg">
   <div class="creator-tool-entry-head">
-    <div><span class="creator-tool-kicker">DEIN EINSTIEG</span><strong>Vom ersten Widget bis zum fertigen Stream-Element.</strong><p>Manuelle Widgets funktionieren auch ohne TikTok. Für LIVE-Daten kannst du TikTok und den Launcher später getrennt verbinden.</p></div>
-    <span class="creator-tool-status">ANLEITUNG</span>
+    <div><span class="creator-tool-kicker">DEIN STANDARD-ABLAUF</span><strong>Vom ersten Widget bis zum fertigen Stream-Element.</strong><p>Du wählst Inhalt und Plattform, gestaltest dein Widget, testest es und veröffentlichst erst am Ende.</p></div>
+    <span class="creator-tool-status available">VERFÜGBAR</span>
   </div>
   <div class="creator-tool-path">
     <article><b>01</b><span><strong>Widget wählen</strong><small>Goal, Counter, Timer, Chat, Kamera oder weitere Typen starten.</small></span></article>
-    <article><b>02</b><span><strong>Gestalten & testen</strong><small>Bearbeite Inhalte und Darstellung und prüfe dein Widget in der Vorschau.</small></span></article>
+    <article><b>02</b><span><strong>Gestalten &amp; testen</strong><small>Inhalt, Design, Dateien und Vorschau liegen in einem Ablauf.</small></span></article>
     <article><b>03</b><span><strong>Veröffentlichen</strong><small>Als einzelnes Widget nutzen oder anschließend im Scene Studio kombinieren.</small></span></article>
   </div>
-  <div class="creator-tool-entry-actions"><a class="btn primary" href="/pages/universal-builder.html">BUNDLE-UMWANDLER</a><button class="btn" type="button" data-action="open-create">NEUES WIDGET</button><a class="btn" href="/pages/scene-studio.html">SCENE STUDIO</a><a class="btn" href="/pages/launcher.html">LAUNCHER STATUS</a></div>
-</details></section>
+  <div class="creator-tool-entry-actions"><a class="btn primary" href="/pages/universal-builder.html">UNIVERSAL BUILDER · V203</a><button class="btn" type="button" data-action="open-create">NEUES WIDGET</button><a class="btn" href="/pages/scene-studio.html">SCENE STUDIO</a><a class="btn" href="/pages/launcher.html">LAUNCHER STATUS</a></div>
+</section>
 
 <section class="container ws-shell" id="wsApp">
   <div class="notice" id="wsMessage" role="status" aria-live="polite" aria-atomic="true" tabindex="-1" hidden></div>
@@ -308,8 +315,8 @@
       <div class="ws-create-nav-row">
         <button class="ws-back ws-back-pill" type="button" data-action="dashboard"><span aria-hidden="true">←</span> Zurück zu Widgets</button>
         <div class="ws-experience-switch ws-experience-switch-inline" role="group" aria-label="Widget Studio Modus">
-          <button class="active" type="button" data-experience-mode="simple"><span>🌱</span><strong>STANDARD</strong></button>
-          <button type="button" data-experience-mode="pro"><span>⚙</span><strong>WEITERE OPTIONEN</strong></button>
+          <button class="active" type="button" data-experience-mode="simple"><span>✓</span><strong>STANDARD</strong></button>
+          <button type="button" data-experience-mode="pro"><span>＋</span><strong>WEITERE OPTIONEN</strong></button>
         </div>
       </div>
       <div class="ws-create-headline">
@@ -363,21 +370,10 @@
 
     <section class="ws-widget-converter" id="wsWidgetConverter" aria-label="Widget Umwandler">
       <div class="ws-widget-converter-head">
-        <div><div class="ws-section-label">UMWANDLER · EIGENE BUNDLES</div><h3>Dein Bundle in Widgets, Overlays und Tools umsetzen.</h3><p>Wähle ein selbst erstelltes Bundle. CFS erzeugt daraus editierbare Entwürfe und öffnet danach den normalen Widget-Editor.</p></div>
-        <span>BUNDLE → CFS</span>
-      </div>
-      <div class="ws-converter-bundle-source">
-        <div><strong>Eigene Bundle-Quelle</strong><small>Nur gespeicherte Universal-Builder-Bundles werden verwendet.</small></div>
-        <label><span>BUNDLE AUSWÄHLEN</span><select id="wsConverterBundle"><option value="">Bundle laden …</option></select></label>
-        <button class="btn primary" id="wsConverterBundleCreate" type="button" disabled>BUNDLE UMWANDELN</button>
+        <div><div class="ws-section-label">UMWANDLER · DIREKT NUTZBAR</div><h3>Bild oder Logo in ein fertiges Widget verwandeln.</h3><p>Wähle eine Plattform, einen passenden Widget-Typ und eine Datei. CFS legt daraus direkt ein editierbares Widget an und öffnet den normalen Editor.</p></div>
+        <span>TIKTOK · TWITCH</span>
       </div>
       <div class="ws-converter-flow">
-        <div class="ws-converter-step"><b>1</b><div><strong>Bundle auswählen</strong><small>Dein eigenes Design bleibt die Quelle.</small></div></div>
-        <div class="ws-converter-step"><b>2</b><div><strong>Ausgaben erzeugen</strong><small>Widgets, Overlays und Tools werden automatisch vorbereitet.</small></div></div>
-        <div class="ws-converter-step"><b>3</b><div><strong>Im Studio weiterarbeiten</strong><small>Alle erzeugten Widgets bleiben editierbare Entwürfe.</small></div></div>
-      </div>
-      <div class="ws-converter-footer"><small id="wsConverterNote">Der Bundle-Umwandler nutzt nur deine eigenen gespeicherten Bundles.</small></div>
-<details class="ws-workflow-guide"><summary>Einzelnes Bild oder Logo als Widget-Branding verwenden</summary>      <div class="ws-converter-flow">
         <div class="ws-converter-step">
           <b>1</b>
           <div><strong>Plattform wählen</strong><small>Die Datenquelle bleibt sauber getrennt.</small></div>
@@ -397,8 +393,7 @@
           <label class="ws-converter-upload"><span id="wsConverterAssetPreview"><span>+</span><div><strong>Logo oder Bild hochladen</strong><small>PNG, JPG oder WebP</small></div></span><input id="wsConverterUpload" type="file" accept="image/png,image/jpeg,image/webp"></label>
         </div>
       </div>
-      <div class="ws-converter-footer"><small class="ws-converter-asset-note">Der Umwandler ist für TikTok und Twitch verfügbar.</small><button class="btn primary" id="wsConverterCreate" type="button" disabled>WIDGET ERSTELLEN</button></div>
-</details>
+      <div class="ws-converter-footer"><small id="wsConverterNote">Der Umwandler ist für TikTok und Twitch verfügbar.</small><button class="btn primary" id="wsConverterCreate" type="button" disabled>WIDGET ERSTELLEN</button></div>
     </section>
 
     <section class="ws-panel-converter" id="wsPanelConverter" aria-label="Panel Umwandler">
@@ -489,13 +484,13 @@
         <button type="button" data-quick-create="chat"><b>⌁</b><span><strong>Chat</strong><small data-quick-start-meta="chat">TikTok LIVE Chat</small></span><em>STARTEN →</em></button>
         <button type="button" data-quick-create="camera"><b>▣</b><span><strong>Kamera</strong><small data-quick-start-meta="camera">Passender Kamera-Rahmen</small></span><em>STARTEN →</em></button>
       </div>
-      <p class="ws-quickstart-30-note">Du kannst danach weiterhin alle sechs Einfach-Schritte oder jederzeit den Profi-Modus nutzen. Es wird nichts automatisch veröffentlicht.</p>
+      <p class="ws-quickstart-30-note">Du kannst danach jeden Schritt weiter anpassen. Es wird nichts automatisch veröffentlicht.</p>
     </section>
 
     <section class="ws-type-library">
       <div class="ws-type-library-head">
         <div><div class="ws-section-label">WIDGET-TYP</div><h3>Was möchtest du im Stream zeigen?</h3></div>
-        <div class="ws-simple-type-picker" data-experience-scope="simple" aria-label="Einfache Widget-Kategorien">
+        <div class="ws-simple-type-picker" data-experience-scope="simple" aria-label="Widget-Kategorien">
           <span>WAS MÖCHTEST DU BAUEN?</span>
           <div class="ws-simple-category-grid">
             <button class="active" type="button" data-type-filter="recommended"><b>★</b><span><strong>Start</strong><small>Empfohlen</small></span></button>
@@ -608,8 +603,8 @@
 
       <div class="ws-editor-actions">
         <div class="ws-experience-switch ws-experience-switch-editor" role="group" aria-label="Widget Studio Modus">
-          <button class="active" type="button" data-experience-mode="simple" title="Geführte Ansicht"><span>🌱</span><strong>STANDARD</strong></button>
-          <button type="button" data-experience-mode="pro" title="Alle Werkzeuge"><span>⚙</span><strong>WEITERE OPTIONEN</strong></button>
+          <button class="active" type="button" data-experience-mode="simple" title="Standard-Ablauf"><span>✓</span><strong>STANDARD</strong></button>
+          <button type="button" data-experience-mode="pro" title="Weitere Optionen"><span>＋</span><strong>WEITERE OPTIONEN</strong></button>
         </div>
         <button class="btn ws-template-save-btn" type="button" data-action="save-template">ALS VORLAGE</button>
         <button class="btn ws-preview-btn" type="button" data-action="preview">VORSCHAU</button>
@@ -745,17 +740,17 @@
         </div>
 
         <div class="ws-experience-switch ws-experience-switch-inspector" role="group" aria-label="Widget Studio Modus">
-          <button class="active" type="button" data-experience-mode="simple"><span>🌱</span><strong>STANDARD</strong></button>
-          <button type="button" data-experience-mode="pro"><span>⚙</span><strong>WEITERE OPTIONEN</strong></button>
+          <button class="active" type="button" data-experience-mode="simple"><span>✓</span><strong>STANDARD</strong></button>
+          <button type="button" data-experience-mode="pro"><span>＋</span><strong>WEITERE OPTIONEN</strong></button>
         </div>
 
         <div class="ws-simple-editor-guide" data-experience-scope="simple">
           <span>DEIN WEG</span>
           <div><b>1</b> Vorlage <i>→</i> <b>2</b> Inhalt <i>→</i> <b>3</b> Design <i>→</i> <b>4</b> Position <i>→</i> <b>5</b> Effekte <i>→</i> <b>6</b> Testen</div>
-          <small>Ein Schritt nach dem anderen. HEX, Ebenen, exakte Pixelwerte und technische Ausgabe bleiben im Profi-Modus.</small>
+          <small>Ein Schritt nach dem anderen. Technische Details werden nur geöffnet, wenn du sie wirklich brauchst.</small>
         </div>
 
-        <nav class="ws-simple-editor-nav" data-experience-scope="simple" aria-label="Einfache Gestaltungsschritte">
+        <nav class="ws-simple-editor-nav" data-experience-scope="simple" aria-label="Gestaltungsschritte">
           <button class="active" type="button" data-simple-section="template"><b>1</b><span><strong>Vorlage</strong><small>Layout &amp; Themen</small></span></button>
           <button type="button" data-simple-section="content"><b>2</b><span><strong>Inhalt</strong><small>Text, Wert oder Datei</small></span></button>
           <button type="button" data-simple-section="design"><b>3</b><span><strong>Design</strong><small>Farben &amp; Rahmen</small></span></button>
@@ -776,11 +771,11 @@
 
         <div class="ws-pro-workspace" data-experience-scope="pro">
           <div class="ws-pro-workspace-head">
-            <span>PROFI-WERKZEUGE</span>
+            <span>WEITERE OPTIONEN</span>
             <strong id="wsProSectionTitle">Designbibliothek</strong>
             <small>Alle Werkzeuge bleiben erhalten, sind aber nach Aufgabe getrennt.</small>
           </div>
-          <nav class="ws-pro-section-nav" aria-label="Profi-Bereiche">
+          <nav class="ws-pro-section-nav" aria-label="Weitere Bereiche">
             <button class="active" type="button" data-pro-section="design"><b>◆</b><span><strong>Design</strong><small>Layouts, Themes, Farben</small></span></button>
             <button type="button" data-pro-section="element"><b>◇</b><span><strong>Element</strong><small>Text, Position, Ebenen</small></span></button>
             <button type="button" data-pro-section="data"><b>≋</b><span><strong>Daten</strong><small>Werte, Medien, Canvas</small></span></button>
@@ -790,14 +785,14 @@
 
         <div class="ws-editor-mode-switch" data-experience-scope="pro" role="tablist" aria-label="Gestaltungsmodus">
           <button class="active" type="button" data-editor-mode="quick" role="tab" aria-selected="true">
-            <span>⚡</span><strong>Kompakt</strong><small>Wichtige Profi-Optionen</small>
+            <span>⚡</span><strong>Kompakt</strong><small>Wichtige Optionen</small>
           </button>
           <button type="button" data-editor-mode="free" role="tab" aria-selected="false">
             <span>◇</span><strong>Detail-Editor</strong><small>Exakte Werte & Ebenen</small>
           </button>
         </div>
-        <div class="ws-editor-mode-hint" id="wsModeHint" data-experience-scope="pro">Kompakt zeigt die wichtigsten Profi-Werkzeuge. Im Detail-Editor erhältst du exakte Werte, Ebenen und freie Gestaltung.</div>
-        <div class="ws-editor-mode-hint ws-simple-mode-hint" data-experience-scope="simple"><strong>🌱 STANDARD-ABLAUF:</strong> Du siehst nur die Entscheidung des aktuellen Schritts. Für HEX, Ebenen, exakte Positionen und technische Ausgabe wechselst du auf „Profi“.</div>
+        <div class="ws-editor-mode-hint" id="wsModeHint" data-experience-scope="pro">Kompakt zeigt die wichtigsten Werkzeuge. Im Detail-Editor erhältst du exakte Werte, Ebenen und freie Gestaltung.</div>
+        <div class="ws-editor-mode-hint ws-simple-mode-hint" data-experience-scope="simple"><strong>STANDARD-ABLAUF:</strong> Du siehst immer nur die Entscheidung des aktuellen Schritts. Technische Details bleiben geschlossen, bis du sie brauchst.</div>
         <div class="ws-free-mode-guide" data-mode-scope="free" hidden>
           <div class="ws-free-mode-guide-head">
             <span>FREI GESTALTEN</span>
@@ -1583,8 +1578,8 @@
       <section class="ws-help-mode-choice">
         <span>WIE MÖCHTEST DU ARBEITEN?</span>
         <div class="ws-experience-switch ws-experience-switch-help" role="group" aria-label="Widget Studio Modus">
-          <button class="active" type="button" data-experience-mode="simple"><span>🌱</span><strong>Einfach starten</strong><small>geführt · nur das Wichtigste</small></button>
-          <button type="button" data-experience-mode="pro"><span>⚙</span><strong>Profi-Modus</strong><small>freie Gestaltung · alle Werkzeuge</small></button>
+          <button class="active" type="button" data-experience-mode="simple"><span>✓</span><strong>Standard-Ablauf</strong><small>geführt · klarer Weg</small></button>
+          <button type="button" data-experience-mode="pro"><span>＋</span><strong>Weitere Optionen</strong><small>nur bei Bedarf</small></button>
         </div>
       </section>
       <section class="ws-help-hero">
@@ -1619,8 +1614,9 @@
 <script src="/assets/js/app.js?v=v42-r10"></script>
 <script src="/assets/js/cfs-widget-renderer.js?v=v42-r13"></script>
 <script src="/assets/js/widget-studio.js?v=v42-r20"></script>
+<script src="/assets/js/cfs-suite-navigation-v204.js"></script>
 <script src="/assets/js/cfs-creator-ux-v189.js"></script>
 <script src="/assets/js/cfs-product-v199.js" defer></script>
-<script src="/assets/js/cfs-suite-navigation-v204.js" defer></script>
+<script src="/assets/js/cfs-help-v6.js" defer></script><script src="/assets/js/cfs-guide-v5.js" defer></script><script src="/assets/js/cfs-guide-journeys.js" defer></script><script src="/assets/js/cfs-workspace-v205.js" defer></script>
 </body>
 </html>
