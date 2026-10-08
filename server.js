@@ -2,7 +2,7 @@
  * ============================================================
  * cfs_zockt Creator Suite
  * Website Backend
- * Version 3.20.57
+ * Version 3.20.58
  * ============================================================
  */
 
@@ -79,7 +79,7 @@ const APP_NAME =
     "CFS_Zockt Creator Suite";
 
 const BACKEND_VERSION =
-    "3.20.57";
+    "3.20.58";
 
 // ============================================================
 // PRIVATE BETA / LEGAL BASELINE

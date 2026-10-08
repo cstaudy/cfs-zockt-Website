@@ -12,9 +12,11 @@ const versionAtLeast=(current,minimum)=>{const a=String(current||"0").split(".")
 const checks=[];
 const check=(name,ok)=>{checks.push([name,Boolean(ok)]);if(!ok)process.exitCode=1};
 
-for(const kind of ['goal','counter','timer','chat','camera']){
+for(const kind of ['goal','counter','timer','chat']){
   check(`Quickstart ${kind} vorhanden`,html.includes(`data-quick-create="${kind}"`));
 }
+check('Kamera ist nicht mehr im Einfach-Quickstart',!html.includes('data-quick-create="camera"'));
+check('Kamera bleibt intern/pro kompatibel',js.includes('if(kind==="camera")return["camera_frame","camera_frame_square"]')); 
 check('Quickstarts nur im Einfach-Modus',/ws-quickstart-30[^>]+data-experience-scope="simple"/.test(html));
 check('Quickstart veröffentlicht nicht automatisch',html.includes('Es wird nichts automatisch veröffentlicht.'));
 check('Direkter Handler vorhanden',js.includes("function createQuickStart(kind)"));

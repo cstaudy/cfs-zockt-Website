@@ -1,198 +1,150 @@
 {
-  "release": "3.20.57",
-  "from_release": "3.20.56",
+  "release": "3.20.58",
+  "from_release": "3.20.57",
   "database_schema": 80,
   "launcher": "0.47.31",
   "files": [
     {
-      "path": "BETA-TEST-START-3.20.57.md",
-      "sha256": "6df2f9d38007e241537a20b2c5d0ed894abb2e0d4c54c8c718f98cb9347a310a",
+      "path": "CHANGED-FILES-3.20.58.txt",
+      "sha256": "4cb24de433b591fa34ab751ffa241f7d871e96cf1b971610011e8c3db76c187a",
       "accepted_previous_sha256": [],
       "may_be_absent": true
     },
     {
-      "path": "CHANGED-FILES-3.20.57.txt",
-      "sha256": "a04dcef03b5146542777518926e970e5b3c345724b98f6c2618c4ef854509dbd",
+      "path": "EINBAU-3.20.58.md",
+      "sha256": "ddaf20d5c1e28e506471c1c1da5ac9845a4650eda63f52f323da02d898265486",
       "accepted_previous_sha256": [],
       "may_be_absent": true
     },
     {
-      "path": "EINBAU-3.20.57.md",
-      "sha256": "92786443aaf54db526b4bb27cb3d77ad1905d4583251e2ab7166580443f30d48",
+      "path": "UEBERGABE-3.20.58.md",
+      "sha256": "dc15d55c9386bff29bd59f0f8709f9f38ecf9e678b3c37f5fcc37965769e0e94",
       "accepted_previous_sha256": [],
       "may_be_absent": true
     },
     {
-      "path": "PRE-BETA-STATUS-3.20.57.md",
-      "sha256": "e5d78007214f40d8b28142f23767b3989faf46122b2043fb7e5f04d0ff596ef6",
-      "accepted_previous_sha256": [],
-      "may_be_absent": true
-    },
-    {
-      "path": "UEBERGABE-3.20.57.md",
-      "sha256": "b35a73de5beb2ecee59aeb0e4fbe2ad9c7d0edb48a375f772b771e3c886d763d",
-      "accepted_previous_sha256": [],
-      "may_be_absent": true
-    },
-    {
-      "path": "UPDATE-3.20.57.md",
-      "sha256": "a23e77bf398f6850e41e2bae19885f61fc518f44af9edfdc0163caa0154eb173",
-      "accepted_previous_sha256": [],
-      "may_be_absent": true
-    },
-    {
-      "path": "docs/UPDATE-UEBERGABE-STANDARD.md",
-      "sha256": "4bd3290766ae54cea179d4f41f137b070e60df3e5a8018d8f5d82bb642c9f2b1",
-      "accepted_previous_sha256": [],
-      "may_be_absent": true
-    },
-    {
-      "path": "docs/legacy-npm-scripts-3.20.57.json",
-      "sha256": "f6a806cce8b1421060fb17ce25fb5db41960a62e8ee6e15fb93a1e661de4e785",
-      "accepted_previous_sha256": [],
-      "may_be_absent": true
-    },
-    {
-      "path": "launcher/package.json",
-      "sha256": "2b29fd5a9dcdc30b4b577bd42363207b9370c31b2f1e0191ac97a041e2609104",
-      "accepted_previous_sha256": [
-        "4f03b0a539ec04352fbcb43e246010059d4f05bbbc0416eaab01622a62cb9412"
-      ],
-      "may_be_absent": false
-    },
-    {
-      "path": "lib/beta-acceptance-v32057.js",
-      "sha256": "43b4e3b98f8ec26f733f63eb5974f73d9584a31b4dc7236e25f35f8412fd5eee",
+      "path": "UPDATE-3.20.58.md",
+      "sha256": "790b204cef985c752c87f9d3c57a04a640b822b15c49507c2e338c71657444eb",
       "accepted_previous_sha256": [],
       "may_be_absent": true
     },
     {
       "path": "package-lock.json",
-      "sha256": "6d2edc386c8074cd16b2c3c2dae623898ef6222d67360a7c25ab9d2577848644",
+      "sha256": "579a7c3294caa7281e6d30d3eb9a823b67425dd41c36577a9a1880fd04a7d250",
       "accepted_previous_sha256": [
-        "5fec08b9a5e7d98218fb83e9e1c75d7bb13f2302e704d39245449dc797d2b620"
+        "6d2edc386c8074cd16b2c3c2dae623898ef6222d67360a7c25ab9d2577848644"
       ],
       "may_be_absent": false
     },
     {
       "path": "package.json",
-      "sha256": "71557a565e65362cd84d8ed340fcd3870460559b533e7af26fd99f63185cadd5",
+      "sha256": "25fb9245d3381435e9317c61d96edce10e76243cbbc62c867be013bdc115e18f",
       "accepted_previous_sha256": [
-        "fdf11a8dcd7403c00b9f48b343f343baf43af367e9f2d53ae10f221e7d951e06"
+        "71557a565e65362cd84d8ed340fcd3870460559b533e7af26fd99f63185cadd5"
       ],
       "may_be_absent": false
     },
     {
-      "path": "public/assets/css/beta-acceptance-v32057.css",
-      "sha256": "77c11332816d455785329cb07a42d5f8c949c9d3c01abbb15b91b69664c40b5e",
-      "accepted_previous_sha256": [],
-      "may_be_absent": true
+      "path": "public/assets/css/cfs-suite-v203.css",
+      "sha256": "55e97cea9a6277699b9a97bb6a3ccdf6aaa50ec3e2edd68a71aea5f2b72d433b",
+      "accepted_previous_sha256": [
+        "d5f339670f8d2e7e6b745b580b0cdc1c0bc4a8273e41bebf1e35c214084d1487"
+      ],
+      "may_be_absent": false
     },
     {
-      "path": "public/assets/data/beta-acceptance-v32057.json",
-      "sha256": "01d414ace31394846a612dc5600d38a20fba97236360de258e9c5366be56e354",
-      "accepted_previous_sha256": [],
-      "may_be_absent": true
-    },
-    {
-      "path": "public/assets/js/page-beta-acceptance-v32057.js",
-      "sha256": "ed6f0209eb7c76f415f3e8ddcf8c5cf5cad4ed30d6ba8177a4af6e391238157e",
-      "accepted_previous_sha256": [],
-      "may_be_absent": true
+      "path": "public/assets/css/stream-maker.css",
+      "sha256": "10c6a8106aa7297756550b4ed29bd11cbd38a163aec0273644025973d8c8013a",
+      "accepted_previous_sha256": [
+        "409f1eb7107b12005a1067b07da793cba90faedbcb292161a1677b38ffa21ad2"
+      ],
+      "may_be_absent": false
     },
     {
       "path": "public/assets/js/page-system-check.js",
-      "sha256": "872bf6ade4eea4b70b7557bf2bd816ccb15f05054466d62a30a370c6c19ade52",
+      "sha256": "be88e3b0a8f530f73c0a39a2346af5edc9b7e94eb581fe406d23b0eecd1d3e84",
       "accepted_previous_sha256": [
-        "d65ac2b0ebb64f0ab2bc5247a7285216521d439cd1f91fb712f1f1d78852e9b6"
+        "872bf6ade4eea4b70b7557bf2bd816ccb15f05054466d62a30a370c6c19ade52"
       ],
       "may_be_absent": false
     },
     {
-      "path": "public/pages/beta-acceptance.html",
-      "sha256": "5ed2c5320fc06a6bfb30c72564a871d7ee4e385e53f1e6f0178165ed33dcccf0",
+      "path": "public/assets/js/stream-maker-core.js",
+      "sha256": "e59faee9f042810e56044cf7e1474d8f50d9e87ba4a96731170a983952e61fbe",
       "accepted_previous_sha256": [
-        "203fa4b1667511932c27d998e9b9cbef628dde11ec22ff08f8f7e64221c78558"
+        "3f64d8f34086a6aea06128e92fa88668da7cde963aaeff69a5d7b95fbf670fde"
       ],
       "may_be_absent": false
     },
     {
-      "path": "public/pages/system-check.html",
-      "sha256": "043c9963e2dd525d54bed829283ffde8cce57a6e75ed240e4d40610a3fee524e",
+      "path": "public/assets/js/stream-maker.js",
+      "sha256": "b4a19eda636cb626f17896117b78a0fac39bb7572ed5e7b46e25150efde763e0",
       "accepted_previous_sha256": [
-        "2a15f3391933cfbc61beacd505fd341b37dcd996fe4b0bfe6933ad39180d4fc0"
+        "0c336df4b910feb95deabbf8fbc33b1bda88efaf27898420cca6943623ff3aef"
+      ],
+      "may_be_absent": false
+    },
+    {
+      "path": "public/assets/js/widget-studio.js",
+      "sha256": "a2eadb6c972a44b713e5645b780eac8d88c8326dee5810b27a4b8254d8fd3951",
+      "accepted_previous_sha256": [
+        "33fed90f25fd4360a80af09c646c9335963d761638d2c09bda8793bbe618746b"
+      ],
+      "may_be_absent": false
+    },
+    {
+      "path": "public/pages/stream-maker.html",
+      "sha256": "12155fe9b1f5237ef2772f08290673c797852a3e6b4768a63bd04d08f2ec0de6",
+      "accepted_previous_sha256": [
+        "951c0248087c76e2662d2208f046d5986207938fb281432bc29a5b1579df6c32"
+      ],
+      "may_be_absent": false
+    },
+    {
+      "path": "public/pages/widget-studio.html",
+      "sha256": "a42bfb0dbcecdc895ddbe44b24d9eaedbce741d29a654e88629300641d89b0a2",
+      "accepted_previous_sha256": [
+        "7c08196177c788d65ea20d6444b7c91c3d7d6bdb5e01c42402c1a2a807c7f0fd"
       ],
       "may_be_absent": false
     },
     {
       "path": "server.js",
-      "sha256": "6c72007d24c071380397da1241f36476cd4be171e9165aea46d9d557ce21a565",
+      "sha256": "68c2ecb2043e3c6dc3fde9097c9568c9f4026c6bb376585afa68ec8b30cb8689",
       "accepted_previous_sha256": [
-        "5d95da75151e9529623fdc20b53a18b2a1c9e53dbf6d217d2215be8d7d70e07c"
+        "6c72007d24c071380397da1241f36476cd4be171e9165aea46d9d557ce21a565"
       ],
       "may_be_absent": false
     },
     {
-      "path": "tools/beta-acceptance-v32057-test.mjs",
-      "sha256": "935ad5d16a428b0cff8865298c0157379ab41ad36fc5107de0c694098cdac531",
-      "accepted_previous_sha256": [],
-      "may_be_absent": true
-    },
-    {
-      "path": "tools/beta-acceptance-v32057.mjs",
-      "sha256": "f4618d97ecb7ae1f4c881ff23d1a271c88a0564bf6214c2f13fbae7c9b68cf72",
-      "accepted_previous_sha256": [],
-      "may_be_absent": true
-    },
-    {
-      "path": "tools/beta-evidence-v32057.mjs",
-      "sha256": "7a0f369e44a6d4f56f0a13d378bbc44a8d15d757ea5860135d4c5bac867ab7e2",
-      "accepted_previous_sha256": [],
-      "may_be_absent": true
-    },
-    {
-      "path": "tools/beta-go-no-go-v32057.mjs",
-      "sha256": "bddfe2bd8057fd07a65b056d59c050475cab932b27ace28a2e62ec3aba8c8326",
-      "accepted_previous_sha256": [],
-      "may_be_absent": true
-    },
-    {
-      "path": "tools/beta-preflight-v32057.mjs",
-      "sha256": "3f387c18a0ad1b5e2fd9b854b7d4aae30f1f4a42e0abf11954f8a5fa5a578f21",
-      "accepted_previous_sha256": [],
-      "may_be_absent": true
-    },
-    {
-      "path": "tools/beta-windows-kit-v32057-test.mjs",
-      "sha256": "b789073e7c8cecfa19b16f4d1c0b31016002f6bbd6c0e6f1f0f06aa2235993a2",
-      "accepted_previous_sha256": [],
-      "may_be_absent": true
-    },
-    {
-      "path": "tools/beta-windows-kit-v32057.mjs",
-      "sha256": "297545981b0b57d889ce05240891a9652923d6c770d0599d9b21b29ad0cb0ca2",
-      "accepted_previous_sha256": [],
-      "may_be_absent": true
-    },
-    {
-      "path": "tools/npm-script-hygiene-v32057-test.mjs",
-      "sha256": "dea39e8a379c5fb06cc061a735b81411d44b4b4f7a5005addb2d73b70fe8b5f9",
-      "accepted_previous_sha256": [],
-      "may_be_absent": true
-    },
-    {
-      "path": "tools/pre-beta-expansion-v32056-test.mjs",
-      "sha256": "5a45afab0d0bd8e7d303fa4f24d3197c03d41699a029a387c25490320d0ebb6c",
+      "path": "tools/master-image-generator-v32049-test.mjs",
+      "sha256": "1dad3b04aea19c69e3c99b419bf8731e4fe0da8ec2bb87c855602041047ccb59",
       "accepted_previous_sha256": [
-        "fae27ec4a67af919b91965727cfdf2714556fec390f54ebb70bf8527165e0501"
+        "28979937b6b6684785d6e6e2158a619f5920e1422def595b94e7f3ea1226769c"
       ],
       "may_be_absent": false
     },
     {
-      "path": "tools/release-handover-check.mjs",
-      "sha256": "39eac86142e833dec6888e7c24847148b0014ac226038ec6ba2409861adf6ade",
+      "path": "tools/master-image-generator-v32050-test.mjs",
+      "sha256": "94ed828c85271e8e66ffe90ed818af3eee4760580d68ed7b149e1c842d4f985e",
+      "accepted_previous_sha256": [
+        "7f29c64c42c8696bc1b2c85583be913f6dafbf7ba622af6dc2d26864151b07bc"
+      ],
+      "may_be_absent": false
+    },
+    {
+      "path": "tools/studio-role-separation-v32058-test.mjs",
+      "sha256": "de901af12f815450575d217a146c7f3ab81363e821bc6f96590e01f5d625b4e7",
       "accepted_previous_sha256": [],
       "may_be_absent": true
+    },
+    {
+      "path": "tools/widget-studio-30s-ux-test.mjs",
+      "sha256": "e9199d32b6bce5fd10adaac305886d5bd6834d5552a5b282a4c637ad9071b481",
+      "accepted_previous_sha256": [
+        "f789e2b19f794a63dc7f203437bed1f2120f38530742bffc355a3f5bd1a18424"
+      ],
+      "may_be_absent": false
     }
   ]
 }

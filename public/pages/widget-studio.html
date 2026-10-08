@@ -85,16 +85,18 @@
 
 <section class="creator-tool-entry" data-tool-entry="widget-studio" aria-label="Widget Studio Einstieg">
   <div class="creator-tool-entry-head">
-    <div><span class="creator-tool-kicker">DEIN STANDARD-ABLAUF</span><strong>Vom ersten Widget bis zum fertigen Stream-Element.</strong><p>Du wählst Inhalt und Plattform, gestaltest dein Widget, testest es und veröffentlichst erst am Ende.</p></div>
+    <div><span class="creator-tool-kicker">DEIN STANDARD-ABLAUF</span><strong>Dynamische Widgets und Live-Daten – ohne Design-Bundle-Chaos.</strong><p>Hier baust du alles, was sich im Stream verändert: Goals, Counter, Timer, Chat, Events und Provider-Daten. Den visuellen Grundlook erstellst du vorher im Stream Maker.</p></div>
     <span class="creator-tool-status available">VERFÜGBAR</span>
   </div>
   <div class="creator-tool-path">
-    <article><b>01</b><span><strong>Widget wählen</strong><small>Goal, Counter, Timer, Chat, Kamera oder weitere Typen starten.</small></span></article>
+    <article><b>01</b><span><strong>Widget wählen</strong><small>Goal, Counter, Timer, Chat, Latest Events oder andere Live-Widgets starten.</small></span></article>
     <article><b>02</b><span><strong>Gestalten &amp; testen</strong><small>Inhalt, Design, Dateien und Vorschau liegen in einem Ablauf.</small></span></article>
     <article><b>03</b><span><strong>Veröffentlichen</strong><small>Als einzelnes Widget nutzen oder anschließend im Scene Studio kombinieren.</small></span></article>
   </div>
   <div class="creator-tool-entry-actions"><a class="btn primary" href="/pages/universal-builder.html">UNIVERSAL BUILDER · V203</a><button class="btn" type="button" data-action="open-create">NEUES WIDGET</button><a class="btn" href="/pages/scene-studio.html">SCENE STUDIO</a><a class="btn" href="/pages/launcher.html">LAUNCHER STATUS</a></div>
 </section>
+
+<section class="ws-role-boundary container" aria-label="Aufgabe des Widget Studios"><div><span>WIDGET STUDIO = LIVE &amp; DATEN</span><strong>Hier entstehen dynamische Stream-Elemente.</strong><small>Goals · Counter · Timer · Chat · Events · Provider-Daten</small></div><a href="/pages/stream-maker.html">Für Kamera-Rahmen, Szenen &amp; Panels → Stream Maker</a></section>
 
 <section class="container ws-shell" id="wsApp">
   <div class="notice" id="wsMessage" role="status" aria-live="polite" aria-atomic="true" tabindex="-1" hidden></div>
@@ -135,7 +137,7 @@
       </div>
       <div class="ws-simple-category-grid">
         <article class="ws-simple-category">
-          <header><span>01 · ERSTELLEN</span><strong>Widget &amp; Design</strong><small>Alles, was du zum Bauen und Gestalten brauchst.</small></header>
+          <header><span>01 · ERSTELLEN</span><strong>Widget &amp; Live-Daten</strong><small>Goals, Counter, Timer, Chat und Events – klar nach Funktion.</small></header>
           <div class="ws-simple-category-actions">
             <button class="primary" type="button" data-action="open-create"><b>＋</b><span><strong>Neues Widget</strong><small>Geführt starten</small></span></button>
             <button type="button" data-action="open-latest-widget"><b>↺</b><span><strong>Weiterarbeiten</strong><small id="wsSimpleContinueMeta">Letztes Widget öffnen</small></span></button>
@@ -482,7 +484,6 @@
         <button type="button" data-quick-create="counter"><b>#</b><span><strong>Counter</strong><small data-quick-start-meta="counter">Passender Counter wird gewählt</small></span><em>STARTEN →</em></button>
         <button type="button" data-quick-create="timer"><b>◷</b><span><strong>Timer</strong><small data-quick-start-meta="timer">Passender Timer wird gewählt</small></span><em>STARTEN →</em></button>
         <button type="button" data-quick-create="chat"><b>⌁</b><span><strong>Chat</strong><small data-quick-start-meta="chat">TikTok LIVE Chat</small></span><em>STARTEN →</em></button>
-        <button type="button" data-quick-create="camera"><b>▣</b><span><strong>Kamera</strong><small data-quick-start-meta="camera">Passender Kamera-Rahmen</small></span><em>STARTEN →</em></button>
       </div>
       <p class="ws-quickstart-30-note">Du kannst danach jeden Schritt weiter anpassen. Es wird nichts automatisch veröffentlicht.</p>
     </section>
@@ -500,14 +501,14 @@
             <button type="button" data-type-filter="chat"><b>⌁</b><span><strong>Chat</strong><small>Provider-Chat</small></span></button>
             <button type="button" data-type-filter="latest"><b>↗</b><span><strong>Latest</strong><small>Letzte Events</small></span></button>
             <button type="button" data-type-filter="manual"><b>＋</b><span><strong>Manuell</strong><small>Gaming &amp; eigene Werte</small></span></button>
-            <button type="button" data-type-filter="overlay"><b>▣</b><span><strong>Overlays</strong><small>Rahmen, Kamera &amp; Szenen</small></span></button>
+            <button type="button" data-type-filter="alerts"><b>!</b><span><strong>Events</strong><small>Alerts &amp; Reaktionen</small></span></button>
           </div>
           <label class="ws-simple-type-search">
             <span aria-hidden="true">⌕</span>
             <input id="wsSimpleTypeSearch" type="search" placeholder="Widgets im gewählten Stream-Bereich suchen" autocomplete="off">
             <small>Durchsucht alle passenden Widget-Typen in deinem gewählten Stream-Bereich.</small>
           </label>
-          <small>Wähle nur die Kategorie, die du brauchst. Kamera-Rahmen, Szenen, Branding und freie Overlays findest du gesammelt unter „Overlays“.</small>
+          <small>Wähle nur die Live-Funktion, die du brauchst. Kamera-Rahmen, Szenen, Panels und Branding gehören in den Stream Maker und werden dort als zusammenhängender Look gebaut.</small>
           <div id="wsSimpleCategoryGuide" class="ws-simple-category-guide" aria-live="polite"></div>
         </div>
         <div class="ws-widget-finder" data-experience-scope="pro" aria-label="Widget-Bibliothek filtern">
@@ -531,7 +532,7 @@
             <button type="button" data-type-filter="branding">BRANDING &amp; INFOS</button>
             <button type="button" data-type-filter="overlay">ALLE OVERLAYS</button>
           </div>
-          <small class="ws-finder-help">Tipp: Starte mit „Empfohlen“. Kamera, Szenen, Branding, Goals, Counter, Alerts und Chat sind getrennt gruppiert. Alle Typen verwenden dieselbe Designbibliothek.</small>
+          <small class="ws-finder-help">Tipp: Starte mit „Empfohlen“. Goals, Counter, Timer, Chat, Events und Latest-Daten sind der Standardweg. Kamera, Szenen und Branding bleiben im Profi-Bereich nur für bestehende Projekte kompatibel; neue Looks baust du im Stream Maker.</small>
         </div>
       </div>
       <div class="ws-widget-type-grid" id="wsWidgetTypeGrid"></div>
@@ -559,7 +560,7 @@
           </div>
         </div>
       </section>
-      <div class="ws-create-availability"><span id="wsAvailableTypes">–</span><p>Alle Widgets nutzen dieselben Designvorlagen, Farben und Rahmen. Wähle zuerst den Inhalt – den Look kannst du danach jederzeit ändern.</p></div>
+      <div class="ws-create-availability"><span id="wsAvailableTypes">–</span><p>Wähle zuerst die Live-Funktion. Farben und Markenlook kannst du danach anpassen oder aus deinem Stream-Maker-Design übernehmen.</p></div>
     </section>
 
     <div class="ws-create-layout ws-create-layout-v2 ws-create-design-area">
@@ -1584,8 +1585,8 @@
       </section>
       <section class="ws-help-hero">
         <span>CREATOR WORKFLOW</span>
-        <h3>Erst Widget wählen. Dann gemeinsam gestalten.</h3>
-        <p>TikTok LIVE und OBS sind klar getrennte Einstiege. Gemeinsame manuelle Widgets und freie Overlays erscheinen bewusst in beiden Bereichen und nutzen dieselben Designs.</p>
+        <h3>Erst Live-Funktion wählen. Dann passend gestalten.</h3>
+        <p>TikTok LIVE, Twitch und providerfreie Widgets bleiben klar getrennt. Das Widget Studio konzentriert sich auf dynamische Inhalte; statische Stream-Designs entstehen im Stream Maker.</p>
       </section>
       <div class="ws-help-simple-flow ws-help-simple-flow-six" data-experience-scope="simple">
         <article><b>1</b><strong>Vorlage</strong><p>Einen passenden Grundlook auswählen.</p></article>
@@ -1596,7 +1597,7 @@
         <article><b>6</b><strong>Testen &amp; live</strong><p>Vorschau prüfen und erst danach veröffentlichen.</p></article>
       </div>
       <div class="ws-help-grid" data-experience-scope="pro">
-        <article><b>01</b><strong>Elemente bauen</strong><p>Text, Counter, Progress, Formen und eigene Bilder kombinieren.</p></article>
+        <article><b>01</b><strong>Live-Elemente bauen</strong><p>Goals, Counter, Timer, Chat, Events und dynamische Daten kombinieren.</p></article>
         <article><b>02</b><strong>Mehrfach auswählen</strong><p>Shift-Klick wählt mehrere Ebenen für gemeinsames Verschieben und Ausrichten.</p></article>
         <article><b>03</b><strong>Copy & Paste</strong><p>Strg+C / Strg+V kopiert auch komplette Mehrfachauswahlen.</p></article>
         <article><b>04</b><strong>Testen</strong><p>Simuliere Werte und Events, ohne LIVE-Daten vorzutäuschen.</p></article>
