@@ -1,91 +1,106 @@
 {
-  "from": "3.20.62",
-  "to": "3.20.63",
+  "from": "3.20.63",
+  "to": "3.20.64",
   "files": [
     {
-      "path": "package.json",
-      "before_sha256": "0abde91a63ed09a5f2e85b286c84d62673c3c53d81628b7b985a85abed355e83",
-      "after_sha256": "da2a51de3007374d0b7803406df68cfeab100ecd20b13cdb7e0fd7b510301603"
+      "path": "CHANGED-FILES-3.20.64.txt",
+      "before_sha256": null,
+      "after_sha256": "ef8e51dadea312b6b43939064d9a6e337d7771ba80bb51485ace41a53cf4ef40"
+    },
+    {
+      "path": "EINBAU-3.20.64.md",
+      "before_sha256": null,
+      "after_sha256": "132fac44bc0ff7542c455d6dd818aa828e5ddfbff611f717d16bfd7dd862ef3b"
+    },
+    {
+      "path": "FUNKTIONSLUECKEN-STATUS-3.20.64.md",
+      "before_sha256": null,
+      "after_sha256": "d650bf4b9358e03a30549b083897862a096af425b5c21ade96b7d2ab58260e72"
+    },
+    {
+      "path": "UEBERGABE-3.20.64.md",
+      "before_sha256": null,
+      "after_sha256": "b4c4b920089f1dff216930ffff0384a581ee2585003c88778f33d8a03589035a"
+    },
+    {
+      "path": "UPDATE-3.20.64.md",
+      "before_sha256": null,
+      "after_sha256": "19cc606258d4c1888c7874b1dba11e5b16fd8b2190b6d603c8e685b88edc8d70"
     },
     {
       "path": "package-lock.json",
-      "before_sha256": "5f54ff1ca7e484452890fb29cb57f7a9413af94857d6abbdc036b7283367a37f",
-      "after_sha256": "c384dae55c17d95fed56d0eed391ae71cd7ed79a25121b9506712c947749d47a"
+      "before_sha256": "c384dae55c17d95fed56d0eed391ae71cd7ed79a25121b9506712c947749d47a",
+      "after_sha256": "ca5aa34db7db38757eebdde77b2317a10e48c68f24ed1a5c4198191203f11a64"
+    },
+    {
+      "path": "package.json",
+      "before_sha256": "da2a51de3007374d0b7803406df68cfeab100ecd20b13cdb7e0fd7b510301603",
+      "after_sha256": "da7913b1ffcb05db079f66335bbd3f83f170cf0360580909e7c5ec22330dae3a"
+    },
+    {
+      "path": "public/assets/css/cfs-shop-v172.css",
+      "before_sha256": "36ba1d8a148f9856c340e928a6518d0eddbf4faaa796b189b1af67de2be57145",
+      "after_sha256": "0864accd1f622dc03249c0e8083f7b0d2074d150671d9d525d15773612ab2982"
+    },
+    {
+      "path": "public/assets/css/stream-maker.css",
+      "before_sha256": "10c6a8106aa7297756550b4ed29bd11cbd38a163aec0273644025973d8c8013a",
+      "after_sha256": "50d19bb08114b0ff6186d98383df7ae91e6e38cfdb1559aeecaedc5802111fcb"
+    },
+    {
+      "path": "public/assets/data/design-download-catalog-v32064.json",
+      "before_sha256": null,
+      "after_sha256": "edb396eb7df721d4c8b23cabcba51ffbd701c9d5eda8ce95a27a3fc24dbf59e8"
+    },
+    {
+      "path": "public/assets/js/design-downloads-core-v32064.js",
+      "before_sha256": null,
+      "after_sha256": "837d81b5719f609c651839f5323d3b071f0a5a4bc3fac37c0cc6634b34144c7c"
+    },
+    {
+      "path": "public/assets/js/design-downloads-page-v32064.js",
+      "before_sha256": null,
+      "after_sha256": "f77a73a9225d996d0b50b81706a813ead0d24b9880eddfd6eb6899101497bbcd"
+    },
+    {
+      "path": "public/assets/js/stream-maker.js",
+      "before_sha256": "717fd76bb6b614c044ab7d04db6cd404ffb6792fab1eb7e3e17ef07b6f9a2c63",
+      "after_sha256": "88502642c902fb97d9b9519ffbf395f49bbe489157e3ec406023099f5cd29f19"
+    },
+    {
+      "path": "public/pages/shop.html",
+      "before_sha256": "9bcd9b868f975e67ab616689b9b0d4f0f8ec587c1eb7998d2b774d83bd509293",
+      "after_sha256": "1bf89242c50992bb1be9f9ec6b98a49f187c2883744fbc42c6543b4b27605b26"
+    },
+    {
+      "path": "public/pages/stream-maker.html",
+      "before_sha256": "d518a34db97b8b7ab7899c0e32e86fa290931a1ad395fd2817d9cf8de1b11b06",
+      "after_sha256": "46fbe0b1c1fa1131869ab82e88c48b161dff94da97b9f1d88ddbfaeb2aed5dfa"
     },
     {
       "path": "server.js",
-      "before_sha256": "d55e60a1589cea53629d7d6c5d4f9cf46a6b68017ba05a0ec9ed52a0d55b182a",
-      "after_sha256": "53ba971a79e1e1622f9b92b537f67ebfc436b2599593cf4d2565e5fe92002633"
-    },
-    {
-      "path": "public/pages/cut-studio.html",
-      "before_sha256": "a5fcdb8b9f10693018ea5dc67cfbbe5f75af42391fb748a7272ce0b25f2395fe",
-      "after_sha256": "2ac52b2cca9c11da32d9f627681860918db57fa7d9926a87b2ba031a23fa0da0"
-    },
-    {
-      "path": "public/assets/js/cut-studio.js",
-      "before_sha256": "5e54ab4ea77a33e68d7e2b5d468c79ac04c33c9283a1fda14d663bd8ec85eba0",
-      "after_sha256": "01bd71cd809b92f1a4f1ca2410367b59d605af56da21ca1d7caeaeba11fbe1d8"
-    },
-    {
-      "path": "public/assets/js/cut-local-preview.js",
-      "before_sha256": "302abbc9139eefb24757a7c0359772888deefb5177e4e9632613a4b64d12d43f",
-      "after_sha256": "532eddb6d99a0b8212f0e5d1bd089c44289a87fd0efe4783847bf9e59a8c0d5f"
-    },
-    {
-      "path": "public/assets/js/cut-preview-core-v32063.js",
-      "before_sha256": null,
-      "after_sha256": "c9f36aa723af2ce9c32ec56d96a7c40fcf1394b5c19cce6c4da67ca383034430"
-    },
-    {
-      "path": "public/assets/css/cut-local-preview.css",
-      "before_sha256": "bafd3c9e56d9201fd763f1a23a0104f5f62e34123d3bda2c880841b1f431bd36",
-      "after_sha256": "81c1201f356d561fda85ddf788c2a33190fb6c7bf2ffe51fc4a5078e78be8cab"
-    },
-    {
-      "path": "tools/cut-preview-v32063-test.mjs",
-      "before_sha256": null,
-      "after_sha256": "b0c6fe52971eb2f65734a182320d7246742a7d95eb81aa7b4148c44d14819ecc"
-    },
-    {
-      "path": "tools/cut-real-export-probe-v32063.mjs",
-      "before_sha256": null,
-      "after_sha256": "6609082b5e46b4ed4b9914e7cec61afb9d094b4e4d93e0fad82381d53ccf8ff3"
+      "before_sha256": "53ba971a79e1e1622f9b92b537f67ebfc436b2599593cf4d2565e5fe92002633",
+      "after_sha256": "c656f434a06a07e96a01a7271c35ffbbc9519f620d439fc895a569d8039ffdfe"
     },
     {
       "path": "tools/audio-sample-studio-v32062-test.mjs",
-      "before_sha256": "bf61e14c49bb9b7ebfbfa4665bc70ffe747eabe9c0dbb9daa894f0f4bc68114b",
-      "after_sha256": "238f5bebad051c0e4a71935c9c6bfefb11f96f8523240435668cd4ef3cdf97f7"
+      "before_sha256": "238f5bebad051c0e4a71935c9c6bfefb11f96f8523240435668cd4ef3cdf97f7",
+      "after_sha256": "b86bc35e4051303b6674d96e5197d9620206fbfe93ce76196fb647860c9b92b4"
+    },
+    {
+      "path": "tools/cut-preview-v32063-test.mjs",
+      "before_sha256": "b0c6fe52971eb2f65734a182320d7246742a7d95eb81aa7b4148c44d14819ecc",
+      "after_sha256": "e755534d5e38374f10903f48a0dfe3f1e09d9eb65da0771cdcf2c548e0f5206d"
+    },
+    {
+      "path": "tools/design-downloads-v32064-test.mjs",
+      "before_sha256": null,
+      "after_sha256": "23082b1647e416cab671104dc056a06c304ac8cf973a27504aa237f1507c59cf"
     },
     {
       "path": "tools/maker-widget-obs-flow-v32061-test.mjs",
-      "before_sha256": "75fc5c72df05f44aa4e859ca4b40c71e45806a8a50ec18da14b80984d6966ea1",
-      "after_sha256": "ec0127a049118d4c45a06d737041d5f3d6affcb5ab62dfe639eeeb176a89e58b"
-    },
-    {
-      "path": "UEBERGABE-3.20.63.md",
-      "before_sha256": null,
-      "after_sha256": "7e4286068cb879b35a2414153bf3bfeb63ccc958dedd6eec46d5dd8419c40748"
-    },
-    {
-      "path": "UPDATE-3.20.63.md",
-      "before_sha256": null,
-      "after_sha256": "50f34592c4322b532e054c4b295e3765e5c158179fd4fa566b499e677791b3dd"
-    },
-    {
-      "path": "EINBAU-3.20.63.md",
-      "before_sha256": null,
-      "after_sha256": "f365d2cd965fc50c4a1a20fe520ab3cbe76002fbf72201aaac2596de8614a331"
-    },
-    {
-      "path": "FUNKTIONSLUECKEN-STATUS-3.20.63.md",
-      "before_sha256": null,
-      "after_sha256": "d34034ea655d7742eae51adba912338a9aab4babfce90b948fb3c0f7996a25ec"
-    },
-    {
-      "path": "CHANGED-FILES-3.20.63.txt",
-      "before_sha256": null,
-      "after_sha256": "e1d205ccf3bebb72f9669f3ab3575c03c7e86073b908ec9a00f1057aa2dc99fb"
+      "before_sha256": "ec0127a049118d4c45a06d737041d5f3d6affcb5ab62dfe639eeeb176a89e58b",
+      "after_sha256": "9e65f144d0f7ee62bc2e1338aeb5411403eb951240ba680c4e5d3503f10f6f21"
     }
   ]
 }

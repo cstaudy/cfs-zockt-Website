@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "kind": "cfs-built-in-design-catalog",
+  "origin": "generated-built-in-v32064",
+  "original_design_packs_included": false,
+  "message": "8 integrierte Basisdesigns. Die früher beworbenen 31 Original-Designwelten sind nicht im Projektarchiv enthalten.",
+  "designs": [
+    {"id":"aurora","name":"Aurora","description":"Weiche Verläufe und klare Konturen"},
+    {"id":"circuit","name":"Circuit","description":"Technische Linien und markante Ecken"},
+    {"id":"minimal","name":"Essential","description":"Ruhige, reduzierte Flächen"},
+    {"id":"arcade","name":"Arcade","description":"Retro- und Pixelcharakter"},
+    {"id":"orbit","name":"Orbit","description":"Runde Formen und Akzente"},
+    {"id":"editorial","name":"Studio","description":"Typografie und Flächen"},
+    {"id":"ember","name":"Ember","description":"Warme Akzente und kräftige Rahmen"},
+    {"id":"midnight","name":"Midnight","description":"Dunkle Flächen und feine Details"}
+  ]
+}

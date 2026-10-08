@@ -163,7 +163,7 @@ await (async()=>{
 })();
 check('Version test scripts and no database or launcher changes',()=>{
   const pkg=JSON.parse(read('package.json'));
-  assert.equal(pkg.version,'3.20.63');assert.match(pkg.scripts['check:v32063'],/cut-preview-v32063-test/);
+  assert.ok(['3.20.63','3.20.64'].includes(pkg.version));assert.match(pkg.scripts['check:v32063'],/cut-preview-v32063-test/);
   assert.ok(read('public/assets/css/cut-local-preview.css').includes('cut-preview-caption'));
 });
 console.log(`\nCut Studio 3.20.63: ${total}/${total} PASS`);

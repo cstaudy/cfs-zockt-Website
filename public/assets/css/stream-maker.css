@@ -25,3 +25,6 @@
 .sm-role-boundary{display:flex;align-items:center;justify-content:space-between;gap:18px;margin:14px 0 18px;padding:14px 16px;border:1px solid rgba(56,189,248,.26);border-radius:14px;background:linear-gradient(135deg,rgba(11,56,88,.52),rgba(8,18,32,.88));box-shadow:0 14px 34px rgba(1,8,18,.18)}
 .sm-role-boundary div{display:grid;gap:3px}.sm-role-boundary span{font-size:9px;font-weight:950;letter-spacing:.15em;color:#67e8f9}.sm-role-boundary strong{font-size:14px;color:#f4f9ff}.sm-role-boundary small{font-size:10px;color:#9fc1d8}.sm-role-boundary a{flex:0 0 auto;padding:9px 11px;border:1px solid rgba(125,211,252,.24);border-radius:10px;color:#dff5ff;text-decoration:none;font-size:9px;font-weight:900;background:rgba(14,52,78,.46)}
 @media(max-width:760px){.sm-role-boundary{align-items:flex-start;flex-direction:column}.sm-role-boundary a{width:100%;box-sizing:border-box}}
+
+/* 3.20.64: local imported built-in design sets */
+.sm-design-import{margin:1rem 0;padding:1rem;border:1px solid rgba(100,180,230,.35);border-radius:12px;background:rgba(15,32,48,.65)}.sm-design-import h3{margin:.1rem 0 .35rem;font-size:1rem}.sm-design-import p{font-size:.85rem;line-height:1.4;color:#c0d5e1}.sm-design-import button,.sm-design-import a{margin:.2rem .3rem .2rem 0;display:inline-flex}

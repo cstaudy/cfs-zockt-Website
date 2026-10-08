@@ -1,6 +1,6 @@
 {
   "name": "cfs-zockt-creator-suite-web",
-  "version": "3.20.63",
+  "version": "3.20.64",
   "private": true,
   "description": "cfs_zockt Website mit TikTok Login Kit, Profil-Sync und geschützter Launcher-API.",
   "main": "server.js",
@@ -366,7 +366,8 @@
     "check:v32061": "node tools/maker-widget-obs-flow-v32061-test.mjs . && npm run check:v32060",
     "check:v32062": "node tools/audio-sample-studio-v32062-test.mjs && npm run check:v32061",
     "check:v32063": "node tools/cut-preview-v32063-test.mjs && npm run check:v32062 && node tools/cut-export-workflow-test.cjs",
-    "cut:v32063:media-smoke": "node tools/cut-real-export-probe-v32063.mjs"
+    "cut:v32063:media-smoke": "node tools/cut-real-export-probe-v32063.mjs",
+    "check:v32064": "node tools/design-downloads-v32064-test.mjs . && npm run check:v32063"
   },
   "engines": {
     "node": ">=22"

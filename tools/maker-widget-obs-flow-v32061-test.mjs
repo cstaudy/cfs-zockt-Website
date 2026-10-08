@@ -80,17 +80,17 @@ await check('Publish never opens the final step when draft save fails',async()=>
  passes=true;await context.go();assert.equal(opens,1);
 });
 await check('Missing design catalog shows honest built-in starter fallback',()=>{
- assert.ok(makerJs.includes('Der Designpaket-Katalog ist in dieser Installation nicht verfügbar.'));
- assert.ok(makerJs.includes('const presets=M.designs.slice(0,6)'));
+ assert.ok(makerJs.includes('Die 31 ursprünglichen Designwelten fehlen in diesem Projektarchiv.'));
+ assert.ok(makerJs.includes('const presets=M.designs.slice(0,8)'));
  assert.ok(makerJs.includes('previewCard(node,starter(item.id))'));
 });
 await check('Wiring: new helper loads before Maker, both screens document the workflow, publish stops on failed draft save',()=>{
- assert.ok(makerHtml.indexOf('creator-handoff-v32061.js')<makerHtml.indexOf('stream-maker.js?v=3.20.61'));
+ assert.ok(makerHtml.indexOf('creator-handoff-v32061.js')<makerHtml.indexOf('stream-maker.js?v=3.20.64'));
  assert.ok(makerJs.includes('window.CFSCreatorHandoff.importableImage')&&makerJs.includes('helper.importPublicImage'));
  assert.ok(widgetHtml.includes('id="wsMakerJourney"')&&css.includes('.ws-maker-journey[hidden]'));
  assert.ok(widgetJs.includes('state.makerJourney=fromMaker')&&widgetJs.includes('async function publish(){if(await saveDraft()!==true)return;'));
  assert.ok(widgetJs.includes('if(await saveDraft()!==true)throw new Error("Widget wurde angelegt'));
  assert.ok(widgetHtml.includes('widget-studio.js?v=v32061')&&widgetHtml.includes('widget-studio.css?v=v32061'));
- assert.match(JSON.parse(read('package.json')).version,/^3\.20\.(61|62|63)$/);
+ assert.match(JSON.parse(read('package.json')).version,/^3\.20\.(61|62|63|64)$/);
 });
 console.log(`\nMaker -> Widget -> OBS 3.20.61: ${n}/${n} PASS`);
