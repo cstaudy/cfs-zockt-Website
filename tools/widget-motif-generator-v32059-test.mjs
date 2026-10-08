@@ -1,0 +1,38 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import {createRequire} from 'node:module';
+const root=path.resolve(process.argv[2]||'.');
+const req=createRequire(import.meta.url);
+const motif=req(path.join(root,'public/assets/js/widget-motif-generator.js'));
+let count=0;const check=(name,fn)=>{fn();console.log('PASS '+name);count++;};
+check('Three distinct preset styles',()=>assert.deepEqual(motif.styles,['prism','ribbon','glass']));
+check('Reject external URL',()=>assert.equal(motif.safeSource('https://attacker.test/widget-assets/'+'a'.repeat(48),'https://cfs-zockt.de'),null));
+check('Reject protocol-relative URL',()=>assert.equal(motif.safeSource('//attacker.test/widget-assets/'+'a'.repeat(48),'https://cfs-zockt.de'),null));
+check('Reject paths outside widget assets',()=>assert.equal(motif.safeSource('/assets/img/private.png','https://cfs-zockt.de'),null));
+check('Reject short tokens',()=>assert.equal(motif.safeSource('/widget-assets/deadbeef','https://cfs-zockt.de'),null));
+check('Reject traversal',()=>assert.equal(motif.safeSource('/widget-assets/../private/'+'a'.repeat(48),'https://cfs-zockt.de'),null));
+check('Allow own asset URL',()=>assert.equal(motif.safeSource('/widget-assets/'+'a'.repeat(48),'https://cfs-zockt.de'),'https://cfs-zockt.de/widget-assets/'+'a'.repeat(48)));
+check('Allow same-origin absolute URL',()=>assert.equal(motif.safeSource('https://cfs-zockt.de/widget-assets/'+'b'.repeat(48),'https://cfs-zockt.de'),'https://cfs-zockt.de/widget-assets/'+'b'.repeat(48)));
+check('Non-image / empty palette uses safe fallback',()=>assert.equal(motif.palette([]).accent,'#38bdf8'));
+check('Color detection from strongly saturated pixels',()=>{const px=new Uint8ClampedArray([...Array(70)].flatMap(()=>[30,150,240,255]));assert.match(motif.palette(px).accent,/^#[a-f0-9]{6}$/);assert.notEqual(motif.palette(px).accent,'#38bdf8')});
+const image={naturalWidth:1600,naturalHeight:900};
+function fakeCanvas(){const calls=[];const g={calls,save(){calls.push('save')},restore(){calls.push('restore')},clearRect(...x){calls.push(['clear',...x])},beginPath(){calls.push('path')},moveTo(){},lineTo(){},closePath(){},clip(){calls.push('clip')},drawImage(...a){calls.push(['draw',...a])},createLinearGradient(){calls.push('gradient');return{addColorStop(){}}},fillRect(){calls.push('fill')},set globalCompositeOperation(v){calls.push(['blend',v])},set fillStyle(v){},set globalAlpha(v){}};return g;}
+for(const style of motif.styles){check(`${style} draws a clipped original motif`,()=>{const g=fakeCanvas();motif.draw(g,image,style);assert.ok(g.calls.includes('clip'));assert.ok(g.calls.some(c=>Array.isArray(c)&&c[0]==='draw'));assert.ok(g.calls.some(c=>Array.isArray(c)&&c[0]==='blend'&&c[1]==='destination-out'));});}
+check('Reject invalid render style',()=>assert.throws(()=>motif.draw(fakeCanvas(),image,'unknown')));
+check('Reject invalid render dimensions',()=>assert.throws(()=>motif.draw(fakeCanvas(),image,'prism',0,180)));
+const read=rel=>fs.readFileSync(path.join(root,rel),'utf8');
+const html=read('public/pages/widget-studio.html'),js=read('public/assets/js/widget-studio.js'),css=read('public/assets/css/widget-studio.css'),maker=read('public/assets/js/stream-maker.js');
+check('Script imported before existing Widget Studio script',()=>assert.ok(html.indexOf('widget-motif-generator.js')<html.indexOf('widget-studio.js?v=')));
+check('Library image can be selected without reuploading',()=>assert.ok(html.includes('id="wsConverterLibrarySelect"')&&js.includes('state.converterAssetId=asset?.id||""')));
+check('Creator chooses motif or classic logo',()=>assert.ok(html.includes('name="wsConverterArtMode" value="motif"')&&html.includes('name="wsConverterArtMode" value="logo"')));
+check('Motif style chooser offers all modes',()=>motif.styles.forEach(mode=>assert.ok(html.includes('value="'+mode+'"'))));
+check('Converter applies actual derived image',()=>assert.ok(js.includes('prepareConverterArtwork(asset,{mode,style})')&&js.includes('applyConverterMotif(artwork)')));
+check('Converter keeps classic logo path',()=>assert.ok(js.includes('else addConverterBrandAsset(asset)')));
+check('Derived image uses existing owned media upload',()=>assert.ok(js.includes('uploadCreatorAsset(generated.file,{quiet:true})')));
+check('Image is behind live data and does not change data bindings',()=>assert.ok(js.includes('Math.min(0,...state.config.elements.map(e=>Number(e.zIndex||0)))-1')&&js.includes('setPaletteOnElement(e,')&&!js.includes('state.config.data.metric="follower"')));
+check('Builder retains authentic provider and server endpoint',()=>assert.ok(js.includes('requested_platform:platform')&&js.includes('api("/api/creator/widget-studio/widgets"')));
+check('No source image sent to external service',()=>assert.ok(!read('public/assets/js/widget-motif-generator.js').includes('fetch(')));
+check('New UI is mobile responsive',()=>assert.ok(css.includes('@media(max-width:700px){.ws-converter-art-mode')));
+check('Maker handoff remains owned asset based',()=>assert.ok(maker.includes('makerAssetToken()')&&js.includes('makerHandoffAsset(token)')));
+console.log(`\nWidget Motif Generator v3.20.59: ${count}/${count} PASS`);

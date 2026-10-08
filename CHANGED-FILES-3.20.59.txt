@@ -1,0 +1,15 @@
+package.json
+package-lock.json
+server.js
+public/assets/js/page-system-check.js
+public/assets/js/widget-studio.js
+public/pages/widget-studio.html
+public/assets/css/widget-studio.css
+tools/studio-role-separation-v32058-test.mjs
+public/assets/js/widget-motif-generator.js
+tools/widget-motif-generator-v32059-test.mjs
+FUNKTIONSLUECKEN-STATUS-3.20.59.md
+UPDATE-3.20.59.md
+UEBERGABE-3.20.59.md
+EINBAU-3.20.59.md
+CHANGED-FILES-3.20.59.txt

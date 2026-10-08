@@ -10,7 +10,7 @@ const widgetJs=read('public/assets/js/widget-studio.js');
 const pkg=JSON.parse(read('package.json'));
 const server=read('server.js');
 const checks=[];const check=(n,v)=>{checks.push([n,!!v]);if(!v)process.exitCode=1};
-check('Version 3.20.58',pkg.version==='3.20.58'&&server.includes('"3.20.58"'));
+check('Version mindestens 3.20.58',Number(pkg.version.split('.')[2])>=58&&server.includes(`"${pkg.version}"`));
 check('Maker role banner',makerHtml.includes('STREAM MAKER = DESIGN')&&makerHtml.includes('Masterbild · Kamera-Rahmen · Branding · Szenen · Panels · Bundle'));
 check('Widget role banner',widgetHtml.includes('WIDGET STUDIO = LIVE &amp; DATEN')&&widgetHtml.includes('Goals · Counter · Timer · Chat · Events · Provider-Daten'));
 check('Maker standard categories exclude Widgets',makerJs.includes("['Alle','Overlays','Szenen','Panels']")&&!makerJs.includes("['Alle','Widgets','Overlays','Szenen','Panels']"));

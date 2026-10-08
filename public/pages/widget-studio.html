@@ -392,9 +392,21 @@
         <div class="ws-converter-step">
           <b>3</b>
           <div><strong>Datei hinzufügen</strong><small>Logo oder Bild als Branding einsetzen.</small></div>
+          <label class="ws-converter-library-label">Oder vorhandenes Bild aus deiner Bibliothek wählen
+            <select id="wsConverterLibrarySelect" aria-label="Masterbild aus eigener Medienbibliothek auswählen"><option value="">Zuerst ein eigenes Bild wählen</option></select>
+          </label>
           <label class="ws-converter-upload"><span id="wsConverterAssetPreview"><span>+</span><div><strong>Logo oder Bild hochladen</strong><small>PNG, JPG oder WebP</small></div></span><input id="wsConverterUpload" type="file" accept="image/png,image/jpeg,image/webp"></label>
         </div>
       </div>
+      <fieldset class="ws-converter-art-mode" aria-label="Wie soll das Bild verwendet werden?">
+        <legend>Wie soll CFS dein Bild verwenden?</legend>
+        <label><input type="radio" name="wsConverterArtMode" value="motif" checked><span><strong>Ganzes Motiv als Widget-Stil</strong><small>CFS schneidet eine transparente Designfläche aus deinem Bild aus, übernimmt Farben und lässt Live-Zahlen lesbar.</small></span></label>
+        <label><input type="radio" name="wsConverterArtMode" value="logo"><span><strong>Nur als kleines Logo</strong><small>Bisheriger Weg: Das Original bleibt als Logo im Widget.</small></span></label>
+        <label class="ws-motif-style-label" id="wsMotifStyleLabel">Form des Motivs
+          <select id="wsMotifStyle"><option value="prism">Prisma · schräge Motivkante</option><option value="ribbon">Ribbon · dynamischer Streifen</option><option value="glass">Glass · ruhige Motivfläche</option></select>
+        </label>
+        <p class="ws-converter-art-privacy">Die Ableitung entsteht lokal aus deinem eigenen Bibliotheksbild. Die transparente PNG-Ableitung wird erst bei „Widget erstellen“ in deiner geschützten Medienbibliothek gespeichert. Keine fremden URLs und keine künstlichen Follower-Zahlen.</p>
+      </fieldset>
       <div class="ws-converter-footer"><small id="wsConverterNote">Der Umwandler ist für TikTok und Twitch verfügbar.</small><button class="btn primary" id="wsConverterCreate" type="button" disabled>WIDGET ERSTELLEN</button></div>
     </section>
 
@@ -1614,6 +1626,7 @@
 
 <script src="/assets/js/app.js?v=v42-r10"></script>
 <script src="/assets/js/cfs-widget-renderer.js?v=v42-r13"></script>
+<script src="/assets/js/widget-motif-generator.js?v=3.20.59"></script>
 <script src="/assets/js/widget-studio.js?v=v42-r20"></script>
 <script src="/assets/js/cfs-suite-navigation-v204.js"></script>
 <script src="/assets/js/cfs-creator-ux-v189.js"></script>

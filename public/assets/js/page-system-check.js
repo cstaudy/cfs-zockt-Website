@@ -1,4 +1,4 @@
-const EXPECTED = {backend:"3.20.58",schema:80,launcher:"0.47.31"};
+const EXPECTED = {backend:"3.20.59",schema:80,launcher:"0.47.31"};
 
 const checks = [
   {name:"Backend / Schema",url:"/api/health",type:"health",group:"Code & Backend"},

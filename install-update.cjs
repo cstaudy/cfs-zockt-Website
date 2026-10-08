@@ -17,5 +17,5 @@ try{
  const backup=path.join(target,'update-backups','cfs-'+manifest.release+'-'+Date.now());fs.mkdirSync(backup,{recursive:true});for(const item of changes){if(item.old!==null){const file=contained(backup,item.entry.path);fs.mkdirSync(path.dirname(file),{recursive:true});fs.writeFileSync(file,item.old);}}
  fs.writeFileSync(path.join(backup,'backup-manifest.json'),JSON.stringify({release:manifest.release,new_files:changes.filter(x=>x.old===null).map(x=>x.entry.path),replaced_files:changes.filter(x=>x.old!==null).map(x=>x.entry.path)},null,2));
  const written=[];try{for(const item of changes){fs.mkdirSync(path.dirname(item.dest),{recursive:true});written.push(item);fs.writeFileSync(item.dest,item.content);}}catch(error){for(const item of written.reverse()){if(item.old===null){if(fs.existsSync(item.dest))fs.unlinkSync(item.dest);}else fs.writeFileSync(item.dest,item.old);}throw Error('Schreibfehler; bereits geänderte Dateien zurückgesetzt: '+error.message);}
- console.log('Update '+manifest.release+' eingebaut: '+changes.length+' Dateien.\nDateisicherung: '+backup+'\nDanach npm run check:v32058 ausführen.');
+ console.log('Update '+manifest.release+' eingebaut: '+changes.length+' Dateien.\nDateisicherung: '+backup+'\nDanach npm run check:v32059 ausführen.');
 }catch(error){console.error('Update abgebrochen: '+error.message);process.exit(1);}
