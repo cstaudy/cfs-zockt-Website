@@ -18,6 +18,7 @@
 <link rel="stylesheet" href="/assets/css/cfs-workspace-v205.css">
 <link rel="stylesheet" href="/assets/css/cfs-guide-v5.css">
 <link rel="stylesheet" href="/assets/css/cfs-help-v6.css">
+<link rel="stylesheet" href="/assets/css/audio-sample-studio-v32062.css?v=3.20.62">
 </head>
 <body data-cfs-product-v199="1" data-cfs-brand-v192="1" class="creator-workspace" data-cfs-brand-v198="1">
 <header class="site-header creator-site-header">
@@ -58,30 +59,54 @@
 <main class="container internal-module-page">
 <section class="creator-tool-entry" data-tool-entry="audio-studio" aria-label="Audio Studio Einstieg">
   <div class="creator-tool-entry-head">
-    <div><span class="creator-tool-kicker">AUDIO WORKFLOW</span><strong>Audio Studio ist vorbereitet, aber noch kein fertiger Audio-Prozessor.</strong><p>Die Creator Suite kann bereits Preset-Zustände verwalten, sofern dein Plan das Modul freischaltet. Echte Audioverarbeitung soll später lokal über den Launcher laufen.</p></div>
-    <span class="creator-tool-status roadmap">ROADMAP</span>
+    <div><span class="creator-tool-kicker">AUDIO WORKFLOW</span><strong>Lokaler Alert-Sound-Editor jetzt verfügbar; Live-Mixer weiterhin in Entwicklung.</strong><p>Eigene Audiodateien im Browser schneiden, mit Fades bearbeiten, anhören und als WAV speichern. Die Stream-Mixer-Engine im Launcher bleibt ein separater Roadmap-Baustein.</p></div>
+    <span class="creator-tool-status roadmap">SAMPLE EDITOR · BETA</span>
   </div>
   <div class="creator-tool-path">
     <article><b>01</b><span><strong>Preset vorbereiten</strong><small>Master, Voice, Game und Soundboard als Konfiguration speichern.</small></span></article>
     <article><b>02</b><span><strong>Lokal verarbeiten</strong><small>Die spätere Audio-Engine gehört auf den Creator-PC und nicht in einen Browser-Upload.</small></span></article>
     <article><b>03</b><span><strong>NEXUS verbinden</strong><small>Audio- und Stream-Ereignisse sollen später über die gemeinsame Event-Basis verteilt werden.</small></span></article>
   </div>
-  <div class="creator-tool-entry-actions"><a class="btn primary" href="/pages/stream-studio.html#studio-audio">ZUM LIVE MIXER</a><a class="btn" href="#audioWorkspace">AUDIO STUDIO</a><a class="btn" href="/pages/launcher.html">LAUNCHER</a><a class="btn" href="/pages/nexus.html">NEXUS</a></div>
+  <div class="creator-tool-entry-actions"><a class="btn primary" href="/pages/stream-studio.html#studio-audio">ZUM LIVE MIXER</a><a class="btn" href="#alertToneStudio">SAMPLE EDITOR</a><a class="btn" href="#audioWorkspace">AUDIO PRESETS</a><a class="btn" href="/pages/launcher.html">LAUNCHER</a><a class="btn" href="/pages/nexus.html">NEXUS</a></div>
 </section>
 
 <section class="page-hero internal-module-hero">
-<div class="eyebrow">AUDIO STUDIO · ROADMAP</div>
+<div class="eyebrow">AUDIO STUDIO · SAMPLE EDITOR BETA</div>
 <h1>SOUNDS. VOICE.<br><span>STREAM AUDIO.</span></h1>
-<p>Die Modulbasis ist vorbereitet. Freigeschaltete Accounts können Preset-Zustände serverseitig speichern; die eigentliche Audioverarbeitung ist noch nicht Bestandteil dieser Web-Version.</p>
+<p>Der neue Sample-Editor schneidet und verarbeitet Alert-Sounds lokal im Browser. Gespeicherte Mixer-Presets bleiben von der Plan-Freischaltung abhängig; eine echte Stream-Audio-Engine ist weiterhin geplant.</p>
 </section>
 
 <section id="audioWorkspace" class="internal-status-shell audio-status-shell">
-  <div class="internal-status-head"><div><span class="meta">MODULSTATUS</span><h2>Vorbereitet für den lokalen Workflow</h2><p>Die Website verwaltet Konfiguration. Audiodateien und Audioverarbeitung werden in dieser Version nicht in der Cloud verarbeitet.</p></div><span class="internal-state-pill roadmap">ROADMAP</span></div>
+  <div class="internal-status-head"><div><span class="meta">MODULSTATUS</span><h2>Vorbereitet für den lokalen Workflow</h2><p>Die Website verwaltet freigeschaltete Mixer-Presets. Der separate Sample-Editor bearbeitet Audiodaten ausschließlich im Browser; eine Live-Audio-Engine läuft hier noch nicht.</p></div><span class="internal-state-pill roadmap">ROADMAP</span></div>
   <div class="management-overview management-overview-compact audio-architecture-grid">
     <div class="management-overview-card"><span>WEB</span><div><strong>Preset-Zustand</strong><p>Einstellungen und Preset-Werte werden in der Creator Suite verwaltet.</p></div></div>
     <div class="management-overview-card"><span>PC</span><div><strong>Lokale Engine</strong><p>Geplante Audio-Berechtigungen und Verarbeitung gehören in den Launcher.</p></div></div>
     <div class="management-overview-card"><span>NX</span><div><strong>Event-Verteilung</strong><p>NEXUS ist als gemeinsame Basis für spätere Sound- und Stream-Events vorgesehen.</p></div></div>
   </div>
+</section>
+
+<section id="alertToneStudio" aria-labelledby="toneHeading">
+  <div class="eyebrow">04 · TONSTUDIO · LOKALER SAMPLE EDITOR</div>
+  <h2 id="toneHeading">EIGENE ALERT-SOUNDS BEARBEITEN</h2>
+  <p class="tone-lead">WAV, MP3, OGG, M4A, AAC, FLAC, OPUS oder WebM auswählen (max. 20 MB, 120 Sekunden). Einen Ausschnitt bis 30 Sekunden markieren, Fades und Pegel anpassen, wirklich anhören und als 16-Bit-WAV exportieren. Ob ein Format dekodiert werden kann, hängt vom Browser ab. <strong>Audiodaten bleiben auf diesem Gerät.</strong></p>
+  <div class="tone-drop" id="toneDrop">
+    <label for="toneFile">Deine Audiodatei</label><input id="toneFile" type="file" accept="audio/*,.wav,.mp3,.ogg,.m4a,.aac,.flac,.opus,.webm">
+    <div class="tone-muted">Datei auswählen oder hierher ziehen · kein Cloud-Upload, kein automatisches Speichern</div>
+    <div class="tone-source tone-muted" id="toneSource">Keine Audiodatei geladen</div>
+  </div>
+  <canvas id="toneWave" width="760" height="142" class="tone-wave" role="img" aria-label="Wellenform des Sounds; gelbe Linien markieren den Ausschnitt">Die Wellenform wird nach der Dateiauswahl angezeigt.</canvas>
+  <p id="toneSelection" class="tone-muted" aria-live="polite">Noch kein Ausschnitt gewählt</p>
+  <div class="tone-controls">
+    <div class="tone-control"><label for="toneStart">Start <output id="toneStartText" for="toneStart">0,00 s</output></label><input type="range" id="toneStart" min="0" max="30" step="0.01" value="0" disabled></div>
+    <div class="tone-control"><label for="toneEnd">Ende <output id="toneEndText" for="toneEnd">30,00 s</output></label><input type="range" id="toneEnd" min="0" max="30" step="0.01" value="30" disabled></div>
+    <div class="tone-control"><label for="toneFadeIn">Fade-in <output id="toneFadeInText" for="toneFadeIn">0,00 s</output></label><input type="range" id="toneFadeIn" min="0" max="3" step="0.05" value="0.1" disabled></div>
+    <div class="tone-control"><label for="toneFadeOut">Fade-out <output id="toneFadeOutText" for="toneFadeOut">0,00 s</output></label><input type="range" id="toneFadeOut" min="0" max="3" step="0.05" value="0.2" disabled></div>
+    <div class="tone-control"><label for="toneGain">Lautstärke <output id="toneGainText" for="toneGain">0 dB</output></label><input type="range" id="toneGain" min="-24" max="12" step="1" value="0" disabled></div>
+    <div class="tone-control"><label class="tone-check" for="tonePeakLimit"><input type="checkbox" id="tonePeakLimit" checked disabled> Pegelspitzen bei −1 dBFS absenken</label><span class="tone-muted">Verhindert Übersteuerung beim Export, verstärkt leise Dateien nicht.</span></div>
+  </div>
+  <div class="tone-row tone-actions"><button class="tone-action primary" id="tonePlay" type="button" disabled>▶ AUSSCHNITT ANHÖREN</button><button class="tone-action" id="toneStop" type="button" disabled>■ STOPP</button><button class="tone-action" id="toneDownload" type="button" disabled>↓ WAV HERUNTERLADEN</button></div>
+  <p id="toneStatus" class="notice tone-notice" role="status" aria-live="polite">Wähle eine Audiodatei, um loszulegen.</p>
+  <p class="tone-fineprint">Vorschau und WAV-Export basieren auf denselben bearbeiteten PCM-Samples. Dies ist kein System-Mikrofonmixer, keine Live-Audio-Übertragung und noch keine automatische Widget-Alert-Verknüpfung. Stelle später die WAV-Datei in deinem vorgesehenen Alert-/OBS-Workflow bereit.</p>
 </section>
 
 <div id="locked" class="notice warn hidden"></div>
@@ -102,12 +127,12 @@
 </section>
 <section class="panel">
 <div class="panel-label">ARCHITEKTUR</div>
-<h2>Was diese Version bereits tut</h2>
+<h2>Server-Presets und Live-Audio</h2>
 <div class="feature-list">
 <div>Website speichert Presets und Einstellungen</div>
 <div>Launcher erhält später lokale Audio-Berechtigungen</div>
 <div>NEXUS verteilt Sound- und Stream-Events</div>
-<div>Keine Audio-Dateien werden in dieser V1 verarbeitet</div>
+<div>Lokaler Sample-Editor verarbeitet nur Dateien in deinem Browser</div>
 </div>
 </section>
 </div>
@@ -124,6 +149,8 @@
 
 <script src="/assets/js/app.js"></script>
 <script src="/assets/js/page-audio-studio.js"></script>
+<script src="/assets/js/audio-sample-core-v32062.js?v=3.20.62"></script>
+<script src="/assets/js/audio-sample-studio-v32062.js?v=3.20.62"></script>
 <script src="/assets/js/cfs-creator-ux-v189.js"></script>
 <script src="/assets/js/cfs-product-v199.js" defer></script>
 <script src="/assets/js/cfs-help-v6.js" defer></script><script src="/assets/js/cfs-guide-v5.js" defer></script><script src="/assets/js/cfs-guide-journeys.js" defer></script><script src="/assets/js/cfs-workspace-v205.js" defer></script>

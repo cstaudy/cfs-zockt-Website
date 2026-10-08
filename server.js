@@ -79,7 +79,7 @@ const APP_NAME =
     "CFS_Zockt Creator Suite";
 
 const BACKEND_VERSION =
-    "3.20.64";
+    "3.20.62";
 
 // ============================================================
 // PRIVATE BETA / LEGAL BASELINE

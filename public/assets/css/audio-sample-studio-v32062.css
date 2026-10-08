@@ -1,0 +1,23 @@
+/* Lokales Sample Studio 3.20.62; isolation from existing creator theme. */
+#alertToneStudio{scroll-margin-top:90px;border:1px solid rgba(56,189,248,.28);border-radius:20px;background:linear-gradient(135deg,rgba(9,21,41,.95),rgba(15,20,42,.97));padding:clamp(18px,3vw,32px);margin:26px 0;color:#e2e8f0}
+#alertToneStudio h2{margin:.3rem 0 .5rem}#alertToneStudio .tone-lead{max-width:860px;color:#b4c4dc;line-height:1.55}
+#alertToneStudio .tone-row{display:flex;gap:14px;flex-wrap:wrap;align-items:center}
+#alertToneStudio .tone-drop{border:1px dashed #4e7997;padding:18px;border-radius:12px;margin:18px 0;background:rgba(14,165,233,.05)}
+#alertToneStudio .tone-drop.drag{outline:3px solid #6ee7f9;background:rgba(14,165,233,.15)}
+#alertToneStudio .tone-drop label{display:inline-block;margin-right:12px;font-weight:700}
+#alertToneStudio .tone-drop input{max-width:100%;font-size:.95rem}
+#alertToneStudio .tone-muted{color:#aab9d1;font-size:.9rem}#alertToneStudio .tone-source{margin-top:10px;overflow-wrap:anywhere}
+#alertToneStudio .tone-wave{display:block;width:100%;height:auto;border:1px solid #344761;border-radius:10px;margin:14px 0 8px}
+#alertToneStudio .tone-controls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin:17px 0}
+#alertToneStudio .tone-control{display:flex;flex-direction:column;gap:6px;padding:12px;border:1px solid #31415b;border-radius:10px;background:rgba(15,23,42,.65)}
+#alertToneStudio .tone-control label{font-weight:700;display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+#alertToneStudio .tone-control output{color:#7dd3fc;font-variant-numeric:tabular-nums;white-space:nowrap}
+#alertToneStudio input[type=range]{width:100%;accent-color:#38bdf8}
+#alertToneStudio .tone-check{display:flex;align-items:center;gap:8px;max-width:580px}
+#alertToneStudio .tone-action{border:1px solid #5b7894;border-radius:9px;padding:11px 16px;background:#16223a;color:#fff;font-weight:700;cursor:pointer}
+#alertToneStudio .tone-action.primary{background:#0875a8;border-color:#26b8ed}
+#alertToneStudio .tone-action:disabled{opacity:.48;cursor:not-allowed}
+#alertToneStudio .tone-actions{margin:20px 0 10px}
+#alertToneStudio .tone-notice{min-height:38px}
+#alertToneStudio .tone-fineprint{font-size:.85rem;color:#aab9d1;margin:16px 0 0}
+@media(max-width:670px){#alertToneStudio .tone-controls{grid-template-columns:1fr}#alertToneStudio .tone-action{width:100%}}

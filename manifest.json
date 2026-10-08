@@ -1,106 +1,76 @@
 {
-  "from": "3.20.63",
-  "to": "3.20.64",
+  "from": "3.20.61",
+  "to": "3.20.62",
   "files": [
     {
-      "path": "CHANGED-FILES-3.20.64.txt",
-      "before_sha256": null,
-      "after_sha256": "ef8e51dadea312b6b43939064d9a6e337d7771ba80bb51485ace41a53cf4ef40"
-    },
-    {
-      "path": "EINBAU-3.20.64.md",
-      "before_sha256": null,
-      "after_sha256": "132fac44bc0ff7542c455d6dd818aa828e5ddfbff611f717d16bfd7dd862ef3b"
-    },
-    {
-      "path": "FUNKTIONSLUECKEN-STATUS-3.20.64.md",
-      "before_sha256": null,
-      "after_sha256": "d650bf4b9358e03a30549b083897862a096af425b5c21ade96b7d2ab58260e72"
-    },
-    {
-      "path": "UEBERGABE-3.20.64.md",
-      "before_sha256": null,
-      "after_sha256": "b4c4b920089f1dff216930ffff0384a581ee2585003c88778f33d8a03589035a"
-    },
-    {
-      "path": "UPDATE-3.20.64.md",
-      "before_sha256": null,
-      "after_sha256": "19cc606258d4c1888c7874b1dba11e5b16fd8b2190b6d603c8e685b88edc8d70"
+      "path": "package.json",
+      "before_sha256": "304b614cc868925ed67478ebbb0eac1c8dd33b2e2ed03f2d0e47e9b859fd53bc",
+      "after_sha256": "0abde91a63ed09a5f2e85b286c84d62673c3c53d81628b7b985a85abed355e83"
     },
     {
       "path": "package-lock.json",
-      "before_sha256": "c384dae55c17d95fed56d0eed391ae71cd7ed79a25121b9506712c947749d47a",
-      "after_sha256": "ca5aa34db7db38757eebdde77b2317a10e48c68f24ed1a5c4198191203f11a64"
-    },
-    {
-      "path": "package.json",
-      "before_sha256": "da2a51de3007374d0b7803406df68cfeab100ecd20b13cdb7e0fd7b510301603",
-      "after_sha256": "da7913b1ffcb05db079f66335bbd3f83f170cf0360580909e7c5ec22330dae3a"
-    },
-    {
-      "path": "public/assets/css/cfs-shop-v172.css",
-      "before_sha256": "36ba1d8a148f9856c340e928a6518d0eddbf4faaa796b189b1af67de2be57145",
-      "after_sha256": "0864accd1f622dc03249c0e8083f7b0d2074d150671d9d525d15773612ab2982"
-    },
-    {
-      "path": "public/assets/css/stream-maker.css",
-      "before_sha256": "10c6a8106aa7297756550b4ed29bd11cbd38a163aec0273644025973d8c8013a",
-      "after_sha256": "50d19bb08114b0ff6186d98383df7ae91e6e38cfdb1559aeecaedc5802111fcb"
-    },
-    {
-      "path": "public/assets/data/design-download-catalog-v32064.json",
-      "before_sha256": null,
-      "after_sha256": "edb396eb7df721d4c8b23cabcba51ffbd701c9d5eda8ce95a27a3fc24dbf59e8"
-    },
-    {
-      "path": "public/assets/js/design-downloads-core-v32064.js",
-      "before_sha256": null,
-      "after_sha256": "837d81b5719f609c651839f5323d3b071f0a5a4bc3fac37c0cc6634b34144c7c"
-    },
-    {
-      "path": "public/assets/js/design-downloads-page-v32064.js",
-      "before_sha256": null,
-      "after_sha256": "f77a73a9225d996d0b50b81706a813ead0d24b9880eddfd6eb6899101497bbcd"
-    },
-    {
-      "path": "public/assets/js/stream-maker.js",
-      "before_sha256": "717fd76bb6b614c044ab7d04db6cd404ffb6792fab1eb7e3e17ef07b6f9a2c63",
-      "after_sha256": "88502642c902fb97d9b9519ffbf395f49bbe489157e3ec406023099f5cd29f19"
-    },
-    {
-      "path": "public/pages/shop.html",
-      "before_sha256": "9bcd9b868f975e67ab616689b9b0d4f0f8ec587c1eb7998d2b774d83bd509293",
-      "after_sha256": "1bf89242c50992bb1be9f9ec6b98a49f187c2883744fbc42c6543b4b27605b26"
-    },
-    {
-      "path": "public/pages/stream-maker.html",
-      "before_sha256": "d518a34db97b8b7ab7899c0e32e86fa290931a1ad395fd2817d9cf8de1b11b06",
-      "after_sha256": "46fbe0b1c1fa1131869ab82e88c48b161dff94da97b9f1d88ddbfaeb2aed5dfa"
+      "before_sha256": "7a5cb5e4f521775ddc3ac7b28cb56468a2d14f12221d0f2172d00dff7ad69a42",
+      "after_sha256": "5f54ff1ca7e484452890fb29cb57f7a9413af94857d6abbdc036b7283367a37f"
     },
     {
       "path": "server.js",
-      "before_sha256": "53ba971a79e1e1622f9b92b537f67ebfc436b2599593cf4d2565e5fe92002633",
-      "after_sha256": "c656f434a06a07e96a01a7271c35ffbbc9519f620d439fc895a569d8039ffdfe"
+      "before_sha256": "1612e151af6a1d5585efb3e2eba92f2c9cf2ddaef439474a580d52659b33838d",
+      "after_sha256": "d55e60a1589cea53629d7d6c5d4f9cf46a6b68017ba05a0ec9ed52a0d55b182a"
+    },
+    {
+      "path": "public/pages/audio-studio.html",
+      "before_sha256": "a028b8b9b46b5d9f181dfea60e3a95f937cde551a1c7ac666e29ccabf8862090",
+      "after_sha256": "d06deb17a9f3e149680bbc8e7bb35712ac9ab992c1a87cf1c0f887788b4b3061"
+    },
+    {
+      "path": "public/assets/js/audio-sample-core-v32062.js",
+      "before_sha256": null,
+      "after_sha256": "5ef854e257a2449a91d1136da2c804d4a5e97058f32b0723cd6b57f3a52d1aee"
+    },
+    {
+      "path": "public/assets/js/audio-sample-studio-v32062.js",
+      "before_sha256": null,
+      "after_sha256": "d84ae40a443bce0744b9b48c5339f7207a0d4c58d31d9c4751204117d12a1ef0"
+    },
+    {
+      "path": "public/assets/css/audio-sample-studio-v32062.css",
+      "before_sha256": null,
+      "after_sha256": "2b9ca3a01cba0723422de594faf358864ac7624d76b58b5dd91c2829c346b2ae"
     },
     {
       "path": "tools/audio-sample-studio-v32062-test.mjs",
-      "before_sha256": "238f5bebad051c0e4a71935c9c6bfefb11f96f8523240435668cd4ef3cdf97f7",
-      "after_sha256": "b86bc35e4051303b6674d96e5197d9620206fbfe93ce76196fb647860c9b92b4"
-    },
-    {
-      "path": "tools/cut-preview-v32063-test.mjs",
-      "before_sha256": "b0c6fe52971eb2f65734a182320d7246742a7d95eb81aa7b4148c44d14819ecc",
-      "after_sha256": "e755534d5e38374f10903f48a0dfe3f1e09d9eb65da0771cdcf2c548e0f5206d"
-    },
-    {
-      "path": "tools/design-downloads-v32064-test.mjs",
       "before_sha256": null,
-      "after_sha256": "23082b1647e416cab671104dc056a06c304ac8cf973a27504aa237f1507c59cf"
+      "after_sha256": "bf61e14c49bb9b7ebfbfa4665bc70ffe747eabe9c0dbb9daa894f0f4bc68114b"
     },
     {
       "path": "tools/maker-widget-obs-flow-v32061-test.mjs",
-      "before_sha256": "ec0127a049118d4c45a06d737041d5f3d6affcb5ab62dfe639eeeb176a89e58b",
-      "after_sha256": "9e65f144d0f7ee62bc2e1338aeb5411403eb951240ba680c4e5d3503f10f6f21"
+      "before_sha256": "5c23cce996260887a1876fa4569f3c968139fb3455502c3a06f03868ca54d252",
+      "after_sha256": "75fc5c72df05f44aa4e859ca4b40c71e45806a8a50ec18da14b80984d6966ea1"
+    },
+    {
+      "path": "UPDATE-3.20.62.md",
+      "before_sha256": null,
+      "after_sha256": "68af8d23be51e0f1285c95a09f4ebd87846228f8915d73e7c19f86e917fa2f7a"
+    },
+    {
+      "path": "UEBERGABE-3.20.62.md",
+      "before_sha256": null,
+      "after_sha256": "f28c981253f5bfd9cbf62dbd9991664c5a5bcaa028c938c1ef8b9e86b9dfb828"
+    },
+    {
+      "path": "FUNKTIONSLUECKEN-STATUS-3.20.62.md",
+      "before_sha256": null,
+      "after_sha256": "1ef24320e9ab6ba0d8ebb196244eab23cbfa7d48b9a1155adaeedce69dcc9a61"
+    },
+    {
+      "path": "EINBAU-3.20.62.md",
+      "before_sha256": null,
+      "after_sha256": "6533836b4a0250c4ee2a88ca5cbde6075779b85aeed06b81f9dcdd5c7f79d1b0"
+    },
+    {
+      "path": "CHANGED-FILES-3.20.62.txt",
+      "before_sha256": null,
+      "after_sha256": "7c1047c96d3df20e00948fb84e85b1133b68efab1b9be9b88a11224a1731ca46"
     }
   ]
 }

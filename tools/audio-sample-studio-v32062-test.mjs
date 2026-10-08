@@ -111,7 +111,7 @@ check('Existing preset forms stay unchanged; no schema/launcher changes',()=>{
 });
 check('Version scripts and accompanying assets',()=>{
   const pkg=JSON.parse(read('package.json'));
-  assert.ok(['3.20.62','3.20.63','3.20.64'].includes(pkg.version));assert.match(pkg.scripts['check:v32062'],/audio-sample-studio-v32062-test/);
+  assert.equal(pkg.version,'3.20.62');assert.match(pkg.scripts['check:v32062'],/audio-sample-studio-v32062-test/);
   assert.ok(fs.statSync(path.join(base,'public/assets/css/audio-sample-studio-v32062.css')).size>1000);
 });
 console.log(`\nAudio Sample Studio 3.20.62: ${cases}/${cases} PASS`);

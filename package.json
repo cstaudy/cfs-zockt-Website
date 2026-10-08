@@ -1,6 +1,6 @@
 {
   "name": "cfs-zockt-creator-suite-web",
-  "version": "3.20.64",
+  "version": "3.20.62",
   "private": true,
   "description": "cfs_zockt Website mit TikTok Login Kit, Profil-Sync und geschützter Launcher-API.",
   "main": "server.js",
@@ -364,10 +364,7 @@
     "check:v32059": "node tools/widget-motif-generator-v32059-test.mjs . && npm run check:v32058",
     "check:v32060": "node tools/provider-live-binding-v32060-test.mjs . && node tools/twitch-runtime-hardening-v148-test.mjs . && node tools/widget-motif-generator-v32059-test.mjs . && node tools/studio-role-separation-v32058-test.mjs . && node launcher/tools/tiktool-provider-acceptance-part2-test.mjs && node tools/launcher-provider-connect-v144-test.mjs . && node tools/provider-adapters-pass21-10-6-test.mjs . && node tools/widget-runtime-audio-part2-test.mjs .",
     "check:v32061": "node tools/maker-widget-obs-flow-v32061-test.mjs . && npm run check:v32060",
-    "check:v32062": "node tools/audio-sample-studio-v32062-test.mjs && npm run check:v32061",
-    "check:v32063": "node tools/cut-preview-v32063-test.mjs && npm run check:v32062 && node tools/cut-export-workflow-test.cjs",
-    "cut:v32063:media-smoke": "node tools/cut-real-export-probe-v32063.mjs",
-    "check:v32064": "node tools/design-downloads-v32064-test.mjs . && npm run check:v32063"
+    "check:v32062": "node tools/audio-sample-studio-v32062-test.mjs && npm run check:v32061"
   },
   "engines": {
     "node": ">=22"
