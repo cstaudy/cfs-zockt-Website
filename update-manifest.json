@@ -1,112 +1,138 @@
 {
-  "release": "3.20.59",
-  "from_release": "3.20.58",
-  "database_schema": 80,
-  "launcher": "0.47.31",
+  "from_release": "3.20.70",
+  "release": "3.20.71",
   "files": [
     {
-      "path": "package.json",
-      "sha256": "55998ef906c94ff23217754c72ebe2d4799b174b8a227e3c67b1538213235b3f",
+      "path": "EINBAU-3.20.71.md",
+      "sha256": "49a9e1f496d3f535485e87f8e10d6d873a2793718b5b1d87671ce46a04d07d6e",
+      "accepted_previous_sha256": [],
+      "may_be_absent": true
+    },
+    {
+      "path": "RC-CHECKLIST-3.20.71.md",
+      "sha256": "7244406959fa5c980f17278a8ece94842196c2d96e9b57a86e7d7905d341fc9e",
+      "accepted_previous_sha256": [],
+      "may_be_absent": true
+    },
+    {
+      "path": "UEBERGABE-3.20.71.md",
+      "sha256": "7c03b0e0a0cb6a3390a3d4ab354b9763de5cb6f070063cfae18dc5337945dd62",
+      "accepted_previous_sha256": [],
+      "may_be_absent": true
+    },
+    {
+      "path": "lib/admin-finance-v32071.js",
+      "sha256": "a6d75cfcf46446adfb390d5fefd687c5811e6b7713c7b9739809e05ce5a1da15",
+      "accepted_previous_sha256": [],
+      "may_be_absent": true
+    },
+    {
+      "path": "package-lock.json",
+      "sha256": "5a1697a988c09216239b23129e208562a3a6ad336066f86ef76dc8272f9bd6fa",
       "accepted_previous_sha256": [
-        "25fb9245d3381435e9317c61d96edce10e76243cbbc62c867be013bdc115e18f"
+        "cfb1624cdc4daccf590f614e2cbd90712f5bffa63463529f8924a1f836c53941"
       ],
       "may_be_absent": false
     },
     {
-      "path": "package-lock.json",
-      "sha256": "30e0c812d95d800c789cd1d96e68f7fa21a3ce25df65aa29b0cfc4fcc51ebdc7",
+      "path": "package.json",
+      "sha256": "f6f6d08636fa47843febb2deed62d35fdbf909dd05ed9ec09c7a082abef28319",
       "accepted_previous_sha256": [
-        "579a7c3294caa7281e6d30d3eb9a823b67425dd41c36577a9a1880fd04a7d250"
+        "7ea6ec05945efc8306c9454e3a871eb7a3a600b86eada12b8d272ad0c28f0b54"
+      ],
+      "may_be_absent": false
+    },
+    {
+      "path": "public/assets/css/admin-finance-v32071.css",
+      "sha256": "e98f32f51dfd528c0d42a5f70f3c9bd4d03722c4cecec0a4640cb4983dc247ad",
+      "accepted_previous_sha256": [],
+      "may_be_absent": true
+    },
+    {
+      "path": "public/assets/js/admin-finance-v32071.js",
+      "sha256": "e6525b9e5e5b4b5371087200c9144e9ef2cf4178b44bfd88315b634a917b9afb",
+      "accepted_previous_sha256": [],
+      "may_be_absent": true
+    },
+    {
+      "path": "public/pages/admin-creators.html",
+      "sha256": "d3ae770bc81092ebda71efeaf22592a65a8cae63719779b4b92ab30d4b905519",
+      "accepted_previous_sha256": [
+        "c4010376342d105538b502bf36dedeec5357ab24e7acd679e8905fa1f9fccce1"
+      ],
+      "may_be_absent": false
+    },
+    {
+      "path": "public/pages/admin.html",
+      "sha256": "1cf8e1bb762235aa1cb026a6463b2f3dbbc5c8a28beac9fab2d5fd884cd5e53b",
+      "accepted_previous_sha256": [
+        "4b6221abd675e3ea443e9f44fe51c89513917ee3480b6288d4eb51b71eba96a6"
       ],
       "may_be_absent": false
     },
     {
       "path": "server.js",
-      "sha256": "dcbee2030d22eb707ac9739bc3b33a089d178c96abbe01179e70aed3ca5f26e6",
+      "sha256": "66b60b1219f700007b92d826f742e5b12a373060c2553c23ebff218e22baf346",
       "accepted_previous_sha256": [
-        "68c2ecb2043e3c6dc3fde9097c9568c9f4026c6bb376585afa68ec8b30cb8689"
+        "8c3afdceaad98f3dedfcc5bc59c5d2697fbf4794a5c6802f06153b60cc32beb4"
       ],
       "may_be_absent": false
     },
     {
-      "path": "public/assets/js/page-system-check.js",
-      "sha256": "c4802557a7882d4f48330c747f13720c309c47bff46a17df8e213fa6957736d0",
+      "path": "tools/admin-design-factory-v32070-test.mjs",
+      "sha256": "30083f173e6a5b75898baf8c379a2115d84b5e93dee6a94a8d3887d4d43e3879",
       "accepted_previous_sha256": [
-        "be88e3b0a8f530f73c0a39a2346af5edc9b7e94eb581fe406d23b0eecd1d3e84"
+        "2cece58f745ba5b9575f1e67b510c3144b32151fda9901484f01ab2c0c5276cf"
       ],
       "may_be_absent": false
     },
     {
-      "path": "public/assets/js/widget-studio.js",
-      "sha256": "3aa70d49b4480b1425290cb7e3f990278f5acfece4a1895d9c2d4959b9daaf64",
+      "path": "tools/admin-finance-v32071-test.mjs",
+      "sha256": "e3420d52634b7bb7a785a7eff02af7de33c60ab5044636f79885cac39738adf1",
+      "accepted_previous_sha256": [],
+      "may_be_absent": true
+    },
+    {
+      "path": "tools/ai-background-designs-v32068-test.mjs",
+      "sha256": "22c5f5fc4fa06622ad647df51d172e9f68a19be1d25cb97a8879b4f25cc39081",
       "accepted_previous_sha256": [
-        "a2eadb6c972a44b713e5645b780eac8d88c8326dee5810b27a4b8254d8fd3951"
+        "b7d7681409a6a103662c37a00eaa73df0ddff177f14a52ffd5a19f2965f43963"
       ],
       "may_be_absent": false
     },
     {
-      "path": "public/pages/widget-studio.html",
-      "sha256": "5138fef9dfdec5c29c19a28a1d0bea7b52261143130c4fe7a1fd45c981c261ec",
+      "path": "tools/design-downloads-v32064-test.mjs",
+      "sha256": "ac8e41d1376c9fd76887263450607817536e8e0e0a50ff9f0bd4e7f99ae10f4b",
       "accepted_previous_sha256": [
-        "a42bfb0dbcecdc895ddbe44b24d9eaedbce741d29a654e88629300641d89b0a2"
+        "05a4c25eb60b6bb9f8624d190d7bc130a0ef22185d20163097b48bb0617bd245"
       ],
       "may_be_absent": false
     },
     {
-      "path": "public/assets/css/widget-studio.css",
-      "sha256": "8c322e42f95c4058f3b71db63dc14e2f408c4cee6e01a1c0db2658e245e056b4",
+      "path": "tools/original-design-shop-v32066-test.mjs",
+      "sha256": "500c372a832dc9b2391efd5288889a989dfd46710aacbe87110f0f8601caa643",
       "accepted_previous_sha256": [
-        "115bbf54b9bfd892514eaa14cd4d1e9b1421fa404b4265f7eea56907d22216bd"
+        "6b2ec01afc193523eafa85cb3c7c010dd4af37f210a6fdeadac5cc7f25829e8c"
       ],
       "may_be_absent": false
     },
     {
-      "path": "tools/studio-role-separation-v32058-test.mjs",
-      "sha256": "3fcf176b2073f183a6a986c4151f82c55a768affd0b0b4a8791446d44e1c5655",
+      "path": "tools/rc-readiness-v32071.mjs",
+      "sha256": "d14a8672066f2f29fd356a69b8e389315cb31c5524b42812b3bd6d0a888552ff",
+      "accepted_previous_sha256": [],
+      "may_be_absent": true
+    },
+    {
+      "path": "tools/shop-experience-v32067-test.mjs",
+      "sha256": "8bcb2eb773c7e15b6c4a585a5a1d86e8520427206f7c13d4c899a9604dcad066",
       "accepted_previous_sha256": [
-        "de901af12f815450575d217a146c7f3ab81363e821bc6f96590e01f5d625b4e7"
+        "024078da1c1c33b2e403dbe45689c9eea24e466b9484d6b4f74e35f6cc190e44"
       ],
       "may_be_absent": false
     },
     {
-      "path": "public/assets/js/widget-motif-generator.js",
-      "sha256": "76b4ddd06c3043b2bb25e82c32ffcb0c2b327be821990a5b6411bf7bd66a369e",
-      "accepted_previous_sha256": [],
-      "may_be_absent": true
-    },
-    {
-      "path": "tools/widget-motif-generator-v32059-test.mjs",
-      "sha256": "95eaad9d442bc61ad070f4b11411f2a2f973213f04a1c55280c45d520e299a05",
-      "accepted_previous_sha256": [],
-      "may_be_absent": true
-    },
-    {
-      "path": "FUNKTIONSLUECKEN-STATUS-3.20.59.md",
-      "sha256": "8347ead97cc263a15616aba85a2e1edaf14d2a19848fef9fc55f344b8cadedb7",
-      "accepted_previous_sha256": [],
-      "may_be_absent": true
-    },
-    {
-      "path": "UPDATE-3.20.59.md",
-      "sha256": "5384b74f60c368b86654a3b17158031c082e3eb88918294925f6e32594ea09df",
-      "accepted_previous_sha256": [],
-      "may_be_absent": true
-    },
-    {
-      "path": "UEBERGABE-3.20.59.md",
-      "sha256": "6892208ae41bb73a0238ccf75c48bfec53c3055315e7aab3aa41ba311f1ed095",
-      "accepted_previous_sha256": [],
-      "may_be_absent": true
-    },
-    {
-      "path": "EINBAU-3.20.59.md",
-      "sha256": "70e71094b7513008b5e1523c87dfffcae1863dee35c3c269505f9fd45fe5a488",
-      "accepted_previous_sha256": [],
-      "may_be_absent": true
-    },
-    {
-      "path": "CHANGED-FILES-3.20.59.txt",
-      "sha256": "eab9cc6f8d7269ed1042314b7bab61794a639f1c38b9b1d76c1b5cf4872f302f",
+      "path": "CHANGED-FILES-3.20.71.txt",
+      "sha256": "56c30cfb49e5131415b19f878411aba7a20140a6f6a72f5f8fc76af5e5415908",
       "accepted_previous_sha256": [],
       "may_be_absent": true
     }

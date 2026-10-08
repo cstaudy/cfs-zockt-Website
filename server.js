@@ -2,7 +2,7 @@
  * ============================================================
  * cfs_zockt Creator Suite
  * Website Backend
- * Version 3.20.60
+ * Version 3.20.71
  * ============================================================
  */
 
@@ -30,6 +30,7 @@ const { publicGamePresets, buildGameProfileBundle, parseGameProfileBundle } = re
 const { buildCutJobManifest, sanitizeCutJobResult, publicCutJob, canTransitionCutJob } = require("./lib/creator-cut-jobs");
 const { profileSyncStatus, bridgeConnectionStatus, creatorReadiness } = require("./lib/creator-admin-health");
 const { billingAccessState, effectivePlan: effectiveBillingPlan, stripeSubscriptionSnapshot, publicBillingSubscription, billingConfigState, eventSummary: billingEventSummary, shouldApplyStripeEvent, stripeSubscriptionIdFromInvoice } = require("./lib/creator-billing");
+const { parseMonth: financeMonth, invoiceMoneyFromStripe, refundMoneyFromStripe, sumVerifiedStripeEvents } = require("./lib/admin-finance-v32071");
 const { productionReleaseReadiness } = require("./lib/production-release-readiness");
 const { EVIDENCE_KINDS, MANUAL_EVIDENCE_KINDS, AUTOMATED_EVIDENCE_KIND_SET, sanitizeProductionEvidence, publicProductionEvidence, verificationFlagsFromEvidence } = require("./lib/production-evidence");
 const { evaluateLaunchGate } = require("./lib/launch-production-gate");
@@ -56,6 +57,7 @@ const { publicProviderOAuthContracts } = require("./lib/provider-oauth-contract"
 const { publicConfig: cfsAiPublicConfig, requestJson: cfsAiRequestJson, requestHtml: cfsAiRequestHtml } = require("./lib/cfs-ai-gateway");
 const { isAllowedBridgeRequest, bridgeTransport, bridgeWorkerConfig } = require("./lib/cfs-ai-bridge-policy");
 const { productById: creatorShopDownloadProductById, resolvePackage: resolveCreatorShopDownloadPackage, publicCatalog: publicCreatorShopDownloadCatalog } = require("./lib/shop-downloads-v32054");
+const { getCatalog: getOriginalDesignCatalog, previewBuffer: getOriginalDesignPreviewBuffer, packageBuffer: getOriginalDesignPackageBuffer, packageEtag: getOriginalDesignPackageEtag, assetBuffer: getOriginalDesignAssetBuffer, findGroup: getOriginalDesignProductGroup } = require("./lib/original-design-catalog-v32065");
 
 const streamMaker = require("./lib/stream-maker");
 const app = express();
@@ -79,7 +81,7 @@ const APP_NAME =
     "CFS_Zockt Creator Suite";
 
 const BACKEND_VERSION =
-    "3.20.62";
+    "3.20.64";
 
 // ============================================================
 // PRIVATE BETA / LEGAL BASELINE
@@ -6408,13 +6410,18 @@ async function handleStripeEvent(event){
         if(type==="invoice.payment_failed"||type==="invoice.payment_action_required"||type==="invoice.paid"){
             const subscriptionId=stripeSubscriptionIdFromInvoice(object);
             if(!creatorId&&subscriptionId){const r=await pool.query(`SELECT creator_id FROM creator_billing_subscriptions WHERE provider='stripe' AND provider_subscription_id=$1 LIMIT 1`,[subscriptionId]);creatorId=r.rows[0]?.creator_id||"";}
-            if(!creatorId||!subscriptionId){await recordBillingEvent(event,creatorId,"ignored_unmapped",{reason:"invoice_subscription_unmapped"});return{ignored:true};}
+            if(!creatorId||!subscriptionId){await recordBillingEvent(event,creatorId,"ignored_unmapped",{reason:"invoice_subscription_unmapped",finance_invoice:invoiceMoneyFromStripe(event)});return{ignored:true};}
             const subscription=await client.subscriptions.retrieve(subscriptionId);
             const paymentProblem=type!=="invoice.paid";
             const graceEndsAt=paymentProblem?new Date(Date.now()+BILLING_GRACE_DAYS*86400000):null;
             const invoiceState=type==="invoice.paid"?"paid":type==="invoice.payment_action_required"?"payment_action_required":"payment_failed";
             const synced=await upsertStripeSubscription(creatorId,subscription,event,{graceEndsAt,lastInvoiceStatus:invoiceState});
-            await recordBillingEvent(event,creatorId,synced.applied?"processed":"ignored_stale",{grace_ends_at:graceEndsAt,plan:synced.snapshot.plan,subscription_status:synced.snapshot.status,cancel_at_period_end:synced.snapshot.cancel_at_period_end,last_invoice_status:invoiceState});return synced;
+            await recordBillingEvent(event,creatorId,synced.applied?"processed":"ignored_stale",{grace_ends_at:graceEndsAt,plan:synced.snapshot.plan,subscription_status:synced.snapshot.status,cancel_at_period_end:synced.snapshot.cancel_at_period_end,last_invoice_status:invoiceState,finance_invoice:invoiceMoneyFromStripe(event)});return synced;
+        }
+        if(type==="charge.refunded"){
+            const finance_refund=refundMoneyFromStripe(event);
+            await recordBillingEvent(event,creatorId||null,finance_refund?"processed":"ignored_unmapped",{finance_refund,reason:finance_refund?"invoice_refund":"unmapped_charge_refund"});
+            return{recorded:Boolean(finance_refund)};
         }
         await recordBillingEvent(event,creatorId||null,"ignored_unmapped",{reason:"event_not_required"});return{ignored:true};
     }catch(error){await recordBillingEvent(event,creatorId||null,"failed",{error:studioText(error?.message,300,"billing event failed")});throw error;}
@@ -8997,6 +9004,82 @@ for(const action of ["approve","reject","rollback"]){
         catch(error){return cfsAiGatewayFailure(res,error,`Proposal konnte nicht ${action} werden.`);}
     });
 }
+
+// 3.20.70 · Website Admin Control Center: CFS AI design production via the existing restricted gateway.
+// No direct Ollama access, no remote deployment, no unbounded file access.
+function cfsDesignDraftId(raw){return /^[a-f0-9]{32}$/.test(String(raw||""))?String(raw):"";}
+function decodeDesignRpcFile(reply, limit, mime){
+    if(reply?.ok!==true||reply.media_type!==mime||typeof reply.data_b64!=="string"||reply.data_b64.length>Math.ceil(limit*4/3)+16||!/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(reply.data_b64))throw new Error("CFS AI lieferte keine gültige Datei.");
+    const data=Buffer.from(reply.data_b64,"base64");
+    if(!data.length||data.length>limit)throw new Error("Datei überschreitet das Sicherheitslimit.");
+    return data;
+}
+function cfsDesignAudit(req,res,next){res.on("finish",()=>{void recordAdminAuditEvent(req,res.statusCode);});next();}
+app.get("/api/admin/cfs-ai/design-factory/status",requireCreatorAccount,requireCreatorAdmin,async(req,res)=>{
+    res.set("Cache-Control","private, no-store");
+    try{
+        const gateway={...cfsAiPublicConfig(),transport:bridgeTransport()};
+        if(!gateway.enabled)return res.json({ok:true,gateway,worker_online:false,design_factory:null});
+        let worker_online=null;
+        if(bridgeTransport()==="bridge"){
+            const worker=await cfsAiBridgeLatestWorker();worker_online=worker?.online===true;
+            if(!worker_online)return res.json({ok:true,gateway,worker_online:false,design_factory:null});
+        }
+        const design_factory=await cfsAiRequestJsonFlexible("/api/design-factory/status",{timeoutMs:30000});
+        return res.json({ok:true,gateway,worker_online,design_factory});
+    }catch(error){return cfsAiGatewayFailure(res,error,"Design Factory nicht erreichbar.");}
+});
+app.get("/api/admin/cfs-ai/design-factory/drafts",requireCreatorAccount,requireCreatorAdmin,async(req,res)=>{
+    res.set("Cache-Control","private, no-store");
+    try{
+        const data=await cfsAiRequestJsonFlexible("/api/design-factory/drafts",{timeoutMs:30000});
+        return res.json({ok:true,items:Array.isArray(data?.items)?data.items.slice(0,150):[],status:data?.status||null});
+    }catch(error){return cfsAiGatewayFailure(res,error,"Designentwürfe nicht erreichbar.");}
+});
+app.get("/api/admin/cfs-ai/design-factory/drafts/:id/preview",requireCreatorAccount,requireCreatorAdmin,async(req,res)=>{
+    res.set("Cache-Control","private, no-store");
+    const id=cfsDesignDraftId(req.params.id);if(!id)return res.status(400).send("Ungültige Entwurfs-ID.");
+    try{
+        const data=decodeDesignRpcFile(await cfsAiRequestJsonFlexible(`/api/design-factory/drafts/${id}/preview-data`,{timeoutMs:30000}),300000,"image/svg+xml");
+        if(!data.toString("utf8",0,1200).includes("<svg"))throw new Error("Ungültige SVG-Vorschau.");
+        res.set({"Content-Security-Policy":"default-src 'none'; sandbox","X-Content-Type-Options":"nosniff"});
+        return res.type("image/svg+xml").send(data);
+    }catch(error){return res.status(503).send("Vorschau derzeit nicht verfügbar.");}
+});
+app.post("/api/admin/cfs-ai/design-factory/settings",requireCreatorAccount,requireCreatorAdmin,requireCreatorAdminElevation,cfsDesignAudit,async(req,res)=>{
+    res.set("Cache-Control","private, no-store");
+    const raw=req.body||{};
+    if(typeof raw.enabled!=="boolean")return res.status(400).json({ok:false,error:"Aktivierungswert fehlt."});
+    const number=(key,min,max)=>{const n=Number(raw[key]);return Number.isSafeInteger(n)&&n>=min&&n<=max?n:null;};
+    const interval_hours=number("interval_hours",1,168),max_per_day=number("max_per_day",1,12),max_pending=number("max_pending",1,40);
+    if([interval_hours,max_per_day,max_pending].includes(null))return res.status(400).json({ok:false,error:"Ungültige Limits."});
+    const hint=studioText(raw.hint,280,"");
+    try{return res.json(await cfsAiRequestJsonFlexible("/api/design-factory/settings",{method:"POST",body:{enabled:raw.enabled,interval_hours,max_per_day,max_pending,hint},timeoutMs:30000}));}
+    catch(error){return cfsAiGatewayFailure(res,error,"Design-Einstellungen konnten nicht gespeichert werden.");}
+});
+app.post("/api/admin/cfs-ai/design-factory/run-now",requireCreatorAccount,requireCreatorAdmin,requireCreatorAdminElevation,cfsDesignAudit,async(req,res)=>{
+    res.set("Cache-Control","private, no-store");
+    try{return res.json(await cfsAiRequestJsonFlexible("/api/design-factory/run-now",{method:"POST",body:{},timeoutMs:115000}));}
+    catch(error){return cfsAiGatewayFailure(res,error,"Entwurf konnte nicht erstellt werden.");}
+});
+for(const action of ["approve","reject"]){
+    app.post(`/api/admin/cfs-ai/design-factory/drafts/:id/${action}`,requireCreatorAccount,requireCreatorAdmin,requireCreatorAdminElevation,cfsDesignAudit,async(req,res)=>{
+        res.set("Cache-Control","private, no-store");
+        const id=cfsDesignDraftId(req.params.id);if(!id)return res.status(400).json({ok:false,error:"Ungültige Entwurfs-ID."});
+        try{return res.json(await cfsAiRequestJsonFlexible(`/api/design-factory/drafts/${id}/${action}`,{method:"POST",body:{},timeoutMs:30000}));}
+        catch(error){return cfsAiGatewayFailure(res,error,"Entwurf konnte nicht bearbeitet werden.");}
+    });
+}
+app.get("/api/admin/cfs-ai/design-factory/export",requireCreatorAccount,requireCreatorAdmin,requireCreatorAdminElevation,async(req,res)=>{
+    res.set("Cache-Control","private, no-store");
+    try{
+        const payload=await cfsAiRequestJsonFlexible("/api/design-factory/approved-export-data",{timeoutMs:45000});
+        const data=decodeDesignRpcFile(payload,2000000,"application/zip");
+        if(data.subarray(0,2).toString("ascii")!=="PK")throw new Error("Shop-Export hat kein ZIP-Format.");
+        res.set({"Content-Disposition":"attachment; filename=cfs-ai-approved-shop-assets.zip","X-Content-Type-Options":"nosniff"});
+        return res.type("application/zip").send(data);
+    }catch(error){return cfsAiGatewayFailure(res,error,"Shop-Export nicht verfügbar. Für größere Exporte bitte lokal herunterladen.");}
+});
 
 app.get("/api/creator/cfs-ai/roadmap",requireCreatorAccount,requireCreatorAdmin,async(req,res)=>{
     res.set("Cache-Control","no-store");
@@ -20828,6 +20911,31 @@ app.post("/api/admin/creator-suite/release-decisions",requireCreatorAccount,requ
     }
 });
 
+// 3.20.71 · financial observations ONLY from authenticated Stripe webhook receipts.
+// No price preview, plan estimate or unaudited synthetic amount becomes revenue.
+app.get("/api/admin/creator-suite/finance-report",requireCreatorAccount,requireCreatorAdmin,requireCreatorAdminSensitiveRead,async(req,res)=>{
+    res.set("Cache-Control","private, no-store");
+    const now=new Date();
+    const month=String(req.query.month||`${now.getUTCFullYear()}-${String(now.getUTCMonth()+1).padStart(2,"0")}`);
+    let window;
+    try{window=financeMonth(month);}catch{return res.status(400).json({ok:false,error:"Ungültiger Monat (YYYY-MM)."});}
+    const mode=STRIPE_SECRET_MODE==="live"?"live":"test";
+    try{
+        const [ledger,subs,offers]=await Promise.all([
+            pool.query(`SELECT event_id,event_type,event_created,livemode,outcome,summary FROM creator_billing_events WHERE event_created >= $1 AND event_created < $2 AND livemode=$3 AND event_type IN ('invoice.paid','charge.refunded') ORDER BY event_created ASC,event_id ASC LIMIT 10001`,[window.from,window.until,mode==="live"]),
+            pool.query(`SELECT plan,status,COUNT(*)::int AS count FROM creator_billing_subscriptions WHERE provider='stripe' GROUP BY plan,status`),
+            pool.query(`SELECT status,pricing_mode,COUNT(*)::int AS count FROM admin_store_products WHERE offer_enabled=TRUE GROUP BY status,pricing_mode`)
+        ]);
+        const truncated=ledger.rows.length>10000;
+        const report=sumVerifiedStripeEvents(ledger.rows.slice(0,10000),{mode,truncated});
+        const shop={paid_preview:0,paid_checkout_enabled:false};
+        for(const row of offers.rows){if(row.pricing_mode==="paid_preview")shop.paid_preview+=Number(row.count)||0;}
+        return res.json({ok:true,month,generated_at:new Date().toISOString(),provider:"stripe",source:"signed_webhooks",stripe_configured:Boolean(BILLING_CONFIG.provider_configured),stripe_webhook_ready:Boolean(BILLING_CONFIG.webhook_ready),
+            report,subscription_statuses:subs.rows.map(r=>({plan:r.plan,status:r.status,count:Number(r.count)||0})),shop,
+            release_blockers:["Bezahlte Shop-Pakete haben noch keinen echten Checkout/Entitlement-Workflow.","Stripe-Testmode und Stripe-LIVE müssen vor Release mit signierten Webhooks geprüft werden.","Historische Rechnungen, Gebühren, Steuern und Auszahlungen sind nicht vollständig in dieser Übersicht."]});
+    }catch(error){safeLogError("finance-report",error);return res.status(500).json({ok:false,error:"Finanzübersicht konnte nicht geladen werden."});}
+});
+
 app.get("/api/admin/creator-suite/billing-center",requireCreatorAccount,requireCreatorAdmin,requireCreatorAdminSensitiveRead,async(req,res)=>{
     res.set("Cache-Control","no-store");
     try{
@@ -31112,6 +31220,84 @@ app.use((req, res, next) => {
     const query = queryIndex >= 0 ? rawUrl.slice(queryIndex) : "";
 
     return res.redirect(308, `${targetPath}${query}`);
+});
+
+
+app.get("/api/original-designs/catalog",(req,res)=>{
+    res.set("Cache-Control","public, max-age=300, must-revalidate");
+    try {
+        return res.json(getOriginalDesignCatalog());
+    } catch (error) {
+        safeLogError("Originaldesign-Katalog Fehler:", error);
+        return res.status(500).json({ ok:false, error:"Originaldesign-Katalog konnte nicht geladen werden." });
+    }
+});
+
+app.get("/api/original-designs/preview/:designId/:colorId.jpg",(req,res)=>{
+    try {
+        const buffer=getOriginalDesignPreviewBuffer(req.params.designId,req.params.colorId);
+        const etag=`W/"${getOriginalDesignPackageEtag(req.params.designId,req.params.colorId)}-preview"`;
+        if(req.headers["if-none-match"]===etag)return res.status(304).end();
+        res.set("Content-Type","image/jpeg");
+        res.set("Cache-Control","public, max-age=3600, must-revalidate");
+        res.set("ETag",etag);
+        res.set("Content-Disposition","inline");
+        res.set("X-Content-Type-Options","nosniff");
+        return res.send(buffer);
+    } catch (error) {
+        safeLogError("Originaldesign-Vorschau Fehler:", error);
+        return res.status(404).end();
+    }
+});
+
+app.get("/api/original-designs/asset/:designId/:colorId/:file",(req,res)=>{
+    try {
+        const buffer=getOriginalDesignAssetBuffer(req.params.designId,req.params.colorId,req.params.file);
+        res.set("Content-Type","image/png");
+        res.set("Cache-Control","public, max-age=3600, must-revalidate");
+        res.set("X-Content-Type-Options","nosniff");
+        return res.send(buffer);
+    } catch {
+        return res.status(404).end();
+    }
+});
+
+app.get("/api/original-designs/package/:designId/:colorId/:groupId.zip",(req,res)=>{
+    const group=getOriginalDesignProductGroup(req.params.groupId);
+    if(!group)return res.status(404).json({ok:false,error:"Produktgruppe nicht gefunden."});
+    try {
+        const payload=getOriginalDesignPackageBuffer(req.params.designId,req.params.colorId,group.id);
+        const etag=`"${getOriginalDesignPackageEtag(req.params.designId,req.params.colorId,group.id)}"`;
+        if(req.headers["if-none-match"]===etag)return res.status(304).end();
+        res.set("Content-Type","application/zip");
+        res.set("Cache-Control","private, max-age=0, must-revalidate");
+        res.set("Content-Disposition",`attachment; filename="${payload.downloadName}"`);
+        res.set("X-Original-Design-File-Count",String(payload.fileCount||0));
+        res.set("ETag",etag);
+        res.set("X-Content-Type-Options","nosniff");
+        return res.send(payload.buffer);
+    } catch (error) {
+        safeLogError("Originaldesign-Produktgruppe Fehler:",error);
+        return res.status(404).json({ok:false,error:"Originaldesign-Produktgruppe konnte nicht gepackt werden."});
+    }
+});
+
+app.get("/api/original-designs/package/:designId/:colorId.zip",(req,res)=>{
+    try {
+        const payload=getOriginalDesignPackageBuffer(req.params.designId,req.params.colorId);
+        const etag=`"${getOriginalDesignPackageEtag(req.params.designId,req.params.colorId)}"`;
+        if(req.headers["if-none-match"]===etag)return res.status(304).end();
+        res.set("Content-Type","application/zip");
+        res.set("Cache-Control","private, max-age=0, must-revalidate");
+        res.set("Content-Disposition",`attachment; filename="${payload.downloadName}"`);
+        res.set("X-Original-Design-File-Count",String(payload.fileCount||0));
+        res.set("ETag",etag);
+        res.set("X-Content-Type-Options","nosniff");
+        return res.send(payload.buffer);
+    } catch (error) {
+        safeLogError("Originaldesign-Paket Fehler:", error);
+        return res.status(404).json({ ok:false, error:"Designvariante konnte nicht gepackt werden." });
+    }
 });
 
 

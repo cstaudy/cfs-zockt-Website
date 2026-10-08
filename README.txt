@@ -1,4 +1,5 @@
-CFS Zockt 3.20.62 (von 3.20.61): SHA256-geschütztes Delta mit Backup.
-Einbau: node install-update.cjs --check <Projektpfad>
-Dann: node install-update.cjs --apply <Projektpfad>
-Details: payload/EINBAU-3.20.62.md und payload/UPDATE-3.20.62.md
+CFS Zockt Website 3.20.71 RC
+Ausgang: Website 3.20.70
+node install-update.cjs --check <website-ordner>
+node install-update.cjs --apply <website-ordner>
+LIVE RELEASE: HOLD. Lies RC-CHECKLIST-3.20.71.md.

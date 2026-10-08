@@ -1,0 +1,11 @@
+/* CFS Zockt 3.20.71: finance overview is deliberately sparse and read-only. */
+.admin-finance-v32071 .finance-controls{display:flex;gap:12px;align-items:end;flex-wrap:wrap;margin:16px 0}
+.admin-finance-v32071 .finance-controls label{display:grid;gap:6px;color:#b7c9e2;font-size:.85rem}
+.admin-finance-v32071 .finance-controls input{min-height:42px;padding:8px 12px;border:1px solid #315172;border-radius:9px;background:#091626;color:#fff}
+.admin-finance-v32071 .finance-state{border-left:3px solid #3c729e;background:#0b2030;padding:12px 14px;border-radius:8px;color:#c7d7e7;line-height:1.5}
+.admin-finance-v32071 .finance-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:18px 0}
+.admin-finance-v32071 .finance-cards article,.admin-finance-v32071 .finance-currency{border:1px solid #25435f;background:#0b1929;padding:16px;border-radius:12px}
+.admin-finance-v32071 .finance-cards article{display:grid;gap:8px}.admin-finance-v32071 .finance-cards article span{color:#b2c6dd;font-size:.78rem}.admin-finance-v32071 .finance-cards article strong{font-size:1.7rem;color:#fff}
+.admin-finance-v32071 .finance-currency{margin-bottom:12px}.admin-finance-v32071 .finance-currency h3{font-size:1rem;margin:0 0 14px}.admin-finance-v32071 .finance-numbers{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.admin-finance-v32071 .finance-numbers div{display:grid;gap:7px}.admin-finance-v32071 .finance-numbers span{color:#b2c6dd;font-size:.77rem}.admin-finance-v32071 .finance-numbers strong{font-size:1.2rem;color:#f1f7ff}
+@media(max-width:750px){.admin-finance-v32071 .finance-cards,.admin-finance-v32071 .finance-numbers{grid-template-columns:1fr}}

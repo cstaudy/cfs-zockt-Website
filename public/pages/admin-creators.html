@@ -7,6 +7,7 @@
   <title>Admin Control Center | cfs_zockt</title>
   <link rel="stylesheet" href="/assets/css/styles.css">
   <link rel="stylesheet" href="/assets/css/admin-creators.css">
+<link rel="stylesheet" href="/assets/css/admin-finance-v32071.css">
   <link rel="stylesheet" href="/assets/css/admin-control-center-v181.css">
   <link rel="stylesheet" href="/assets/css/admin-beta-handbook-v154.css">
   <meta name="robots" content="noindex,nofollow,noarchive">
@@ -18,6 +19,7 @@
   <link rel="apple-touch-icon" href="/assets/img/apple-touch-icon.png">
   <link rel="stylesheet" href="/assets/css/cfs-brand-v198.css" data-cfs-brand-v198>
   <link rel="stylesheet" href="/assets/css/cfs-product-v199.css" data-cfs-product-v199>
+  <link rel="stylesheet" href="/assets/css/admin-cfs-ai-design-v32070.css">
 </head>
 <body data-cfs-product-v199="1" data-cfs-brand-v192="1" class="creator-workspace cfs-private-product-v180" data-cfs-brand-v198="1">
 <header class="site-header">
@@ -94,6 +96,10 @@
       <p>Öffne nur den Bereich, den du gerade brauchst. Technische Details bleiben sonst eingeklappt.</p>
     </div>
     <div class="admin-start-grid">
+      <button class="admin-start-card" type="button" data-admin-open="adminAiDesignPanel">
+        <span class="admin-start-icon">AI</span><strong>CFS AI Designs</strong>
+        <small>Entwürfe, Freigaben, Export und lokale KI steuern</small>
+      </button>
       <button class="admin-start-card" type="button" data-admin-open="adminControlCenterPanel">
         <span class="admin-start-icon">00</span>
         <strong>Website & Produkte</strong>
@@ -118,6 +124,10 @@
         <span class="admin-start-icon">04</span>
         <strong>Beta prüfen</strong>
         <small>Feedback, Test-Sessions & RC-Readiness</small>
+      </button>
+      <button class="admin-start-card" type="button" data-admin-open="adminFinancePanel">
+        <span class="admin-start-icon">€</span><strong>Finanzen & Einnahmen</strong>
+        <small>Stripe-Zahlungen, Abo-Umsätze und Paketverkauf-Status</small>
       </button>
       <button class="admin-start-card" type="button" data-admin-open="adminProductionPanel">
         <span class="admin-start-icon">05</span>
@@ -171,6 +181,38 @@
     </div>
   </section>
 
+
+  <details class="admin-workspace cfs-admin-ai" id="adminAiDesignPanel">
+    <summary class="admin-workspace-summary"><span class="admin-workspace-number">AI</span>
+      <span class="admin-workspace-copy"><strong>CFS AI Designproduktion</strong><small>Lokale KI überwachen, Entwürfe prüfen und manuelle Shop-Exporte erstellen.</small></span>
+      <span class="admin-workspace-toggle">ÖFFNEN</span></summary>
+    <div class="admin-workspace-body">
+      <div class="admin-section-heading"><div><span class="admin-step">3.20.70 · ADMIN ONLY</span>
+        <h2>KI-Designs verwalten</h2><p>Die KI läuft auf deinem Rechner. Du entscheidest über jeden Entwurf. Freigabe exportiert lokal – es findet kein automatisches Live-Deployment statt.</p></div>
+        <button class="btn" id="aiAdminRefresh" type="button">STATUS LADEN</button></div>
+      <div class="cfs-ai-kpis"><article><span>KI & BRIDGE</span><strong id="aiAdminConnection">Nicht geprüft</strong></article>
+        <article><span>OFFENE ENTWÜRFE</span><strong id="aiAdminPending">–</strong></article>
+        <article><span>FREIGEGEBEN (LOKAL)</span><strong id="aiAdminApproved">–</strong></article>
+        <article><span>LETZTER LAUF</span><strong id="aiAdminLastRun">–</strong></article></div>
+      <p id="aiAdminNotice" class="cfs-ai-notice" role="status">Öffne diesen Bereich, um die Verbindung zu CFS AI zu prüfen.</p>
+      <div class="cfs-ai-admin-settings">
+        <h3>Hintergrund-Erstellung</h3>
+        <label class="cfs-ai-check"><input id="aiAdminEnabled" type="checkbox"> Automatische Entwürfe aktivieren</label>
+        <label>Richtung <input id="aiAdminHint" maxlength="280" placeholder="z. B. futuristisch, dezent, Cyan und Violett"></label>
+        <div class="cfs-ai-admin-nums"><label>Intervall (Stunden) <input id="aiAdminInterval" type="number" min="1" max="168" value="12"></label>
+          <label>Maximal pro Tag <input id="aiAdminMaxDay" type="number" min="1" max="12" value="2"></label>
+          <label>Maximal offene <input id="aiAdminMaxPending" type="number" min="1" max="40" value="12"></label></div>
+        <div class="cfs-ai-actions"><button class="btn primary" id="aiAdminSave" type="button">EINSTELLUNGEN SPEICHERN</button>
+          <button class="btn" id="aiAdminRun" type="button">JETZT ENTWURF ERSTELLEN</button></div>
+        <small>Änderungen benötigen oben die frische Admin-Sicherheitsfreigabe. Der Windows-PC und Ollama müssen eingeschaltet sein.</small>
+      </div>
+      <div class="cfs-ai-gallery-bar"><div><h3>Entwurfsgalerie</h3><p>Vorschauen enthalten keine echten Stream-Events.</p></div>
+        <label>Status <select id="aiAdminFilter"><option value="all">ALLE</option><option value="draft">OFFEN</option><option value="approved">FREIGEGEBEN</option><option value="rejected">ABGELEHNT</option></select></label></div>
+      <div class="cfs-ai-admin-gallery" id="aiAdminGallery"><p>Entwürfe werden geladen, sobald die KI erreichbar ist.</p></div>
+      <div class="cfs-ai-export"><p><strong>Shop-Übergabe</strong> – Nur freigegebene Designs werden in ein lokales ZIP gepackt. Das ZIP muss anschließend geprüft und separat in die Website übernommen werden.</p>
+        <button class="btn" id="aiAdminExport" type="button">SHOP-EXPORT HERUNTERLADEN</button></div>
+    </div>
+  </details>
 
   <details class="admin-workspace admin-control-center-v181" id="adminControlCenterPanel" open>
     <summary class="admin-workspace-summary">
@@ -392,7 +434,19 @@
     </div>
   </details>
 
-<details class="admin-workspace admin-production" id="adminProductionPanel">
+<details class="admin-workspace admin-finance-v32071" id="adminFinancePanel">
+    <summary class="admin-workspace-summary"><span class="admin-workspace-number">€</span><span class="admin-workspace-copy"><strong>Finanzen & Einnahmen</strong><small>Bestätigte Stripe-Zahlungen; nicht die Produktpreise.</small></span><span class="admin-workspace-toggle">ÖFFNEN</span></summary>
+    <div class="admin-workspace-body">
+      <div class="admin-section-heading"><div><div class="eyebrow">FINANZEN · READ ONLY · VERTRAULICH</div><h2>Monatliche Zahlungseingänge</h2><p>Aus tatsächlich signierten Stripe-Webhooks. Anmeldung und starke Admin-Freigabe erforderlich. Dies ist keine Buchhaltungs- oder Steuerabrechnung.</p></div></div>
+      <div class="finance-controls"><label>Monat <input type="month" id="financeMonth" min="2020-01" max="2099-12"></label><button class="btn primary" type="button" id="financeLoad">ZAHLUNGSDATEN PRÜFEN</button><button class="btn" type="button" id="financeCsv" disabled>CSV EXPORT</button></div>
+      <div class="finance-state" id="financeReportStatus" role="status">Noch nicht geladen. Bitte zuerst den Admin-Schutz entsperren.</div>
+      <div class="finance-cards"><article><span>BESTÄTIGTE RECHNUNGEN</span><strong id="financeInvoiceCount">–</strong></article><article><span>AKTIVE ABOS</span><strong id="financeActiveCount">–</strong></article><article><span>PAKETE MIT PREISVORSCHAU</span><strong id="financePreviewCount">–</strong></article></div>
+      <div id="financeCurrencyRows" class="finance-currencies" aria-live="polite"></div>
+      <p id="financeReportWarning" class="finance-state">Historische Daten, Gebühren und Erstattungen können unvollständig sein. Paketverkäufe sind noch nicht aktiviert.</p>
+    </div>
+  </details>
+
+  <details class="admin-workspace admin-production" id="adminProductionPanel">
     <summary class="admin-workspace-summary">
       <span class="admin-workspace-number">05</span>
       <span class="admin-workspace-copy"><strong>Production prüfen</strong><small>Config, Billing und Evidence für technische Abnahmen.</small></span>
@@ -463,8 +517,10 @@
 <div class="admin-toast" id="adminToast" hidden></div>
 <script src="/assets/js/app.js"></script>
 <script src="/assets/js/admin-creators.js"></script>
+<script src="/assets/js/admin-finance-v32071.js"></script>
 <script src="/assets/js/admin-control-center-v181.js"></script>
 <script src="/assets/js/admin-bundle-factory-v178.js"></script>
+<script src="/assets/js/admin-cfs-ai-design-v32070.js" defer></script>
 <script src="/assets/js/cfs-product-v199.js" defer></script>
 </body>
 </html>
