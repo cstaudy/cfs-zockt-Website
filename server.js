@@ -2,7 +2,7 @@
  * ============================================================
  * cfs_zockt Creator Suite
  * Website Backend
- * Version 3.20.58
+ * Version 3.20.60
  * ============================================================
  */
 
@@ -79,7 +79,7 @@ const APP_NAME =
     "CFS_Zockt Creator Suite";
 
 const BACKEND_VERSION =
-    "3.20.59";
+    "3.20.61";
 
 // ============================================================
 // PRIVATE BETA / LEGAL BASELINE
@@ -222,6 +222,7 @@ const TWITCH_TOKEN_URL = "https://id.twitch.tv/oauth2/token";
 const TWITCH_REVOKE_URL = "https://id.twitch.tv/oauth2/revoke";
 const TWITCH_VALIDATE_URL = "https://id.twitch.tv/oauth2/validate";
 const TWITCH_USERS_URL = "https://api.twitch.tv/helix/users";
+const { publicProviderLiveState, widgetEventReadAllowed } = require("./lib/widget-provider-live-policy");
 const TWITCH_EVENTSUB_URL = "https://api.twitch.tv/helix/eventsub/subscriptions";
 const TWITCH_STREAMS_URL = "https://api.twitch.tv/helix/streams";
 const TWITCH_VIDEOS_URL = "https://api.twitch.tv/helix/videos";
@@ -11198,6 +11199,30 @@ const WIDGET_STUDIO_WIDGET_TYPES = Object.freeze({
         description: "Zeigt den letzten Zuschauer, der deinen LIVE geteilt hat."
     },
 
+    twitch_follow_session_counter: {
+        key: "twitch_follow_session_counter", minimum_plan: "creator", label: "Twitch LIVE Follows", short_label: "TWITCH FOLLOWS",
+        category: "counter", mode: "counter", metric: "twitch.followers_gained", required_scope: "moderator:read:followers",
+        source: "Twitch EventSub · aktuelle Session", source_kind: "live_provider", provider: "twitch", platform: "twitch", studio_areas: ["twitch"],
+        description: "Zählt bestätigte Follow-Events der aktuellen Twitch-LIVE-Session, nicht deinen gesamten Kanal-Followerstand."
+    },
+    twitch_follow_session_goal: {
+        key: "twitch_follow_session_goal", minimum_plan: "creator", label: "Twitch Follow Goal", short_label: "TWITCH FOLLOW GOAL",
+        category: "goals", mode: "goal", metric: "twitch.followers_gained", required_scope: "moderator:read:followers",
+        source: "Twitch EventSub · aktuelle Session", source_kind: "live_provider", provider: "twitch", platform: "twitch", studio_areas: ["twitch"],
+        description: "Ziel für echte neue Twitch-Follows in der laufenden Session.", default_goal: 25
+    },
+    twitch_bits_session_counter: {
+        key: "twitch_bits_session_counter", minimum_plan: "creator", label: "Twitch Bits Counter", short_label: "TWITCH BITS",
+        category: "counter", mode: "counter", metric: "twitch.bits", required_scope: "bits:read",
+        source: "Twitch EventSub · aktuelle Session", source_kind: "live_provider", provider: "twitch", platform: "twitch", studio_areas: ["twitch"],
+        description: "Summiert Bits aus bestätigten Cheer-Events der laufenden Twitch-LIVE-Session."
+    },
+    twitch_bits_session_goal: {
+        key: "twitch_bits_session_goal", minimum_plan: "creator", label: "Twitch Bits Goal", short_label: "TWITCH BITS GOAL",
+        category: "goals", mode: "goal", metric: "twitch.bits", required_scope: "bits:read",
+        source: "Twitch EventSub · aktuelle Session", source_kind: "live_provider", provider: "twitch", platform: "twitch", studio_areas: ["twitch"],
+        description: "Ziel für Bits aus Twitch-Cheer-Events der aktuellen LIVE-Session.", default_goal: 1000
+    },
     twitch_live_timer: {
         key: "twitch_live_timer", minimum_plan: "creator", label: "Twitch LIVE Timer", short_label: "TWITCH LIVE TIMER",
         category: "counter", mode: "timer", metric: "",
@@ -14767,11 +14792,25 @@ async function getStudioLiveState(creatorId) {
     };
 }
 
+async function getTwitchSessionMetrics(creatorId,sessionId){
+    if(!sessionId)return {followers_gained:0,bits:0};
+    const result=await pool.query(`
+        SELECT COUNT(*) FILTER (WHERE event_type='follow') AS follows,
+               COALESCE(SUM(amount) FILTER (WHERE event_type='cheer'),0) AS bits
+        FROM creator_live_events
+        WHERE creator_id=$1 AND provider='twitch' AND session_id=$2
+    `,[normalizeCreatorId(creatorId),String(sessionId)]);
+    const row=result.rows[0]||{};
+    return {followers_gained:Math.max(0,Number(row.follows||0)),bits:Math.max(0,Number(row.bits||0))};
+}
+
 async function studioDataSnapshot(creatorId, provider = "tiktok") {
     const key=String(provider||"tiktok").toLowerCase();
     if(key==="twitch"){
         const [connection,live]=await Promise.all([getTwitchConnection(creatorId),getProviderLiveState(creatorId,"twitch")]);
+        const twitch=await getTwitchSessionMetrics(creatorId,live.session_id);
         return{
+            twitch,
             profile:{
                 connected:Boolean(connection?.connected),
                 display_name:connection?.display_name||connection?.login||"",
@@ -14857,7 +14896,9 @@ async function getRecentStudioLiveEvents(creatorId, eventType = null, limit = 20
     const providerKey=provider?String(provider).toLowerCase():"";
     let resolvedSessionId=sessionId;
     if(!providerKey && !resolvedSessionId)resolvedSessionId=(await getStudioLiveState(creatorId)).session_id;
-    if(!providerKey && !resolvedSessionId)return[];
+    // Auch Twitch/YouTube benötigen eine explizite Session. Ohne sie darf ein
+    // frisch gestartetes Widget nicht sämtliche historischen Events abspielen.
+    if(!resolvedSessionId)return[];
     const params=[normalizeCreatorId(creatorId)];
     let where=`creator_id = $1`;
     if(providerKey){params.push(providerKey);where+=` AND provider = $${params.length}`;}
@@ -22958,6 +22999,13 @@ app.post(
                 if (["live_start","live_end","reset"].includes(type)) {
                     return res.status(400).json({ ok:false, error:"LIVE Start/Ende bitte über die Session-Endpunkte senden." });
                 }
+                // Ein Mock-/Simulator-Provider darf niemals LIVE-Zähler oder
+                // produktive Alerts befüllen. Tests laufen im Creator-Simulator.
+                if (String(event?.payload?.source_provider || event?.payload?.sourceProvider || "").toLowerCase() === "simulator") {
+                    dropped += 1;
+                    results.push({event_key:event?.event_key||null,event_type:type,dropped:true,reason:"simulator_not_live"});
+                    continue;
+                }
                 const eventSessionId = studioText(event?.session_id,80,"");
                 if (eventSessionId && currentSessionId && eventSessionId !== currentSessionId) {
                     dropped += 1;
@@ -23263,8 +23311,8 @@ app.get(
                 }
                 : snapshot;
             const eventType = detachedData ? null : (definition.event_type || null);
-            const events = eventType
-                ? await getRecentStudioLiveEvents(row.creator_id, eventType, 20, snapshot.live.session_id, ["twitch","youtube"].includes(widgetProvider)?widgetProvider:null)
+            const events = eventType && widgetEventReadAllowed(definition, publicSnapshot.live)
+                ? await getRecentStudioLiveEvents(row.creator_id, eventType, 20, publicSnapshot.live.session_id, ["twitch","youtube"].includes(widgetProvider)?widgetProvider:null)
                 : [];
 
             return res.json({
@@ -24272,8 +24320,7 @@ async function getProviderLiveState(creatorId,provider){
     const key=String(provider||"").toLowerCase();
     if(key==="tiktok")return getStudioLiveState(creatorId);
     const row=(await pool.query(`SELECT * FROM creator_provider_live_state WHERE creator_id=$1 AND provider=$2 LIMIT 1`,[normalizeCreatorId(creatorId),key])).rows[0];
-    if(!row)return{connected:false,provider:key||"none",session_id:null,likes:0,viewers:0,shares:0,gifts_count:0,gifts_value:0,followers_gained:0,started_at:null,last_event_at:null,updated_at:null,stale:false};
-    return{connected:Boolean(row.connected),provider:key,session_id:row.session_id||null,likes:0,viewers:0,shares:0,gifts_count:0,gifts_value:0,followers_gained:0,started_at:row.started_at||null,last_event_at:row.last_event_at||null,updated_at:row.updated_at||null,stale:false};
+    return publicProviderLiveState(key,row);
 }
 
 async function saveTwitchProviderLiveState(creatorId,{connected,sessionId=null,startedAt=null,lastEventAt=null}={}){

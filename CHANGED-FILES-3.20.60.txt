@@ -1,0 +1,11 @@
+server.js
+package.json
+public/assets/js/widget-studio.js
+public/pages/widget-studio.html
+lib/widget-provider-live-policy.js
+tools/provider-live-binding-v32060-test.mjs
+UPDATE-3.20.60.md
+UEBERGABE-3.20.60.md
+FUNKTIONSLUECKEN-STATUS-3.20.60.md
+EINBAU-3.20.60.md
+CHANGED-FILES-3.20.60.txt

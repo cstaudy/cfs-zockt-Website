@@ -2252,3 +2252,13 @@ body[data-ws-experience="simple"] #wsLatestTimeoutField>small{font-size:5.6px}
 @media(max-width:700px){.ws-converter-art-mode{grid-template-columns:1fr}.ws-converter-art-mode legend{font-size:.78rem}}
 
 .ws-converter-library-label{display:grid;gap:7px;margin:14px 0;color:#bce5f4;font-weight:800;font-size:.75rem}.ws-converter-library-label select{max-width:100%;min-height:42px;background:#092337;color:#f0faff;border:1px solid rgba(91,177,222,.4);border-radius:10px;padding:8px 10px}
+
+/* 3.20.61: Maker -> Widget -> OBS journey, visible in Standard mode too. */
+.ws-maker-journey{margin:12px 18px 0;padding:16px 18px;display:flex;align-items:center;justify-content:space-between;gap:16px;background:rgba(20,140,190,.09);border:1px solid rgba(72,194,235,.38);border-radius:14px;color:inherit}
+.ws-maker-journey[hidden]{display:none!important}
+.ws-maker-journey>div:first-child{min-width:0}
+.ws-maker-journey span{display:block;font-size:11px;letter-spacing:.09em;opacity:.75;font-weight:800}
+.ws-maker-journey strong{display:block;margin-top:5px;font-size:16px}
+.ws-maker-journey p{margin:6px 0 0;font-size:13px;line-height:1.5;max-width:680px}
+.ws-maker-journey-actions{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end}
+@media(max-width:840px){.ws-maker-journey{flex-direction:column;align-items:stretch}.ws-maker-journey-actions{justify-content:flex-start}}
