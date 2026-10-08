@@ -1,0 +1,38 @@
+CFS ZOCKT – GEMEINSAMES UPDATEPAKET 3.20.69 (KOMPAKT)
+=========================================================
+
+Eine ZIP-Datei mit allen aktuellen CODE-Updates:
+  - WEBSITE v3.20.68: kumulativ v3.20.60 bis v3.20.68
+  - CFS AI v20: lokales Design-Factory-Update v3.20.69
+
+WICHTIG: Das 344-MB-ORIGINALDESIGNARCHIV ist aus Groessengruenden
+NICHT in diesem kompakten ZIP enthalten. Du hast es zuvor bereitgestellt:
+"Streaming-Gesamtpaket-31-Designs-496-Farbvarianten-Animiert-DE.zip"
+
+Mit dem beigefuegten "VOLLPROJEKT_ERSTELLEN.py" kann das komplette
+Website-Projekt aus dem Website-Code und diesem Originaldesignarchiv
+wieder zusammengesetzt werden. Dafuer brauchst du beide Dateien lokal.
+
+Die Website und CFS AI sind technisch SEPARATE Anwendungen und werden
+separat eingerichtet. Die KI-Update-Datei ist KEIN CFS-AI-v20-Basisprogramm!
+
+SICHERE INSTALLATION
+  1) Gesamtes Paket auf dem PC entpacken.
+  2) README-UND-INSTALLATION.md lesen.
+  3) Originaldesignarchiv bereitlegen.
+  4) Optional Website-Vollprojekt neu zusammensetzen:
+     py -3 VOLLPROJEKT_ERSTELLEN.py --design-archiv "C:\Pfad\Streaming-Gesamtpaket-31-Designs-496-Farbvarianten-Animiert-DE.zip" --ziel "C:\CFS-Zockt-Staging"
+  5) Die Website separat in einer Testumgebung pruefen. Keine Live-/Private-
+     Konfiguration, Datenbank oder nutzereigenen Uploads blind ueberschreiben.
+  6) Fuer die CFS AI den Installer aus dem separaten AI-Update-ZIP nutzen:
+     py -3 install_update.py --check "C:\Pfad\zu\CFS_AI_LOCAL_SERVICE_v20"
+     py -3 install_update.py --apply "C:\Pfad\zu\CFS_AI_LOCAL_SERVICE_v20"
+  7) Lokale KI starten, lokal http://127.0.0.1:8000/design-factory oeffnen.
+     Automatische Designproduktion ist standardmaessig AUS; bewusst aktivieren.
+
+NICHT parallel den aelteren Website-Design-Worker aus v3.20.68
+und den neuen integrierten CFS-AI-v3.20.69-Worker aktivieren.
+Beide koennen dieselben Exportdateien belegen.
+
+Kein automatisches Git-Push, kein Web-Deployment, kein KI-Publish.
+Windows-/Ollama-/Bridge-/OBS-Livetests weiterhin OFFEN (HOLD).

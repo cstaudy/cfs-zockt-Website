@@ -1,0 +1,25 @@
+{
+  "package": "CFS-Zockt-Gesamtpaket-3.20.69-Kompakt",
+  "website_version": "3.20.68",
+  "cfs_ai_version": "v20 + Design Factory 3.20.69 Update",
+  "schema": 1,
+  "created_at_utc": "2026-10-08T18:37:18.833300+00:00",
+  "has_original_design_zip": false,
+  "original_design_archive_sha256": "ed07b455972eebb320d0210eca6729e6478ad363573213006415e70fb7381f4b",
+  "requires_existing_ai_v20": true,
+  "requires_separate_installation": true,
+  "files": [
+    {
+      "path": "01-Website/CFS-Zockt-Website-Code-v3.20.68.zip",
+      "bytes": 18543396,
+      "sha256": "7805f04e1536936c156664838f697eaa7985271712c4590fc54f7ac5fc1de69d",
+      "beschreibung": "Vollständiger kumulativer Website-Code (3.20.60–3.20.68), jedoch ohne großes Originaldesignarchiv"
+    },
+    {
+      "path": "02-CFS-AI/CFS-AI-Design-Factory-Update-v3.20.69.zip",
+      "bytes": 39838,
+      "sha256": "a126a720b6edc5e53dd9dc8eb1bc36c483301883ad7820548b5e8e6b5b8546a1",
+      "beschreibung": "Nur lokales CFS AI v20 Update; AI-v20-Basis muss bereits installiert sein"
+    }
+  ]
+}

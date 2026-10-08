@@ -1,76 +1,37 @@
 {
-  "from": "3.20.61",
-  "to": "3.20.62",
+  "from": "CFS AI v20",
+  "to": "CFS AI v20 + Design Factory 3.20.69",
+  "format": 1,
   "files": [
     {
-      "path": "package.json",
-      "before_sha256": "304b614cc868925ed67478ebbb0eac1c8dd33b2e2ed03f2d0e47e9b859fd53bc",
-      "after_sha256": "0abde91a63ed09a5f2e85b286c84d62673c3c53d81628b7b985a85abed355e83"
+      "path": "app/main.py",
+      "before_sha256": "43d72d13a8a945e8add3bd531c8890676b3e71849e0486fb54cc91afdeafff3e",
+      "after_sha256": "13822d5468dcf01c86d342e63b5a624ede557d0a9dd676b9f4578e79821156fa",
+      "size": 52619
     },
     {
-      "path": "package-lock.json",
-      "before_sha256": "7a5cb5e4f521775ddc3ac7b28cb56468a2d14f12221d0f2172d00dff7ad69a42",
-      "after_sha256": "5f54ff1ca7e484452890fb29cb57f7a9413af94857d6abbdc036b7283367a37f"
+      "path": "app/autonomous_studio.py",
+      "before_sha256": "d8af00552128bc4d3120647bb47f58e681384ffc250c1ef35493565895494dcb",
+      "after_sha256": "ae11430f7b9e7040d5a066b7274432614130b0a8118fd924ccdee280b482c50c",
+      "size": 19192
     },
     {
-      "path": "server.js",
-      "before_sha256": "1612e151af6a1d5585efb3e2eba92f2c9cf2ddaef439474a580d52659b33838d",
-      "after_sha256": "d55e60a1589cea53629d7d6c5d4f9cf46a6b68017ba05a0ec9ed52a0d55b182a"
-    },
-    {
-      "path": "public/pages/audio-studio.html",
-      "before_sha256": "a028b8b9b46b5d9f181dfea60e3a95f937cde551a1c7ac666e29ccabf8862090",
-      "after_sha256": "d06deb17a9f3e149680bbc8e7bb35712ac9ab992c1a87cf1c0f887788b4b3061"
-    },
-    {
-      "path": "public/assets/js/audio-sample-core-v32062.js",
+      "path": "app/design_factory.py",
       "before_sha256": null,
-      "after_sha256": "5ef854e257a2449a91d1136da2c804d4a5e97058f32b0723cd6b57f3a52d1aee"
+      "after_sha256": "96b854fe9865c1ef2f0c65a238d4b34ded3283dc1d46ac0383b177cc813d948d",
+      "size": 27351
     },
     {
-      "path": "public/assets/js/audio-sample-studio-v32062.js",
+      "path": "tests/test_design_factory_v32069.py",
       "before_sha256": null,
-      "after_sha256": "d84ae40a443bce0744b9b48c5339f7207a0d4c58d31d9c4751204117d12a1ef0"
+      "after_sha256": "a360d69306d0e009a1985ce74b81c0164a3b39b167d6f94f92f47f95b892955f",
+      "size": 6108
     },
     {
-      "path": "public/assets/css/audio-sample-studio-v32062.css",
+      "path": "web/design-factory-v32069.html",
       "before_sha256": null,
-      "after_sha256": "2b9ca3a01cba0723422de594faf358864ac7624d76b58b5dd91c2829c346b2ae"
-    },
-    {
-      "path": "tools/audio-sample-studio-v32062-test.mjs",
-      "before_sha256": null,
-      "after_sha256": "bf61e14c49bb9b7ebfbfa4665bc70ffe747eabe9c0dbb9daa894f0f4bc68114b"
-    },
-    {
-      "path": "tools/maker-widget-obs-flow-v32061-test.mjs",
-      "before_sha256": "5c23cce996260887a1876fa4569f3c968139fb3455502c3a06f03868ca54d252",
-      "after_sha256": "75fc5c72df05f44aa4e859ca4b40c71e45806a8a50ec18da14b80984d6966ea1"
-    },
-    {
-      "path": "UPDATE-3.20.62.md",
-      "before_sha256": null,
-      "after_sha256": "68af8d23be51e0f1285c95a09f4ebd87846228f8915d73e7c19f86e917fa2f7a"
-    },
-    {
-      "path": "UEBERGABE-3.20.62.md",
-      "before_sha256": null,
-      "after_sha256": "f28c981253f5bfd9cbf62dbd9991664c5a5bcaa028c938c1ef8b9e86b9dfb828"
-    },
-    {
-      "path": "FUNKTIONSLUECKEN-STATUS-3.20.62.md",
-      "before_sha256": null,
-      "after_sha256": "1ef24320e9ab6ba0d8ebb196244eab23cbfa7d48b9a1155adaeedce69dcc9a61"
-    },
-    {
-      "path": "EINBAU-3.20.62.md",
-      "before_sha256": null,
-      "after_sha256": "6533836b4a0250c4ee2a88ca5cbde6075779b85aeed06b81f9dcdd5c7f79d1b0"
-    },
-    {
-      "path": "CHANGED-FILES-3.20.62.txt",
-      "before_sha256": null,
-      "after_sha256": "7c1047c96d3df20e00948fb84e85b1133b68efab1b9be9b88a11224a1731ca46"
+      "after_sha256": "42aa5ae0283c4385cc7aaef0b3a04516bcb83663ba00892330bd65333897803b",
+      "size": 8197
     }
   ]
 }

@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CFS AI · Design Factory</title>
+<style>
+:root{color-scheme:dark;font:16px/1.5 system-ui,Arial,sans-serif;background:#07111e;color:#eaf8ff}*{box-sizing:border-box}
+body{margin:0;max-width:1180px;padding:1.5rem;margin-inline:auto}header{border-bottom:1px solid #295374;margin-bottom:1.6rem;padding-bottom:1rem}h1{margin:.3rem 0;font-size:clamp(1.7rem,4vw,2.8rem)}h2{margin:0 0 .9rem}p{color:#bdcfdf}small{color:#a1c2d7}
+.tag{display:inline-block;border:1px solid #3189ac;color:#9cefff;border-radius:999px;padding:.15rem .6rem;font-weight:700;font-size:.75rem}
+.layout{display:grid;grid-template-columns:minmax(260px,320px) 1fr;gap:1.4rem}.panel{background:#0b1c30;border:1px solid #255074;border-radius:16px;padding:1.2rem;min-width:0;margin-bottom:1.2rem}
+label{display:block;margin:0 0 .85rem;font-weight:650;font-size:.9rem}input,textarea{display:block;width:100%;font:inherit;color:inherit;background:#051021;border:1px solid #385f76;border-radius:8px;padding:.6rem;margin-top:.3rem}input[type=checkbox]{display:inline-block;width:auto;margin-right:.4rem}button,.link{background:#0e7b99;color:white;border:1px solid #299dbf;padding:.55rem .8rem;border-radius:8px;cursor:pointer;font-weight:700;text-decoration:none}button:hover,.link:hover{background:#1892b0}button:disabled{opacity:.5;cursor:wait}.neutral{background:#19344b;border-color:#355770}.muted{color:#b7cedf}.status{background:#102a3b;border:1px solid #377389;border-radius:12px;padding:.75rem;margin-bottom:1rem;white-space:pre-wrap}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(265px,1fr));gap:1rem}.card{background:#061522;border:1px solid #27506b;border-radius:13px;overflow:hidden}.card img{width:100%;aspect-ratio:16/9;object-fit:contain;background:#020811}.card-content{padding:1rem}.card h3{margin:0}.card p{font-size:.9rem;min-height:3rem}.actions{display:flex;flex-wrap:wrap;gap:.5rem}.code{font:12px monospace;overflow-wrap:anywhere;color:#89bacf}.note{border-left:3px solid #24b7c1;padding-left:.8rem}
+@media(max-width:760px){.layout{grid-template-columns:1fr}body{padding:1rem}}
+</style>
+</head>
+<body>
+<header><span class="tag">CFS AI · lokal / private Entwürfe</span><h1>Design Factory</h1><p>Neue Stream-Designs im Hintergrund entwickeln, prüfen und freigeben – ohne automatische Shop-Veröffentlichung.</p></header>
+<div id="feedback" class="status" role="status" aria-live="polite">Lade Designstatus …</div>
+<div class="layout">
+<section class="panel" aria-labelledby="settingsTitle"><h2 id="settingsTitle">Automatik</h2>
+<form id="settings">
+<label><input id="enabled" type="checkbox"> Hintergrund-Erstellung aktivieren</label>
+<label>Intervall (Stunden)<input id="hours" type="number" min="1" max="168" value="12" required></label>
+<label>Max. neue Entwürfe pro Tag<input id="daily" type="number" min="1" max="12" value="2" required></label>
+<label>Max. offene Entwürfe<input id="pending" type="number" min="1" max="40" value="12" required></label>
+<label>Gestaltungsrichtung<textarea id="hint" maxlength="280" rows="3">Premium-Gaming-Streamdesign</textarea></label>
+<div class="actions"><button type="submit" id="saveBtn">Einstellungen speichern</button><button type="button" class="neutral" id="runBtn">Jetzt einen Entwurf erstellen</button></div></form>
+<p class="note">Ollama muss lokal laufen. CFS AI erstellt SVG-Grafiken, keine fotorealistischen KI-Bilder. Bestehende Originaldesigns bleiben unverändert.</p>
+</section>
+<div><section class="panel"><h2>Entwürfe und Export</h2><p id="stats">Lade …</p><div class="actions"><button class="neutral" type="button" id="refreshBtn">Aktualisieren</button><a class="link" href="/api/design-factory/approved-export" id="exportBtn">Freigegebene Designs als ZIP</a></div><p class="muted">Der ZIP-Export ist nur für eine manuelle Übernahme in eine Website-Arbeitskopie vorgesehen. Kein Live-Deployment.</p></section><div id="cards" class="cards" aria-live="polite"></div></div>
+</div>
+<script>
+(()=>{'use strict';
+const $=id=>document.getElementById(id);let busy=false;
+const feedback=message=>{$('feedback').textContent=message;};
+async function api(path,method='GET',body=null){const options={method,cache:'no-store',credentials:'same-origin',headers:{}};if(body!==null){options.headers['Content-Type']='application/json';options.body=JSON.stringify(body)}const response=await fetch(path,options);const data=response.headers.get('content-type')?.includes('application/json')?await response.json():{};if(!response.ok)throw new Error(String(data.detail||`HTTP ${response.status}`).slice(0,200));return data;}
+function action(label,onClick){const button=document.createElement('button');button.textContent=label;button.type='button';button.onclick=onClick;return button;}
+async function run(actionFn){if(busy)return;busy=true;for(const button of document.querySelectorAll('button'))button.disabled=true;try{await actionFn();await refresh();}catch(error){feedback('Fehler: '+error.message);}finally{busy=false;for(const button of document.querySelectorAll('button'))button.disabled=false;}}
+async function refresh(){const [snapshot,data]=await Promise.all([api('/api/design-factory/status'),api('/api/design-factory/drafts')]);const settings=snapshot.settings||{};$('enabled').checked=settings.enabled===true;$('hours').value=settings.interval_hours||12;$('daily').value=settings.max_per_day||2;$('pending').value=settings.max_pending||12;$('hint').value=settings.hint||'';$('stats').textContent=`Offen: ${snapshot.pending} · Freigegeben: ${snapshot.approved} · Letzter Lauf: ${snapshot.last_run_at||'noch keiner'} · Ergebnis: ${snapshot.last_result||'–'}`;$('exportBtn').style.display=snapshot.staged_export_available?'inline-block':'none';const cards=$('cards');cards.replaceChildren();for(const draft of (data.items||[])){if(!/^[a-f0-9]{32}$/.test(String(draft.id||'')))continue;const article=document.createElement('article');article.className='card';const image=document.createElement('img');image.loading='lazy';image.alt='Vorschau';image.src=`/api/design-factory/drafts/${draft.id}/preview`;article.append(image);const content=document.createElement('div');content.className='card-content';const name=document.createElement('h3');name.textContent=String(draft.blueprint?.name||'Entwurf');const desc=document.createElement('p');desc.textContent=String(draft.blueprint?.description||'');const status=document.createElement('small');status.textContent='Status: '+String(draft.status||'draft');const controls=document.createElement('div');controls.className='actions';if(draft.status==='draft'){controls.append(action('Freigeben',()=>run(async()=>{if(!confirm('Diesen Entwurf für den lokalen Shop-Export freigeben?'))return;await api(`/api/design-factory/drafts/${draft.id}/approve`,'POST');feedback('Entwurf lokal freigegeben. Shop-Deployment bleibt manuell.');})),action('Ablehnen',()=>run(async()=>{if(!confirm('Diesen Entwurf ablehnen?'))return;await api(`/api/design-factory/drafts/${draft.id}/reject`,'POST');feedback('Entwurf abgelehnt.');})));}content.append(name,desc,status,controls);article.append(content);cards.append(article);}if(!(data.items||[]).length){const p=document.createElement('p');p.textContent='Noch keine KI-Entwürfe vorhanden.';cards.append(p);}if(!busy)feedback('Design Factory erreichbar. Automatische Veröffentlichung ist deaktiviert.');}
+$('saveBtn').closest('form').onsubmit=event=>{event.preventDefault();run(async()=>{const settings={enabled:$('enabled').checked,interval_hours:Number($('hours').value),max_per_day:Number($('daily').value),max_pending:Number($('pending').value),hint:$('hint').value};await api('/api/design-factory/settings','POST',settings);feedback('Einstellungen gespeichert.');});};
+$('runBtn').onclick=()=>run(async()=>{feedback('CFS AI arbeitet am Entwurf …');await api('/api/design-factory/run-now','POST');feedback('Entwurf erstellt und zur Prüfung bereit.');});
+$('refreshBtn').onclick=()=>run(async()=>{});
+refresh().catch(error=>feedback('Design Factory nicht erreichbar: '+error.message));
+})();
+</script>
+</body></html>
