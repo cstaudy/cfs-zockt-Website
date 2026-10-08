@@ -125,7 +125,7 @@
     "test:stream-credential-store": "node tools/stream-credential-store-test.mjs"
   },
   "devDependencies": {
-    "electron": "38.0.0",
+    "electron": "44.4.5",
     "electron-builder": "26.0.12"
   },
   "build": {
