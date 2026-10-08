@@ -91,6 +91,6 @@ await check('Wiring: new helper loads before Maker, both screens document the wo
  assert.ok(widgetJs.includes('state.makerJourney=fromMaker')&&widgetJs.includes('async function publish(){if(await saveDraft()!==true)return;'));
  assert.ok(widgetJs.includes('if(await saveDraft()!==true)throw new Error("Widget wurde angelegt'));
  assert.ok(widgetHtml.includes('widget-studio.js?v=v32061')&&widgetHtml.includes('widget-studio.css?v=v32061'));
- assert.equal(JSON.parse(read('package.json')).version,'3.20.61');
+ assert.match(JSON.parse(read('package.json')).version,/^3\.20\.(61|62|63)$/);
 });
 console.log(`\nMaker -> Widget -> OBS 3.20.61: ${n}/${n} PASS`);

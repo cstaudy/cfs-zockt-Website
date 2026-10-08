@@ -1,81 +1,91 @@
 {
-  "from": "3.20.60",
-  "to": "3.20.61",
+  "from": "3.20.62",
+  "to": "3.20.63",
   "files": [
     {
       "path": "package.json",
-      "before_sha256": "28b39ab452081df11e9dd73da28c479166d92ae52e015005569c65da50a31a87",
-      "after_sha256": "304b614cc868925ed67478ebbb0eac1c8dd33b2e2ed03f2d0e47e9b859fd53bc"
+      "before_sha256": "0abde91a63ed09a5f2e85b286c84d62673c3c53d81628b7b985a85abed355e83",
+      "after_sha256": "da2a51de3007374d0b7803406df68cfeab100ecd20b13cdb7e0fd7b510301603"
     },
     {
       "path": "package-lock.json",
-      "before_sha256": "30e0c812d95d800c789cd1d96e68f7fa21a3ce25df65aa29b0cfc4fcc51ebdc7",
-      "after_sha256": "7a5cb5e4f521775ddc3ac7b28cb56468a2d14f12221d0f2172d00dff7ad69a42"
+      "before_sha256": "5f54ff1ca7e484452890fb29cb57f7a9413af94857d6abbdc036b7283367a37f",
+      "after_sha256": "c384dae55c17d95fed56d0eed391ae71cd7ed79a25121b9506712c947749d47a"
     },
     {
       "path": "server.js",
-      "before_sha256": "1e28c1401799fe0d4d97c4277ee41bda2db2121995ebc0043baf6e85b8443c38",
-      "after_sha256": "1612e151af6a1d5585efb3e2eba92f2c9cf2ddaef439474a580d52659b33838d"
+      "before_sha256": "d55e60a1589cea53629d7d6c5d4f9cf46a6b68017ba05a0ec9ed52a0d55b182a",
+      "after_sha256": "53ba971a79e1e1622f9b92b537f67ebfc436b2599593cf4d2565e5fe92002633"
     },
     {
-      "path": "public/assets/js/creator-handoff-v32061.js",
+      "path": "public/pages/cut-studio.html",
+      "before_sha256": "a5fcdb8b9f10693018ea5dc67cfbbe5f75af42391fb748a7272ce0b25f2395fe",
+      "after_sha256": "2ac52b2cca9c11da32d9f627681860918db57fa7d9926a87b2ba031a23fa0da0"
+    },
+    {
+      "path": "public/assets/js/cut-studio.js",
+      "before_sha256": "5e54ab4ea77a33e68d7e2b5d468c79ac04c33c9283a1fda14d663bd8ec85eba0",
+      "after_sha256": "01bd71cd809b92f1a4f1ca2410367b59d605af56da21ca1d7caeaeba11fbe1d8"
+    },
+    {
+      "path": "public/assets/js/cut-local-preview.js",
+      "before_sha256": "302abbc9139eefb24757a7c0359772888deefb5177e4e9632613a4b64d12d43f",
+      "after_sha256": "532eddb6d99a0b8212f0e5d1bd089c44289a87fd0efe4783847bf9e59a8c0d5f"
+    },
+    {
+      "path": "public/assets/js/cut-preview-core-v32063.js",
       "before_sha256": null,
-      "after_sha256": "6df580c684efc2ca1572fcb3c8b4e2caff46deca1584e3f9b16858adfabcf1e7"
+      "after_sha256": "c9f36aa723af2ce9c32ec56d96a7c40fcf1394b5c19cce6c4da67ca383034430"
     },
     {
-      "path": "public/assets/js/stream-maker.js",
-      "before_sha256": "b4a19eda636cb626f17896117b78a0fac39bb7572ed5e7b46e25150efde763e0",
-      "after_sha256": "717fd76bb6b614c044ab7d04db6cd404ffb6792fab1eb7e3e17ef07b6f9a2c63"
+      "path": "public/assets/css/cut-local-preview.css",
+      "before_sha256": "bafd3c9e56d9201fd763f1a23a0104f5f62e34123d3bda2c880841b1f431bd36",
+      "after_sha256": "81c1201f356d561fda85ddf788c2a33190fb6c7bf2ffe51fc4a5078e78be8cab"
     },
     {
-      "path": "public/pages/stream-maker.html",
-      "before_sha256": "12155fe9b1f5237ef2772f08290673c797852a3e6b4768a63bd04d08f2ec0de6",
-      "after_sha256": "d518a34db97b8b7ab7899c0e32e86fa290931a1ad395fd2817d9cf8de1b11b06"
+      "path": "tools/cut-preview-v32063-test.mjs",
+      "before_sha256": null,
+      "after_sha256": "b0c6fe52971eb2f65734a182320d7246742a7d95eb81aa7b4148c44d14819ecc"
     },
     {
-      "path": "public/assets/js/widget-studio.js",
-      "before_sha256": "d84c2258cf94c8797accf58a7aeac8115c149f9d594d688c1825ff28ef8532cc",
-      "after_sha256": "c67116e07ad7d3f60ee7f9e6cd13283a3a0138a3ae484a1c64839a950b7cded1"
+      "path": "tools/cut-real-export-probe-v32063.mjs",
+      "before_sha256": null,
+      "after_sha256": "6609082b5e46b4ed4b9914e7cec61afb9d094b4e4d93e0fad82381d53ccf8ff3"
     },
     {
-      "path": "public/pages/widget-studio.html",
-      "before_sha256": "ffe5fc581d1141ffbdc7363235e214ffefaa416324a6e3dad4963e19f9a396cd",
-      "after_sha256": "bc23e18c0425716f926ca577c4abd60e28df3e48d5fd0a43117a005fc3d66e7c"
-    },
-    {
-      "path": "public/assets/css/widget-studio.css",
-      "before_sha256": "8c322e42f95c4058f3b71db63dc14e2f408c4cee6e01a1c0db2658e245e056b4",
-      "after_sha256": "60e8d25f36d99e3f7b5cef7344adbc768ad7eeab3a3d4dd8ca199c42e33ad981"
+      "path": "tools/audio-sample-studio-v32062-test.mjs",
+      "before_sha256": "bf61e14c49bb9b7ebfbfa4665bc70ffe747eabe9c0dbb9daa894f0f4bc68114b",
+      "after_sha256": "238f5bebad051c0e4a71935c9c6bfefb11f96f8523240435668cd4ef3cdf97f7"
     },
     {
       "path": "tools/maker-widget-obs-flow-v32061-test.mjs",
-      "before_sha256": null,
-      "after_sha256": "5c23cce996260887a1876fa4569f3c968139fb3455502c3a06f03868ca54d252"
+      "before_sha256": "75fc5c72df05f44aa4e859ca4b40c71e45806a8a50ec18da14b80984d6966ea1",
+      "after_sha256": "ec0127a049118d4c45a06d737041d5f3d6affcb5ab62dfe639eeeb176a89e58b"
     },
     {
-      "path": "UPDATE-3.20.61.md",
+      "path": "UEBERGABE-3.20.63.md",
       "before_sha256": null,
-      "after_sha256": "b4a3f849c0e62d9ac4ea7563f75abaaac8ca1697a14b537395ea01c27536929a"
+      "after_sha256": "7e4286068cb879b35a2414153bf3bfeb63ccc958dedd6eec46d5dd8419c40748"
     },
     {
-      "path": "UEBERGABE-3.20.61.md",
+      "path": "UPDATE-3.20.63.md",
       "before_sha256": null,
-      "after_sha256": "3e35c182c8187b6a3c32813505a956b8c62ffe2931decb8ea1566eed132d7cab"
+      "after_sha256": "50f34592c4322b532e054c4b295e3765e5c158179fd4fa566b499e677791b3dd"
     },
     {
-      "path": "FUNKTIONSLUECKEN-STATUS-3.20.61.md",
+      "path": "EINBAU-3.20.63.md",
       "before_sha256": null,
-      "after_sha256": "139f4585f2de562000328f59779f3a83ea7056a61fccf59c3a5b901774f42e30"
+      "after_sha256": "f365d2cd965fc50c4a1a20fe520ab3cbe76002fbf72201aaac2596de8614a331"
     },
     {
-      "path": "EINBAU-3.20.61.md",
+      "path": "FUNKTIONSLUECKEN-STATUS-3.20.63.md",
       "before_sha256": null,
-      "after_sha256": "6eaa90ac81d262af73a84071c336268c067fa5298bbcdcdfea1cf7c9e165d787"
+      "after_sha256": "d34034ea655d7742eae51adba912338a9aab4babfce90b948fb3c0f7996a25ec"
     },
     {
-      "path": "CHANGED-FILES-3.20.61.txt",
+      "path": "CHANGED-FILES-3.20.63.txt",
       "before_sha256": null,
-      "after_sha256": "b61ffaf206f4ad894be9572b9b088e49526a0ad890d7207124e88e67af3aac94"
+      "after_sha256": "e1d205ccf3bebb72f9669f3ab3575c03c7e86073b908ec9a00f1057aa2dc99fb"
     }
   ]
 }

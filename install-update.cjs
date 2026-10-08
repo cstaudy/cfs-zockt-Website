@@ -38,7 +38,7 @@ if(errors){console.error(`${errors} Konflikt(e): keine Datei geschrieben.`);proc
 const pending=plan.filter(x=>x.status==="PENDING");
 if(mode==="--check"){console.log(`CHECK OK · ${pending.length} ausstehend · ${plan.length-pending.length} unverändert`);process.exit(0)}
 if(!pending.length){console.log("APPLY OK · 0 Änderungen (bereits installiert)");process.exit(0)}
-const backup=path.join(root,'.cfs-backups','3.20.61',`${new Date().toISOString().replace(/[:.]/g,'-')}-${crypto.randomBytes(4).toString('hex')}`);
+const backup=path.join(root,'.cfs-backups','3.20.63',`${new Date().toISOString().replace(/[:.]/g,'-')}-${crypto.randomBytes(4).toString('hex')}`);
 for(const item of pending){
   if(fs.existsSync(item.file)){
     const dst=path.join(backup,item.rel);fs.mkdirSync(path.dirname(dst),{recursive:true});fs.copyFileSync(item.file,dst);
@@ -47,7 +47,7 @@ for(const item of pending){
 // Das gesamte Preflight-Set wurde geprüft und alle Bestandsdateien sind gesichert.
 for(const item of pending){
   fs.mkdirSync(path.dirname(item.file),{recursive:true});
-  const tmp=`${item.file}.cfs-32061-${crypto.randomBytes(6).toString('hex')}.tmp`;
+  const tmp=`${item.file}.cfs-32063-${crypto.randomBytes(6).toString('hex')}.tmp`;
   try{fs.copyFileSync(item.payload,tmp);fs.renameSync(tmp,item.file)}
   finally{if(fs.existsSync(tmp))fs.unlinkSync(tmp)}
 }

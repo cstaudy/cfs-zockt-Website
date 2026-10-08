@@ -1,1 +1,18 @@
 .cut-local-preview{padding:20px;border:1px solid #314c68;border-radius:12px;background:#0e1c2c;margin:20px 0}.cut-local-preview h3{margin:0 0 8px}.cut-local-preview p{font-size:12px;color:#b4c9df;line-height:1.6}.cut-local-preview video{display:block;background:#03070c;width:100%;max-height:430px;border-radius:8px}.cut-preview-drop{border:1px dashed #456785;padding:12px;border-radius:8px;margin:12px 0}.cut-preview-drop.drag{outline:2px solid #81eccb}.cut-preview-controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:12px 0}.cut-preview-controls select{background:#101f30;color:#e9f2ff;padding:10px;border:1px solid #456785;border-radius:6px;max-width:100%}#cutPreviewSeek{width:100%}#cutPreviewStatus{min-height:2.5em;color:#bce4db}.cut-local-preview input:focus-visible,.cut-local-preview button:focus-visible{outline:2px solid #81eccb;outline-offset:3px}
+
+.cut-preview-media{position:relative;max-width:100%;background:#03070c;border-radius:8px;overflow:hidden}
+.cut-preview-media video{display:block;max-height:430px;object-fit:contain}
+.cut-preview-caption{position:absolute;left:8%;right:8%;bottom:15%;text-align:center;pointer-events:none;white-space:pre-wrap;overflow-wrap:anywhere;font-size:clamp(14px,2.6vw,30px);font-weight:800;line-height:1.25;text-shadow:0 2px 7px #000,0 -2px 7px #000;color:#fff}
+.cut-preview-caption[data-position="top"]{top:12%;bottom:auto}
+.cut-preview-caption[data-style="box"]{background:#081522d9;border-radius:8px;padding:.4em}
+.cut-preview-caption[data-style="minimal"]{text-shadow:0 2px 7px #000}
+.cut-preview-audio-files{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:14px;margin:14px 0}
+.cut-preview-audio-files label{border:1px solid #314c68;border-radius:8px;padding:12px;display:grid;gap:9px;min-width:0}
+.cut-preview-audio-files input{width:100%;font-size:12px}
+.cut-preview-disclaimer{font-size:12px}
+.cut-export-check{margin:18px 0;padding:16px;border:1px solid #456785;border-radius:10px;background:#101d2b;display:grid;gap:10px}
+.cut-export-check p{margin:4px 0;color:#c1d4e7;font-size:12px}
+#cutExportCheckResult{font-size:12px;line-height:1.5;overflow-wrap:anywhere}
+#cutExportCheckResult strong{display:block;margin-bottom:6px}
+#cutExportCheckResult p[data-level="error"]{color:#ffb6b6}
+#cutExportCheckResult p[data-level="warning"]{color:#f7d6a1}

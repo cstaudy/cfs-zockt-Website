@@ -161,7 +161,17 @@
           <div class="cut-reference-status" id="cutReferenceStatus"><strong>0 ANALYSIERT</strong><span>Keine Referenzwerte aktiv.</span></div>
         </section>
 
-<section class="cut-local-preview" aria-label="Lokale Schnittvorschau"><h3>Am echten Video schneiden</h3><p>Die Vorschau bleibt lokal in deinem Browser. Ordne dieselbe Quelldatei anschließend im Launcher zu. Musik, Effekte und Captions werden erst beim Export zusammengesetzt.</p><div class="cut-preview-drop" id="cutPreviewDrop"><button class="btn" type="button" id="cutPreviewChoose">Videodatei auswählen</button> oder eine Datei hier ablegen<input type="file" id="cutPreviewFile" accept="video/*,.mkv,.mov" hidden></div><video id="cutLocalVideo" controls playsinline preload="metadata" aria-label="Lokale Videovorschau"></video><label for="cutPreviewSeek">Position <output id="cutPreviewTime">0.00 s</output></label><input type="range" id="cutPreviewSeek" min="0" max="0" step="0.01" value="0"><div class="cut-preview-controls"><label>Clip <select id="cutPreviewClip"></select></label><button type="button" class="btn" id="cutPreviewIn">Start hier setzen</button><button type="button" class="btn" id="cutPreviewOut">Ende hier setzen</button><button type="button" class="btn" id="cutPreviewPlay">Ausschnitt abspielen</button><button type="button" class="btn" id="cutPreviewClear">Datei schließen</button></div><p id="cutPreviewStatus" role="status" aria-live="polite">Wähle eine lokale Videodatei für die Schnittvorschau.</p></section>        <section class="cut-section cut-section-clips">
+<section class="cut-local-preview" aria-label="Lokale audiovisuelle Schnittvorschau">
+  <h3>Video, Caption und Ton lokal prüfen</h3>
+  <p>Die Einzelclip-Vorschau bleibt auf deinem Gerät. Sie zeigt den geplanten Caption-Text und kann eine Musik- und eine Voiceover-Datei grob zeitsynchron abspielen. Kein Cloud-Upload, kein finaler Render: Weitere Tracks, SFX, Ducking, Fade-Automationen, Panorama, Übergänge und Keyframes hörst bzw. siehst du erst im Launcher-Export.</p>
+  <div class="cut-preview-drop" id="cutPreviewDrop"><button class="btn" type="button" id="cutPreviewChoose">Videodatei auswählen</button> oder eine Datei hier ablegen<input type="file" id="cutPreviewFile" accept="video/*,.mkv,.mov" hidden></div>
+  <div class="cut-preview-media" id="cutPreviewMedia"><video id="cutLocalVideo" controls playsinline preload="metadata" aria-label="Lokale Videovorschau mit Originalton"></video><div id="cutPreviewCaption" class="cut-preview-caption" hidden aria-live="off"></div></div>
+  <label for="cutPreviewSeek">Position <output id="cutPreviewTime">0.00 s</output></label><input type="range" id="cutPreviewSeek" min="0" max="0" step="0.01" value="0">
+  <div class="cut-preview-controls"><label>Clip <select id="cutPreviewClip"></select></label><button type="button" class="btn" id="cutPreviewIn">Start hier setzen</button><button type="button" class="btn" id="cutPreviewOut">Ende hier setzen</button><button type="button" class="btn primary" id="cutPreviewPlay">Ausschnitt mit Ton prüfen</button><button type="button" class="btn" id="cutPreviewClear">Lokale Dateien schließen</button></div>
+  <div class="cut-preview-audio-files"><label>Lokale Musik für Hörprobe<input id="cutPreviewMusicFile" type="file" accept="audio/*,.mp3,.m4a,.wav,.ogg,.opus"><button class="btn" type="button" id="cutPreviewClearMusic">Musik entfernen</button></label><label>Lokales Voiceover für Hörprobe<input id="cutPreviewVoiceFile" type="file" accept="audio/*,.mp3,.m4a,.wav,.ogg,.opus"><button class="btn" type="button" id="cutPreviewClearVoice">Voiceover entfernen</button></label></div>
+  <p id="cutPreviewAudioStatus" class="cut-preview-disclaimer">Keine zusätzlichen Audiodateien geladen.</p><p id="cutPreviewStatus" role="status" aria-live="polite">Wähle eine lokale Videodatei für die Schnittvorschau.</p>
+</section>
+<section class="cut-section cut-section-clips">
           <div class="cut-section-head"><div><span>SCHRITT 2</span><h3>Clips schneiden</h3><p>Lege Start und Ende fest. Text ist optional. Alles Weitere findest du im Profi-Modus.</p></div><button class="btn primary" id="addCutClip">+ CLIP</button></div>
           <div class="cut-timeline-head"><span>TIMELINE</span><strong id="cutClipLimit">0 / 0</strong></div>
           <div id="cutTimeline" class="cut-timeline"></div>
@@ -259,6 +269,7 @@
             <div><span>CLIPS</span><strong id="cutClipCount">0</strong></div>
             <div><span>VERARBEITUNG</span><strong>LOKAL IM LAUNCHER</strong></div>
           </div>
+          <div class="cut-export-check" aria-label="Exportplan prüfen"><div><strong>Export-Check vor dem Launcher</strong><p>Prüft markierte Clip-Grenzen, Quellnamen und zugeordnete Audio-Dateinamen. Kein Ersatz für eine echte Codec- und Ergebnisprüfung im Launcher.</p></div><button type="button" class="btn" id="cutCheckExport">Exportplan prüfen</button><div id="cutExportCheckResult" role="status" aria-live="polite">Noch keine Prüfung gestartet.</div></div>
           <div class="cut-job-create"><button class="btn primary" id="queueCutExport">EXPORT FÜR LAUNCHER VORBEREITEN</button><span>Es wird nur ein sicherer Arbeitsauftrag erstellt. Deine Video- und Audiodateien bleiben lokal.</span></div>
         </section>
       </div>
@@ -284,5 +295,5 @@
 <script src="/assets/js/cfs-creator-ux-v189.js"></script>
 <script src="/assets/js/cfs-product-v199.js" defer></script>
 <script src="/assets/js/cfs-help-v6.js" defer></script><script src="/assets/js/cfs-guide-v5.js" defer></script><script src="/assets/js/cfs-guide-journeys.js" defer></script><script src="/assets/js/cfs-workspace-v205.js" defer></script>
-<script src="/assets/js/cut-local-preview.js" defer></script></body>
+<script src="/assets/js/cut-preview-core-v32063.js" defer></script><script src="/assets/js/cut-local-preview.js" defer></script></body>
 </html>
