@@ -1,0 +1,13 @@
+{
+  "kind": "cfs-original-design-product-groups",
+  "schema": 1,
+  "groups": [
+    {"id":"voll","name":"Komplettsets","short":"Komplettset","description":"Alle PNG-Elemente und Szenen-HTMLs dieser Designfarbe.","tag":"Vollpaket","png_numbers":[],"scene_numbers":[],"gallery":["01-Start.png","05-Spiel-Overlay.png","10-Hinweis-Follower.png","31-Panel-DISCORD.png"]},
+    {"id":"screens","name":"Start & Pausen-Screens","short":"Screens","description":"Start, Pause, Ende, Offline und passende Szenen-HTMLs.","tag":"Szenen","png_numbers":[1,2,3,4],"scene_numbers":[1,2,3,4,5,6,7],"gallery":["01-Start.png","02-Pause.png","03-Ende.png","04-Offline.png"]},
+    {"id":"overlays","name":"Gameplay & Kamera","short":"Gameplay","description":"Spiel-, Chat- und Kamerarahmen samt passenden Szenen-HTMLs.","tag":"Overlays","png_numbers":[5,6,7,8,9,22,23,25,26],"scene_numbers":[8,9,10,11,12,13,15,16,17,18,19],"gallery":["05-Spiel-Overlay.png","06-Chat-Overlay.png","07-Kamerarahmen-16zu9.png","23-Duo-Kameras.png"]},
+    {"id":"alerts","name":"Alerts & Hinweise","short":"Alerts","description":"Follower-, Abo-, Spenden- und Raid-Hinweise mit zugehörigen Szenen.","tag":"Alerts","png_numbers":[10,11,12,13,21,29,30],"scene_numbers":[20,21,22],"gallery":["10-Hinweis-Follower.png","11-Hinweis-Abo.png","12-Hinweis-Spende.png","13-Hinweis-Raid.png"]},
+    {"id":"panels","name":"Panels & Branding","short":"Panels","description":"Profil- und Kanal-Panels, Kontakt- und Community-Grafiken.","tag":"Branding","png_numbers":[14,15,16,17,18,19,31,32,33,34,35,36],"scene_numbers":[27,28,29],"gallery":["31-Panel-DISCORD.png","32-Panel-KONTAKT.png","33-Panel-HAEUFIGE-FRAGEN.png","34-Panel-PARTNER.png"]},
+    {"id":"widgets","name":"Goals, Ticker & Status","short":"Widgets","description":"Statische Vorlagen für Ziele, Statusleiste und Ticker sowie Szenen-HTMLs. Keine Live-Providerdaten.","tag":"Widgets","png_numbers":[20,27,28],"scene_numbers":[23,24,25,26],"gallery":["20-Statusleiste.png","27-Ziel-Leer.png","28-Ticker-Leer.png"]},
+    {"id":"hochformat","name":"Hochformat & Mobile","short":"Hochformat","description":"Vertikale Layouts und kompakte Hinweise mit passenden Szenen-HTMLs.","tag":"9:16","png_numbers":[24,30],"scene_numbers":[14,22],"gallery":["24-Hochformat.png","30-Hinweis-Vertikal.png"]}
+  ]
+}

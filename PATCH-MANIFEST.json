@@ -1,0 +1,446 @@
+{
+  "name": "CFS Zockt Website 3.20.71 - NUR Fehlende + abweichende Dateien",
+  "target_version": "3.20.71",
+  "basis": "cfs-zockt-Website-main (1).zip",
+  "files": [
+    {
+      "path": "CHANGED-FILES-3.20.65.txt",
+      "status": "fehlend",
+      "sha256": "29cbb11c90c431544e86cb878df7dbb83e142d576d6b9beb07997852a3d65304",
+      "original_sha256": null,
+      "bytes": 625
+    },
+    {
+      "path": "CHANGED-FILES-3.20.66.txt",
+      "status": "fehlend",
+      "sha256": "39eb9bafced869ca2c8bb46befab166b4b0e7c72d72de5b45fb79e2fe1290a03",
+      "original_sha256": null,
+      "bytes": 983
+    },
+    {
+      "path": "CHANGED-FILES-3.20.67.txt",
+      "status": "fehlend",
+      "sha256": "0f0f93ae73fdbdb34b67aaef5c6af7ed374ef1a87b1dc4a0808f8e42dff6f386",
+      "original_sha256": null,
+      "bytes": 498
+    },
+    {
+      "path": "CHANGED-FILES-3.20.68.txt",
+      "status": "fehlend",
+      "sha256": "1156772650dfa5ee2c65a08050d837f7227f5f5d8e97309b18f09653cbc86e75",
+      "original_sha256": null,
+      "bytes": 914
+    },
+    {
+      "path": "EINBAU-3.20.65.md",
+      "status": "fehlend",
+      "sha256": "5759531bc840f6401c04c95a947e6edd80618a5fd303d12fa23065f29b975d18",
+      "original_sha256": null,
+      "bytes": 646
+    },
+    {
+      "path": "EINBAU-3.20.66.md",
+      "status": "fehlend",
+      "sha256": "ae5486843e7f1499c7b052dd8c2079e4239696320c21825b3f832c6964b7829a",
+      "original_sha256": null,
+      "bytes": 776
+    },
+    {
+      "path": "EINBAU-3.20.67.md",
+      "status": "fehlend",
+      "sha256": "b936ed0eae6047bf994c4886fc082bca5926dc804b31ceb001dfe00f61929f90",
+      "original_sha256": null,
+      "bytes": 805
+    },
+    {
+      "path": "EINBAU-3.20.68.md",
+      "status": "fehlend",
+      "sha256": "a796fa6fc00a4044091fe27948eed96839f4fc5ffd0f1063aa1d3fe7b83a3ba2",
+      "original_sha256": null,
+      "bytes": 1099
+    },
+    {
+      "path": "EINBAU-3.20.70.md",
+      "status": "fehlend",
+      "sha256": "d03eb3a15285bc8677da11fa3ae86b2c333ad656d3c5521d1dd4524fa957befb",
+      "original_sha256": null,
+      "bytes": 1750
+    },
+    {
+      "path": "FUNKTIONSLUECKEN-STATUS-3.20.65.md",
+      "status": "fehlend",
+      "sha256": "d07f4667cb7c6eee8ce5d64ab4809f88def8f379bb3eba5636a9b6aa5c87a78f",
+      "original_sha256": null,
+      "bytes": 571
+    },
+    {
+      "path": "FUNKTIONSLUECKEN-STATUS-3.20.66.md",
+      "status": "fehlend",
+      "sha256": "25c1507f3efc42c7056f0a51fc4a33992b7d1cc967bc4a29e654acdc8ea6bc71",
+      "original_sha256": null,
+      "bytes": 630
+    },
+    {
+      "path": "FUNKTIONSLUECKEN-STATUS-3.20.67.md",
+      "status": "fehlend",
+      "sha256": "ca7c2eda3ba5db6417595c8eb4fd6f538541a66048520fb16ba4e8f0cd5e0164",
+      "original_sha256": null,
+      "bytes": 652
+    },
+    {
+      "path": "FUNKTIONSLUECKEN-STATUS-3.20.68.md",
+      "status": "fehlend",
+      "sha256": "0f0839b83938057f91e7593ffc846d9d80d531ac81c78f2644f0d6cf4c4723c7",
+      "original_sha256": null,
+      "bytes": 596
+    },
+    {
+      "path": "ORIGINAL-DESIGNS-INFO.txt",
+      "status": "fehlend",
+      "sha256": "095847336b86ae29ebb1bd51de1eda4d3c3455dff574dee686c0de98a1bc6c45",
+      "original_sha256": null,
+      "bytes": 252
+    },
+    {
+      "path": "SAUBERE-UEBERGABE-3.20.71.md",
+      "status": "fehlend",
+      "sha256": "802e0ea5c705e85eee66dd82d7a65a407848c66f72eab9fd22701c2235f04b71",
+      "original_sha256": null,
+      "bytes": 398
+    },
+    {
+      "path": "UEBERGABE-3.20.65.md",
+      "status": "fehlend",
+      "sha256": "66fc14bea76ae44d483b42f8b2a685fa6def819429d38f6d998ce72a6ef329ff",
+      "original_sha256": null,
+      "bytes": 1001
+    },
+    {
+      "path": "UEBERGABE-3.20.66.md",
+      "status": "fehlend",
+      "sha256": "1e90c77b78f4771f938e1864d22d551e5f339e473dcc9bd688410ec141ac75ed",
+      "original_sha256": null,
+      "bytes": 1265
+    },
+    {
+      "path": "UEBERGABE-3.20.67.md",
+      "status": "fehlend",
+      "sha256": "5fc4def511cc482f2c47112ab689bedea2b92f3500c3ed926fca5977c2eae1e2",
+      "original_sha256": null,
+      "bytes": 1243
+    },
+    {
+      "path": "UEBERGABE-3.20.68.md",
+      "status": "fehlend",
+      "sha256": "0b97cfa67148aaadebc5e88402bd0e95b5ded2eb369d2dafdd3ce4c2eefdb2f7",
+      "original_sha256": null,
+      "bytes": 2554
+    },
+    {
+      "path": "UEBERGABE-3.20.70.md",
+      "status": "fehlend",
+      "sha256": "e084b783f4e5a4f7903146764a10054b14f866edf952e82599349755b4bc3953",
+      "original_sha256": null,
+      "bytes": 589
+    },
+    {
+      "path": "UPDATE-3.20.65.md",
+      "status": "fehlend",
+      "sha256": "c798cb4547895e169a5a915bb302b1c063e5798a85df8db4e69b6ea164503921",
+      "original_sha256": null,
+      "bytes": 1159
+    },
+    {
+      "path": "UPDATE-3.20.66.md",
+      "status": "fehlend",
+      "sha256": "ed9a122431f6cb2de04c9f595d640431f742d7a3b468cb8e0f5aae00aac0ff83",
+      "original_sha256": null,
+      "bytes": 1979
+    },
+    {
+      "path": "UPDATE-3.20.67.md",
+      "status": "fehlend",
+      "sha256": "06da199fcc075f8ad4899cbee20c52f77a35ef7b18d175806281d16dc2f317a0",
+      "original_sha256": null,
+      "bytes": 1400
+    },
+    {
+      "path": "UPDATE-3.20.68.md",
+      "status": "fehlend",
+      "sha256": "a66397185e512faed11c78842050112963738b16d0c4970c1d171dcd38573aa6",
+      "original_sha256": null,
+      "bytes": 695
+    },
+    {
+      "path": "lib/original-design-catalog-v32065.js",
+      "status": "fehlend",
+      "sha256": "00925c82859d6e5d37615eccea1d21617da2592d25c58253c7bb187ef77ede91",
+      "original_sha256": null,
+      "bytes": 7068
+    },
+    {
+      "path": "public/assets/css/admin-cfs-ai-design-v32070.css",
+      "status": "fehlend",
+      "sha256": "d062527d26815239c6a126cbae60aa091551eb4aacb0edf1e99f4d4f3344ecb2",
+      "original_sha256": null,
+      "bytes": 2285
+    },
+    {
+      "path": "public/assets/data/cfs-ai-designs-v32068.json",
+      "status": "fehlend",
+      "sha256": "455ea06ccc7cf11964026c1cb6bd6494e0ebfeb6a08e4b7865c4235cb81b9337",
+      "original_sha256": null,
+      "bytes": 72
+    },
+    {
+      "path": "public/assets/data/design-pack-catalog-v211.json",
+      "status": "fehlend",
+      "sha256": "3bfdbe3f3848d2a050f6d6efd8022919b9dfb2165519e5a7d0ec1d34ea64e00d",
+      "original_sha256": null,
+      "bytes": 257589
+    },
+    {
+      "path": "public/assets/data/original-design-catalog-v32065.json",
+      "status": "fehlend",
+      "sha256": "8433708021da2bac834046af21e46d7097605e4986f70a1ff553e13e59045094",
+      "original_sha256": null,
+      "bytes": 271444
+    },
+    {
+      "path": "public/assets/data/original-design-product-groups-v32066.json",
+      "status": "fehlend",
+      "sha256": "716491ca55b211558522c2dff8ddda2930dba09c3ba4add0e9b32ff148bec2e6",
+      "original_sha256": null,
+      "bytes": 2305
+    },
+    {
+      "path": "public/assets/js/admin-cfs-ai-design-v32070.js",
+      "status": "fehlend",
+      "sha256": "a7b689a283eb06a35923e30cd502959701af6a6c5371d52c3b77b326fffb7c7d",
+      "original_sha256": null,
+      "bytes": 6992
+    },
+    {
+      "path": "public/assets/js/original-design-detail-v32066.js",
+      "status": "fehlend",
+      "sha256": "2b278c7180d8d6f4c8d20cc5445aa91689b9da7058339f80349f9a334051d0bb",
+      "original_sha256": null,
+      "bytes": 4949
+    },
+    {
+      "path": "public/assets/js/page-shop-original-designs-v32065.js",
+      "status": "fehlend",
+      "sha256": "d6c4137e18127853587a17189ea5c7ee3fd5ed3dd2a44402f2925298cc4fb267",
+      "original_sha256": null,
+      "bytes": 4784
+    },
+    {
+      "path": "public/assets/js/page-shop-original-designs-v32066.js",
+      "status": "fehlend",
+      "sha256": "604da867776279b362de9a22c518dbae9dd12ce383ef057b847554963f58b103",
+      "original_sha256": null,
+      "bytes": 5683
+    },
+    {
+      "path": "public/assets/js/shop-ai-new-designs-v32068.js",
+      "status": "fehlend",
+      "sha256": "7a6ba83b3f672ba1dae458f4fd4535cce4f2a46fa6c5ce79b9f96c46a68a1efb",
+      "original_sha256": null,
+      "bytes": 2139
+    },
+    {
+      "path": "public/assets/js/shop-design-advisor-v32067.js",
+      "status": "fehlend",
+      "sha256": "495b456b4f37cb8884d44acec06422aaef47bfd8af4f8b498f448c82eba7baa5",
+      "original_sha256": null,
+      "bytes": 3953
+    },
+    {
+      "path": "public/assets/js/shop-experience-v32067.js",
+      "status": "fehlend",
+      "sha256": "d42936a85ac82b77819e673808f87bb237a4b781daf45abee8546a7c157fa81e",
+      "original_sha256": null,
+      "bytes": 7255
+    },
+    {
+      "path": "public/assets/js/shop-scene-preview-v32067.js",
+      "status": "fehlend",
+      "sha256": "fb9c4a8c7cbbc7301067c4b685a7adb4d6b89f1aa3c1164c73bc3a4f9cc7a74d",
+      "original_sha256": null,
+      "bytes": 1326
+    },
+    {
+      "path": "public/pages/original-design.html",
+      "status": "fehlend",
+      "sha256": "57ee16711d971dc693f9ca708e20f8501cda9a4e305aef6df9ff84caf84bb0ae",
+      "original_sha256": null,
+      "bytes": 7060
+    },
+    {
+      "path": "reports/beta-acceptance-3.20.57.json",
+      "status": "fehlend",
+      "sha256": "27d2d9a91cc68a99160418035540d9a8520101617fefb35fe9f781ccba2e97e9",
+      "original_sha256": null,
+      "bytes": 20312
+    },
+    {
+      "path": "reports/beta-acceptance-3.20.57.md",
+      "status": "fehlend",
+      "sha256": "68cc78a41b16bb2d7208bf260cbf90b3d3cd229503b597f481f567aa2965d6a0",
+      "original_sha256": null,
+      "bytes": 4350
+    },
+    {
+      "path": "reports/beta-go-no-go-3.20.57.json",
+      "status": "fehlend",
+      "sha256": "10450589d73530587c3e2ae481562b1304c2dfc718018e635158051b5c399c3a",
+      "original_sha256": null,
+      "bytes": 1933
+    },
+    {
+      "path": "tools/audit-clean-website-v32071.py",
+      "status": "fehlend",
+      "sha256": "c775b339122aceb2376f1a48c9ae77ce2829fc5c4bc953fc9da90d941f37d372",
+      "original_sha256": null,
+      "bytes": 4897
+    },
+    {
+      "path": "tools/cfs-ai-design-factory/CREATE_ONE_DESIGN_WINDOWS.cmd",
+      "status": "fehlend",
+      "sha256": "bfc86a7987287ee6af61f6dfeb5e1e1ec4033bbc4cc450c23e3f390599a7f8a1",
+      "original_sha256": null,
+      "bytes": 166
+    },
+    {
+      "path": "tools/cfs-ai-design-factory/README-DE.md",
+      "status": "fehlend",
+      "sha256": "c4e1bb3b20f8efc969ea8cfbfe25005488051b73f1d7bbd1601d84c088f4e26f",
+      "original_sha256": null,
+      "bytes": 4071
+    },
+    {
+      "path": "tools/cfs-ai-design-factory/REVIEW_DESIGNS_WINDOWS.cmd",
+      "status": "fehlend",
+      "sha256": "d5a0d68c9df067b4ff11b92673b6634b712ebd5738e4ff1633ebb4e4fef463f4",
+      "original_sha256": null,
+      "bytes": 165
+    },
+    {
+      "path": "tools/cfs-ai-design-factory/START_DESIGN_WORKER_WINDOWS.cmd",
+      "status": "fehlend",
+      "sha256": "2959ede822ced6bb47b623e9ff8c154bae6b6b4cbc3c00002b9e1599706aab5d",
+      "original_sha256": null,
+      "bytes": 325
+    },
+    {
+      "path": "tools/cfs-ai-design-factory/design_factory.py",
+      "status": "fehlend",
+      "sha256": "489f0266c8a3412fcfa35ab644640f879022317e64d92620a8f8fe978a6d2a84",
+      "original_sha256": null,
+      "bytes": 23600
+    },
+    {
+      "path": "tools/cfs-ai-design-factory/run_tests.mjs",
+      "status": "fehlend",
+      "sha256": "3f5f65bacfaa264cb66dce1a7a1b113e74a72a71ed0c2af81ec2b3b4c874a318",
+      "original_sha256": null,
+      "bytes": 523
+    },
+    {
+      "path": "tools/cfs-ai-design-factory/test_design_factory.py",
+      "status": "fehlend",
+      "sha256": "0d1a803f1a635d6926559943fe7af49666d98a0f65518ba357019078eee54bcd",
+      "original_sha256": null,
+      "bytes": 5756
+    },
+    {
+      "path": "tools/original-design-shop-v32065-test.mjs",
+      "status": "fehlend",
+      "sha256": "90b875c1f2fc0ac7710bef7323181341de0f8ffeeb9042d4725e1c427da20a24",
+      "original_sha256": null,
+      "bytes": 3635
+    },
+    {
+      "path": "lib/cfs-ai-bridge-policy.js",
+      "status": "aktualisieren",
+      "sha256": "a0d456dcae13f3fb171e4c2fd7f9c29f8566e3cecf814e09d7329dfe792cf1bd",
+      "original_sha256": "00e667bdf928d42a847386493d3e074ca7b8278e4df42914b353e6e0cce28adb",
+      "bytes": 2351
+    },
+    {
+      "path": "lib/stream-maker.js",
+      "status": "aktualisieren",
+      "sha256": "0cc20dd5b16f97e22173fe53cade74822ea6aa6b9908a304e3bdec52e1050a00",
+      "original_sha256": "8e7077622b5270eab79c4f5e5bbdacaa265c3bc75caa73828f51d2232d398722",
+      "bytes": 8869
+    },
+    {
+      "path": "public/assets/css/cfs-shop-v172.css",
+      "status": "aktualisieren",
+      "sha256": "c5fe095a7d7bc28b0e8c55eee81f9e054504df92927e8fc3345ca36fde16c51c",
+      "original_sha256": "0864accd1f622dc03249c0e8083f7b0d2074d150671d9d525d15773612ab2982",
+      "bytes": 39345
+    },
+    {
+      "path": "public/assets/js/stream-maker-core.js",
+      "status": "aktualisieren",
+      "sha256": "78d07530ad006518ba2cbe7741a603dd2f6b372903cdc8d3558a727d9cb7a672",
+      "original_sha256": "e59faee9f042810e56044cf7e1474d8f50d9e87ba4a96731170a983952e61fbe",
+      "bytes": 13363
+    },
+    {
+      "path": "public/assets/js/stream-maker.js",
+      "status": "aktualisieren",
+      "sha256": "744152324def676fded806c4b0d6e9736616a0fdcf94e6f7b4690355964dac30",
+      "original_sha256": "88502642c902fb97d9b9519ffbf395f49bbe489157e3ec406023099f5cd29f19",
+      "bytes": 40740
+    },
+    {
+      "path": "public/pages/shop.html",
+      "status": "aktualisieren",
+      "sha256": "3b7e9c9bcb0fa6125a513f9fc610956441a6a45e6324602caea09ba3c3d825e0",
+      "original_sha256": "1bf89242c50992bb1be9f9ec6b98a49f187c2883744fbc42c6543b4b27605b26",
+      "bytes": 14380
+    },
+    {
+      "path": "tools/audio-sample-studio-v32062-test.mjs",
+      "status": "aktualisieren",
+      "sha256": "c8c3674ba108d8ccde16aaeba21744730cfee419d78963c15b90e4a052840227",
+      "original_sha256": "bf61e14c49bb9b7ebfbfa4665bc70ffe747eabe9c0dbb9daa894f0f4bc68114b",
+      "bytes": 8131
+    },
+    {
+      "path": "tools/beta-preflight-v32057.mjs",
+      "status": "aktualisieren",
+      "sha256": "436c31cde74a93858c530b247979538f6827ef33e75dd0377d7812fb6d560069",
+      "original_sha256": "3f387c18a0ad1b5e2fd9b854b7d4aae30f1f4a42e0abf11954f8a5fa5a578f21",
+      "bytes": 3272
+    },
+    {
+      "path": "tools/maker-widget-obs-flow-v32061-test.mjs",
+      "status": "aktualisieren",
+      "sha256": "dea18a7192716a988c1c6ad4e2ba46deb3a030fb535d0af5fa504534d1158609",
+      "original_sha256": "75fc5c72df05f44aa4e859ca4b40c71e45806a8a50ec18da14b80984d6966ea1",
+      "bytes": 9331
+    }
+  ],
+  "design_archive": {
+    "path": "resources/original-designs/Streaming-Gesamtpaket-31-Designs-496-Farbvarianten-Animiert-DE.zip",
+    "sha256": "ed07b455972eebb320d0210eca6729e6478ad363573213006415e70fb7381f4b",
+    "bytes": 359712548,
+    "im_patch": false
+  },
+  "not_replaced": [
+    "install-update.cjs",
+    "update-manifest.json"
+  ],
+  "excluded_extra_files_warning": [
+    "autonomous_studio.py",
+    "design_factory.py",
+    "design-factory-v32069.html",
+    "install_update.py",
+    "main.py",
+    "test_design_factory_v32069.py"
+  ],
+  "note": "Keine live release Freigabe, Beta HOLD, keine automatische Zahlungsaktivierung."
+}

@@ -1,0 +1,19 @@
+3.20.65 – Geänderte / neue Dateien
+
+NEU
+- lib/original-design-catalog-v32065.js
+- public/assets/data/design-pack-catalog-v211.json
+- public/assets/data/original-design-catalog-v32065.json
+- public/assets/js/page-shop-original-designs-v32065.js
+- resources/original-designs/Streaming-Gesamtpaket-31-Designs-496-Farbvarianten-Animiert-DE.zip
+- tools/original-design-shop-v32065-test.mjs
+
+GEÄNDERT
+- package.json
+- package-lock.json
+- public/assets/css/cfs-shop-v172.css
+- public/assets/js/stream-maker-core.js
+- public/assets/js/stream-maker.js
+- public/pages/shop.html
+- server.js
+- tools/design-downloads-v32064-test.mjs

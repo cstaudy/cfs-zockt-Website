@@ -47,11 +47,51 @@
     <div class="shop-hero-copy"><span>CFS CREATOR SHOP</span><h1>FERTIGE INHALTE.<br><span>DIREKT IN DEINEN WORKFLOW.</span></h1><p>Hier findest du fertige Widgets, Panels, Overlays, Scenes, Bundles und Tools. Wähle etwas aus, übernimm es in deine Bibliothek und öffne es danach direkt im passenden Studio.</p></div>
     <aside class="shop-library-summary"><span>MEINE PRODUKTE</span><strong id="shopLibraryCount">–</strong><small id="shopLibraryText">Bibliothek wird geladen …</small><a class="btn" href="#catalog">KATALOG ANSEHEN</a></aside>
   </section>
+  <section class="shop-discovery" id="shopDiscovery" aria-labelledby="shopDiscoverTitle">
+    <div class="shop-discovery-head"><div><p class="sm-eyebrow">STREAM DESIGN · ENTDECKEN</p><h2 id="shopDiscoverTitle">Finde deinen nächsten Stream-Look.</h2><p>31 Originalwelten, 496 Farben und sieben Produktgruppen. Erst ansehen, dann auswählen und herunterladen.</p></div><a class="sm-btn sm-primary" href="#originalDesigns">Alle Designs entdecken ↗</a></div>
+    <div id="shopFeatured" class="shop-featured-grid" aria-label="Ausgewählte Designwelten"></div>
+  </section>
+  <section class="shop-smart-grid" aria-label="Designberatung und Downloads">
+    <div class="shop-assistant" id="shopDesignAssistant"><p class="sm-eyebrow">CFS AI · DESIGNBERATER</p><h2>Welcher Look passt zu deinem Stream?</h2><p>Beschreibe deinen Wunsch. Der Berater findet echte Designwelten. Bei aktiviertem CFS-AI-Dienst kann der Admin zusätzlich eine KI-Auswertung starten.</p>
+      <form id="shopAiForm"><label for="shopAiDescription">Mein Stream-Look</label><textarea id="shopAiDescription" rows="2" maxlength="240" placeholder="Zum Beispiel: Dunkler Sci-Fi-Look mit blauem Neon für Gaming"></textarea>
+      <div class="shop-assistant-fields"><label>Stil<select id="shopAiStyle"><option value="all">Stil offen</option></select></label><label>Plattform<select id="shopAiPlatform"><option value="obs">OBS</option><option value="twitch">Twitch</option><option value="tiktok">TikTok</option><option value="youtube">YouTube</option></select></label><label>Verwendung<select id="shopAiMode"><option value="gaming">Gaming</option><option value="justchatting">Just Chatting</option><option value="mobile">Hochformat</option><option value="branding">Branding</option></select></label></div>
+      <button id="shopAiGo" class="sm-btn sm-primary" type="submit">Passende Designs finden ↗</button></form>
+      <div id="shopAiStatus" class="design-download-status" role="status" aria-live="polite">Der Designberater wird vorbereitet …</div><div id="shopAiResults" class="shop-ai-results" aria-live="polite"></div>
+      <p class="shop-hint">Katalogvorschläge funktionieren ohne AI-Service. Das echte CFS-AI-Modell ist aktuell nur über den geschützten Admin-Gateway zugänglich. Keine automatische Veröffentlichung oder Änderung.</p>
+    </div>
+    <div class="shop-download-center" id="shopDownloadCenter"><p class="sm-eyebrow">DOWNLOAD-CENTER</p><h2>Dein Set, deine Dateien.</h2><p>Prüfe den Paketinhalt vor dem Download. Die Dateien kommen unverändert aus dem Originaldesignarchiv.</p>
+      <img id="shopDownloadPreview" alt="Originaldesign" loading="lazy" decoding="async" class="shop-download-cover">
+      <div class="shop-download-fields"><label>Designwelt<select id="shopDownloadDesign"></select></label><label>Farbe<select id="shopDownloadColor"></select></label><label>Produktgruppe<select id="shopDownloadGroup"></select></label></div>
+      <p id="shopDownloadInfo" class="shop-download-info" role="status">Designauswahl wird geladen …</p>
+      <div class="shop-download-actions"><button id="shopDownloadAction" class="sm-btn sm-primary" type="button">Paket herunterladen ↓</button><a id="shopDownloadDetails" class="sm-btn" href="#originalDesigns">Originaldateien ansehen ↗</a></div>
+      <p class="shop-hint">ZIP-Dateien enthalten PNGs, Szenen-HTML, benötigte Ressourcen und eine Anleitung; keine simulierten Live-Zähler.</p>
+    </div>
+  </section>
   <section class="sm-shop-section" aria-labelledby="makerShopTitle"><div class="sm-section-heading"><div><p class="sm-eyebrow">DESIGN-VORLAGEN · STREAM MAKER</p><h2 id="makerShopTitle">Dein Design. Dein ganzes Stream-Set.</h2><p>Vorlage wählen, im Maker anpassen und als eigenes Bundle verwenden.</p></div><a class="sm-btn sm-primary" href="/pages/stream-maker.html">Eigenes Design hochladen ↗</a></div><div class="sm-template-grid" id="makerShopTemplates"></div></section>
+  <section class="original-designs" id="originalDesigns" aria-labelledby="originalDesignsTitle">
+    <div class="sm-section-heading">
+      <div><p class="sm-eyebrow">ORIGINAL-DESIGNPAKETE · 31 WELTEN · 496 FARBVARIANTEN</p><h2 id="originalDesignsTitle">Originaldesigns direkt im Shop</h2><p>Deine hochgeladenen Designwelten sind jetzt im Shop eingebunden, nach Stilrichtungen sortiert und mit eigenen Produkt-Unterkategorien, Detailseiten, Stream-Maker-Start und passenden ZIP-Downloads verfügbar.</p></div>
+      <a class="sm-btn sm-primary" href="/pages/stream-maker.html?view=templates">Alle im Maker ansehen ↗</a>
+    </div>
+    <div class="original-design-controls">
+      <div id="originalDesignCategoryFilters" class="original-design-filters" aria-label="Originaldesigns nach Stilrichtung filtern"></div>
+      <div class="original-design-toolbar"><label for="originalDesignProductGroup">Produkt-Unterkategorie</label><select id="originalDesignProductGroup" aria-label="Produkt-Unterkategorie wählen"></select>
+        <label for="originalDesignColor">Farbvariante</label><select id="originalDesignColor" aria-label="Farbvariante für Designkarten"></select>
+        <input id="originalDesignSearch" type="search" maxlength="80" placeholder="Designwelten durchsuchen …" aria-label="Originaldesigns durchsuchen">
+      </div>
+    </div>
+    <div id="originalDesignStatus" class="design-download-status" role="status" aria-live="polite">Originaldesigns werden geladen …</div>
+    <div id="originalDesignGrid" class="original-design-grid"></div>
+  </section>
+  <section class="shop-ai-generated" id="aiGeneratedDesigns" aria-labelledby="shopAiGeneratedTitle">
+    <div class="sm-section-heading"><div><p class="sm-eyebrow">CFS AI · NEUE DESIGN-ENTWÜRFE</p><h2 id="shopAiGeneratedTitle">Von CFS AI gestaltet. Von dir freigegeben.</h2><p>CFS AI kann auf deinem Windows-PC im Hintergrund neue Designs vorbereiten. Nur geprüfte und anschließend bereitgestellte Entwürfe erscheinen hier. Die 31 Originaldesignwelten bleiben unverändert.</p></div></div>
+    <div class="design-download-status" id="shopAiGeneratedStatus" role="status" aria-live="polite">Freigegebene KI-Designs werden geladen …</div>
+    <div class="shop-ai-generated-grid" id="shopAiGeneratedGrid"></div>
+  </section>
   <section class="design-downloads" id="designDownloads" aria-labelledby="designDownloadsTitle">
     <span class="sm-eyebrow">NEU · KOSTENLOSE BASISDESIGNS</span><h2 id="designDownloadsTitle">Designs zum Herunterladen</h2>
-    <p>Acht neu aus dem integrierten Stream-Maker-Renderer erzeugte Basisdesigns, jeweils in 16 Farben. Jedes ZIP enthält sieben statische PNG-Elemente, ein Manifest und eine wieder importierbare Maker-Datei. Keine Live-Zähler, Sounds oder Original-Designpakete.</p>
-    <p><strong>Hinweis:</strong> Die früher angekündigten 31 Original-Designwelten sind im gelieferten Projekt nicht vorhanden und werden hier nicht vorgetäuscht.</p>
+    <p>Zusätzlich zu den Originaldesigns oben findest du hier weiterhin acht direkt im Browser generierte Basisdesigns. Jedes ZIP enthält sieben statische PNG-Elemente, ein Manifest und eine wieder importierbare Maker-Datei. Keine Live-Zähler oder Sounds.</p>
+    <p><strong>Hinweis:</strong> Diese Basisdesigns sind kompakte Schnellstarter. Für die vollständigen 31 Originalwelten nutze den Bereich „Originaldesigns direkt im Shop“.</p>
     <div class="design-download-controls"><label for="designDownloadColor">Farbvariante</label><select id="designDownloadColor" aria-label="Farbe für alle Designpakete"></select></div>
     <div id="designDownloadStatus" class="design-download-status" role="status" aria-live="polite">Designs werden geladen …</div>
     <div id="designDownloadGrid" class="design-download-grid"></div>
@@ -75,6 +115,10 @@
 <script src="/assets/js/app.js"></script>
 <script src="/assets/js/cfs-shop-preview-v174.js"></script>
 <script src="/assets/js/page-shop-v172.js"></script>
+<script src="/assets/js/page-shop-original-designs-v32066.js"></script>
+<script src="/assets/js/shop-design-advisor-v32067.js"></script>
+<script src="/assets/js/shop-experience-v32067.js"></script>
+<script src="/assets/js/shop-ai-new-designs-v32068.js"></script>
 <script src="/assets/js/cfs-product-v199.js" defer></script>
 <script src="/assets/js/stream-maker-core.js"></script><script src="/assets/js/design-downloads-core-v32064.js"></script><script src="/assets/js/design-downloads-page-v32064.js"></script><script src="/assets/js/stream-maker-shop.js"></script>
 <script src="/assets/js/cfs-help-v6.js" defer></script><script src="/assets/js/cfs-guide-v5.js" defer></script><script src="/assets/js/cfs-guide-journeys.js" defer></script><script src="/assets/js/cfs-workspace-v205.js" defer></script>

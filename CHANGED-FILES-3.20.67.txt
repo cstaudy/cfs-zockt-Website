@@ -1,0 +1,16 @@
+UPDATE-3.20.67.md
+UEBERGABE-3.20.67.md
+EINBAU-3.20.67.md
+FUNKTIONSLUECKEN-STATUS-3.20.67.md
+CHANGED-FILES-3.20.67.txt
+package.json
+package-lock.json
+public/pages/shop.html
+public/pages/original-design.html
+public/assets/css/cfs-shop-v172.css
+public/assets/js/shop-design-advisor-v32067.js
+public/assets/js/shop-experience-v32067.js
+public/assets/js/shop-scene-preview-v32067.js
+tools/shop-experience-v32067-test.mjs
+tools/original-design-shop-v32066-test.mjs
+tools/design-downloads-v32064-test.mjs

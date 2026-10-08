@@ -1,0 +1,15 @@
+Version 3.20.66 · Differenz zu 3.20.65
+
+Geänderte Bereiche:
+- Creator Shop: public/pages/shop.html, public/assets/css/cfs-shop-v172.css
+- Originaldesign-Listing: public/assets/js/page-shop-original-designs-v32066.js (neu)
+- Produktdetail: public/pages/original-design.html und public/assets/js/original-design-detail-v32066.js (neu)
+- Kategorie-Definitionen: public/assets/data/original-design-product-groups-v32066.json (neu)
+- Original-ZIP-Handling: lib/original-design-catalog-v32065.js
+- Stream Maker Server-Validierung: lib/stream-maker.js
+- Server-Routing: server.js
+- Tests und Version: tools/original-design-shop-v32066-test.mjs, tools/original-design-shop-v32065-test.mjs, tools/design-downloads-v32064-test.mjs, package.json, package-lock.json
+- Releaseunterlagen: UPDATE-3.20.66.md, UEBERGABE-3.20.66.md, EINBAU-3.20.66.md, FUNKTIONSLUECKEN-STATUS-3.20.66.md
+
+Kompatibilität:
+- page-shop-original-designs-v32065.js bleibt ungenutzt erhalten; der Shop lädt nur v32066.

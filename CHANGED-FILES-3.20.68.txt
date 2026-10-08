@@ -1,0 +1,27 @@
+3.20.68 – CFS AI Design Factory
+
+Neu:
+- public/assets/data/cfs-ai-designs-v32068.json
+- public/assets/js/shop-ai-new-designs-v32068.js
+- tools/cfs-ai-design-factory/design_factory.py
+- tools/cfs-ai-design-factory/test_design_factory.py
+- tools/cfs-ai-design-factory/run_tests.mjs
+- tools/cfs-ai-design-factory/START_DESIGN_WORKER_WINDOWS.cmd
+- tools/cfs-ai-design-factory/CREATE_ONE_DESIGN_WINDOWS.cmd
+- tools/cfs-ai-design-factory/REVIEW_DESIGNS_WINDOWS.cmd
+- tools/cfs-ai-design-factory/README-DE.md
+- tools/ai-background-designs-v32068-test.mjs
+- UEBERGABE-3.20.68.md
+- EINBAU-3.20.68.md
+- UPDATE-3.20.68.md
+- FUNKTIONSLUECKEN-STATUS-3.20.68.md
+- CHANGED-FILES-3.20.68.txt
+
+Geändert:
+- public/pages/shop.html
+- public/assets/css/cfs-shop-v172.css
+- package.json
+- package-lock.json
+- tools/shop-experience-v32067-test.mjs
+- tools/original-design-shop-v32066-test.mjs
+- tools/design-downloads-v32064-test.mjs

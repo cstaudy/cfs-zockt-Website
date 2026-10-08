@@ -1,0 +1,2 @@
+Vollständige Website: Das Archiv mit 31 Designwelten und 496 Farbvarianten liegt unter resources/original-designs/.
+Die ursprüngliche ZIP-Datei bleibt unverändert eingebunden, damit API-Vorschau und Paketdownloads die Originaldateien lesen können.
