@@ -1,0 +1,84 @@
+{
+  "version": "3.20.57",
+  "schema": 1,
+  "launcher": "0.47.31",
+  "database_schema": 80,
+  "groups": [
+    {"id":"windows","code":"A","title":"Windows · Launcher · OBS","copy":"Echter Ziel-PC, lokaler Launcher und OBS-WebSocket.","items":[
+      {"id":"windows.clean_install","title":"Windows Clean Install","copy":"Launcher auf sauberem Windows 11 installieren und starten.","requirement":"required"},
+      {"id":"windows.launcher_link","title":"Launcher verbinden","copy":"Creator Device-Link, Heartbeat und Capabilities real bestätigen.","requirement":"required"},
+      {"id":"obs.websocket","title":"OBS WebSocket","copy":"OBS lokal verbinden und Reconnect nach OBS-Neustart prüfen.","requirement":"required"},
+      {"id":"obs.widget_install","title":"Widget One-Click","copy":"Widget aus der Creator Suite in eine echte OBS-Szene installieren.","requirement":"required"},
+      {"id":"windows.application_audio","title":"Application Audio","copy":"Echte Windows-Anwendungsquelle abhören und Recovery prüfen.","requirement":"required"},
+      {"id":"windows.game_capture","title":"Game Capture","copy":"Echtes Spiel erfassen, Fokuswechsel und Recovery prüfen.","requirement":"required"},
+      {"id":"windows.recording_cut","title":"Recording → Cut","copy":"Aufnahme erstellen und sauber an Cut Studio übergeben.","requirement":"required"},
+      {"id":"windows.artifact","title":"Release-Artefakt","copy":"Windows-Artefakt und SHA-256 dokumentieren.","requirement":"required"}
+    ]},
+    {"id":"twitch","code":"B","title":"Twitch LIVE","copy":"Echter Twitch-Testaccount statt Mock/Contract.","items":[
+      {"id":"twitch.oauth","title":"OAuth","copy":"Login und Redirect mit Testaccount abschließen.","requirement":"required"},
+      {"id":"twitch.chat","title":"Chat","copy":"Echte Chat-Nachricht empfangen.","requirement":"required"},
+      {"id":"twitch.eventsub","title":"EventSub","copy":"Mindestens Follow plus ein weiteres unterstütztes Event real empfangen.","requirement":"required"},
+      {"id":"twitch.sub_cheer","title":"Sub / Cheer","copy":"Real testen, soweit der Testaccount diese Funktion besitzt.","requirement":"conditional"},
+      {"id":"twitch.refresh","title":"Token Refresh","copy":"Refresh und Reconnect ohne manuelle Reparatur bestätigen.","requirement":"required"},
+      {"id":"twitch.revoke","title":"Disconnect / Reconnect","copy":"Verbindung trennen, widerrufen und erneut verbinden.","requirement":"required"}
+    ]},
+    {"id":"tiktok","code":"C","title":"TikTok LIVE","copy":"Nur offizielle Provider-Wege; kein Scraping/Circumvention.","items":[
+      {"id":"tiktok.connect","title":"Provider verbinden","copy":"Echten Testaccount über den unterstützten Provider-Weg verbinden.","requirement":"required"},
+      {"id":"tiktok.events","title":"LIVE Events","copy":"Mindestens Like/Gift/Share oder unterstützte LIVE-Ereignisse real prüfen.","requirement":"required"},
+      {"id":"tiktok.reconnect","title":"Reconnect","copy":"Provider-Unterbrechung und Wiederverbindung prüfen.","requirement":"required"},
+      {"id":"tiktok.vertical","title":"9:16 Output","copy":"Vertikalen Creator-/Widget-Workflow auf echtem Ziel testen.","requirement":"required"},
+      {"id":"tiktok.stream_target","title":"Encoder-Ziel","copy":"Nur testen, wenn der Account offiziell Server-URL/Stream-Key-Zugang besitzt.","requirement":"conditional"}
+    ]},
+    {"id":"youtube","code":"D","title":"YouTube LIVE","copy":"OAuth, Live-Broadcast und Chat mit Testchannel.","items":[
+      {"id":"youtube.oauth","title":"OAuth","copy":"Google/YouTube OAuth real verbinden.","requirement":"required"},
+      {"id":"youtube.channel","title":"Channel Sync","copy":"Kanalstatus und Token-Refresh prüfen.","requirement":"required"},
+      {"id":"youtube.live_chat","title":"Live Broadcast / Chat","copy":"Aktiven Broadcast und Live-Chat real prüfen.","requirement":"required"},
+      {"id":"youtube.monetization","title":"Membership / Super Chat","copy":"Nur testen, wenn der Testchannel die Funktion besitzt.","requirement":"conditional"},
+      {"id":"youtube.stream_target","title":"Streaming-Ziel","copy":"Lokales Ingest-Ziel ohne Secret-Leak prüfen.","requirement":"required"}
+    ]},
+    {"id":"multistream","code":"E","title":"Multistream · Output","copy":"Mehrere Ziele parallel und isoliert betreiben.","items":[
+      {"id":"multistream.parallel","title":"Zwei Ziele parallel","copy":"Mindestens zwei reale Ziele gleichzeitig starten.","requirement":"required"},
+      {"id":"multistream.isolation","title":"Fehlerisolation","copy":"Ausfall eines Ziels darf andere Ziele nicht stoppen.","requirement":"required"},
+      {"id":"multistream.manual_stop","title":"Manueller Stop","copy":"Stop eines Ziels unterdrückt Reconnect nur für dieses Ziel.","requirement":"required"},
+      {"id":"multistream.custom_rtmp","title":"Custom RTMP lokal","copy":"Custom RTMP/Keys bleiben ausschließlich lokal.","requirement":"required"}
+    ]},
+    {"id":"browser","code":"F","title":"Browser · Responsive · Accessibility","copy":"Public-, Creator- und Admin-Flows auf echten Browsern.","items":[
+      {"id":"browser.chromium","title":"Desktop Chromium / Edge","copy":"Dashboard, Shop und alle Kernstudios durchgehen.","requirement":"required"},
+      {"id":"browser.firefox","title":"Desktop Firefox","copy":"Canvas, Audio, Formulare und Kernflows prüfen.","requirement":"required"},
+      {"id":"browser.mobile","title":"Mobiler Viewport / Gerät","copy":"Navigation, Shop, Formulare und Hauptaktionen prüfen.","requirement":"required"},
+      {"id":"browser.keyboard","title":"Keyboard / Fokus","copy":"Navigation, Dialoge und Hauptformulare per Tastatur bedienen.","requirement":"required"},
+      {"id":"browser.error_states","title":"Empty / Error States","copy":"Kein Launcher, kein OBS, Providerfehler und Offline-Zustände prüfen.","requirement":"required"},
+      {"id":"browser.admin","title":"Admin Oberfläche","copy":"Admin Control Center responsiv und mit korrekter Rechteabgrenzung prüfen.","requirement":"required"}
+    ]},
+    {"id":"security","code":"G","title":"Account · Security · Isolation","copy":"Rechte und Secrets auf realen Accounts prüfen.","items":[
+      {"id":"security.passkey","title":"Passkey / WebAuthn","copy":"Auf echter Hardware und unterstütztem Browser testen.","requirement":"required"},
+      {"id":"security.creator_isolation","title":"Creator-Isolation","copy":"Zwei Creator dürfen gegenseitig keine Assets/Widgets/Scenes erreichen.","requirement":"required"},
+      {"id":"security.admin_isolation","title":"Admin-Isolation","copy":"Normaler Creator darf Admin-HTML/API nicht nutzen.","requirement":"required"},
+      {"id":"security.secret_review","title":"Secret Review","copy":"Logs, Browser, Evidence und Downloads auf Tokens/Keys prüfen.","requirement":"required"}
+    ]},
+    {"id":"shop","code":"H","title":"Shop · Downloads · Creator-Pakete","copy":"Katalog, Downloadprodukte und Content-Workflows.","items":[
+      {"id":"shop.categories","title":"Kategorien / Filter","copy":"Designs, Soundpacks, Creator-Tools und eigene Bundles verständlich prüfen.","requirement":"required"},
+      {"id":"shop.design_download","title":"Design-ZIP","copy":"Mindestens ein Designprodukt herunterladen, entpacken und Inhalt prüfen.","requirement":"required"},
+      {"id":"shop.sound_download","title":"Sound-ZIP","copy":"Mindestens ein Soundpack herunterladen und WAVs prüfen.","requirement":"required"},
+      {"id":"shop.maker_handoff","title":"Shop → Maker","copy":"Designwelt direkt im Stream Maker öffnen und ableiten.","requirement":"required"},
+      {"id":"shop.audio_handoff","title":"Shop → Tonstudio","copy":"Soundpack direkt im Tonstudio öffnen und Vorschau/Export testen.","requirement":"required"},
+      {"id":"shop.license_review","title":"Lizenztext vor Verkauf","copy":"Finale kommerzielle Lizenz vor öffentlicher Bezahlfreigabe prüfen.","requirement":"conditional"}
+    ]},
+    {"id":"creator","code":"I","title":"Creator End-to-End","copy":"Kernwege aus Sicht eines normalen Creators.","items":[
+      {"id":"creator.image_to_set","title":"Bild → Creator-Set","copy":"Masterbild hochladen und Overlay/Kamera/Panel/Widget ableiten.","requirement":"required"},
+      {"id":"creator.widget_to_obs","title":"Widget → OBS","copy":"Widget erstellen, veröffentlichen und real in OBS installieren.","requirement":"required"},
+      {"id":"creator.audio_alert","title":"Alert-Sound","copy":"Sound auswählen/erstellen, Vorschau und WAV-Export prüfen.","requirement":"required"},
+      {"id":"creator.stream_record_cut","title":"Stream → Recording → Cut","copy":"Session aufnehmen und in Cut Studio weiterbearbeiten.","requirement":"required"},
+      {"id":"creator.nexus","title":"NEXUS Action","copy":"Erlaubte Aktion über Control Plane → Launcher real zustellen.","requirement":"required"},
+      {"id":"creator.system_check","title":"Systemcheck","copy":"Fehlerzustände und erwartete Versionen auf dem Zielsystem nachvollziehen.","requirement":"required"}
+    ]},
+    {"id":"stability","code":"J","title":"Soak · Recovery · GO/NO-GO","copy":"Lange reale Session und finale Blockerbewertung.","items":[
+      {"id":"stability.network_drop","title":"Netzwerk-Unterbrechung","copy":"Kontrollierten Reconnect prüfen.","requirement":"required"},
+      {"id":"stability.provider_drop","title":"Provider-Unterbrechung","copy":"Einzelnen Provider-Ausfall isoliert recovern.","requirement":"required"},
+      {"id":"stability.launcher_restart","title":"Launcher-Neustart","copy":"Launcher während vorbereiteter Session neu starten und wieder verbinden.","requirement":"required"},
+      {"id":"stability.soak60","title":"60-Minuten-Soak","copy":"Mindestens 60 Minuten mit Szenen, Audio, Events und Recording.","requirement":"required"},
+      {"id":"stability.p0p1","title":"P0/P1 Review","copy":"Keine offenen Crash-, Datenverlust-, Security-, Login- oder Stream-Blocker.","requirement":"required"},
+      {"id":"stability.evidence","title":"Evidence vollständig","copy":"Sichere Referenzen, Logs und Screenshots ohne Secrets dokumentieren.","requirement":"required"}
+    ]}
+  ]
+}

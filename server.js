@@ -2,7 +2,7 @@
  * ============================================================
  * cfs_zockt Creator Suite
  * Website Backend
- * Version 3.20.43
+ * Version 3.20.57
  * ============================================================
  */
 
@@ -55,6 +55,7 @@ const { DEFAULT_HEARTBEAT_INTERVAL_MS, DEFAULT_ONLINE_WINDOW_MS, DEFAULT_GRACE_W
 const { publicProviderOAuthContracts } = require("./lib/provider-oauth-contract");
 const { publicConfig: cfsAiPublicConfig, requestJson: cfsAiRequestJson, requestHtml: cfsAiRequestHtml } = require("./lib/cfs-ai-gateway");
 const { isAllowedBridgeRequest, bridgeTransport, bridgeWorkerConfig } = require("./lib/cfs-ai-bridge-policy");
+const { productById: creatorShopDownloadProductById, resolvePackage: resolveCreatorShopDownloadPackage, publicCatalog: publicCreatorShopDownloadCatalog } = require("./lib/shop-downloads-v32054");
 
 const streamMaker = require("./lib/stream-maker");
 const app = express();
@@ -78,7 +79,7 @@ const APP_NAME =
     "CFS_Zockt Creator Suite";
 
 const BACKEND_VERSION =
-    "3.20.43";
+    "3.20.57";
 
 // ============================================================
 // PRIVATE BETA / LEGAL BASELINE
@@ -2455,7 +2456,7 @@ const pool =
     new Pool({
 
         connectionString:
-            DATABASE_URL,
+            DATABASE_RUNTIME_SECURITY?.connectionString || DATABASE_URL,
 
         ...(DATABASE_RUNTIME_SECURITY?.poolOptions || {})
 
@@ -6552,7 +6553,7 @@ const CREATOR_MODULES =
             stateful:
                 true,
             status:
-                "roadmap"
+                "beta"
         },
 
         twitch: {
@@ -9922,6 +9923,56 @@ async function getModuleState(
                 .updated_at ||
             null
 
+    };
+
+}
+
+
+async function getPublicGameActivityModuleState(
+    creatorId
+) {
+
+    const result =
+        await pool.query(
+            `
+            SELECT
+                state,
+                updated_at
+
+            FROM creator_module_state
+
+            WHERE
+                creator_id = $1
+
+            AND
+                module_key = $2
+
+            LIMIT 1
+            `,
+            [
+                creatorId,
+                PUBLIC_GAME_ACTIVITY_MODULE_KEY
+            ]
+        );
+
+    if (!result.rows[0]) {
+        return {
+            module_key:
+                PUBLIC_GAME_ACTIVITY_MODULE_KEY,
+            state:
+                {},
+            updated_at:
+                null
+        };
+    }
+
+    return {
+        module_key:
+            PUBLIC_GAME_ACTIVITY_MODULE_KEY,
+        state:
+            result.rows[0].state || {},
+        updated_at:
+            result.rows[0].updated_at || null
     };
 
 }
@@ -19014,6 +19065,24 @@ function storeInstallMessage(result){
   if(result.mode==="update")return result.complete?`Paket ist auf dem aktuellen Stand. Bestehende editierte Inhalte wurden beibehalten; neue Bestandteile wurden ergänzt.${repair}${retired}`:`Update teilweise abgeschlossen: ${result.installed_count} verfügbar · ${result.pending_count} Voraussetzung(en) offen.${repair}${retired}`;
   return result.complete?`${result.installed_count} Paketbestandteile wurden als editierbare CFS-Inhalte importiert.${repair}${retired}`:`${result.installed_count} Paketbestandteile importiert · ${result.pending_count} ausstehend. Offene Provider-/Plan-Voraussetzungen werden nicht umgangen.${repair}${retired}`;
 }
+
+// CFS ORIGINAL CREATOR DOWNLOADS · V32054
+// Packages live outside /public. The current beta allows authenticated creators;
+// a commerce/entitlement check can replace this beta gate without changing ZIP format.
+app.get("/api/creator/shop/downloads/catalog",requireCreatorAccount,(req,res)=>{
+    res.set("Cache-Control","no-store");
+    return res.json({ok:true,...publicCreatorShopDownloadCatalog()});
+});
+app.get("/api/creator/shop/downloads/:id",requireCreatorAccount,(req,res)=>{
+    res.set("Cache-Control","no-store");
+    const item=creatorShopDownloadProductById(req.params.id);
+    const file=resolveCreatorShopDownloadPackage(item);
+    if(!item||!file)return res.status(404).json({ok:false,error:"Download-Paket nicht gefunden."});
+    const safeName=`CFS-${String(item.id).replace(/[^a-z0-9-]/gi,"-")}-v${String(item.version||"1.0.0").replace(/[^0-9.]/g,"")}.zip`;
+    res.set("X-Content-Type-Options","nosniff");
+    return res.download(file,safeName,error=>{if(error&&!res.headersSent){safeLogError("Creator Shop Download Fehler:",error);res.status(500).json({ok:false,error:"Download konnte nicht bereitgestellt werden."});}});
+});
+
 app.get("/api/creator/shop/catalog",requireCreatorAccount,async(req,res)=>{res.set("Cache-Control","no-store");try{await refreshDynamicStoreProducts();const stored=normalizeStoreState((await getModuleState(req.creatorAccount.id,"shop")).state);return res.json({ok:true,commercial_mode:COMMERCIAL_MODE,products:allStoreProducts().map(publicStoreProduct),library:stored.library.map(publicStoreLibraryItem),categories:["widgets","panels","overlays","scenes","tools","bundles"]});}catch(error){safeLogError("Creator Shop Katalog Fehler:",error);return res.status(500).json({ok:false,error:"Shop konnte nicht geladen werden."});}});
 app.get("/api/creator/shop/products/:id",requireCreatorAccount,async(req,res)=>{
   res.set("Cache-Control","no-store");await refreshDynamicStoreProducts();const product=cfsStoreProduct(req.params.id);if(!product)return res.status(404).json({ok:false,error:"Produkt nicht gefunden."});
@@ -23825,7 +23894,7 @@ async function nexusStatusSnapshot(account) {
         live:{connected:Boolean(live.connected),provider:live.provider||"none",viewers:Number(live.viewers||0),likes:Number(live.likes||0),gifts_count:Number(live.gifts_count||0),shares:Number(live.shares||0),started_at:live.started_at||null,stale:Boolean(live.stale)},
         game:game?{status:game.status||"idle",title:game.title||"Game",state:game.state||{}}:{status:"not_configured",title:"Game",state:{}},
         counts:{widgets:Number(row.widgets||0),scenes:Number(row.scenes||0),cut_projects:Number(row.cut_projects||0),cut_jobs:Number(row.cut_jobs||0),pending_actions:Number(pending.rows[0]?.count||0),automations:automations.length},
-        integrations:{website:"online",creator_account:"online",launcher:bridge.online?(bridge.capabilities?.nexus_control_plane_v1===true?"online":"upgrade_required"):bridge.configured?"prepared":"setup_required",tiktok:live.provider==="tiktok"&&live.connected?"active":"prepared",stream_studio:"active",widget_studio:"active",cut_studio:"active",games:game?"active":"prepared",audio_studio:"roadmap"},
+        integrations:{website:"online",creator_account:"online",launcher:bridge.online?(bridge.capabilities?.nexus_control_plane_v1===true?"online":"upgrade_required"):bridge.configured?"prepared":"setup_required",tiktok:live.provider==="tiktok"&&live.connected?"active":"prepared",stream_studio:"active",widget_studio:"active",cut_studio:"active",games:game?"active":"prepared",audio_studio:"beta"},
         actions:nexusActionCatalog(),
         automation_actions:nexusActionCatalog({automationOnly:true}),
         event_types:Array.from(NEXUS_EVENT_TYPES),
@@ -25371,7 +25440,7 @@ async function clearCreatorGameActivity(creatorId) {
 async function getPublicRecentGames(creatorId,{days=PUBLIC_GAME_ACTIVITY_WINDOW_DAYS,limit=6}={}) {
     const safeDays=Math.max(1,Math.min(30,Math.round(Number(days)||PUBLIC_GAME_ACTIVITY_WINDOW_DAYS)));
     const safeLimit=Math.max(1,Math.min(8,Math.round(Number(limit)||6)));
-    const moduleState=await getModuleState(creatorId,PUBLIC_GAME_ACTIVITY_MODULE_KEY);
+    const moduleState=await getPublicGameActivityModuleState(creatorId);
     const state=normalizeStoredGameActivityState(moduleState?.state||{});
     const cutoff=Date.now()-safeDays*24*60*60*1000;
     const grouped=new Map();

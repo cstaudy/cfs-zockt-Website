@@ -1,0 +1,7 @@
+import fs from 'node:fs';import path from 'node:path';import crypto from 'node:crypto';
+const root=path.resolve(process.argv[2]&&!process.argv[2].startsWith('--')?process.argv[2]:'.'),evidence=path.join(root,'evidence','beta-3.20.57'),reports=path.join(root,'reports');
+const secret=txt=>/(?:rtmps?:\/\/|oauth:\S+|bearer\s+\S+|(?:access|refresh)[_-]?token\s*[=:]\s*\S+|client[_-]?secret\s*[=:]\s*\S+|stream[_ -]?key\s*[=:]\s*\S+|obs[_ -]?password\s*[=:]\s*\S+)/i.test(txt);
+const textExt=new Set(['.txt','.log','.md','.json','.csv','.xml','.html','.htm','.yaml','.yml','.ps1','.cmd','.bat','.js','.mjs','.cjs','.ini','.conf']);
+function walk(dir){if(!fs.existsSync(dir))return[];return fs.readdirSync(dir,{withFileTypes:true}).flatMap(d=>d.isDirectory()?walk(path.join(dir,d.name)):d.isFile()?[path.join(dir,d.name)]:[])}
+fs.mkdirSync(evidence,{recursive:true});const files=[];for(const p of walk(evidence)){const buf=fs.readFileSync(p),rel=path.relative(root,p).split(path.sep).join('/');if(textExt.has(path.extname(p).toLowerCase())&&buf.length<=10_000_000&&secret(buf.toString('utf8')))throw Error(`Evidence enthält mögliches Secret: ${rel}`);files.push({file:rel,size:buf.length,sha256:crypto.createHash('sha256').update(buf).digest('hex')});}
+const manifest={version:'3.20.57',generated_at:new Date().toISOString(),secret_scan:'PASS',files};fs.mkdirSync(reports,{recursive:true});fs.writeFileSync(path.join(reports,'beta-evidence-3.20.57.json'),JSON.stringify(manifest,null,2)+'\n');console.log(`Evidence 3.20.57: ${files.length} Dateien · secret scan PASS`);

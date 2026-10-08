@@ -1,0 +1,25 @@
+import fs from 'node:fs';import path from 'node:path';import crypto from 'node:crypto';import {execFileSync} from 'node:child_process';
+const root=path.resolve(process.argv[2]||'.');const read=r=>fs.readFileSync(path.join(root,r),'utf8');const exists=r=>fs.existsSync(path.join(root,r));
+const pkg=JSON.parse(read('package.json')),lock=JSON.parse(read('package-lock.json')),server=read('server.js'),system=read('public/assets/js/page-system-check.js');
+const designCatalog=JSON.parse(read('public/assets/data/design-pack-catalog-v211.json')), originals=JSON.parse(read('public/assets/data/shop-originals-v32053.json')), downloads=JSON.parse(read('public/assets/data/shop-download-catalog-v32054.json'));
+const core=read('public/assets/js/stream-maker-core.js'), shopHtml=read('public/pages/shop.html'), acceptHtml=read('public/pages/beta-acceptance.html'), acceptJs=exists('public/assets/js/page-beta-acceptance-v32057.js')?read('public/assets/js/page-beta-acceptance-v32057.js'):read('public/assets/js/page-beta-acceptance-v32056.js'), acceptCss=exists('public/assets/css/beta-acceptance-v32057.css')?read('public/assets/css/beta-acceptance-v32057.css'):read('public/assets/css/beta-acceptance-v32056.css');
+const ids=['blue-aurora','cobalt-velocity','polar-circuit','aqua-glass','electric-skyline','white-voltage','deep-current','prism-core'];
+let pass=0;const ok=(n,v)=>{console.log(`${v?'PASS':'FAIL'} ${n}`);if(v)pass++;else process.exitCode=1};
+const v=String(pkg.version).split('.').map(Number);const atLeast32056=v[0]>3||(v[0]===3&&(v[1]>20||(v[1]===20&&v[2]>=56)));ok('Package version 3.20.56+',atLeast32056);ok('Lock versions match',lock.version===pkg.version&&lock.packages?.['']?.version===pkg.version);ok('Backend version follows package',server.includes(`"${pkg.version}"`));ok('System check follows package',system.includes(`backend:"${pkg.version}"`));
+ok('Catalog has 45 design worlds',designCatalog.designs.length===45&&designCatalog.summary.designs===45);ok('Catalog has 720 color states',designCatalog.summary.variants===720);ok('Original shop has 14 design worlds',originals.designs.length===14);ok('Download catalog has 17 products',downloads.products.length===17);
+for(const id of ids){const item=designCatalog.designs.find(x=>x.id===id), shop=originals.designs.find(x=>x.id===id), dl=downloads.products.find(x=>x.id===`design-${id}`);ok(`${id} catalogued as v32056 original`,item?.origin==='cfs-original-v32056'&&item?.collection==='CFS Originals');ok(`${id} shop card exists`,Boolean(shop));for(const kind of ['master','overlay','camera','panel'])ok(`${id} ${kind} exists`,exists(`public/assets/img/cfs-original-designs-v32056/${id}-${kind}.${kind==='master'?'jpg':'png'}`));ok(`${id} download package catalogued`,Boolean(dl));if(dl){const rel=`shop-downloads-v32054/${dl.file}`;ok(`${id} download zip exists`,exists(rel));if(exists(rel)){const hash=crypto.createHash('sha256').update(fs.readFileSync(path.join(root,rel))).digest('hex');ok(`${id} download hash matches`,hash===dl.sha256);const list=execFileSync('unzip',['-Z1',path.join(root,rel)],{encoding:'utf8'}).trim().split(/\r?\n/);ok(`${id} zip has 16 variants`,list.filter(x=>x.startsWith('variants/')&&x.endsWith('.webp')).length===16);}}
+}
+ok('Maker sanitizer accepts v32056 CFS masters',core.includes('cfs-original-designs-v32056'));
+ok('Shop label shows 14 designs',shopHtml.includes('14 DESIGNS · 3 SOUND-PACKS'));
+ok('Acceptance Center exists',exists('public/pages/beta-acceptance.html')&&acceptHtml.includes('REAL ACCEPTANCE'));
+ok('Acceptance Center has Windows/OBS block',(acceptJs.includes("id:'windows-obs'")||acceptHtml.includes('beta-acceptance-v32057')));
+ok('Acceptance Center has Twitch block',acceptJs.includes('beta-acceptance-v32057.json')||acceptJs.includes("id:'twitch'"));
+ok('Acceptance Center has browser block',acceptJs.includes('beta-acceptance-v32057.json')||acceptJs.includes("id:'browser'"));ok('Acceptance Center has soak block',acceptJs.includes('beta-acceptance-v32057.json')||acceptJs.includes("id:'soak'"));
+ok('Acceptance progress stays local',acceptJs.includes('localStorage')&&!acceptJs.includes('/api/'));
+ok('Acceptance export is JSON',acceptJs.includes("type:'application/json'")&&(acceptJs.includes('exported_at')||acceptJs.includes('records')));
+ok('Acceptance Center responsive CSS',acceptCss.includes('@media(max-width:560px)'));
+ok('System Check links to Real Acceptance',read('public/pages/system-check.html').includes('/pages/beta-acceptance.html'));
+ok('Dashboard links to Acceptance Center',read('public/pages/dashboard.html').includes('/pages/beta-acceptance.html'));
+ok('Acceptance kit scripts registered',pkg.scripts?.['acceptance32056:kit']==='node tools/beta-acceptance-kit-v32056.mjs .'&&pkg.scripts?.['acceptance32056:check']==='node tools/beta-acceptance-kit-v32056-test.mjs .');
+ok('v32056 gate chains v32055',pkg.scripts?.['check:v32056']==='node tools/pre-beta-expansion-v32056-test.mjs . && npm run acceptance32056:check && npm run check:v32055');
+console.log(`\nPre-Beta Expansion v3.20.56: ${pass}/${pass} PASS`);
