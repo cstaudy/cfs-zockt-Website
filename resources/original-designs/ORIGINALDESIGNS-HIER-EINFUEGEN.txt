@@ -1,0 +1,2 @@
+Originaldesign-Paket aus der bestehenden Version 3.20.67 an gleicher Stelle behalten.
+Falls neu installiert, die Datei Streaming-Gesamtpaket-31-Designs-496-Farbvarianten-Animiert-DE.zip in dieses Verzeichnis kopieren.
