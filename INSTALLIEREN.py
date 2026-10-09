@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""cfs_zockt R11 cumulative, SHA-256 checked, no force overwrite, atomic rollback."""
+"""cfs_zockt R12 cumulative, SHA-256 checked, no force overwrite, atomic rollback."""
 import argparse,datetime,hashlib,json,os,pathlib,shutil,sys,tempfile
 BASE=pathlib.Path(__file__).resolve().parent
 MAN=json.loads((BASE/'manifest.json').read_text(encoding='utf-8'))
@@ -46,14 +46,14 @@ def compute(site,verify=False):
                 old=sha(dest)
                 if old==entry['sha256']:rows.append((str(r),'AKTUELL',''))
                 elif not verify and old in entry['accepted_prior_sha256']:rows.append((str(r),'UPDATE',''))
-                else:rows.append((str(r),'KONFLIKT','Unbekannter Dateistand' if not verify else 'Datei stimmt nicht mit R11 überein'))
+                else:rows.append((str(r),'KONFLIKT','Unbekannter Dateistand' if not verify else 'Datei stimmt nicht mit R12 überein'))
         else:
             if entry.get('create') and not verify:rows.append((str(r),'NEU',''))
             else:rows.append((str(r),'KONFLIKT','Datei fehlt'))
     return rows
 
 def main():
-    pa=argparse.ArgumentParser(description='cfs_zockt Website 3.20.71-R11 Gesamtupdate')
+    pa=argparse.ArgumentParser(description='cfs_zockt Website 3.20.71-R12 Gesamtupdate')
     group=pa.add_mutually_exclusive_group(required=True)
     group.add_argument('--check',action='store_true');group.add_argument('--apply',action='store_true');group.add_argument('--verify',action='store_true')
     pa.add_argument('--target',default='')
@@ -64,14 +64,14 @@ def main():
     except ValueError as e:print('SICHERHEITSSTOPP:',e);return 2
     from collections import Counter
     c=Counter(s for _,s,_ in rows)
-    print('Website:',site,'\nPaket: cfs_zockt 3.20.71-R11','\nDateien:',len(rows),'· Neu:',c['NEU'],'· Update:',c['UPDATE'],'· Aktuell:',c['AKTUELL'],'· Konflikt:',c['KONFLIKT'])
+    print('Website:',site,'\nPaket: cfs_zockt 3.20.71-R12','\nDateien:',len(rows),'· Neu:',c['NEU'],'· Update:',c['UPDATE'],'· Aktuell:',c['AKTUELL'],'· Konflikt:',c['KONFLIKT'])
     if c['KONFLIKT']:
         for r,s,msg in rows:
             if s=='KONFLIKT':print('KONFLIKT:',r,'-',msg)
         print('ABBRUCH: Nichts überschrieben. Bitte lokalen Dateistand gesondert abgleichen.')
         return 3
     if args.verify:
-        print('OK – alle R11-Dateien mit SHA-256 bestätigt. Keine reale OBS- oder Beta-Abnahme.')
+        print('OK – alle R12-Dateien mit SHA-256 bestätigt. Keine reale OBS- oder Beta-Abnahme.')
         return 0
     if args.check:
         for r,s,_ in rows:
@@ -82,7 +82,7 @@ def main():
     if not changes:
         print('Bereits aktuell. Es wurde nichts verändert.');return 0
     stamp=datetime.datetime.now().strftime('%Y%m%d-%H%M%S-%f')
-    backup=site.parent/'_cfs_zockt_update_backups'/f'R11-{stamp}'
+    backup=site.parent/'_cfs_zockt_update_backups'/f'R12-{stamp}'
     # One consistent write phase. Files in the site are only touched after full preflight.
     # Backups are outside site root so they cannot accidentally become public downloads.
     originals=[]; created=[]
@@ -95,7 +95,7 @@ def main():
             else:created.append(target)
         for r in changes:
             dest=site/r;src=BASE/'payload'/r;dest.parent.mkdir(parents=True,exist_ok=True)
-            fd,tmp=tempfile.mkstemp(prefix='.cfs-r11-',dir=str(dest.parent))
+            fd,tmp=tempfile.mkstemp(prefix='.cfs-r12-',dir=str(dest.parent))
             try:
                 with os.fdopen(fd,'wb') as f:f.write(src.read_bytes());f.flush();os.fsync(f.fileno())
                 os.replace(tmp,dest)

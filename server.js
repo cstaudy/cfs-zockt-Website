@@ -58,6 +58,7 @@ const { publicConfig: cfsAiPublicConfig, requestJson: cfsAiRequestJson, requestH
 const { isAllowedBridgeRequest, bridgeTransport, bridgeWorkerConfig } = require("./lib/cfs-ai-bridge-policy");
 const { bridgeHealth } = require("./lib/cfs-ai-bridge-health");
 const { inspectPagePath } = require("./lib/private-html-policy");
+const { ownerDesktopAccess } = require("./lib/admin-private-desktop");
 const { productById: creatorShopDownloadProductById, resolvePackage: resolveCreatorShopDownloadPackage, publicCatalog: publicCreatorShopDownloadCatalog } = require("./lib/shop-downloads-v32054");
 const { getCatalog: getOriginalDesignCatalog, previewBuffer: getOriginalDesignPreviewBuffer, packageBuffer: getOriginalDesignPackageBuffer, packageEtag: getOriginalDesignPackageEtag, assetBuffer: getOriginalDesignAssetBuffer, findGroup: getOriginalDesignProductGroup } = require("./lib/original-design-catalog-v32065");
 
@@ -9499,6 +9500,46 @@ function requireCreatorAdminSensitiveRead(req,res,next) {
 function creatorAdminSensitiveDetailsUnlocked(req) {
     return Boolean(adminElevationState(req).active && accountElevationTokenState(req).active);
 }
+
+// ============================================================
+// R11 · PRIVATE WINDOWS ADMIN DOWNLOAD · owner only, never /public
+// Configure CFS_ADMIN_EMAILS AND CFS_ADMIN_DESKTOP_OWNER_EMAIL.
+// Additional optional binding: CFS_ADMIN_DESKTOP_OWNER_ID (stable creator ID).
+// The website never serves this bundle via express.static.
+// ============================================================
+const ADMIN_DESKTOP_ZIP_PATH = path.join(__dirname,"private","admin-desktop","cfs_zockt-admin-pc.zip");
+const ADMIN_DESKTOP_ZIP_SHA256 = "23713f11cc0a7ca300d48c68e77762f9a38ec5de312211ffce9af3604a3766b1";
+const ADMIN_DESKTOP_OWNER_EMAIL = String(process.env.CFS_ADMIN_DESKTOP_OWNER_EMAIL || "").trim().toLowerCase();
+const ADMIN_DESKTOP_OWNER_ID = String(process.env.CFS_ADMIN_DESKTOP_OWNER_ID || "").trim();
+
+function adminDesktopOwnerCheck(account) {
+    return ownerDesktopAccess(account,{ownerEmail:ADMIN_DESKTOP_OWNER_EMAIL,ownerCreatorId:ADMIN_DESKTOP_OWNER_ID});
+}
+function adminDesktopBundleBuffer() {
+    try {
+        const buf=fs.readFileSync(ADMIN_DESKTOP_ZIP_PATH);
+        if(crypto.createHash("sha256").update(buf).digest("hex")!==ADMIN_DESKTOP_ZIP_SHA256)return null;
+        return buf;
+    } catch { return null; }
+}
+app.get("/api/admin/desktop/availability",requireCreatorAccount,requireCreatorAdmin,(req,res)=>{
+    res.set("Cache-Control","no-store");
+    const owner=adminDesktopOwnerCheck(req.creatorAccount);
+    if(!owner.allowed)return res.status(owner.code==="owner_not_configured"?503:403).json({ok:false,available:false,code:owner.code});
+    return res.json({ok:true,available:Boolean(adminDesktopBundleBuffer()),reauth_required:true});
+});
+app.get("/api/admin/desktop/download",requireCreatorAccount,requireCreatorAdmin,requireCreatorAdminSensitiveRead,(req,res)=>{
+    res.set("Cache-Control","no-store");
+    res.set("Pragma","no-cache");
+    res.set("X-Content-Type-Options","nosniff");
+    const owner=adminDesktopOwnerCheck(req.creatorAccount);
+    if(!owner.allowed)return res.status(owner.code==="owner_not_configured"?503:403).json({ok:false,error:"Privater Admin-Download nicht freigeschaltet."});
+    const buffer=adminDesktopBundleBuffer();
+    if(!buffer)return res.status(503).json({ok:false,error:"Admin-PC-Paket ist auf dem Server nicht bereitgestellt oder ungültig."});
+    res.set("Content-Disposition",'attachment; filename="cfs_zockt-Admin-PC-Windows.zip"');
+    res.type("application/zip");
+    return res.status(200).send(buffer);
+});
 
 app.get("/api/admin/creator-suite/elevation",requireCreatorAccount,requireCreatorAdmin,async(req,res)=>{
     res.set("Cache-Control","no-store");

@@ -1,7 +1,7 @@
 {
   "project": "cfs_zockt",
   "base_version": "3.20.71",
-  "revision": "R11",
+  "revision": "R12",
   "type": "cumulative_non_destructive_update",
   "compatible_from": [
     "3.20.71 original",
@@ -12,13 +12,21 @@
     "partially updated known files",
     "R8",
     "R9",
-    "R10"
+    "R10",
+    "R11"
   ],
   "release_approval": false,
   "beta_approval": "HOLD",
   "paid_design_checkout_enabled": false,
   "includes_original_design_archive": false,
   "entries": [
+    {
+      "path": "lib/admin-private-desktop.js",
+      "sha256": "0d0dd814f3f17c3eaf18d030612bc8902888c62abd93c0a47e06da475be12a5a",
+      "accepted_prior_sha256": [],
+      "create": true,
+      "size": 796
+    },
     {
       "path": "lib/cfs-ai-bridge-health.js",
       "sha256": "57cf0741edf3aa198159e5c610cedad1b8bdf3b3a8dbba1e22539858a29cde64",
@@ -32,6 +40,20 @@
       "accepted_prior_sha256": [],
       "create": true,
       "size": 1102
+    },
+    {
+      "path": "lib/shop-downloads-v32054.js",
+      "sha256": "a76c0b96c2a5ddc2042822324c57fddc4d124cdc20529c0fa6ca4811c3a96593",
+      "accepted_prior_sha256": [],
+      "create": true,
+      "size": 4404
+    },
+    {
+      "path": "private/admin-desktop/cfs_zockt-admin-pc.zip",
+      "sha256": "23713f11cc0a7ca300d48c68e77762f9a38ec5de312211ffce9af3604a3766b1",
+      "accepted_prior_sha256": [],
+      "create": true,
+      "size": 196783
     },
     {
       "path": "public/assets/css/admin-cfs-ai-design-v32070.css",
@@ -94,6 +116,13 @@
       "accepted_prior_sha256": [],
       "create": true,
       "size": 1002
+    },
+    {
+      "path": "public/assets/js/cfs-admin-private-download-v32077.js",
+      "sha256": "dec3c61eb892b1366f6620c5d2b0e839efec48dfa2854d08a19bd60fca40e59f",
+      "accepted_prior_sha256": [],
+      "create": true,
+      "size": 1519
     },
     {
       "path": "public/assets/js/cfs-obs-beta-check-v32076.js",
@@ -642,6 +671,13 @@
       "size": 3723
     },
     {
+      "path": "tools/cfs-r11-admin-private-download-test.cjs",
+      "sha256": "c6ae7ccb2402d75091a3bd4c0bfd3dc2a79f3296ff31039999ca61e7d3b8cb6a",
+      "accepted_prior_sha256": [],
+      "create": true,
+      "size": 1995
+    },
+    {
       "path": "tools/cfs-r5-security-test.mjs",
       "sha256": "4688662b2fcdd25ba0c022ba6785c933ec344b2e961f915606b926ac31def18a",
       "accepted_prior_sha256": [],
@@ -649,38 +685,27 @@
       "size": 2554
     },
     {
-      "path": "lib/admin-private-desktop.js",
-      "sha256": "0d0dd814f3f17c3eaf18d030612bc8902888c62abd93c0a47e06da475be12a5a",
+      "path": "tools/render-startup-preflight.cjs",
+      "sha256": "2125ef2825174409fca618d05f76119a3817ff350d0e3fc4455725b7fb35e0ee",
       "accepted_prior_sha256": [],
       "create": true,
-      "size": 796
+      "size": 1476
     },
     {
-      "path": "private/admin-desktop/cfs_zockt-admin-pc.zip",
-      "sha256": "23713f11cc0a7ca300d48c68e77762f9a38ec5de312211ffce9af3604a3766b1",
+      "path": "tools/render-startup-repair-test.cjs",
+      "sha256": "877f16eeb75debd1fb9f9ca1472911e10a2af029af7ad16347c32cb5c42fcc66",
       "accepted_prior_sha256": [],
       "create": true,
-      "size": 196783
-    },
-    {
-      "path": "public/assets/js/cfs-admin-private-download-v32077.js",
-      "sha256": "dec3c61eb892b1366f6620c5d2b0e839efec48dfa2854d08a19bd60fca40e59f",
-      "accepted_prior_sha256": [],
-      "create": true,
-      "size": 1519
-    },
-    {
-      "path": "tools/cfs-r11-admin-private-download-test.cjs",
-      "sha256": "c6ae7ccb2402d75091a3bd4c0bfd3dc2a79f3296ff31039999ca61e7d3b8cb6a",
-      "accepted_prior_sha256": [],
-      "create": true,
-      "size": 1995
+      "size": 3611
     }
   ],
   "new_features": [
     "Authentifizierte Creator-Bereitschaft aus /api/creator/stream-ready (read-only)",
     "12 einzelne manuell bewertbare OBS/CFS-Studio Beta-Testfälle",
     "Lokales Markdown-Abnahmeprotokoll ohne Quelle, Token oder Accounts",
-    "Windows-Vorprüfung nur OBS-Prozess und Loopback-Port; keine Verbindungsbehauptung"
+    "Windows-Vorprüfung nur OBS-Prozess und Loopback-Port; keine Verbindungsbehauptung",
+    "Render-Startup-Fix: fehlender lokaler Shop-Download-Adapter ergänzt",
+    "Legacy-Shop-Downloads ohne verifiziertes ZIP fail-closed deaktiviert",
+    "Render-Build-Preflight prüft lokale serverseitige require-Abhängigkeiten"
   ]
 }

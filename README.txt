@@ -1,4 +1,4 @@
-cfs_zockt WEBSITE-UPDATE 3.20.71-R11 – KUMULATIV (R4–R11)
+cfs_zockt WEBSITE-UPDATE 3.20.71-R12 – KUMULATIV (R4–R12)
 
 1. Website-Ordner 3.20.71 sichern.
 2. 01-NUR-PRUEFEN.cmd – Website-Ordner auswählen.
@@ -23,3 +23,6 @@ Sicherheitsprinzipien:
 - Die Einstellungen des Live-Hosters können hier nicht kontrolliert werden.
 - Das Windows-Adminpaket ist ein Startcenter, KEIN fertig signierter Installer.
 - Keine Beta- oder Shopfreigabe; echte Windows- und Live-Tests offen.
+
+Render-Hinweis: Nach lokalem Einbau muessen die geaenderten Dateien
+mit git commit + git push nach main. Render deployed nicht lokale ZIPs.

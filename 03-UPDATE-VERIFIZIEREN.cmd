@@ -2,7 +2,7 @@
 setlocal
 cd /d "%~dp0"
 echo ==========================================
-echo cfs_zockt WEBSITE R11 - VERSIONSPRUEFUNG
+echo cfs_zockt WEBSITE R12 - VERSIONSPRUEFUNG
 echo ==========================================
 where py >nul 2>&1
 if not errorlevel 1 (
