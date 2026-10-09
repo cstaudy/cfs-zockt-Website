@@ -1,0 +1,47 @@
+/* cfs_zockt R7: Creator Workspace surface update, built on R6.
+   Visual / informational only. Does not modify auth, provider scopes, OBS, payments or media exports. */
+.cfs-r7-ui { --r7-cyan:#32d5ff; --r7-line:rgba(68,176,241,.34); --r7-glass:rgba(6,25,45,.94); }
+.cfs-r7-ui .cfs-r7-hub { width:min(calc(100% - 36px),1440px);box-sizing:border-box;margin:22px auto 26px;padding:18px 20px 20px;border-radius:18px;border:1px solid var(--r7-line);background:radial-gradient(ellipse at 84% 0,rgba(10,127,234,.18),transparent 56%),linear-gradient(125deg,rgba(8,34,59,.97),rgba(3,16,31,.98));box-shadow:0 18px 55px rgba(0,0,0,.19),inset 0 1px 0 rgba(139,208,255,.05);color:#e8f7ff;overflow:hidden;}
+.cfs-r7-ui .cfs-r7-hub-heading {display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+.cfs-r7-ui .cfs-r7-hub-heading>div{display:flex;flex-direction:column;gap:3px}
+.cfs-r7-ui .cfs-r7-hub-kicker{font-size:10px;font-weight:850;letter-spacing:.13em;color:#5cd9ff;text-transform:uppercase}
+.cfs-r7-ui .cfs-r7-hub-heading>div>strong{font-size:clamp(17px,2vw,22px);font-weight:850;letter-spacing:-.026em;line-height:1.3}
+.cfs-r7-ui .cfs-r7-beta-label{display:inline-flex;align-items:center;gap:8px;padding:7px 11px;background:rgba(136,89,13,.20);border:1px solid rgba(250,184,78,.39);border-radius:999px;color:#f4cf83;font-size:10px;line-height:1.4;font-weight:800;letter-spacing:.022em;white-space:normal}
+.cfs-r7-ui .cfs-r7-beta-label:before{content:"";background:#ffbf4e;width:7px;height:7px;border-radius:50%;flex:none}
+.cfs-r7-ui .cfs-r7-flow{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;padding:0;margin:0}
+.cfs-r7-ui .cfs-r7-stage{min-width:0;box-sizing:border-box;display:flex;align-items:center;gap:11px;padding:13px 10px;text-decoration:none!important;border-radius:11px;background:rgba(9,35,57,.83);border:1px solid rgba(54,130,197,.26);color:#bad6e9!important;transition:background .19s,border-color .19s,transform .19s;line-height:1.3}
+.cfs-r7-ui .cfs-r7-stage strong{font-size:clamp(11px,1.1vw,13px);overflow-wrap:break-word;letter-spacing:-.01em;font-weight:780}
+.cfs-r7-ui .cfs-r7-stage-n{border:1px solid rgba(52,170,252,.25);background:rgba(30,117,182,.13);color:#86caee;font-size:10px;font-variant-numeric:tabular-nums;flex:none;border-radius:8px;padding:7px 8px;font-weight:840}
+.cfs-r7-ui .cfs-r7-stage.is-current{color:#fff!important;border-color:#20baff;background:linear-gradient(120deg,rgba(2,103,189,.38),rgba(4,46,93,.80));box-shadow:inset 0 0 0 1px rgba(0,191,255,.13),0 0 18px rgba(0,151,241,.12)}
+.cfs-r7-ui .cfs-r7-stage.is-current .cfs-r7-stage-n{color:#fff;background:linear-gradient(120deg,#0078e9,#04b5ff);border-color:#35c6ff}
+.cfs-r7-ui .cfs-r7-stage:hover{background:rgba(20,78,124,.7);border-color:rgba(59,194,252,.67);color:#fff!important}
+.cfs-r7-ui .cfs-r7-stage:focus-visible,.cfs-r7-ui .cfs-r7-hub-actions a:focus-visible{outline:3px solid #68dfff;outline-offset:3px}
+.cfs-r7-ui .cfs-r7-hub-bottom{display:flex;align-items:center;justify-content:space-between;gap:22px;margin-top:14px;padding-top:14px;border-top:1px solid rgba(69,142,196,.2)}
+.cfs-r7-ui .cfs-r7-hub-copy{min-width:0;max-width:650px}
+.cfs-r7-ui .cfs-r7-hub-copy>strong{font-size:14px;color:#f1faff;line-height:1.4}
+.cfs-r7-ui .cfs-r7-hub-copy>p{color:#accbdf;font-size:12px;line-height:1.55;margin:5px 0 0;max-width:660px}
+.cfs-r7-ui .cfs-r7-hub-actions{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:8px}
+.cfs-r7-ui .cfs-r7-hub-actions>a{color:#dbf5ff!important;text-decoration:none!important;border-radius:9px;border:1px solid rgba(52,147,208,.5);padding:9px 11px;font-size:11px;font-weight:800;line-height:1.35;background:rgba(2,52,94,.48);white-space:normal}
+.cfs-r7-ui .cfs-r7-hub-actions>a:first-child{background:linear-gradient(120deg,#006cce,#059ef2);border-color:#24b6fa;color:#fff!important}
+.cfs-r7-ui .cfs-r7-hub-actions>a:hover{background:rgba(27,116,180,.7);border-color:#45d3ff}
+/* Fit the R7 workflow inside diverse existing layout engines. */
+.cfs-r7-ui .container.cut-shell>.cfs-r7-hub,.cfs-r7-ui .container.scene-shell>.cfs-r7-hub{width:100%}
+.cfs-r7-ui .ub-page>.cfs-r7-hub,.cfs-r7-ui .ws-page>.cfs-r7-hub{margin-top:24px}
+.cfs-r7-ui.sm-app main>.cfs-r7-hub{width:min(calc(100% - 36px),1440px);margin-top:22px}
+.cfs-r7-ui.sm-app .sm-header{background:rgba(3,15,29,.96);border-bottom:1px solid rgba(40,159,226,.29)}
+.cfs-r7-ui .sm-header .cfs-r7-sm-logo{display:inline-flex;align-items:center;justify-content:center;flex:none;max-width:158px}
+.cfs-r7-ui .sm-header .cfs-r7-sm-logo img{display:block;width:140px;max-width:100%;height:auto;object-fit:contain;border-radius:2px}
+/* Keep the already-functioning editors, controls and stage sizes. Add consistent borders & spacing. */
+.cfs-r7-ui :is(.ws-topbar,.ub-hero,.stream-studio-hero,.scene-hero,.cut-hero,.sm-heading){border-radius:17px;scroll-margin-top:90px}
+.cfs-r7-ui :is(.ws-overview-card,.ws-plan-card,.ws-type-library,.ws-inspector-section,.ub-panel,.ub-selection-card,.ub-export-card,.stream-panel,.stream-rack,.stream-dock-zone,.scene-sidebar,.scene-editor,.scene-library,.cut-mode-panel,.cut-guide,.cut-projects,.cut-editor,.sm-library,.sm-settings,.sm-workspace){border-color:rgba(67,160,220,.31)!important;box-shadow:0 12px 30px rgba(0,0,0,.12)}
+.cfs-r7-ui :is(.ws-topbar h1,.ub-hero h1,.stream-studio-hero h1,.scene-hero h1,.cut-hero h1,.sm-heading h1){letter-spacing:-.05em;line-height:1.13;text-wrap:balance}
+.cfs-r7-ui :is(.ws-topbar,.ub-hero,.stream-studio-hero,.scene-hero,.cut-hero,.sm-heading) p{color:#bdd6e7;line-height:1.62}
+.cfs-r7-ui .ws-topbar,.cfs-r7-ui .ub-hero,.cfs-r7-ui .stream-studio-hero,.cfs-r7-ui .cut-hero,.cfs-r7-ui .scene-hero{background-image:radial-gradient(circle at 85% 15%,rgba(0,140,255,.12),transparent 56%)}
+.cfs-r7-ui :is(.ws-shell,.ub-shell,.scene-workspace,.cut-workspace,.stream-studio-grid){scroll-margin-top:90px}
+.cfs-r7-ui :is(.ws-simple-start-hub,.ws-overview-card,.ub-panel,.stream-status-strip,.scene-workspace,.cut-mode-panel,.sm-toolbar){border-radius:14px}
+.cfs-r7-ui :is(.ws-page,.ub-page,.cut-shell,.scene-shell,.stream-studio-shell,.sm-app main){max-width:100%}
+.cfs-r7-ui :is(#wsApp,#builderApp,#editorView,#sceneEditor,#cutApp,#live-workspace,#scene-composer,#stream-preflight){scroll-margin-top:100px}
+/* R7 does not hide warnings, loading indicators or not-yet-configured states. */
+@media(max-width:1160px){.cfs-r7-ui .cfs-r7-flow{grid-template-columns:repeat(3,minmax(0,1fr))}.cfs-r7-ui .cfs-r7-hub-bottom{align-items:stretch;flex-direction:column;gap:12px}.cfs-r7-ui .cfs-r7-hub-actions{justify-content:flex-start}}
+@media(max-width:710px){.cfs-r7-ui .cfs-r7-hub{width:calc(100% - 28px);padding:15px 13px;margin:16px auto 22px}.cfs-r7-ui .cfs-r7-flow{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.cfs-r7-ui .cfs-r7-stage{padding:10px 9px;gap:8px}.cfs-r7-ui .cfs-r7-stage strong{font-size:12px}.cfs-r7-ui .cfs-r7-stage-n{padding:6px}.cfs-r7-ui .cfs-r7-hub-heading>div>strong{font-size:17px}.cfs-r7-ui .cfs-r7-hub-actions>a{flex:1 1 auto;min-width:120px;text-align:center}.cfs-r7-ui .cfs-r7-beta-label{font-size:9px}.cfs-r7-ui .sm-header .cfs-r7-sm-logo img{width:104px}}
+@media (prefers-reduced-motion:reduce){.cfs-r7-ui .cfs-r7-stage{transition:none}}

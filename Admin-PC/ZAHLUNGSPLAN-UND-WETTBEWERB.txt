@@ -1,0 +1,99 @@
+cfs_zockt | Zahlungsplan und Shop-Vergleich | ENTWURF
+=====================================================
+Stand: 09.10.2026 | Keine Preise wurden live gestellt.
+
+1. AKTUELLER TECHNISCHER STAND
+--------------------------------
+- CFS Website-Stand: 3.20.71 (Release Candidate / Beta HOLD).
+- Subscription-Checkout (Creator/Pro) ist im Code vorhanden.
+- Bezahlte Pakete: Preisvorschau (paid_preview). KEIN funktionierender
+  Einzelkauf-Checkout mit Kunden-Berechtigung und Download-Freigabe.
+- Finanz-Dashboard zeigt gebuchte Stripe-Webhooks, nicht geplante Preise.
+- 31 Designwelten und 496 Farbvarianten im separaten Originaldesignarchiv.
+- Alle Zahlen in den UI-Mockups sind Beispiele und KEINE Live-Zahlen.
+
+2. MARKTBEOBACHTUNG (Quelle / Preise koennen sich aendern)
+---------------------------------------------------------
+OWN3D Pro:
+- Free 0 EUR / Widget Pass 7 EUR pro Monat / Stream Pass 14 EUR pro Monat.
+- Abo-Bibliothek, Widgets, Szenenbau, AI-Credits, OBS Integration.
+  https://hi.own3d.pro/de/preise/
+Nerd or Die:
+- Einzelkauf Stream Packs etwa 30 USD, Widgets/Alerts teils 6-15 USD.
+- Einzelne Gratisinhalte und modulare Produktfamilien.
+  https://nerdordie.com/collection/champion/
+Streamlabs:
+- Gratis-Version + Ultra, laut FAQ 27 USD/Monat oder 189 USD/Jahr.
+- Umfassende Suite (Streaming, Widget-Themes, Merch, KI-Assistenz).
+  https://streamlabs.com/de-de/faq
+Overlay Forge:
+- Bundles im Angebot haeufig 20,99 EUR; Preise inklusive MwSt.
+- Klare Anwendungsfaelle und Dateiformate fuer Streamer.
+  https://overlayforge.com/de/shop/stream-bundles/
+
+3. PREISEMPFEHLUNG FUER CFS_ZOCKT (VORSCHLAG, NICHT AKTIV)
+----------------------------------------------------------
+Free             0,00 EUR / Monat
+- Kostenlose Basis-Werkzeuge, Test-Widgets und ausgewaehlte Designs.
+
+CREATOR           6,90 EUR / Monat (Vorschlag, noch nicht buchbar)
+- Erweiterte LIVE- und Community-Tools, Cut Studio und Widgets;
+  Umfang nur dort, wo Funktionen nach Beta tatsaechlich bereitstehen.
+
+PRO              12,90 EUR / Monat (Vorschlag, noch nicht buchbar)
+- Alles aus Creator, mehr aktive Szenen-/Geraete-Limits und ausgewaehlte
+  Premium-Assets, wenn diese Module getestet und freigegeben sind.
+- Nicht automatisch jedes separate Kaufpaket inklusive.
+
+Einzelteile:      4,90 bis 9,90 EUR einmalig
+Starter-Pakete:  14,90 bis 19,90 EUR einmalig
+Komplett-Packs:  24,90 bis 29,90 EUR einmalig
+- Einmal gekaufte Pakete bleiben dem Kundenkonto zugeordnet.
+- Keine doppelte Zahlung fuer bereits erworbene Paketbestandteile.
+- Keine Preisauszeichnung ohne klaren Leistungs-/Lizenzumfang.
+
+Die vorhandenen Website-Tarife heissen FREE, CREATOR und PRO.
+Diese Staffelung ist ein Testvorschlag. Preise, Umfang, Abo-Berechtigungen,
+Steuern, Rabatte und Refund-Regeln muessen vor dem Live-Verkauf beschlossen
+und rechtlich sowie wirtschaftlich geprueft werden.
+
+4. WIE WIR TECHNISCH ZUVERLAESSIG VERKAUFEN
+---------------------------------------------
+A. Produktkatalog + eindeutige IDs + Version / Lizenz / Preis in Cent.
+B. Autorisierter serverseitiger Stripe Checkout fuer Einzelzahlungen.
+C. Webhook-Signatur verpflichtend pruefen, nur bestaetigte bezahlte
+   Ereignisse verbuchen; asynchrone Zahlungen erst nach Erfolg freigeben.
+D. Event-ID-/Payment-ID-Deduplikation (mehrfache Webhooks = ein Kauf).
+E. Datenbanktransaktion: Zahlung -> Berechtigung -> Kundenbibliothek.
+F. Download nur mit aktiver Berechtigung; protokolliert und aktualisierbar.
+G. Rueckerstattungen, Streitfaelle, Fehlbuchungen separat bearbeiten;
+   bereits verwendete digitale Dateien beduerfen klarer Nutzungsregeln.
+H. Abo-Entitlements und Einzelkaeufe getrennt verwalten; Kuendigung darf
+   gekaufte Einzelpakete nicht entfernen.
+I. Testzahlungen inklusive 3-D Secure, Abbruch, Wiederholung, Storno,
+   Rueckerstattung, ausstehende Zahlung und doppelte Webhooks durchspielen.
+J. Mehrwertsteuer- und Rechnungsregeln (inkl. EU-Digitalwaren) mit
+   steuerlich/rechtlich kompetenter Person abstimmen; Bruttopreise zeigen.
+K. Finanzuebersicht klar trennen: Umsatz, Steuer, Refunds, Stripe-Gebuehren,
+   Nettoauszahlung; Stripe-Buchungen mit Datensaetzen abgleichen.
+L. Der Shop-Release bleibt HOLD bis die bezahlten Kaufpfade getestet sind.
+
+5. UNTERSCHIEDE / POTENZIAL
+--------------------------
+Staerken im CFS-Projekt: eigene Streaming-Designs, Creator Suite,
+Launcher, lokale CFS AI, Design-Freigabeworkflow, zentrale Website.
+Offene Luecken: bezahlter Checkout, kundenbezogene Kauf-Entitlements,
+reproduzierbare OBS-Einrichtung, echte Beta-Abnahme, getesteter
+Windows-Desktop-Build, Zahlungsrechtstexte und Rechnungsprozess.
+
+6. ADMIN-MONITOR
+----------------
+- KI-Status laeuft AUSSCHLIESSLICH lokal auf 127.0.0.1.
+- Zeigt Verbindungszustand, Ollama-Modelle, Design-Entwuerfe,
+  letzte autonome Aufgaben, offene Codevorschlaege.
+- Kein lokaler API-Token wird aus dem Dienstordner extrahiert.
+- Bei HTTP 401/403 wird "geschuetzt" angezeigt; keine Status-Erfindung.
+- Cloud-/Website-Bridge ist aus lokalem HTTP nicht nachgewiesen.
+  Ihre Verbindung muss auf der Website durch authentifizierten
+  Heartbeat im Adminbereich kontrolliert werden.
+- Das PC-Monitor-Fenster gibt keine Designs oder Codevorschlaege frei.

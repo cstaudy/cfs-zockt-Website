@@ -1,0 +1,151 @@
+/* cfs_zockt: Phase 2 / Website-Oberfläche (v3.20.73 design layer).
+   Progressive enhancement for existing HTML. No API, auth, checkout or OBS changes. */
+:root {
+  --cfs-r6-ink:#ecf7ff;
+  --cfs-r6-muted:#a5c0d3;
+  --cfs-r6-blue:#008fff;
+  --cfs-r6-cyan:#31d3ff;
+  --cfs-r6-line:rgba(55,177,245,.29);
+  --cfs-r6-surface:#071b2f;
+  --cfs-r6-bg:#020a15;
+}
+body.cfs-r6-ui {
+  --cfs-neon-border:rgba(55,177,245,.31);
+  background:radial-gradient(ellipse 68% 480px at 55% -170px,rgba(0,116,247,.16),transparent 80%),linear-gradient(180deg,#051323 0%,#020a15 64%);
+  color:var(--cfs-r6-ink);
+  -webkit-font-smoothing:antialiased;
+}
+.cfs-r6-ui :is(h1,h2,h3){text-wrap:balance}
+.cfs-r6-ui :is(p,small){overflow-wrap:break-word}
+.cfs-r6-ui .container{width:min(100% - 40px,1440px);max-width:1440px;margin-left:auto;margin-right:auto}
+.cfs-r6-ui :is(.site-header,.creator-site-header,.public-site-header){z-index:80;background:rgba(2,13,27,.94)!important;box-shadow:0 1px 0 rgba(56,174,255,.19),0 18px 54px rgba(0,0,0,.20)!important;border-bottom:1px solid rgba(56,160,235,.27)!important;backdrop-filter:blur(18px)}
+.cfs-r6-ui .site-header :is(.header-inner,.gaming-header-inner){min-height:70px;gap:clamp(12px,1.9vw,24px)}
+.cfs-r6-ui .site-header :is(.gaming-brand,.cfs-public-brand,.creator-brand){min-width:0;flex-shrink:0;gap:10px}
+.cfs-r6-ui .site-header :is(.gaming-brand,.cfs-public-brand,.creator-brand) img{display:block!important;width:clamp(150px,14.3vw,207px)!important;height:auto!important;max-height:49px!important;object-fit:contain!important;object-position:left center!important;flex:none}
+.cfs-r6-ui .site-header :is(.gaming-brand,.cfs-public-brand,.creator-brand)>small,
+.cfs-r6-ui .site-header .gaming-brand>span:not(.cfs-r6-lower-brand),
+.cfs-r6-ui .site-header .creator-brand>span:not(.cfs-r6-lower-brand){font-size:10px;letter-spacing:.09em;color:#89b7d1}
+.cfs-r6-ui .site-header :is(.nav,.creator-nav,.brand-nav,.gaming-nav) a{
+  font-size:clamp(10px,.87vw,12px);font-weight:750;letter-spacing:.015em;white-space:nowrap;
+  min-height:35px;display:inline-flex;align-items:center;text-decoration:none;
+  border-radius:9px;color:#d4e7f6;transition:color .2s ease,background .2s ease,box-shadow .2s ease;
+}
+.cfs-r6-ui .site-header :is(.nav,.creator-nav,.brand-nav,.gaming-nav) a:hover{background:rgba(25,140,241,.11);color:#69deff}
+.cfs-r6-ui .site-header :is(.nav,.creator-nav,.brand-nav,.gaming-nav) a.active,
+.cfs-r6-ui .site-header :is(.nav,.creator-nav,.brand-nav,.gaming-nav) a[aria-current="page"]{color:#64d9ff;border-bottom:2px solid #29c4ff;border-radius:7px 7px 0 0}
+.cfs-r6-ui :is(.btn,.sm-btn,.gaming-btn,.gaming-register-cta,.cfs-nav-register){font-weight:750;letter-spacing:.012em;transition:background .19s ease,border-color .19s ease,transform .19s ease,box-shadow .19s ease}
+.cfs-r6-ui :is(.btn.primary,.sm-btn.sm-primary,.gaming-btn-primary,.gaming-register-cta,.cfs-nav-register){background:linear-gradient(120deg,#006cd5,#009dff)!important;color:#fff!important;border:1px solid #28adff!important;box-shadow:0 7px 22px rgba(0,122,255,.16)!important}
+@media (hover:hover){.cfs-r6-ui :is(.btn,.sm-btn,.gaming-btn,.gaming-register-cta,.cfs-nav-register):hover{transform:translateY(-2px)}}
+.cfs-r6-ui :is(input,textarea,select){accent-color:#19a6ff}
+.cfs-r6-ui :is(input,textarea,select):focus-visible{outline:2px solid #40d9ff!important;outline-offset:2px}
+.cfs-r6-ui :is(.page-hero,.beginner-hero,.marketing-hero,.shop-hero,.cfs-admin-hero){border-color:var(--cfs-r6-line)}
+.cfs-r6-ui :is(.cfs-admin-hub,.creator-workspace,main) :is(.tool-card,.product-card,.feature-card,.stat-card,.ws-overview-card,.ws-plan-card,.marketing-mode-card,.marketing-version-card){border-color:var(--cfs-r6-line)}
+.cfs-r6-ui :is(.shop-featured-card,.shop-ai-generated-card,.marketing-tool-grid article,.creator-dashboard-actions-grid-v166>a){transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease}
+@media (hover:hover){.cfs-r6-ui :is(.shop-featured-card,.shop-ai-generated-card,.marketing-tool-grid article,.creator-dashboard-actions-grid-v166>a):hover{transform:translateY(-3px);border-color:rgba(44,203,255,.70);box-shadow:0 14px 36px rgba(0,0,0,.24)}}
+.cfs-r6-kicker{display:block;color:var(--cfs-r6-cyan);letter-spacing:.14em;font-size:11px;font-weight:850;text-transform:uppercase}
+.cfs-r6-section-heading{display:flex;align-items:end;justify-content:space-between;gap:18px;margin:0 0 24px}
+.cfs-r6-section-heading h2{font-size:clamp(26px,3.2vw,41px);letter-spacing:-.035em;line-height:1.13;margin:8px 0 0;color:#effaff;text-transform:none}
+.cfs-r6-section-heading p{max-width:465px;line-height:1.6;color:var(--cfs-r6-muted);margin:0}
+/* 01 Public homepage: personal streaming/brand identity, with creator tools as a separate entry. */
+.public-home.cfs-r6-ui .gaming-header-inner{max-width:1440px}
+.public-home.cfs-r6-ui .gaming-brand{flex-direction:row;gap:9px}
+.public-home.cfs-r6-ui .gaming-brand img{width:clamp(160px,15vw,212px)!important;max-height:51px!important}
+.public-home.cfs-r6-ui .gaming-brand .cfs-r6-lower-brand{color:#bceaff;font-weight:850;font-size:12px;letter-spacing:-.015em;white-space:nowrap}
+.public-home.cfs-r6-ui .gaming-nav{gap:clamp(4px,.72vw,12px)}
+.public-home.cfs-r6-ui .gaming-hero{position:relative;isolation:isolate;overflow:hidden;background:radial-gradient(circle at 75% 30%,rgba(0,124,255,.12),transparent 50%),linear-gradient(135deg,#061a2f,#03101f 75%)!important}
+.public-home.cfs-r6-ui .gaming-hero-grid{min-height:clamp(460px,39vw,610px);gap:clamp(30px,4vw,64px);align-items:center}
+.public-home.cfs-r6-ui .gaming-hero-copy{position:relative;z-index:3}
+.public-home.cfs-r6-ui .gaming-hero h1.cfs-r6-home-title{font-size:clamp(48px,5.5vw,88px)!important;line-height:1.045!important;letter-spacing:-.06em!important;text-transform:none!important;margin:14px 0 10px!important;white-space:normal!important;color:#f7fbff!important}
+.public-home.cfs-r6-ui .gaming-hero h1.cfs-r6-home-title span{color:#47d0ff!important;text-shadow:0 0 35px rgba(0,172,255,.23)}
+.public-home.cfs-r6-ui .cfs-r6-home-signature{font-size:clamp(13px,1.2vw,16px)!important;margin:0 0 6px!important;color:#9cc7e1!important}
+.public-home.cfs-r6-ui .cfs-r6-home-signature strong{color:#e4faff}
+.public-home.cfs-r6-ui .gaming-hero-art{border:1px solid rgba(50,162,248,.33);box-shadow:0 24px 76px rgba(0,0,0,.42),inset 0 0 0 1px rgba(76,182,255,.06);overflow:hidden;border-radius:20px}
+.public-home.cfs-r6-ui .gaming-hero-art img{display:block;width:100%;height:100%;object-fit:cover}
+.public-home.cfs-r6-ui .gaming-hero-values>div{border:1px solid rgba(34,148,224,.23);background:rgba(5,24,43,.75);border-radius:13px}
+.cfs-r6-entry-section{padding:44px 0 48px;background:linear-gradient(180deg,rgba(5,19,36,.4),rgba(2,11,22,.22))}
+.cfs-r6-entry-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.cfs-r6-entry-card,.cfs-r6-suite-grid>a{display:flex;flex-direction:column;gap:9px;min-width:0;padding:26px 24px;border-radius:16px;text-decoration:none!important;color:#eefaff!important;background:linear-gradient(150deg,rgba(12,39,65,.91),rgba(4,20,37,.96));border:1px solid var(--cfs-r6-line);box-shadow:0 15px 38px rgba(0,0,0,.13);transition:transform .2s ease,border-color .2s ease}
+.cfs-r6-entry-card .cfs-r6-entry-icon,.cfs-r6-suite-grid>a>span{display:grid;place-items:center;width:47px;height:47px;border-radius:13px;border:1px solid rgba(28,175,246,.32);color:#29d5ff;font-size:25px;background:rgba(0,131,231,.13)}
+.cfs-r6-entry-card strong,.cfs-r6-suite-grid>a strong{font-size:20px;line-height:1.2}
+.cfs-r6-entry-card small,.cfs-r6-suite-grid>a small{color:#aac6da;line-height:1.55;font-size:13px}
+.cfs-r6-entry-card em,.cfs-r6-suite-grid>a em{color:#5bdcff;font-style:normal;font-weight:800;font-size:12px;margin-top:8px}
+@media (hover:hover){.cfs-r6-entry-card:hover,.cfs-r6-suite-grid>a:hover{border-color:rgba(56,206,255,.8);transform:translateY(-4px)}}
+.public-home.cfs-r6-ui :is(.gaming-live-card,.gaming-community-card,.gaming-why-points-v180 article,.gaming-game-card){border-color:var(--cfs-r6-line)!important;border-radius:16px}
+/* 02 Public Creator Suite: clear workflows and truthful beta availability. */
+.public-suite-page.cfs-r6-ui .cfs-suite-hero{background:radial-gradient(circle at 77% 35%,rgba(0,121,240,.13),transparent 55%),linear-gradient(125deg,#061c32,#031021)!important}
+.public-suite-page.cfs-r6-ui .cfs-suite-hero h1{font-size:clamp(40px,4.9vw,72px)!important;line-height:1.05!important;letter-spacing:-.052em!important;text-transform:none!important}
+.public-suite-page.cfs-r6-ui .cfs-suite-hero h1 span{color:#48d5ff!important}
+.public-suite-page.cfs-r6-ui .cfs-suite-preview{border:1px solid rgba(46,173,244,.43);border-radius:20px;background:linear-gradient(140deg,rgba(9,36,63,.93),rgba(2,17,32,.96));box-shadow:0 23px 60px rgba(0,0,0,.24)}
+.public-suite-page.cfs-r6-ui .cfs-suite-preview-grid article{border:1px solid rgba(50,164,227,.27);border-radius:11px;background:rgba(10,36,60,.75)}
+.cfs-r6-suite-paths{padding:42px 0 38px;background:linear-gradient(180deg,rgba(4,17,31,.75),rgba(2,11,22,.88))}
+.cfs-r6-suite-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.cfs-r6-suite-grid>a{padding:23px 20px;min-height:225px}
+.cfs-r6-suite-grid>a strong{font-size:18px}
+.cfs-r6-beta-note{border:1px solid rgba(230,177,48,.28);border-radius:12px;background:rgba(109,74,12,.12);color:#e6c37c;padding:12px 16px;font-size:12px;line-height:1.6;margin:18px 0 0}
+.cfs-r6-beta-note>span{color:#ffbe4d;margin-right:6px}
+/* 03 Creator shop: marketing preview, original catalogue and download workflow stay intact. */
+.cfs-shop-v172.cfs-r6-ui .shop-hero{border:1px solid rgba(46,166,234,.32);border-radius:20px;padding:clamp(22px,4vw,43px);background:radial-gradient(ellipse at 78% 15%,rgba(0,137,255,.17),transparent 55%),linear-gradient(130deg,#09223b,#03101f)!important;box-shadow:0 18px 50px rgba(0,0,0,.2)}
+.cfs-shop-v172.cfs-r6-ui .shop-hero-copy h1{font-size:clamp(35px,4.8vw,64px);letter-spacing:-.055em;line-height:1.1;text-transform:none!important}
+.cfs-shop-v172.cfs-r6-ui .shop-hero-copy h1 span{color:#42cfff!important}
+.cfs-shop-v172.cfs-r6-ui .shop-library-summary{background:linear-gradient(155deg,rgba(9,48,80,.96),rgba(5,22,41,.95));border:1px solid rgba(42,169,250,.35);border-radius:15px}
+.cfs-r6-shop-status{display:flex;align-items:center;gap:13px;border:1px solid rgba(221,158,39,.36);border-radius:14px;background:rgba(81,53,12,.17);padding:15px 18px;margin:22px 0 16px;color:#f4d7a1}
+.cfs-r6-shop-status strong{display:block;font-size:13px;color:#ffe2a6}
+.cfs-r6-shop-status small{display:block;font-size:12px;color:#d4bb8b;line-height:1.5;margin-top:3px}
+.cfs-r6-shop-status>a{font-size:12px;margin-left:auto;white-space:nowrap;color:#ffe1a2;text-decoration:underline;text-underline-offset:4px}
+.cfs-r6-status-dot{flex:none;width:11px;height:11px;background:#ffc351;border-radius:50%;box-shadow:0 0 0 4px rgba(255,183,49,.13)}
+.cfs-r6-shop-shortcuts{display:flex;flex-wrap:wrap;gap:9px;margin:0 0 27px;align-items:center}
+.cfs-r6-shop-shortcuts>a{padding:10px 14px;border-radius:11px;background:rgba(7,32,55,.9);border:1px solid rgba(52,153,212,.26);color:#bfe5fb;text-decoration:none;font-weight:800;font-size:12px}
+.cfs-r6-shop-shortcuts>a:hover{color:#fff;border-color:#3ac9ff;background:rgba(12,66,107,.5)}
+.cfs-shop-v172.cfs-r6-ui :is(.shop-discovery,.shop-assistant,.shop-download-center,.original-designs,.sm-shop-section,.shop-ai-generated){border-color:var(--cfs-r6-line);border-radius:18px;background-color:rgba(6,22,41,.78)}
+.cfs-shop-v172.cfs-r6-ui .shop-featured-card{border-radius:15px;border-color:var(--cfs-r6-line);box-shadow:0 10px 25px rgba(0,0,0,.18)}
+.cfs-shop-v172.cfs-r6-ui :is(.shop-discovery-head h2,.sm-section-heading h2){letter-spacing:-.035em;text-transform:none}
+/* 04 Creator dashboard: action-based layout instead of fabricated metrics. */
+.cfs-r6-ui .creator-dashboard-v166 .beginner-hero h1{font-size:clamp(38px,4.9vw,67px)!important;letter-spacing:-.05em!important;line-height:1.08!important;text-transform:none!important}
+.cfs-r6-ui .creator-dashboard-v166 .beginner-hero h1 span{color:#43ceff!important}
+.cfs-r6-ui .creator-dashboard-actions-grid-v166>a{border-radius:15px;background:linear-gradient(145deg,rgba(8,37,63,.92),rgba(3,21,39,.95));border:1px solid var(--cfs-r6-line)}
+.cfs-r6-ui .creator-next-step-v166{border:1px solid rgba(45,171,235,.37);border-radius:16px}
+/* 05 Standard cards/forms across the remaining public and protected sections. */
+.cfs-r6-ui .marketing-section{scroll-margin-top:90px}
+.cfs-r6-ui .creator-workspace :is(.ws-shell,.ws-overview-card,.ws-library,.ws-type-library,.ws-inspector-section),
+.cfs-r6-ui .management-hub,
+.cfs-r6-ui .integration-group{border-color:var(--cfs-r6-line)}
+.cfs-r6-ui .creator-nav-more-menu{z-index:130}
+.cfs-r6-ui :is(.gaming-btn,.btn,.sm-btn,.cfs-r6-shop-shortcuts>a,.cfs-r6-entry-card,.cfs-r6-suite-grid>a):focus-visible{outline:3px solid #70dfff!important;outline-offset:3px}
+.cfs-r6-ui :is(#originalDesigns,#shopDiscovery,#shopDownloadCenter,#shopDesignAssistant,#aiGeneratedDesigns){scroll-margin-top:100px}
+@media (max-width:1100px){
+  .cfs-r6-ui .site-header :is(.gaming-brand,.cfs-public-brand,.creator-brand) img{width:155px!important}
+  .cfs-r6-ui .site-header :is(.gaming-brand,.cfs-public-brand,.creator-brand)>small{display:none}
+  .cfs-r6-suite-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width:800px){
+  .cfs-r6-ui .container{width:min(100% - 28px,1440px)}
+  .cfs-r6-section-heading{flex-direction:column;align-items:flex-start}
+  .cfs-r6-entry-grid{grid-template-columns:1fr}
+  .public-home.cfs-r6-ui .gaming-hero-grid{min-height:auto;gap:24px}
+  .public-home.cfs-r6-ui .gaming-hero h1.cfs-r6-home-title{font-size:clamp(44px,10vw,68px)!important}
+  .cfs-r6-shop-status{align-items:flex-start;flex-wrap:wrap}
+  .cfs-r6-shop-status>a{margin-left:24px}
+}
+@media (max-width:540px){
+  .cfs-r6-suite-grid{grid-template-columns:1fr}
+  .cfs-r6-suite-grid>a{min-height:auto}
+  .cfs-r6-entry-section,.cfs-r6-suite-paths{padding:32px 0}
+  .cfs-r6-entry-card,.cfs-r6-suite-grid>a{padding:19px}
+  .cfs-r6-shop-status{padding:14px}
+  .cfs-r6-shop-status>a{margin-left:0}
+  .cfs-r6-ui .site-header :is(.gaming-brand,.cfs-public-brand,.creator-brand) img{width:147px!important;max-height:40px!important}
+  .public-home.cfs-r6-ui .gaming-brand .cfs-r6-lower-brand{display:none}
+}
+@media (prefers-reduced-motion:reduce){
+  .cfs-r6-ui :is(.btn,.sm-btn,.gaming-btn,.cfs-r6-entry-card,.cfs-r6-suite-grid>a,.shop-featured-card,.marketing-tool-grid article){transition:none!important;transform:none!important}
+}
+/* Desktop navigation fit and stronger logo visibility: prevents protected suite menu wrapping to a second row. */
+@media(min-width:1110px){
+  .cfs-r6-ui .site-header .creator-header-inner{flex-wrap:nowrap!important;justify-content:space-between!important;column-gap:12px!important}
+  .cfs-r6-ui .site-header .creator-brand{width:clamp(160px,15vw,195px)!important;max-width:195px!important;flex:none!important;min-width:0!important}
+  .cfs-r6-ui .site-header .creator-brand>span{display:none!important}
+  .cfs-r6-ui .site-header .creator-nav{display:flex!important;flex:1 1 auto!important;flex-wrap:nowrap!important;justify-content:flex-end!important;gap:clamp(3px,.62vw,9px)!important;min-width:0!important}
+  .cfs-r6-ui .site-header .creator-nav>a{padding-left:clamp(4px,.55vw,9px)!important;padding-right:clamp(4px,.55vw,9px)!important}
+}
+.public-home.cfs-r6-ui .site-header .gaming-brand>span:not(.cfs-r6-lower-brand){display:none!important}
+.public-suite-page.cfs-r6-ui .cfs-suite-hero h1{font-size:clamp(40px,4.18vw,60px)!important}

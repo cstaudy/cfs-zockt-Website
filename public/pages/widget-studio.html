@@ -21,12 +21,15 @@
 <link rel="stylesheet" href="/assets/css/cfs-workspace-v205.css">
 <link rel="stylesheet" href="/assets/css/cfs-guide-v5.css">
 <link rel="stylesheet" href="/assets/css/cfs-help-v6.css">
+  <link rel="stylesheet" href="/assets/css/cfs-neon-redesign-v32071.css" data-cfs-neon-redesign>
+  <link rel="stylesheet" href="/assets/css/cfs-surface-v32073.css" data-cfs-surface="v32073">
+  <link rel="stylesheet" href="/assets/css/cfs-workspace-surface-v32074.css" data-cfs-workspace-surface="v32074">
 </head>
-<body data-cfs-product-v199="1" data-cfs-brand-v192="1" data-cfs-suite-v203="1" class="creator-workspace" data-cfs-brand-v198="1">
+<body data-cfs-product-v199="1" data-cfs-brand-v192="1" data-cfs-suite-v203="1" class="cfs-r6-ui cfs-r7-ui creator-workspace" data-cfs-brand-v198="1">
 <header class="site-header creator-site-header">
   <div class="container header-inner creator-header-inner">
-    <a class="creator-brand" href="/pages/dashboard.html" aria-label="cfs_zockt Creator Suite Dashboard">
-      <img class="creator-brand-logo" src="/assets/img/brand/cfs-zockt-mark-clean.png" alt="cfs_zockt">
+    <a class="creator-brand cfs-neon-brand" href="/pages/dashboard.html" aria-label="cfs_zockt Creator Suite Dashboard">
+      <img class="cfs-neon-brand-logo creator-brand-logo" src="/assets/img/brand/cfs-zockt-logo.png" alt="cfs_zockt">
       <span>CREATOR SUITE</span>
     </a>
     <button class="mobile-toggle creator-mobile-toggle" data-mobile-toggle id="mobileNavToggle" type="button">MENÜ</button>
@@ -62,6 +65,12 @@
 </header>
 
 <main class="ws-page">
+<section class="cfs-r7-hub" aria-label="Creator Suite Arbeitsablauf">
+  <div class="cfs-r7-hub-heading"><div><span class="cfs-r7-hub-kicker">WIDGET STUDIO · cfs_zockt</span><strong>Dein Weg vom Design zum Stream</strong></div><span class="cfs-r7-beta-label">BETA-VORBEREITUNG · Praxistests offen</span></div>
+  <nav class="cfs-r7-flow" aria-label="Workflow – die Creator-Werkzeuge"><a class="cfs-r7-stage" href="/pages/stream-maker.html"><span class="cfs-r7-stage-n">01</span><strong>Design</strong></a><a class="cfs-r7-stage is-current" href="/pages/widget-studio.html" aria-current="step"><span class="cfs-r7-stage-n">02</span><strong>Widgets</strong></a><a class="cfs-r7-stage" href="/pages/universal-builder.html"><span class="cfs-r7-stage-n">03</span><strong>Bundle</strong></a><a class="cfs-r7-stage" href="/pages/stream-studio.html#scene-composer"><span class="cfs-r7-stage-n">04</span><strong>Scenes</strong></a><a class="cfs-r7-stage" href="/pages/stream-studio.html"><span class="cfs-r7-stage-n">05</span><strong>Stream</strong></a><a class="cfs-r7-stage" href="/pages/cut-studio.html"><span class="cfs-r7-stage-n">06</span><strong>Clips</strong></a></nav>
+  <div class="cfs-r7-hub-bottom"><div class="cfs-r7-hub-copy"><strong>Ein Widget vom Entwurf bis zur OBS-Quelle.</strong><p>Widget wählen, Datenquelle prüfen, gestalten und veröffentlichen. Eine nutzbare Browser-Source-URL entsteht erst nach erfolgreicher Veröffentlichung.</p></div><div class="cfs-r7-hub-actions"><a href="#wsApp">Widget bearbeiten<span aria-hidden="true"> ↗</span></a><a href="/pages/stream-studio.html#scene-composer">Scenes vorbereiten<span aria-hidden="true"> ↗</span></a><a href="/pages/launcher.html">Launcher prüfen<span aria-hidden="true"> ↗</span></a><a href="/pages/obs-setup.html">OBS einrichten<span aria-hidden="true"> ↗</span></a></div></div>
+</section>
+
 <section class="ws-topbar container">
   <div>
     <div class="eyebrow">cfs_zockt CREATOR SUITE</div>
@@ -1081,7 +1090,7 @@
               <button class="btn" type="button" data-action="copy-obs">URL KOPIEREN</button>
               <a class="btn" id="wsOpenObs" target="_blank" rel="noopener">ÖFFNEN</a>
             </div>
-            <small class="muted">Mit verbundenem CFS Launcher + OBS WebSocket kann das Widget automatisch als Browser Source in die aktuelle OBS-Szene eingefügt werden. Die URL bleibt stabil.</small>
+            <small class="muted">Mit verbundenem CFS Launcher + OBS WebSocket kann das Widget automatisch als Browser Source in die aktuelle OBS-Szene eingefügt werden. Die URL bleibt stabil. <a href="/pages/obs-setup.html" target="_blank" rel="noopener noreferrer">Manuelle OBS-Einrichtung öffnen ↗</a></small>
           </section>
         </div>
       </aside>

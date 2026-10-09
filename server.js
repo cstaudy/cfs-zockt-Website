@@ -56,6 +56,8 @@ const { DEFAULT_HEARTBEAT_INTERVAL_MS, DEFAULT_ONLINE_WINDOW_MS, DEFAULT_GRACE_W
 const { publicProviderOAuthContracts } = require("./lib/provider-oauth-contract");
 const { publicConfig: cfsAiPublicConfig, requestJson: cfsAiRequestJson, requestHtml: cfsAiRequestHtml } = require("./lib/cfs-ai-gateway");
 const { isAllowedBridgeRequest, bridgeTransport, bridgeWorkerConfig } = require("./lib/cfs-ai-bridge-policy");
+const { bridgeHealth } = require("./lib/cfs-ai-bridge-health");
+const { inspectPagePath } = require("./lib/private-html-policy");
 const { productById: creatorShopDownloadProductById, resolvePackage: resolveCreatorShopDownloadPackage, publicCatalog: publicCreatorShopDownloadCatalog } = require("./lib/shop-downloads-v32054");
 const { getCatalog: getOriginalDesignCatalog, previewBuffer: getOriginalDesignPreviewBuffer, packageBuffer: getOriginalDesignPackageBuffer, packageEtag: getOriginalDesignPackageEtag, assetBuffer: getOriginalDesignAssetBuffer, findGroup: getOriginalDesignProductGroup } = require("./lib/original-design-catalog-v32065");
 
@@ -1906,6 +1908,15 @@ const adminElevationLimiter =
         keyGenerator: req => `${String(req.creatorAccount?.id || "unknown")}|${requestIp(req)}`,
         message: "Zu viele Admin-Bestätigungen. Bitte warte einige Minuten und versuche es erneut."
     });
+
+// An end-to-end Bridge check queues a remote job and holds a web request open.
+// Limit it separately from ordinary admin reads to avoid accidental job floods.
+const cfsAiBridgeVerifyLimiter = createRateLimiter({
+    windowMs: 60 * 1000,
+    max: 3,
+    keyGenerator: req => `${String(req.creatorAccount?.id || "unknown")}|${requestIp(req)}`,
+    message: "Zu viele Bridge-Tests. Bitte eine Minute warten."
+});
 
 const adminSensitiveReadLimiter =
     createRateLimiter({
@@ -8868,11 +8879,35 @@ app.post("/api/internal/cfs-ai-bridge/jobs/:id/complete",requireCfsAiBridgeWorke
     return res.json({ok:true,job:result.rows[0]});
 });
 
-app.get("/api/creator/cfs-ai/bridge",requireCreatorAccount,requireCreatorAdmin,async(req,res)=>{
-    res.set("Cache-Control","no-store");
+// Verified bridge telemetry is derived only from DB timestamps and completed jobs.
+// Never expose worker tokens, environment variables, or local file paths.
+async function cfsAiBridgeHealthSnapshot(){
     const worker=await cfsAiBridgeLatestWorker();
-    const jobs=await pool.query(`SELECT id,status,attempts,created_at,started_at,completed_at,error_text FROM cfs_ai_bridge_jobs ORDER BY created_at DESC LIMIT 30`);
-    return res.json({ok:true,transport:bridgeTransport(),worker,jobs:jobs.rows});
+    const success=worker?await pool.query(`SELECT worker_id,completed_at FROM cfs_ai_bridge_jobs WHERE worker_id=$1 AND status='succeeded' AND completed_at>NOW()-INTERVAL '10 minutes' ORDER BY completed_at DESC LIMIT 1`,[worker.worker_id]):{rows:[]};
+    const enabled=cfsAiPublicConfig().enabled;
+    const health=bridgeHealth({enabled,configured:String(process.env.CFS_AI_BRIDGE_TOKEN||"").trim().length>=24,transport:bridgeTransport(),worker,lastSuccess:success.rows[0]||null});
+    return {health,worker};
+}
+app.get("/api/creator/cfs-ai/bridge",requireCreatorAccount,requireCreatorAdmin,async(req,res)=>{
+    res.set("Cache-Control","private, no-store");
+    try{
+        const {health,worker}=await cfsAiBridgeHealthSnapshot();
+        const jobs=await pool.query(`SELECT id,status,attempts,created_at,started_at,completed_at,error_text FROM cfs_ai_bridge_jobs ORDER BY created_at DESC LIMIT 12`);
+        const publicWorker=worker?{worker_id:worker.worker_id,label:worker.label,last_seen_at:worker.last_seen_at,online:health.worker_online}:null;
+        return res.json({ok:true,...health,worker:publicWorker,jobs:jobs.rows,recent_jobs:jobs.rows.map(row=>({status:row.status,attempts:row.attempts,created_at:row.created_at,started_at:row.started_at,completed_at:row.completed_at}))});
+    }catch(error){safeLogError("CFS AI Bridge Diagnose:",error);return res.status(503).json({ok:false,error:"Bridge-Diagnose vorübergehend nicht erreichbar."});}
+});
+// Explicit end-to-end test. No AI prompts, no filesystem writes or shop publishing.
+app.post("/api/creator/cfs-ai/bridge/verify",requireCreatorAccount,requireCreatorAdmin,requireCreatorAdminElevation,cfsAiBridgeVerifyLimiter,async(req,res)=>{
+    res.set("Cache-Control","private, no-store");
+    try{
+        const {health}=await cfsAiBridgeHealthSnapshot();
+        if(health.transport!=="bridge"||!health.worker_online)return res.status(503).json({ok:false,health,error:"Bridge-Worker ist noch nicht online. CFS_AI_ENABLED, Transport und Worker prüfen."});
+        const response=await cfsAiRequestJsonFlexible("/api/status",{timeoutMs:16000,createdBy:req.creatorAccount.id});
+        if(!response||!response.version)throw new Error("Lokaler Status nicht vollständig.");
+        const updated=(await cfsAiBridgeHealthSnapshot()).health;
+        return res.json({ok:true,verified:updated.rpc_verified,health:updated,service_version:String(response.version).slice(0,100)});
+    }catch(error){return cfsAiGatewayFailure(res,error,"Ende-zu-Ende-Test nicht erfolgreich.");}
 });
 
 // ============================================================
@@ -19227,6 +19262,16 @@ app.post("/api/creator/shop/products/:id/install",requireCreatorAccount,(req,res
 app.post("/api/creator/shop/products/:id/update",requireCreatorAccount,(req,res)=>handleStoreInstallAction(req,res,"update"));
 app.post("/api/creator/shop/products/:id/reinstall",requireCreatorAccount,(req,res)=>handleStoreInstallAction(req,res,"reinstall"));
 
+
+// Admin-only, read-only Shop payment gate. Plans/prices never count as purchases.
+app.get("/api/admin/store/checkout-readiness",requireCreatorAccount,requireCreatorAdmin,requireCreatorAdminSensitiveRead,async(req,res)=>{
+    res.set("Cache-Control","private, no-store");
+    try{
+        const products=await pool.query(`SELECT pricing_mode,status,offer_enabled,COUNT(*)::int AS count FROM admin_store_products GROUP BY pricing_mode,status,offer_enabled`);
+        const paid=products.rows.filter(row=>row.pricing_mode==="paid_preview"&&row.status==="published"&&row.offer_enabled===true).reduce((total,row)=>total+Number(row.count||0),0);
+        return res.json({ok:true,paid_checkout_enabled:false,shop_purchase_mode:"preview_only",paid_preview_products:paid,stripe_subscription_mode:STRIPE_SECRET_MODE,stripe_webhook_configured:Boolean(BILLING_CONFIG.webhook_ready),reasons:["Einmaliger Stripe Checkout und Purchase-Webhooks für Shop-Pakete fehlen.","Serverseitige Kaufberechtigungen, Download-Schutz und Rückerstattungs-Entzug fehlen.","Ende-zu-Ende-Stripe-Test und Beta-Abnahme fehlen."],public_release_allowed:false});
+    }catch(error){safeLogError("Shop Checkout Readiness Fehler:",error);return res.status(503).json({ok:false,error:"Shop-Kaufstatus ist derzeit nicht abrufbar."});}
+});
 
 // ============================================================
 // ADMIN BUNDLE FACTORY · V175
@@ -31135,12 +31180,10 @@ const PUBLIC_PAGE_HTML_ALLOWLIST = new Set([
     "/pages/error.html"
 ]);
 
+// Do not authorize against raw req.path: percent-encoded paths are decoded
+// later by express.static, which could otherwise bypass protected HTML routes.
 function canonicalHtmlPagePath(pathname) {
-    const value = String(pathname || "");
-    if (!value.startsWith("/pages/")) return "";
-    if (value.endsWith(".html")) return value;
-    if (path.posix.extname(value)) return value;
-    return `${value}.html`;
+    return inspectPagePath(pathname);
 }
 
 function safeCreatorReturnTo(req) {
@@ -31154,7 +31197,9 @@ function safeCreatorReturnTo(req) {
 app.use(async (req, res, next) => {
     if (!isSafeHttpMethod(req.method)) return next();
 
-    const pagePath = canonicalHtmlPagePath(req.path);
+    const inspected = canonicalHtmlPagePath(req.path);
+    if (inspected.invalid) return res.status(400).type("text/plain; charset=utf-8").send("Ungültiger Seitenpfad.");
+    const pagePath = inspected.path;
     if (!pagePath || PUBLIC_PAGE_HTML_ALLOWLIST.has(pagePath)) return next();
 
     const pagesRoot = path.join(PUBLIC_DIR, "pages") + path.sep;
@@ -31171,7 +31216,7 @@ app.use(async (req, res, next) => {
             return res.redirect(302, `/pages/login.html?returnTo=${returnTo}`);
         }
         req.creatorAccount = account;
-        if ((pagePath === "/pages/admin-creators.html" || pagePath === "/pages/cfs-ai.html") && !(await isCreatorSuiteAdmin(account))) {
+        if (["/pages/admin.html", "/pages/admin-creators.html", "/pages/cfs-ai.html"].includes(pagePath) && !(await isCreatorSuiteAdmin(account))) {
             return res.status(404).sendFile(path.join(PUBLIC_DIR, "pages", "not-found.html"));
         }
         ensureCreatorCsrfCookie(req, res);

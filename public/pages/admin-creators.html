@@ -20,8 +20,10 @@
   <link rel="stylesheet" href="/assets/css/cfs-brand-v198.css" data-cfs-brand-v198>
   <link rel="stylesheet" href="/assets/css/cfs-product-v199.css" data-cfs-product-v199>
   <link rel="stylesheet" href="/assets/css/admin-cfs-ai-design-v32070.css">
+  <link rel="stylesheet" href="/assets/css/cfs-neon-redesign-v32071.css" data-cfs-neon-redesign>
+  <link rel="stylesheet" href="/assets/css/cfs-surface-v32073.css" data-cfs-surface="v32073">
 </head>
-<body data-cfs-product-v199="1" data-cfs-brand-v192="1" class="creator-workspace cfs-private-product-v180" data-cfs-brand-v198="1">
+<body data-cfs-product-v199="1" data-cfs-brand-v192="1" class="cfs-r6-ui creator-workspace cfs-private-product-v180" data-cfs-brand-v198="1">
 <header class="site-header">
   <div class="container header-inner">
     <a class="brand" href="/">cfs_<span>zockt</span></a>
@@ -194,6 +196,13 @@
         <article><span>OFFENE ENTWÜRFE</span><strong id="aiAdminPending">–</strong></article>
         <article><span>FREIGEGEBEN (LOKAL)</span><strong id="aiAdminApproved">–</strong></article>
         <article><span>LETZTER LAUF</span><strong id="aiAdminLastRun">–</strong></article></div>
+      <section class="cfs-bridge-check" aria-label="Verifizierter CFS-AI-Bridge-Status">
+        <h3>Cloud-Bridge prüfen</h3>
+        <p><strong id="aiBridgeProof">Noch nicht geprüft</strong> · Letzter Heartbeat: <span id="aiBridgeHeartbeat">–</span></p>
+        <p id="aiBridgeDetails">Ein lokaler KI-Status ist kein Beweis für eine Website-Verbindung.</p>
+        <button class="btn" type="button" id="aiBridgeVerify">BRIDGE ENDE-ZU-ENDE TESTEN</button>
+        <small>Nur du als Admin kannst diesen Test nach zusätzlicher Sicherheitsfreigabe starten.</small>
+      </section>
       <p id="aiAdminNotice" class="cfs-ai-notice" role="status">Öffne diesen Bereich, um die Verbindung zu CFS AI zu prüfen.</p>
       <div class="cfs-ai-admin-settings">
         <h3>Hintergrund-Erstellung</h3>
@@ -442,6 +451,7 @@
       <div class="finance-state" id="financeReportStatus" role="status">Noch nicht geladen. Bitte zuerst den Admin-Schutz entsperren.</div>
       <div class="finance-cards"><article><span>BESTÄTIGTE RECHNUNGEN</span><strong id="financeInvoiceCount">–</strong></article><article><span>AKTIVE ABOS</span><strong id="financeActiveCount">–</strong></article><article><span>PAKETE MIT PREISVORSCHAU</span><strong id="financePreviewCount">–</strong></article></div>
       <div id="financeCurrencyRows" class="finance-currencies" aria-live="polite"></div>
+      <section class="cfs-bridge-check" aria-label="Shop Kaufabwicklung Freigabestatus"><h3>Einmalige Paketkäufe – Freigabeprüfung</h3><p><strong id="shopCheckoutGate">NICHT GEPRÜFT</strong> · <span id="shopCheckoutGateDetail">Vor dem Freischalten müssen Checkout, Webhook und Kaufberechtigung getestet werden.</span></p><button class="btn" id="shopCheckoutGateLoad" type="button">KAUF-FREIGABE PRÜFEN</button></section>
       <p id="financeReportWarning" class="finance-state">Historische Daten, Gebühren und Erstattungen können unvollständig sein. Paketverkäufe sind noch nicht aktiviert.</p>
     </div>
   </details>
@@ -518,6 +528,7 @@
 <script src="/assets/js/app.js"></script>
 <script src="/assets/js/admin-creators.js"></script>
 <script src="/assets/js/admin-finance-v32071.js"></script>
+<script src="/assets/js/admin-shop-checkout-gate-v32072.js"></script>
 <script src="/assets/js/admin-control-center-v181.js"></script>
 <script src="/assets/js/admin-bundle-factory-v178.js"></script>
 <script src="/assets/js/admin-cfs-ai-design-v32070.js" defer></script>

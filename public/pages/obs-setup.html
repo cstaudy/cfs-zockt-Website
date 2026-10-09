@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<meta name="theme-color" content="#020c18">
+<title>OBS Browserquelle einrichten | cfs_zockt</title>
+<link rel="icon" href="/assets/img/favicon.ico">
+<link rel="stylesheet" href="/assets/css/cfs-obs-setup-v32075.css">
+<script src="/assets/js/cfs-obs-source-check-v32075.js?v=R10" defer></script>
+<script src="/assets/js/cfs-obs-beta-check-v32076.js?v=R10" defer></script>
+</head>
+<body>
+<a href="#obsMain" class="skip-link">Zum Inhalt springen</a>
+<header class="obs-site-header"><div class="obs-top-inner">
+<a class="obs-brand" href="/pages/dashboard.html" aria-label="cfs_zockt Dashboard"><img src="/assets/img/brand/cfs-zockt-logo.png" alt="cfs_zockt" width="132" height="43"><span>CREATOR SUITE</span></a>
+<nav aria-label="Creator Navigation"><a href="/pages/dashboard.html">Dashboard</a><a href="/pages/stream-maker.html">Stream Maker</a><a href="/pages/widget-studio.html">Widget Studio</a><a href="/pages/stream-studio.html">CFS Studio</a><a href="/pages/shop.html">Shop</a></nav>
+</div></header>
+<main id="obsMain" class="obs-shell">
+<section class="obs-hero"><span class="obs-kicker">cfs_zockt · OBS &amp; CFS Studio</span><h1>Deine Browserquelle.<br><em>Schritt für Schritt.</em></h1><p>Nutze veröffentlichte Widget-/Scene-Quellen oder eine Stream-Maker-Ausgabe in OBS. Dieser Assistent prüft die erreichbare Ausgabe auf deiner Website. Er kann ohne verbundenen Launcher keine OBS-Installation auf deinem PC bestätigen.</p><div class="obs-hero-actions"><a href="/pages/widget-studio.html">Widget veröffentlichen ↗</a><a href="/pages/stream-studio.html#scene-composer">Scene bearbeiten ↗</a></div></section>
+<div class="obs-layout">
+<section class="obs-panel" aria-labelledby="obsStep1"><div class="obs-step-number">01</div><div class="obs-panel-body"><h2 id="obsStep1">Ausgabe-URL einfügen</h2><p>Kopiere in Widget Studio oder Stream Maker die <strong>OBS-Browserquelle</strong> – nicht die Editor-Adresse.</p><label class="obs-label" for="obsSourceUrl">Browser-Quellen-URL</label><input id="obsSourceUrl" type="url" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="https://cfs-zockt.de/widgets/..." aria-describedby="obsPrivacy"><p id="obsPrivacy" class="obs-hint">Deine Token-URL ist ein Zugriffsschlüssel für die öffentliche Anzeige. Teile sie nicht in Chats oder Screenshots. Der Assistent speichert sie nicht im Browser.</p><div class="obs-controls"><button id="obsCheck" class="obs-button primary" type="button">Quelle prüfen</button><button id="obsCopy" class="obs-button" type="button" disabled>URL kopieren</button><a id="obsOpen" class="obs-button" href="#" target="_blank" rel="noopener noreferrer" aria-disabled="true">Quelle öffnen ↗</a></div><div id="obsResult" role="status" aria-live="polite" class="obs-result neutral">Noch keine Quelle geprüft.</div></div></section>
+<section class="obs-panel" aria-labelledby="obsStep2"><div class="obs-step-number">02</div><div class="obs-panel-body"><h2 id="obsStep2">Maße für OBS festlegen</h2><p>Trage die <strong>Originalgröße</strong> des veröffentlichten Widgets oder der Scene ein. OBS skaliert die Browserquelle anschließend.</p><div class="obs-size-grid"><label for="obsWidth">Breite (px)<input id="obsWidth" type="number" min="1" max="4096" step="1" value="1920"></label><label for="obsHeight">Höhe (px)<input id="obsHeight" type="number" min="1" max="4096" step="1" value="1080"></label></div><div class="obs-presets"><button type="button" data-size="1920x1080">Scene 16:9</button><button type="button" data-size="1080x1920">Vertical 9:16</button><button type="button" data-size="600x120">Widget-Beispiel</button></div><p id="obsSizesHelp" class="obs-hint">Bei Widget-Studio-Quellen können die exakten Maße nach der erfolgreichen Prüfung aus dem veröffentlichten Widget übernommen werden.</p></div></section>
+<section class="obs-panel" aria-labelledby="obsStep3"><div class="obs-step-number">03</div><div class="obs-panel-body"><h2 id="obsStep3">Browserquelle in OBS anlegen</h2><ol class="obs-steps"><li><strong>OBS öffnen</strong> und die gewünschte Szene wählen.</li><li>Unter <strong>Quellen → + → Browser</strong> eine neue Quelle erstellen.</li><li>Die geprüfte URL in <strong>URL</strong> einfügen.</li><li>Die oben eingestellte <strong>Breite und Höhe</strong> übernehmen.</li><li>Mit <strong>OK</strong> bestätigen und Sichtbarkeit sowie Position testen.</li></ol><p class="obs-hint">Die Prüfung auf dieser Seite installiert nichts automatisch. Für den automatischen Einbau: Im Widget Studio „In aktuelle OBS-Szene einfügen“ verwenden. Das funktioniert nur bei verbundenem CFS Launcher <strong>und</strong> OBS WebSocket; der Erfolg muss dort bestätigt werden.</p></div></section>
+<section class="obs-panel" aria-labelledby="obsStep4"><div class="obs-step-number">04</div><div class="obs-panel-body"><h2 id="obsStep4">In CFS Studio verwenden</h2><p>Öffne den <strong>Scene Composer</strong> in CFS Studio. Verfügbare veröffentlichte Widgets kannst du dort als Quellen in einer Scene platzieren und die Scene anschließend veröffentlichen.</p><div class="obs-links"><a href="/pages/widget-studio.html">Widget Studio ↗</a><a href="/pages/stream-studio.html#scene-composer">CFS Studio Scene Composer ↗</a><a href="/pages/integrations.html">Integrationen prüfen ↗</a></div><p class="obs-hint">Wichtig: „Quelle erreichbar“ ist <strong>nicht</strong> gleich „in OBS sichtbar“, „Launcher online“ oder „LIVE-Daten vorhanden“. Diese Praxistests stehen in der Beta-Abnahme noch aus.</p></div></section>
+</div>
+<section class="obs-beta" aria-labelledby="obsBetaReadyTitle">
+ <div class="obs-beta-heading"><div><span class="obs-kicker">05 · CREATOR-BEREITSCHAFT</span><h2 id="obsBetaReadyTitle">Ist dein Setup verbunden?</h2><p>Diese Abfrage liest den <strong>echten Status deines angemeldeten Creatoraccounts</strong>. Sie installiert keine Quellen und bestätigt noch keinen sichtbaren OBS-Stream.</p></div><button class="obs-button primary" type="button" id="obsReadinessRefresh">Verbindungen prüfen</button></div>
+ <div id="obsReadinessResult" class="obs-result neutral" role="status" aria-live="polite">Noch nicht abgefragt. Melde dich bei deinem Creatoraccount an und klicke auf „Verbindungen prüfen“.</div>
+ <div id="obsReadinessSteps" class="obs-readiness-grid" aria-label="Verbindungsdetails"></div>
+ <p class="obs-hint">Wichtig: „OBS WebSocket verbunden“ kommt aus dem Launcher-Status. Ob die Quelle <em>sichtbar</em> ist und LIVE-Daten korrekt ankommen, musst du in OBS Studio persönlich testen.</p>
+</section>
+<section class="obs-beta" aria-labelledby="obsBetaProtocolTitle">
+ <div class="obs-beta-heading"><div><span class="obs-kicker">06 · WINDOWS-BETA-ABNAHME</span><h2 id="obsBetaProtocolTitle">12 echte Prüfungen dokumentieren</h2><p>Jeden Punkt bitte erst nach einem echten Test bewerten. <strong>Nichts wird automatisch als bestanden markiert.</strong> Ergebnisse bleiben bis zum Download nur im Arbeitsspeicher dieses Tabs.</p></div><button type="button" class="obs-button primary" id="obsReportDownload">Protokoll herunterladen</button></div>
+ <div class="obs-beta-progress" id="obsBetaProgress" role="status" aria-live="polite">0/12 geprüft · 0 bestanden · Beta bleibt HOLD</div>
+ <div id="obsBetaChecks" class="obs-check-grid"></div>
+ <p class="obs-hint">Das heruntergeladene Protokoll enthält ausschließlich Testnummern, Prüfergebnisse und das Datum – <strong>keine URL, keinen Token, keine Accountdaten</strong>. Lade es nur dann in ein Ticket hoch, wenn du es geprüft hast.</p>
+</section>
+<section class="obs-footer-note"><strong>Fehlerbehebung</strong><p><b>404 / nicht veröffentlicht:</b> Widget zuerst veröffentlichen und URL neu kopieren. <b>403:</b> Provider-Freigabe fehlt. <b>429:</b> Nach dem API-Limit später erneut prüfen. <b>Schwarze Szene:</b> Maße, Transparenz und Reihenfolge der Quellen in OBS prüfen. <b>Keine Live-Events:</b> Plattform und Launcher-Verbindung separat prüfen.</p></section>
+</main>
+<footer class="obs-footer">cfs_zockt · Beta-Vorbereitung · Keine Live-Verbindung wird vorgetäuscht. <a href="/pages/support.html">Support</a></footer>
+</body></html>

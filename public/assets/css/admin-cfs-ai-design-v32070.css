@@ -15,3 +15,7 @@
 .cfs-ai-draft-title{display:flex;justify-content:space-between;gap:6px;align-items:center}.cfs-ai-draft-title span{font-size:.7rem;text-transform:uppercase;color:#88cfef}
 .cfs-ai-export{display:flex;align-items:center;justify-content:space-between;gap:16px}.cfs-ai-export p{max-width:750px;margin:0}
 @media(max-width:900px){.cfs-ai-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:580px){.cfs-ai-kpis,.cfs-ai-admin-nums{grid-template-columns:1fr}.cfs-ai-export,.cfs-ai-gallery-bar{flex-direction:column;align-items:stretch}}
+
+/* v3.20.72 verified cloud bridge */
+.cfs-bridge-check{margin:14px 0;padding:17px 19px;border:1px solid rgba(32,199,255,.42);border-radius:15px;background:linear-gradient(120deg,rgba(9,39,67,.88),rgba(5,17,35,.92));color:#def3ff}
+.cfs-bridge-check h3{margin:0 0 9px;color:#44ceff}.cfs-bridge-check p{margin:5px 0 10px;overflow-wrap:anywhere}.cfs-bridge-check small{display:block;margin-top:8px;color:#a9c1d8}

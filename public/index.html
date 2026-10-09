@@ -37,21 +37,24 @@
   <link rel="stylesheet" href="/assets/css/cfs-brand-unified-v192.css" data-cfs-brand-v192>
   <link rel="stylesheet" href="/assets/css/cfs-brand-v198.css" data-cfs-brand-v198>
   <link rel="stylesheet" href="/assets/css/cfs-product-v199.css" data-cfs-product-v199>
+  <link rel="stylesheet" href="/assets/css/cfs-neon-redesign-v32071.css" data-cfs-neon-redesign>
+  <link rel="stylesheet" href="/assets/css/cfs-surface-v32073.css" data-cfs-surface="v32073">
 </head>
-<body data-cfs-product-v199="1" data-cfs-brand-v192="1" class="public-home brand-home cfs-gaming-home-v112 cfs-gaming-home-v116 cfs-brand-public-v180" data-brand-refinement="v180-brand-public" data-cfs-brand-v198="1">
+<body data-cfs-product-v199="1" data-cfs-brand-v192="1" class="cfs-r6-ui public-home brand-home cfs-gaming-home-v112 cfs-gaming-home-v116 cfs-brand-public-v180" data-brand-refinement="v180-brand-public" data-cfs-brand-v198="1">
 <header class="site-header gaming-header">
   <div class="container gaming-header-inner">
-    <a class="gaming-brand" href="#start" aria-label="cfs_zockt Startseite">
-      <img src="/assets/img/brand/cfs-zockt-mark-clean.png" alt="cfs_zockt">
+    <a class="gaming-brand cfs-neon-brand" href="/" aria-label="cfs_zockt Startseite">
+      <img class="cfs-neon-brand-logo" src="/assets/img/brand/cfs-zockt-logo.png" alt="cfs_zockt"><span class="cfs-r6-lower-brand">cfs_zockt</span>
       <span>GAMING · STREAMS · COMMUNITY</span>
     </a>
     <button class="mobile-toggle gaming-mobile-toggle" data-mobile-toggle type="button" aria-label="Navigation öffnen" aria-expanded="false">MENÜ</button>
     <nav class="nav gaming-nav" data-nav aria-label="Hauptnavigation">
-      <a href="#warum">Warum?</a>
+      <a class="active" href="#start" aria-current="page">Startseite</a>
       <a href="#streams">Streams</a>
       <a href="#games">Games</a>
       <a href="#community">Community</a>
-      <a href="/pages/login.html" data-login-link>Creator Bereich</a>
+      <a href="/pages/creator-suite.html">Creator Suite</a>
+      <a href="/pages/creator-suite.html#creator-shop">Shop</a>
       <div class="gaming-nav-mobile-auth" aria-label="Creator Suite Zugang">
         <a href="/pages/login.html" data-login-link>ANMELDEN</a>
         <a class="gaming-nav-mobile-primary" href="/pages/login.html#regForm" data-auth-cta>KOSTENLOS STARTEN</a>
@@ -71,7 +74,8 @@
     <div class="container gaming-hero-grid">
       <div class="gaming-hero-copy">
         <div class="gaming-kicker" data-site="identity.hero_kicker">GAMING · STREAMS · COMMUNITY</div>
-        <h1><span class="gaming-brand-mark">cfs_zockt</span></h1>
+        <h1 class="cfs-r6-home-title">Gaming.<br>Content.<br><span>Community.</span></h1>
+        <p class="cfs-r6-home-signature">Willkommen bei <strong>cfs_zockt</strong></p>
         <div class="gaming-hero-subline"><i></i><strong>GAMING · LIVE · COMMUNITY</strong><i></i></div>
         <p data-site="identity.hero_text">Ich bin cfs_zockt. Hier geht es um meine Games, LIVE-Streams, Community und darum, warum ich dieses Projekt überhaupt aufgebaut habe.</p>
         <div class="gaming-hero-actions">
@@ -86,6 +90,17 @@
       </div>
       <div class="gaming-hero-art" aria-label="cfs_zockt Gaming Setup">
         <img src="/assets/img/home-v116/hero-stage.webp" alt="Gaming Setup mit CFS Logo und blauem Neon-Licht">
+      </div>
+    </div>
+  </section>
+
+  <section class="cfs-r6-entry-section" aria-labelledby="cfsR6PathsTitle">
+    <div class="container">
+      <div class="cfs-r6-section-heading"><div><span class="cfs-r6-kicker">DEIN EINSTIEG</span><h2 id="cfsR6PathsTitle">Alles an einem Ort.</h2></div><p>Vom Stream über eigene Designs bis zum Creator-Workflow. Wähle den Bereich, der zu dir passt.</p></div>
+      <div class="cfs-r6-entry-grid">
+        <a class="cfs-r6-entry-card" href="#streams"><span class="cfs-r6-entry-icon" aria-hidden="true">◉</span><strong>Streams &amp; Content</strong><small>Was gerade läuft und woran ich spiele.</small><em>Live-Bereich ansehen →</em></a>
+        <a class="cfs-r6-entry-card" href="/pages/creator-suite.html"><span class="cfs-r6-entry-icon" aria-hidden="true">⌘</span><strong>Creator Suite</strong><small>Widgets, Szenen, OBS &amp; CFS Studio.</small><em>Tools entdecken →</em></a>
+        <a class="cfs-r6-entry-card" href="/pages/creator-suite.html#creator-shop"><span class="cfs-r6-entry-icon" aria-hidden="true">◇</span><strong>Designs &amp; Shop</strong><small>31 Originalwelten in 16 Farbvarianten.</small><em>Designs erkunden →</em></a>
       </div>
     </div>
   </section>

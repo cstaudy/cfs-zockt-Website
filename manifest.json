@@ -1,37 +1,686 @@
 {
-  "from": "CFS AI v20",
-  "to": "CFS AI v20 + Design Factory 3.20.69",
-  "format": 1,
-  "files": [
+  "project": "cfs_zockt",
+  "base_version": "3.20.71",
+  "revision": "R11",
+  "type": "cumulative_non_destructive_update",
+  "compatible_from": [
+    "3.20.71 original",
+    "R4",
+    "R5",
+    "R6",
+    "R7",
+    "partially updated known files",
+    "R8",
+    "R9",
+    "R10"
+  ],
+  "release_approval": false,
+  "beta_approval": "HOLD",
+  "paid_design_checkout_enabled": false,
+  "includes_original_design_archive": false,
+  "entries": [
     {
-      "path": "app/main.py",
-      "before_sha256": "43d72d13a8a945e8add3bd531c8890676b3e71849e0486fb54cc91afdeafff3e",
-      "after_sha256": "13822d5468dcf01c86d342e63b5a624ede557d0a9dd676b9f4578e79821156fa",
-      "size": 52619
+      "path": "lib/cfs-ai-bridge-health.js",
+      "sha256": "57cf0741edf3aa198159e5c610cedad1b8bdf3b3a8dbba1e22539858a29cde64",
+      "accepted_prior_sha256": [],
+      "create": true,
+      "size": 1565
     },
     {
-      "path": "app/autonomous_studio.py",
-      "before_sha256": "d8af00552128bc4d3120647bb47f58e681384ffc250c1ef35493565895494dcb",
-      "after_sha256": "ae11430f7b9e7040d5a066b7274432614130b0a8118fd924ccdee280b482c50c",
-      "size": 19192
+      "path": "lib/private-html-policy.js",
+      "sha256": "781ebe3c0886010c64f9bf1b1e4eb17f7fea481c9da0f9bc9afc17525b89f62a",
+      "accepted_prior_sha256": [],
+      "create": true,
+      "size": 1102
     },
     {
-      "path": "app/design_factory.py",
-      "before_sha256": null,
-      "after_sha256": "96b854fe9865c1ef2f0c65a238d4b34ded3283dc1d46ac0383b177cc813d948d",
-      "size": 27351
+      "path": "public/assets/css/admin-cfs-ai-design-v32070.css",
+      "sha256": "4a3545ba5990931e961903aa2087e978dd4301f21f3ac9315afc88a02812885c",
+      "accepted_prior_sha256": [
+        "d062527d26815239c6a126cbae60aa091551eb4aacb0edf1e99f4d4f3344ecb2"
+      ],
+      "create": false,
+      "size": 2695
     },
     {
-      "path": "tests/test_design_factory_v32069.py",
-      "before_sha256": null,
-      "after_sha256": "a360d69306d0e009a1985ce74b81c0164a3b39b167d6f94f92f47f95b892955f",
-      "size": 6108
+      "path": "public/assets/css/cfs-neon-redesign-v32071.css",
+      "sha256": "69a7f9169656d59b8bc8247c87d982943ca3b77bb7b44a879ed3155ec94ca6f1",
+      "accepted_prior_sha256": [],
+      "create": true,
+      "size": 3005
     },
     {
-      "path": "web/design-factory-v32069.html",
-      "before_sha256": null,
-      "after_sha256": "42aa5ae0283c4385cc7aaef0b3a04516bcb83663ba00892330bd65333897803b",
-      "size": 8197
+      "path": "public/assets/css/cfs-obs-setup-v32075.css",
+      "sha256": "15a658f925726e7d904529e97bc9053dd09d55f7844db205b90257ba84940499",
+      "accepted_prior_sha256": [
+        "523dd786eecabf755f54fc0d14f0c007da5f43adec7702c045b9507811785074"
+      ],
+      "create": true,
+      "size": 7168
+    },
+    {
+      "path": "public/assets/css/cfs-surface-v32073.css",
+      "sha256": "16b5c18b058fbe34484cc07ca95d3faf770d6967431a3f33d61bb7c720bd39cd",
+      "accepted_prior_sha256": [],
+      "create": true,
+      "size": 15703
+    },
+    {
+      "path": "public/assets/css/cfs-workspace-surface-v32074.css",
+      "sha256": "3c94f81ad7a144a583998a386d3cbf441c4e9640055dc4329a9d826992eb1d74",
+      "accepted_prior_sha256": [],
+      "create": true,
+      "size": 7286
+    },
+    {
+      "path": "public/assets/img/brand/cfs-zockt-logo.png",
+      "sha256": "8a37acafdf25abd835845cdc7347429a5ce07433f4dfc5f5e15c35413de89a08",
+      "accepted_prior_sha256": [],
+      "create": false,
+      "size": 68357
+    },
+    {
+      "path": "public/assets/js/admin-cfs-ai-design-v32070.js",
+      "sha256": "4abefc2454dd25a00068d094e2108560ce838f0afa308e394d777bac20aabe44",
+      "accepted_prior_sha256": [
+        "a7b689a283eb06a35923e30cd502959701af6a6c5371d52c3b77b326fffb7c7d"
+      ],
+      "create": false,
+      "size": 8536
+    },
+    {
+      "path": "public/assets/js/admin-shop-checkout-gate-v32072.js",
+      "sha256": "64c07eae625bb3f47daf3f772283a9fcef82c477f583c4420f4eacebdf52f41c",
+      "accepted_prior_sha256": [],
+      "create": true,
+      "size": 1002
+    },
+    {
+      "path": "public/assets/js/cfs-obs-beta-check-v32076.js",
+      "sha256": "a3424e65f01396f67d3ce53f9c071b0bfcbc2687d75374c9c82e24866264bfe9",
+      "accepted_prior_sha256": [],
+      "create": true,
+      "size": 6976
+    },
+    {
+      "path": "public/assets/js/cfs-obs-source-check-v32075.js",
+      "sha256": "8d6a2d3f1b87ec5d410d3f80b904c3c0413417adacf42405b79e3e2b95aeb0e6",
+      "accepted_prior_sha256": [
+        "97f07826cffff0265ece14d2ad2975d3dbd903dc9cefece46726e88e1bb6300a"
+      ],
+      "create": true,
+      "size": 8508
+    },
+    {
+      "path": "public/index.html",
+      "sha256": "943959ad71f9ad05c086744b047a16f788da12c808d8811895b30e0f1ada3b1b",
+      "accepted_prior_sha256": [
+        "571ef52abedd599121f1ae100a0be410b1591f5ac22b5fbec2275bcdaf9fdd75",
+        "c849b3fb1ef649507b373619a69fa9d5a21b3e9cd1694d3af7139ab1358f37fa"
+      ],
+      "create": false,
+      "size": 23689
+    },
+    {
+      "path": "public/pages/account.html",
+      "sha256": "f16ef621374a3628fbac33cf5bf9fc6792ba84e3330fca875916b029b483b4f2",
+      "accepted_prior_sha256": [
+        "0cbfba94eddda3a56f1e3e7427e091f10a9683fb5abaab18ce7fd443cc902815",
+        "2c6b487da3bf320a4e58a4fa235572af97d5b39c519545c4c79ead5b1ea4c15e"
+      ],
+      "create": false,
+      "size": 25737
+    },
+    {
+      "path": "public/pages/admin-creators.html",
+      "sha256": "bdc4cd52dc2fc54d5a5aca30329ea494e2e92cd2b56cdbbe0521d802acd7b7f8",
+      "accepted_prior_sha256": [
+        "57b24267a8c5c59183b2953f88b004bc9afd0932e6be7e9fbb8aca242d7f061b",
+        "67d73c78a27399391c6f6c3dc6ab5ccdc1e330dc87c856cc971608b6510bb642",
+        "8bc7f18a67777dc15eca346e07962b5090136030e4477e1a60f86061f05d5908",
+        "d3ae770bc81092ebda71efeaf22592a65a8cae63719779b4b92ab30d4b905519",
+        "c7c92f50be480b8deffb9ea1df582da7c3ba99487778acca64acb760b56651ad"
+      ],
+      "create": false,
+      "size": 48028
+    },
+    {
+      "path": "public/pages/admin.html",
+      "sha256": "5b0a620df48114a34c8bb21ecbbe66bc908829968d37b3c02873d7f1b8f508fc",
+      "accepted_prior_sha256": [
+        "1cf8e1bb762235aa1cb026a6463b2f3dbbc5c8a28beac9fab2d5fd884cd5e53b",
+        "ce6e77725560c78b0fbcd91bb79f154d69e35a761e1e295f84f94b606d0714e3",
+        "2c987dbfaec01d4bb086da6aec50f035428709afba24febf242590d640e9cefe"
+      ],
+      "create": false,
+      "size": 6931
+    },
+    {
+      "path": "public/pages/audio-studio.html",
+      "sha256": "4933b49835365693e1d63fb72cda25cc2dbc96ad5a0ff538b48aaf03424c76a7",
+      "accepted_prior_sha256": [
+        "640d8ccded55cedfa14184f4150be785d6aa215993e3253b672411be7af0c949",
+        "d06deb17a9f3e149680bbc8e7bb35712ac9ab992c1a87cf1c0f887788b4b3061"
+      ],
+      "create": false,
+      "size": 12897
+    },
+    {
+      "path": "public/pages/beta-acceptance.html",
+      "sha256": "e268ccec93ecb7f95379d1540ad1bb2e4d041d6a39d4176cc9e23788aea515f4",
+      "accepted_prior_sha256": [
+        "5ed2c5320fc06a6bfb30c72564a871d7ee4e385e53f1e6f0178165ed33dcccf0",
+        "e796d6c802c11bbf6809b1f4df4355242a92d690f589df8f19d5f27031c48c8a"
+      ],
+      "create": false,
+      "size": 4293
+    },
+    {
+      "path": "public/pages/cfs-ai.html",
+      "sha256": "41c5fa14dff697fd9c0726c8fb936e5510281e353932c7453ba97e3655cf164d",
+      "accepted_prior_sha256": [
+        "5cafb61960a1032d54cefb47d10b847ec49c977b4f303d3e3c924ca200056fc9",
+        "7623339fd11f554ae8529c7920a8719449e60035acc9c715e42dce751aa9371e"
+      ],
+      "create": false,
+      "size": 10110
+    },
+    {
+      "path": "public/pages/creator-suite.html",
+      "sha256": "b1f622efa2099cc3a32626f29f3d8457175d662537a3216d8aadedc06d2a9b98",
+      "accepted_prior_sha256": [
+        "213409ea12f2f5810201e6e000b80409f718f9dbdd773316bd74f53596f2e392",
+        "32f98bbfa9a70e38ad6c187ac0316c9cd9e32ae0026885bdd9a0b703e383a726"
+      ],
+      "create": false,
+      "size": 18588
+    },
+    {
+      "path": "public/pages/cut-studio.html",
+      "sha256": "4132d9cd425acf514a2dc27c4dd9f4c519500441e70720250b587f8b23f767fc",
+      "accepted_prior_sha256": [
+        "1f35c38e018c5bf94a2f8300e8dc36b2ff1064feb9b247646f1d7132139acd74",
+        "2ac52b2cca9c11da32d9f627681860918db57fa7d9926a87b2ba031a23fa0da0",
+        "5a6656c2b21b87d0964912f0ab0a8cd43946dbdcbfe0e0cd4139b87d292d88ae",
+        "b017fa6714c515a3fa1f4379f5299841d209561defcc846b55c028bd7aa885c5"
+      ],
+      "create": false,
+      "size": 34776
+    },
+    {
+      "path": "public/pages/dashboard.html",
+      "sha256": "498a0f7f86c92ad9e4f6e102d9849242e346cc46d00d7d8a96cc97b17123b128",
+      "accepted_prior_sha256": [
+        "13cab682e971d1bbf9842e27d13e12a182d3449322f54fe4f2b92634a8a2d326",
+        "886f06e9db30d3a1a52c75caf602c4c1d6b1fb8b893577eb23be210349837b73",
+        "d4f733c1795f74a5d53c4e51b9dab2fc78749fdaf69a185ec1c16eec045c3c39",
+        "f443c7ac2693852d3cd8eff30dfbf82509dbf9f7b5acc2214f3ff44e5fabb227"
+      ],
+      "create": false,
+      "size": 19693
+    },
+    {
+      "path": "public/pages/datenschutz.html",
+      "sha256": "2e3747ad05be2c90457ae458741dc913efc09bbaecda802c0cdf0820532b1482",
+      "accepted_prior_sha256": [
+        "5e9e241f1c0dc56ed86c4a82fa181011ed86733af65e990c28a38d0b241d29b9",
+        "ad9e9c87689fd615a18b2d7c59da57ba2c33d7c55a4613c6a1586b45048ef4f9"
+      ],
+      "create": false,
+      "size": 16917
+    },
+    {
+      "path": "public/pages/editor.html",
+      "sha256": "c9c2f8e857f3ad49c9d6094b5f96cbc3abcd1d4b43e2f747bfc2d931d12f726a",
+      "accepted_prior_sha256": [
+        "51a5e8a0d58dfc79fefe7d0a90edc511f795778cf4ba776b0e523f689b0c7649",
+        "67f130f93bbdf435547b570cb17dd22cee6736aa4bbadfa41ece9282229d26f2",
+        "802fe7ac9ebb6c4024f134f60a7eabd715ea137b038dd7459b41b23abb60c171",
+        "c1011fa8b29f28715c309ec1a1bea6c507ede9209836636902bc6dcecf8249ec"
+      ],
+      "create": false,
+      "size": 113646
+    },
+    {
+      "path": "public/pages/error.html",
+      "sha256": "1cc22933c7570443f7c3fa3c703e869f441b8546dd7d96c0d02ef17ca29f6ae5",
+      "accepted_prior_sha256": [
+        "5d94efe39f10ece2f37bebc60b25e53fb2abb77aa28552cf8f8622b53632a009",
+        "93b789ff78c3847c5dd48570bb86e243fbd871b136e1fe4a7531d983f3481ceb"
+      ],
+      "create": false,
+      "size": 2271
+    },
+    {
+      "path": "public/pages/forgot-password.html",
+      "sha256": "2b2d2a7cf378196e74ca807acf4a273ff0952feb7a6a0d23ca773888de6ff4e8",
+      "accepted_prior_sha256": [
+        "48e3b2f122620912428ab43d3802ccd8a9cb872c967e7ed4eadc047065563100",
+        "9ec50afb48f17ad5a66a639bf969a7e17ee56422ac215f8fcc0632fb4c9080a1"
+      ],
+      "create": false,
+      "size": 5773
+    },
+    {
+      "path": "public/pages/games.html",
+      "sha256": "a687d61794a4476014ae6a328c3130af4ee66bc5bc8a042d7212efd1dcb97f2b",
+      "accepted_prior_sha256": [
+        "158b93743e3971b783f2130a126d8e3e6cb1acbc953ea4c13901a3cbe936eb79",
+        "16d62c066fda40ba8a5a58f76035eed2b8aaaac7c5e3474c1d4dc42800bd9e32"
+      ],
+      "create": false,
+      "size": 10738
+    },
+    {
+      "path": "public/pages/impressum.html",
+      "sha256": "4e9a053d1bb9ed5336ea9130e7af43c1e2527d72af8f041de521f84b41898ff6",
+      "accepted_prior_sha256": [
+        "0c7bd0cfee676223985ed8b8a96e074c018ebb16509bbe1e4fb871edf15e6e8f",
+        "24d95f7a722522d94c2ea2ae9159b53657837400f08bf51e4955dc5351b957ab"
+      ],
+      "create": false,
+      "size": 7592
+    },
+    {
+      "path": "public/pages/integrations.html",
+      "sha256": "118a44376e3ce6ed4c102203fefa251217eff4d244076082a31b1173e7c9c653",
+      "accepted_prior_sha256": [
+        "0a0f36b6dcddc1aca50a819a9221beae80a6b8a2820d2614bf9f49e2c2be6c4f",
+        "faadb01607b590d7daef55dbb0417fef66a33e47cf8a441697d9112141a4bf21"
+      ],
+      "create": false,
+      "size": 11036
+    },
+    {
+      "path": "public/pages/launcher-connect.html",
+      "sha256": "cb4ebdff298d7fa06eb5c2c9ae9a414b85a3163828b2511ac302eb5bf239bfbd",
+      "accepted_prior_sha256": [
+        "5367bbd72c028031696c63059f0f6ab56de7b4144d034d405d74c538cf8ca651",
+        "cd2b63db592677dddb63d38cf27cc2bdbe3f5d91337d61e5060a397204ef39af"
+      ],
+      "create": false,
+      "size": 6273
+    },
+    {
+      "path": "public/pages/launcher-download.html",
+      "sha256": "0cfb4ce28a9b9099825405963f271f934c68f65cebbb96036f3effe87a920388",
+      "accepted_prior_sha256": [
+        "030ee864f1271a8c3ec1a862e824cb75d6f70dc8f6024e223f57b5364b6eb673",
+        "2a7f7a2c4bdd5b8c7f7581684617f6e3876c8266fe146b99de06e68283f443bf"
+      ],
+      "create": false,
+      "size": 11833
+    },
+    {
+      "path": "public/pages/launcher-provider-connect.html",
+      "sha256": "0af8d3da61380dbcc662a66c82aa8f37c62d4ac7e7695d3fa44887e693f507b1",
+      "accepted_prior_sha256": [
+        "f25da77861ff3ac5e534e31f8402fed7a8c244ebc2372db9e25e607165b7c227",
+        "f4c130d646be57aacb4d07b52d553cac9ec641156514fd35ddd765a5ba9fd72d"
+      ],
+      "create": false,
+      "size": 2889
+    },
+    {
+      "path": "public/pages/launcher.html",
+      "sha256": "5ca5b8e310700a7763deddfc672b3383f5e83a09d3dc8746411852ea40490572",
+      "accepted_prior_sha256": [
+        "225f27f5daf0599ec23fa4dbcd20b95f8d892bb0638ddf92f1098fe4f6d4dd6e",
+        "cb93f4b094964906706f267c42cc1fe47a8ba9c2af37f6846173396a7f91e9cd"
+      ],
+      "create": false,
+      "size": 12159
+    },
+    {
+      "path": "public/pages/login.html",
+      "sha256": "c8ac4771870b16eed2b065b68e8a51fb708853d58858c990c8264dcf2c88dffc",
+      "accepted_prior_sha256": [
+        "2407aa3a0edda7548a8d18c49a530cae30d3dbd17572f5004bf0543c98f2321d",
+        "bb5ae60b4382ecd52ca53ac6f2d6a6465a45140e0193b48bf952b8a7b94c1a22"
+      ],
+      "create": false,
+      "size": 12934
+    },
+    {
+      "path": "public/pages/merch.html",
+      "sha256": "3f2290e6d9d7619887c07698951145d0ad48c1c7c154ae20b82e8ddabceaa295",
+      "accepted_prior_sha256": [
+        "0e43119159f748139cf5d794b781b0e5b902ebabc50ac407daa9910065c56212",
+        "62c5cb2ab89b97c3f81006e66466e2a83808de375d4e1c99dc43f77a1911257b"
+      ],
+      "create": false,
+      "size": 15416
+    },
+    {
+      "path": "public/pages/nexus.html",
+      "sha256": "c43294fc66bad127d57fee2542146b2be712299e93095641da3495d0bc3cf4ee",
+      "accepted_prior_sha256": [
+        "3b98989e0b792d855a092166aaa1e1ffb7aadb39606ab433180e815eb32cb941",
+        "7ddfa3fdd6f7c43c6fc9aa1cd649d069b94121ae6395bdba54e9970e193417d9"
+      ],
+      "create": false,
+      "size": 7735
+    },
+    {
+      "path": "public/pages/not-found.html",
+      "sha256": "94e871cddceff712de11099158410b94b004fe65a9870196ff6a1fe6946fb29a",
+      "accepted_prior_sha256": [
+        "20841621b0fd1823d692f5b34a1e30ec04d875efdefc8722c8d518cad4a296a7",
+        "d5aaefeed584b40b13952342173ff08358d7f96cbc1d5fbee328aaf3c4827c5b"
+      ],
+      "create": false,
+      "size": 2177
+    },
+    {
+      "path": "public/pages/nutzungsbedingungen.html",
+      "sha256": "1e24d1fb4184bb136839167c4aaa01f1d6713bba8dfd740ad06e210f43a85398",
+      "accepted_prior_sha256": [
+        "43a9bbde0a5c93a4b3083f9df81da81bce7cc1242c7cdf3d1e682ddcd1992c2a",
+        "9df01eeeade3f2a4f5e529ee55e32db0a69de0a05e147812140f98dd0a1c5f2e"
+      ],
+      "create": false,
+      "size": 13229
+    },
+    {
+      "path": "public/pages/obs-setup.html",
+      "sha256": "478eb294e8df9922e6e4cdfc1a53e89d48b696b7231d2a677d1de4252a1727d6",
+      "accepted_prior_sha256": [
+        "3896b1fba8279a4c97688e641fdd9eb849fd08fb5cf53c9a05b2a31aad58e0cf",
+        "ce6582aed5ac057e3b519a34744ebb28a7eedcbefbeb4d4335bcffe2f1878dc1"
+      ],
+      "create": true,
+      "size": 8402
+    },
+    {
+      "path": "public/pages/original-design.html",
+      "sha256": "47d43418d46c7f049d49644ed849f80611932b56e9013fdc872dec210ccbf4cc",
+      "accepted_prior_sha256": [
+        "57ee16711d971dc693f9ca708e20f8501cda9a4e305aef6df9ff84caf84bb0ae",
+        "d4d7df01e6e97f249f8bd053a9a681d8cd89f9f77badaf791eb6cd0f47e37af8"
+      ],
+      "create": false,
+      "size": 7290
+    },
+    {
+      "path": "public/pages/plans.html",
+      "sha256": "08dcf5aa4eda6314e408488c3b3c6d0ca18692370e4096cad66c7e9da3c2ea47",
+      "accepted_prior_sha256": [
+        "010ba4f3502abdf3b23c112c96947a55f4af06837f5250f74fc4120106399541",
+        "11d843e9c1822029e552c73283e763fb44dd76f5c9aa8e49617227d399fe4f44"
+      ],
+      "create": false,
+      "size": 11765
+    },
+    {
+      "path": "public/pages/reset-password.html",
+      "sha256": "5cf8436ba814e562cbac666164764fbd5231af8dc9a7f0ff41d56fcaa161aeb2",
+      "accepted_prior_sha256": [
+        "48a7ec31d03d3b1043b10d66381ded3fae8c1098728136538357da0521a10de2",
+        "4f23dcd706a784dcfaa1aab20a0757e16bbca7ea6ee295661fd08f55bc66d6a3"
+      ],
+      "create": false,
+      "size": 5615
+    },
+    {
+      "path": "public/pages/roadmap.html",
+      "sha256": "f084858f695ea576aaf77aec3e7ef70d63eec6b61f213b770634ffc39754ba43",
+      "accepted_prior_sha256": [
+        "0a3f196ad754fc3a20d625612dbe7bf6d365f9054a3a80650971a1186e27cc2f",
+        "6f00b1cf68e0532f551814f1444ea4280063a01e5363eaf569da31bb299f088d"
+      ],
+      "create": false,
+      "size": 12685
+    },
+    {
+      "path": "public/pages/scene-studio.html",
+      "sha256": "0a545cde22c56e38d9904d53fb27cf0f98f41fb60eab5c3a30b32d20c7537d59",
+      "accepted_prior_sha256": [
+        "39f4c003baa35411d3d0888242df2d67f9c1dc68cc2d056fd8ead2278ac1d2fa",
+        "94483f3d71e5e9e43afc7386d7e1511d0abf3cbae4b2a9b79331f931e7a8d9a2",
+        "d6905f73b81bef24831fc6fe50cf0372e46a304c4b169a9479ec1c33b95b1b71",
+        "e1545a49bce31e8d72a7202a2732f1446db5dfd1f62474a1542a55e199df83a3"
+      ],
+      "create": false,
+      "size": 12132
+    },
+    {
+      "path": "public/pages/security.html",
+      "sha256": "78d05c2b238e12c7463370be40b88d7bc6f3b7c915f662a8b41919d119941846",
+      "accepted_prior_sha256": [
+        "0db534c1ee7c0dee3537c1d17d94403f0b8ba8bcbcd7f4b71c484ecbe3af17e8",
+        "12dcb5c0a2f04b6befc387f7351716b6f5bc1b41dc473b011e885c661d58d57b"
+      ],
+      "create": false,
+      "size": 18990
+    },
+    {
+      "path": "public/pages/settings.html",
+      "sha256": "50d4f41720805e83029ba7f93b68fb3e74852a7f4dfa6b87284682ed13801317",
+      "accepted_prior_sha256": [
+        "9f0a02ff04816ac772e00f18738549d9399bbbb7631c74944e6e075e48e48229",
+        "ffcf6a6e4d51be42effea7bc745d264f4ac49ecc173cc26be959c219db7b065f"
+      ],
+      "create": false,
+      "size": 7802
+    },
+    {
+      "path": "public/pages/setup.html",
+      "sha256": "71e372dd03a186bbb9f3abf0e65718b4cacf8f3ef8a471d650dc0f0a794c2eda",
+      "accepted_prior_sha256": [
+        "a7ec3bdd35615da453f95aad40ac3eb17d09165bcabb5c419397e0ef30553675",
+        "bee2ee4bfcbc14947f8cf420e6761308cb9eb741c65dec011a202fd5894c6fb5"
+      ],
+      "create": false,
+      "size": 8794
+    },
+    {
+      "path": "public/pages/shop-product.html",
+      "sha256": "3712b9ccd668a5c630e97ca0b44b18dd4842f7f05ff65a237ea3ea56f38b4e1d",
+      "accepted_prior_sha256": [
+        "2470932eddd16f37a3e963b69091cf6000f8240caf9c702844f3eb834e083569",
+        "957c5e17c59b8454bb8518d25badade6e7d5025676854e263cfcc00ff74c8c7d",
+        "f1e27d4aca139895a4b4e022785b11101efee61401b286b9c5bb3993a9554399"
+      ],
+      "create": false,
+      "size": 3832
+    },
+    {
+      "path": "public/pages/shop.html",
+      "sha256": "0cf98cb2cf0b9cf267d3457efd3742830d6da806db67d2fab4bfd68bbfdb0be9",
+      "accepted_prior_sha256": [
+        "3b7e9c9bcb0fa6125a513f9fc610956441a6a45e6324602caea09ba3c3d825e0",
+        "4f04ee801041ab0e17f5f2f4d05ab71bc18a396265062375bf4f8dfa49def5da",
+        "9b6d0591471e5334f6d909e87092c51a35704e63d9a2245b0e8ac7f20a865bb3"
+      ],
+      "create": false,
+      "size": 15341
+    },
+    {
+      "path": "public/pages/stream-maker.html",
+      "sha256": "4d7b0717eeb192ea92187dc835ecc8a8d6ecd135572597aab804950ece76be4d",
+      "accepted_prior_sha256": [
+        "46fbe0b1c1fa1131869ab82e88c48b161dff94da97b9f1d88ddbfaeb2aed5dfa",
+        "506305e5a52e06341a59a9aece194bde3145b59fafa0910a4dd44c83fde4d642",
+        "805396e1654262a8a2315f2c8ab253bae472625347d62934ff5c3b80f5d3d00f",
+        "e7291ffe09de6da13d10425a66f974e9c478098362faa954feb3465fddc41461"
+      ],
+      "create": false,
+      "size": 16492
+    },
+    {
+      "path": "public/pages/stream-studio.html",
+      "sha256": "b426e7e2212b3771200c1479ba38d0f13f391119c57e72b23972908626c0e596",
+      "accepted_prior_sha256": [
+        "2eb0cdf6d08a518d58786c8e364d96625abd6519255c4fb8de1ae804d0200327",
+        "860b25bb49e8f6c05acb29372d4505e453c4305ea1916a2e3beb216914df3c4d",
+        "a6192517e57b2a666b883923595c0009dfea3bcec4019bb0864a94815359076a",
+        "c03981960774a8c802738038a881d0b8ccbe80b5cf55f153659ef63db6aff8ac"
+      ],
+      "create": false,
+      "size": 46825
+    },
+    {
+      "path": "public/pages/support.html",
+      "sha256": "f3ff11efe54657b66b8de3d72193b3cddb9566ca1881dca34896504b41dd9ffb",
+      "accepted_prior_sha256": [
+        "05111af9cd3f13251c07e8fe9cceaeb5e4844ef1df3a6c524bf8c24927eddcb0",
+        "60c52d6b53ef9fd7ca87c6a68b466997d706baa928c49c7c9643a1f2e2f0ae82"
+      ],
+      "create": false,
+      "size": 12822
+    },
+    {
+      "path": "public/pages/system-check.html",
+      "sha256": "cbc7d7a5259eb3be77fd742eae39a42a91f1b0baf54dcf1419b78ea8fd5ff1dd",
+      "accepted_prior_sha256": [
+        "043c9963e2dd525d54bed829283ffde8cce57a6e75ed240e4d40610a3fee524e",
+        "fb679066808e50ba4510a84fc40963f12b0d01a3f5d3f76b2cffb71bd0768de4"
+      ],
+      "create": false,
+      "size": 8627
+    },
+    {
+      "path": "public/pages/technical-status.html",
+      "sha256": "b33bc502cf742126d55df49a3331ca194d4a3b285ab52d3f5422aa458f0d2014",
+      "accepted_prior_sha256": [
+        "0274d90d4995e55a1b725e28f46e63a723283791d74b0834591071faa26f0d37",
+        "e9f5e86f63655f847db5b6517ef5a85dccef7b44a78c0d751bb7f92f13e696da"
+      ],
+      "create": false,
+      "size": 9317
+    },
+    {
+      "path": "public/pages/tiktok.html",
+      "sha256": "b08f81954bc669d8c14693082103015525de5325f86fcfef9a5c178930b76df5",
+      "accepted_prior_sha256": [
+        "36806a75948a35e61a9eca0640da89eadefafeaa32a0614f7837b53e98d15400",
+        "79279b260aa3307077263b084e689f3cd45e44e5b11ce72ac83a30f0bf1d9202"
+      ],
+      "create": false,
+      "size": 9138
+    },
+    {
+      "path": "public/pages/universal-builder.html",
+      "sha256": "53a37695b4de22fd8e857bd28745e0d658fef81f66201e9473dfad410916b389",
+      "accepted_prior_sha256": [
+        "21b2f84aa330c06dc73f346595f7b63707126b303be994a1b2ab2f5c2e40d69f",
+        "47d8d87483e4bb93405f7169ca333af4472c0816f1fa809bf412ec2a748aa435",
+        "5291f490b726a53112f0b4fc9142a2f3a1d4a964ef2addf7438227938986e6b4",
+        "88bc6af124f18e65d8d11cbf9a3c8e4c27cc49a16aa00e11d5536a035c99e864"
+      ],
+      "create": false,
+      "size": 12709
+    },
+    {
+      "path": "public/pages/verify-email.html",
+      "sha256": "1e4bac23477c534d5cd67e6cd00034c0ba75ca643ab50d598c7753002d2a5eeb",
+      "accepted_prior_sha256": [
+        "525ef67ea624bdf12ad3c411a4da631fc94bcd02e8f3b1323addf7711cb1c26d",
+        "c37c4b8c7fbf9505b728e9e931d8f1c1ee30bbf32838d70f9bf80460c5089426"
+      ],
+      "create": false,
+      "size": 5498
+    },
+    {
+      "path": "public/pages/widget-studio.html",
+      "sha256": "7826dabb0f828cc0abbceb870e0d7475f85a07cdba7326be82719d3ba92cf399",
+      "accepted_prior_sha256": [
+        "ac409ce44aa4db0b21251e846bf98f010fdab668db3092458fe9d1381a818ac0",
+        "bc23e18c0425716f926ca577c4abd60e28df3e48d5fd0a43117a005fc3d66e7c",
+        "d4030e28a99cfbbbc6118825d3a08cedc0f3085883eed2e628f3c45843031b88",
+        "e1b3b9532eb8e615476b562824c17f52414a555908874e73b6bd3d16c8d6bb1f"
+      ],
+      "create": false,
+      "size": 117840
+    },
+    {
+      "path": "server.js",
+      "sha256": "75acae3bc07a39623063982b947f3582d1877e193816d531eb8e1857dd24f5b4",
+      "accepted_prior_sha256": [
+        "66b60b1219f700007b92d826f742e5b12a373060c2553c23ebff218e22baf346",
+        "7c44e55519428ed04da9235a9df9a558b5b7eba86f8188e890ec41550118b679",
+        "f589b512436284989487b868adaa1d55f492f7158f009644612d46333a7d1ff5"
+      ],
+      "create": false,
+      "size": 1550246
+    },
+    {
+      "path": "tools/cfs-ai-verified-bridge-v32072-test.mjs",
+      "sha256": "dfca8ddd5bd939bb756100d58f25111f49c0fbd3ce80f7c276e417d1cf1661d2",
+      "accepted_prior_sha256": [],
+      "create": true,
+      "size": 3941
+    },
+    {
+      "path": "tools/cfs-konsolidiert-r4-check.mjs",
+      "sha256": "d9f366925d9b13a2d58c87be6c91cc7e553c4cee0285a0a23aba32c1c9d6d043",
+      "accepted_prior_sha256": [],
+      "create": true,
+      "size": 1842
+    },
+    {
+      "path": "tools/cfs-obs-r10-readiness-qa.cjs",
+      "sha256": "f6dfbc65d5bf77b724629190f231cd79065448ef0c5dc89a016c38647cda1cd0",
+      "accepted_prior_sha256": [],
+      "create": true,
+      "size": 2991
+    },
+    {
+      "path": "tools/cfs-obs-r9-contract-test.cjs",
+      "sha256": "de1076c6b2ae7bed1289a06e13f4867d581701fb8cad746b98d7bacfadaaaefc",
+      "accepted_prior_sha256": [
+        "b2d884598d926ab9b58ba83ab38aa358dbfb8ac2cd54984a1e83b39af74b7d9b"
+      ],
+      "create": true,
+      "size": 3986
+    },
+    {
+      "path": "tools/cfs-obs-setup-r8-test.cjs",
+      "sha256": "02c974a29ea02b62e9d7a93190014cb3af3c2a84120653419af28852e1ebcfc1",
+      "accepted_prior_sha256": [],
+      "create": true,
+      "size": 3723
+    },
+    {
+      "path": "tools/cfs-r5-security-test.mjs",
+      "sha256": "4688662b2fcdd25ba0c022ba6785c933ec344b2e961f915606b926ac31def18a",
+      "accepted_prior_sha256": [],
+      "create": true,
+      "size": 2554
+    },
+    {
+      "path": "lib/admin-private-desktop.js",
+      "sha256": "0d0dd814f3f17c3eaf18d030612bc8902888c62abd93c0a47e06da475be12a5a",
+      "accepted_prior_sha256": [],
+      "create": true,
+      "size": 796
+    },
+    {
+      "path": "private/admin-desktop/cfs_zockt-admin-pc.zip",
+      "sha256": "23713f11cc0a7ca300d48c68e77762f9a38ec5de312211ffce9af3604a3766b1",
+      "accepted_prior_sha256": [],
+      "create": true,
+      "size": 196783
+    },
+    {
+      "path": "public/assets/js/cfs-admin-private-download-v32077.js",
+      "sha256": "dec3c61eb892b1366f6620c5d2b0e839efec48dfa2854d08a19bd60fca40e59f",
+      "accepted_prior_sha256": [],
+      "create": true,
+      "size": 1519
+    },
+    {
+      "path": "tools/cfs-r11-admin-private-download-test.cjs",
+      "sha256": "c6ae7ccb2402d75091a3bd4c0bfd3dc2a79f3296ff31039999ca61e7d3b8cb6a",
+      "accepted_prior_sha256": [],
+      "create": true,
+      "size": 1995
     }
+  ],
+  "new_features": [
+    "Authentifizierte Creator-Bereitschaft aus /api/creator/stream-ready (read-only)",
+    "12 einzelne manuell bewertbare OBS/CFS-Studio Beta-Testfälle",
+    "Lokales Markdown-Abnahmeprotokoll ohne Quelle, Token oder Accounts",
+    "Windows-Vorprüfung nur OBS-Prozess und Loopback-Port; keine Verbindungsbehauptung"
   ]
 }

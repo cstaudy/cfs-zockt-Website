@@ -1,0 +1,25 @@
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import {createRequire} from "node:module";
+const require=createRequire(import.meta.url);
+const {inspectPagePath}=require("../lib/private-html-policy.js");
+const server=fs.readFileSync(new URL("../server.js",import.meta.url),"utf8");
+let passed=0;
+function test(label,fn){fn();passed++;console.log("PASS",label);}
+test("canonical admin page detected",()=>assert.equal(inspectPagePath("/pages/admin.html").path,"/pages/admin.html"));
+test("encoded a in admin cannot bypass",()=>assert.equal(inspectPagePath("/pages/%61dmin.html").path,"/pages/admin.html"));
+test("encoded pages prefix cannot bypass",()=>assert.equal(inspectPagePath("/%70ages/admin.html").path,"/pages/admin.html"));
+test("encoded slash cannot bypass",()=>assert.equal(inspectPagePath("/pages%2fadmin.html").path,"/pages/admin.html"));
+test("encoded extension cannot bypass",()=>assert.equal(inspectPagePath("/pages/admin%2Ehtml").path,"/pages/admin.html"));
+test("extensionless admin path remains gated",()=>assert.equal(inspectPagePath("/pages/admin").path,"/pages/admin.html"));
+test("public homepage remains public",()=>assert.equal(inspectPagePath("/").path,""));
+test("public login remains on allowlist",()=>assert.match(server,/"\/pages\/login\.html"/));
+test("encoded traversal is rejected",()=>assert.equal(inspectPagePath("/pages/%2e%2e/admin.html").invalid,true));
+test("malformed percent encoding is rejected",()=>assert.equal(inspectPagePath("/pages/%ZZadmin.html").invalid,true));
+test("backslash in page URL rejected",()=>assert.equal(inspectPagePath("/pages%5cadmin.html").invalid,true));
+test("double-percent decoding ambiguities rejected",()=>assert.equal(inspectPagePath("/pages/%2561dmin.html").invalid,true));
+test("main admin HTML requires admin server role",()=>assert.match(server,/\["\/pages\/admin\.html", "\/pages\/admin-creators\.html", "\/pages\/cfs-ai\.html"\]\.includes\(pagePath\) && !\(await isCreatorSuiteAdmin\(account\)\)/));
+test("invalid path stops before static handler",()=>assert.match(server,/if \(inspected\.invalid\) return res\.status\(400\)/));
+test("bridge verification rate limited",()=>assert.match(server,/\/api\/creator\/cfs-ai\/bridge\/verify",requireCreatorAccount,requireCreatorAdmin,requireCreatorAdminElevation,cfsAiBridgeVerifyLimiter/));
+test("bridge verification limit at most 3 per minute",()=>assert.match(server,/const cfsAiBridgeVerifyLimiter = createRateLimiter\(\{\s*windowMs: 60 \* 1000,\s*max: 3,/));
+console.log(`Hardening R5 ${passed}/${passed} PASS`);
